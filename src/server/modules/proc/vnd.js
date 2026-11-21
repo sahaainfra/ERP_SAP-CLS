@@ -253,6 +253,17 @@ export function createVndService({ db, base }) {
     if (detail) o.evidence = json(r.evidence_json, {}); return o;
   };
   const scores = {
+    supplierList(scope) {
+      if (scope.projectId !== null || scope.siteId !== null) throw notFound('The supplier scorecard is unavailable for this grant.');
+      audit({ user: `portal-supplier:${scope.accountId}` }, 'vnd_scorecards', 0, 'supplier_list', scope.companyId);
+      return db.prepare(`SELECT period, total_score, rating, on_time_pct, quality_pct, responsiveness, safety_score, invoice_accuracy
+        FROM vnd_scorecards WHERE company_id = ? AND partner_id = ? AND deleted_at IS NULL AND is_active = 1
+        ORDER BY period_to DESC, id DESC LIMIT 50`).all(scope.companyId, scope.partnerId).map((r) => {
+        const pct = (value) => value == null ? null : value / PCT;
+        return { period: r.period, total: pct(r.total_score), rating: r.rating, onTime: pct(r.on_time_pct),
+          quality: pct(r.quality_pct), responsiveness: pct(r.responsiveness), safety: pct(r.safety_score), invoiceAccuracy: pct(r.invoice_accuracy) };
+      });
+    },
     list(actor, query) { const sc = scope(actor, 'proc.vendor_score.view'); return runList(db, scoreList, parseListRequest(scoreList, query), { select: 'x.*', scopeSql: sc.sql, params: sc.params, tieBreaker: 'x.id', map: (x) => ({ id: x.id, partnerId: x.partner_id, vendor: vname(x.partner_id).name, period: x.period, total: x.total_score == null ? null : x.total_score / PCT, rating: x.rating }) }); },
     exportSource(actor, req) { return scores.list(actor, { ...req, page: 1, pageSize: 100 }); },
     get(actor, id) { need(actor, 'proc.vendor_score.view', 'see scorecards'); const r = db.prepare('SELECT * FROM vnd_scorecards WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(id), actor.companyId); if (!r) throw notFound('That scorecard does not exist.'); return scoreView(actor, r, { detail: true }); },

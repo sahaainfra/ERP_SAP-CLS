@@ -58,7 +58,7 @@ test('AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-07 a policy is written, approved, a
   const phone = info.project.name === 'mobile';
   const tag = phone ? 'M' : 'D';
   const t = tag.toLowerCase();
-  const c = await company(request, `PL${tag}`);
+  const c = await company(request, `POL${tag}`);
   const [hr, cfo, dir, e1, e2] = [`e2e-phr${t}`, `e2e-pcfo${t}`, `e2e-pdir${t}`, `e2e-pe1${t}`, `e2e-pe2${t}`];
   people(c, [[hr, ['HRMGR'], 'Hema HR'], [cfo, ['CFO'], 'Chandra CFO'], [dir, ['DIR'], 'Dina Director'], [e1, ['EMP'], 'Esha Employee'], [e2, ['EMP'], 'Eknath Employee']]);
   const a = await open(browser, info, c, 'HRMGR', hr, '/collab/policies');

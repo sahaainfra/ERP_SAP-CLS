@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
+import { useSearch } from '../site/parts.jsx';
 import { fmtDate, hse, qs } from './api.js';
 import { ErrorLine, big, today, useRunner } from './HseParts.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
@@ -24,7 +25,9 @@ function Trend({ rows, field, label }) {
   );
 }
 function DashboardPageClassic() {
-  const t = useT('hse'); usePageTitle(t('kpi.title')); const { error, run, busy } = useRunner(); const [f, setF] = useState({ projectId: '', siteId: '', from: '', to: '' }); const [month, setMonth] = useState(today().slice(0, 7));
+  const t = useT('hse'); usePageTitle(t('kpi.title')); const { error, run, busy } = useRunner(); const search = useSearch();
+  const [f, setF] = useState(() => ({ projectId: search.get('projectId') ?? '', siteId: '', from: '', to: search.get('to') ?? '' }));
+  const [month, setMonth] = useState(today().slice(0, 7));
   const query = qs(f); const q = useQuery({ queryKey: ['hse', 'dashboard', query], queryFn: () => hse.get(`/dashboard${query}`), retry: false, placeholderData: (p) => p });
   if (q.error?.status === 403) return <NoPermission what={t('kpi.title')} permission="hse.dashboard.view" />; if (q.isPending) return <Skeleton label={t('kpi.title')} rows={6} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const set = (k, v) => setF((s) => ({ ...s, [k]: v, ...(k === 'projectId' ? { siteId: '' } : {}) })); const sites = d.filters.sites.filter((s) => !f.projectId || String(s.projectId) === String(f.projectId));

@@ -86,6 +86,7 @@ export function createFileService({ db, storage, scanners, jobs, signer, approva
     scanDetail: r.scan_status === 'CLEAN' ? null : r.scan_detail,
     linkedEntity: r.linked_entity,
     linkedId: r.linked_id,
+    ...(r.linked_entity === 'proc_rfq' ? { supplierShared: r.supplier_shared === 1 } : {}),
     versionNo: r.version_no,
     supersedesId: r.supersedes_id,
     retentionClass: r.retention_class,
@@ -298,9 +299,35 @@ export function createFileService({ db, storage, scanners, jobs, signer, approva
         .run(r.company_id, key, r.original_name, r.extension, r.mime, r.category, r.size_bytes, r.sha256, r.scanned_at, entity, Number(entityId), r.retention_class, r.exif_json, r.exif_stripped, projectId, siteId, actor.user, String(r.id));
       return { id: Number(res.lastInsertRowid), name: r.original_name };
     },
+    /** Consume a clean staged file in the transaction that created its authorised business record. */
+    adoptStaged(actor, id, { stagingEntity, stagingId, target, extension }) {
+      return transaction(db, () => {
+        const file = fileOrThrow(actor, id);
+        if (file.linked_entity !== stagingEntity || file.linked_id !== stagingId || file.created_by !== actor.user || !file.is_active) {
+          throw notFound('That staged upload is unavailable.');
+        }
+        access(actor, stagingEntity, stagingId, 'edit');
+        if (file.scan_status !== 'CLEAN') throw conflict('The attachment must pass its scan before submission.');
+        if (extension && file.extension !== extension) throw rejected(`Attach a file in ${extension.toUpperCase()} format.`);
+        if (db.prepare(`SELECT 1 FROM core_files WHERE company_id = ? AND linked_entity = ? AND linked_id = ?
+          AND sha256 = ? AND deleted_at IS NULL`).get(file.company_id, target.entity, target.id, file.sha256)) {
+          throw conflict('The same file is already attached to this record.');
+        }
+        db.prepare(`UPDATE core_files SET linked_entity = ?, linked_id = ?, project_id = ?, site_id = ?,
+          updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`)
+          .run(target.entity, target.id, target.projectId ?? null, target.siteId ?? null, actor.user, iso(now()), id);
+        writeAudit(db, { entity: 'core_files', entityId: id, action: 'adopt_staged', companyId: file.company_id,
+          actor: actor.user, oldValues: { linkedEntity: stagingEntity, linkedId: stagingId },
+          newValues: { linkedEntity: target.entity, linkedId: target.id } });
+        return id;
+      });
+    },
     list(actor, { entity, entityId }) {
       const record = access(actor, entity, entityId, 'view');
-      const rows = db.prepare('SELECT * FROM core_files WHERE company_id = ? AND linked_entity = ? AND linked_id = ? AND deleted_at IS NULL ORDER BY id DESC').all(record.companyId, entity, entityId);
+      const rows = db.prepare(`SELECT f.*, CASE WHEN f.linked_entity = 'proc_rfq' THEN
+        EXISTS (SELECT 1 FROM ptl_rfq_files s WHERE s.file_id = f.id) ELSE 0 END AS supplier_shared
+        FROM core_files f WHERE company_id = ? AND linked_entity = ? AND linked_id = ? AND deleted_at IS NULL ORDER BY id DESC`)
+        .all(record.companyId, entity, entityId);
       const replaced = new Set(rows.map((r) => r.supersedes_id).filter(Boolean));
       return rows.map((r) => ({ ...present(r, { locked: record.locked }), current: !replaced.has(r.id) }));
     },

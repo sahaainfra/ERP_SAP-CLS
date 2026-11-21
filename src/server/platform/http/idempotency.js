@@ -24,9 +24,10 @@ export const requestHash = (req) => createHash('sha256').update(`${req.method}\n
  * - same key, different request: 422 `IDEMPOTENCY_KEY_REUSED`
  * - same key while the first request is still running: 409 `REQUEST_IN_PROGRESS`
  * - a non-2xx result is not stored, so the client can fix the request and retry with the same key
- * Keys are scoped to the user and the endpoint. Expired keys are purged as new ones arrive.
+ * Keys are scoped to the actor key and endpoint. The default actor key is the username.
+ * Expired keys are purged as new ones arrive.
  */
-export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, now = () => Date.now() } = {}) {
+export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, now = () => Date.now(), actorKey = (actor) => actor.user } = {}) {
   return (req, res, next) => {
     const key = req.get('idempotency-key');
     if (key === undefined) {
@@ -36,8 +37,8 @@ export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, 
     if (!KEY_FORMAT.test(key)) {
       return next(badRequest('The Idempotency-Key must be 8 to 128 letters, digits, dots, colons, dashes or underscores.', [{ field: 'Idempotency-Key', message: 'has an invalid format' }]));
     }
-    const user = req.actor?.user;
-    if (!user) return next(new Error('idempotency() must run after authentication'));
+    if (!req.actor?.user) return next(new Error('idempotency() must run after authentication'));
+    const user = actorKey(req.actor);
     const endpoint = `${req.method} ${req.baseUrl}${req.route?.path ?? req.path}`;
     const hash = requestHash(req);
     const stamp = now();

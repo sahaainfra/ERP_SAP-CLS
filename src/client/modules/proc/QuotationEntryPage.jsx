@@ -1,3 +1,4 @@
+import { AttachmentList } from '../core/components/Attachments.jsx';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
@@ -37,6 +38,10 @@ function Quote({ t, id }) {
       <div className="table-scroll"><table className="data-table" data-testid="quote-lines"><caption>{t('q.lines')}</caption><thead><tr><th>#</th><th>{t('q.item')}</th><th className="num">{t('q.offered')}</th>{r.canSeeRates ? <><th className="num">{t('q.rate')}</th><th className="num">{t('q.discount')}</th><th className="num">{t('q.gstPct')}</th><th className="num">{t('q.charges')}</th><th className="num">{t('q.landedRate')}</th><th className="num">{t('q.landedAmount')}</th></> : null}<th>{t('q.make')}</th><th>{t('q.deviation')}</th></tr></thead>
         <tbody>{r.lines.map((l) => <tr key={l.id} data-testid="quote-line"><td>{l.lineNo}</td><td>{l.itemCode ? `${l.itemCode} · ` : ''}{l.itemName}</td><td className="num">{fmtQty(l.offeredQty)} / {fmtQty(l.rfqQty)} {l.uom}</td>
           {r.canSeeRates && <><td className="num">{fmtRs(l.rate)}</td><td className="num">{l.discountPct}%</td><td className="num">{l.gstRate}%</td><td className="num">{fmtRs((l.freight ?? 0) + (l.loading ?? 0) + (l.otherCharges ?? 0))}</td><td className="num" data-testid="quote-landed-rate">{fmtRs(l.landedRate)}</td><td className="num">{fmtRs(l.landedAmount)}</td></>}<td>{l.make ?? ''}</td><td>{l.deviation ?? ''}</td></tr>)}</tbody></table></div>
+      {r.hasAttachments && <details className="mdm-panel no-print">
+        <summary>Quotation attachments</summary>
+        <AttachmentList entity="proc_quotation" entityId={r.id} />
+      </details>}
       <div className="actions-row no-print">
         {can.edit && <Link to={`/proc/quotation-entry?id=${r.id}&edit=1`}>{t('q.edit')}</Link>}
         {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => pc.quoteAct(r.id, 'submit'), t('q.recorded'))} data-testid="quote-submit">{t('q.record')}</button>}

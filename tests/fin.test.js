@@ -178,9 +178,10 @@ test('BR-02 an account with postings is not deleted and keeps its nature; it can
   const { api, call, chart, accountId, project } = await setup();
   const c = await chart();
   const g = c.groups.find((x) => x.code === '5600');
-  const r = await call(acc, 'POST', '/accounts', { code: '560020', name: 'Testing charges', groupId: g.id, type: 'EXPENSE', normalBalance: 'DR', dimensions: { PROJECT: 'MANDATORY' }, reason: 'lab testing of materials' });
+  const r = await call(acc, 'POST', '/accounts', { code: '560093', name: 'Testing charges', groupId: g.id, type: 'EXPENSE', normalBalance: 'DR', dimensions: { PROJECT: 'MANDATORY' }, reason: 'lab testing of materials' });
+  assert.equal(r.status, 202, JSON.stringify(r.json));
   await act(api, cfo, r.json.data.instanceId);
-  const id = await accountId('560020');
+  const id = await accountId('560093');
   const posted = new Set([id]);
   accountPostings.register({ code: 'test-gl', count: (_db, _c, accountId) => (posted.has(accountId) ? 3 : 0) });
   try {

@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { parse } from '../../platform/validation/index.js';
 import { Router } from 'express';
 import { parseAnaQ, parseSurvey, parseCorrection, parseRtiIndex, parseRtiIndexImport, parseIntelQ, parsePreqCreate, parsePreqUpdate, parsePreqImport, parseVisitReport, parseSuspCreate, parseScoreCompute, parseScoreInput, parseRankQ, parseAvlCheckQ, parseActionCreate, parseActionRespond, parseActionClose, parseDashQ, parseXpdCreate, parseXpdUpdate, parseXpdImport, parseMilestoneProgress, parseVendorMilestone, parseInspCreate, parseInspUpdate, parseInspResult, parsePunchImport, parseShipCreate, parseShipUpdate, parseShipDispatch, parseShipTrack, parseShipDeliver, parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate, parsePoCreate, parsePoUpdate, parsePoImport, parsePoOptionsQ, parseAmendCreate, parseAmendId, parseDispatch, parseReceipts, parseAdvance, parseTrackerQ, parsePerfQ, parseVendorAck, parseRcCreate, parseRcUpdate, parseRcImport, parseIndexSet, parseIndexQ, parsePvRequest, parseSoCreate, parseSoUpdate, parseSoImport, parseSeCreate, parseSeUpdate, parseSeImport } from './validators.js';
 import { HttpError } from '../../platform/http/errors.js';
@@ -85,6 +87,10 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   r.get('/rfqs/vendors', (req, res) => ok(res, rf.vendors(req.actor, parseVendorsQ(req.query))));
   r.get('/rfqs', (req, res) => res.json(rf.list(req.actor, req.query)));
   r.post('/rfqs', idempotentRequired, (req, res) => ok(res, rf.create(req.actor, parseRfqCreate(req.body)), 201));
+  r.post('/rfqs/:id/files/:fileId/share', idempotentRequired, (req, res) => {
+    const { shared } = parse(z.object({ shared: z.boolean() }).strict(), req.body);
+    ok(res, rf.shareFile(req.actor, pid(req), parseId(req.params.fileId), shared));
+  });
   r.get('/rfqs/:id', (req, res) => ok(res, rf.get(req.actor, pid(req))));
   r.patch('/rfqs/:id', idempotent, (req, res) => ok(res, rf.update(req.actor, pid(req), parseRfqUpdate(req.body))));
   r.delete('/rfqs/:id', (req, res) => ok(res, rf.remove(req.actor, pid(req))));

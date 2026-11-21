@@ -68,13 +68,15 @@ test('FR-02 every widget of the registry has a provider and every provider a wid
   await api.close();
 });
 
-test('BR-01 BR-02 widget data comes from the register inside the person\'s permission; a widget the role may not use is refused; nothing is invented', async () => {
+test('BR-01 BR-02 widget data comes from the register inside the person\'s permission; a widget the role may not use is refused; nothing is invented', async (t) => {
   const api = await startApi();
+  t.after(() => api.close());
   const w = await world(api, { extraProject: true });
+  const requiredBy = new Date(Math.max(Date.now(), Date.parse(today)) + 30 * 86_400_000).toISOString().slice(0, 10);
   assert.equal((await data(api, pm, 'requests.submitted')).json.data.data.value, 0, 'nothing submitted yet: zero, not a placeholder');
-  await raise(api, w, { title: 'Draft one' });
-  await raise(api, w, { title: 'Sent one', submit: true });
-  await raise(api, w, { title: 'Sent two', submit: true, project: w.b, priority: 'URGENT' });
+  await raise(api, w, { title: 'Draft one', requiredBy });
+  await raise(api, w, { title: 'Sent one', requiredBy, submit: true });
+  await raise(api, w, { title: 'Sent two', requiredBy, submit: true, project: w.b, priority: 'URGENT' });
   const get = async (code, who = pm, extra) => (await data(api, who, code, extra)).json.data;
   const k = await get('requests.submitted');
   assert.deepEqual([k.type, k.data.value, k.data.unit, k.data.previous, k.data.trendPct], ['kpi', 2, 'requests', 0, null]);
@@ -94,7 +96,7 @@ test('BR-01 BR-02 widget data comes from the register inside the person\'s permi
   assert.deepEqual([trend.categories, trend.series[0].values, trend.series[1].values], [['2026-10'], [3], [2]]);
   assert.deepEqual((await get('requests.scurve')).data.series[0].values, [3]);
   assert.equal((await get('requests.gantt')).data.rows.length, 3);
-  assert.equal((await get('requests.gantt')).data.rows[0].end, '2026-11-20');
+  assert.equal((await get('requests.gantt')).data.rows[0].end, requiredBy);
   // the value is a commercial value: shown to the project manager, masked for the system administrator
   assert.equal((await get('requests.value')).data.display ?? (await get('requests.value')).data.value, '232000.00');
   assert.equal((await get('requests.value', sys)).data.masked, true);
@@ -117,7 +119,6 @@ test('BR-01 BR-02 widget data comes from the register inside the person\'s permi
   assert.equal((await get('requests.submitted', pm, { projectId: w.b.project.id })).data.value, 1, 'the project filter narrows every widget');
   // an unknown filter is refused, not ignored
   assert.equal((await api.call('GET', `${U}/widgets/requests.submitted/data?bogus=1`, pm)).status, 400);
-  await api.close();
 });
 
 test('T-02 FR-05 the address a KPI, a slice or a bar opens lists the same requests: its count equals the widget\'s value', async () => {

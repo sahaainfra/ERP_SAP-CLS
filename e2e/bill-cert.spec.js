@@ -25,6 +25,9 @@ test('Certification, tax invoice, IRN and the submitted against certified analys
   await acc.page.getByTestId('bill-ti-irn-input').fill((Date.now().toString(16) + 'ab'.repeat(32)).slice(0, 64)); await acc.page.getByTestId('bill-ti-ack-input').fill('112200334455'); await acc.page.getByTestId('bill-ti-irn-save').click(); await expect(acc.page.getByTestId('bill-ti-object')).toHaveAttribute('data-irn', 'GENERATED'); await expect(acc.page.getByTestId('bill-ti-irn-value')).toBeVisible(); await shot(acc.page, '5-irn', info);
   await p.goto('/bill/cert-analysis'); await p.getByTestId('bill-ca-project').selectOption(String(s.A)); await expect(p.getByTestId('bill-ca-row')).toHaveCount(1); await expect(p.getByTestId('bill-ca-t-disputed')).toContainText('12,000'); await noOverflow(p); await shot(p, '6-analysis', info);
   await p.goto('/bill/certifications'); await expect(p.getByTestId('bill-certifications')).toBeVisible(); await p.goto('/bill/tax-invoices'); await expect(p.getByTestId('bill-tax-invoices')).toBeVisible(); await noOverflow(p);
-  const pd = await open(browser, info, c, 'PD', s.u('pd'), '/bill/certification-new'); await pd.page.waitForLoadState('networkidle'); await expect(pd.page.getByTestId('bill-ce-save')).toHaveCount(0); void url;
+  const pd = await open(browser, info, c, 'PD', s.u('pd'), '/bill/certification-new');
+  await expect(pd.page.getByTestId('no-permission')).toBeVisible();
+  await expect(pd.page.getByTestId('bill-ce-save')).toHaveCount(0);
+  void url;
   expect(errors, errors.join('\n')).toEqual([]);
 });

@@ -83,7 +83,7 @@ export function createWidgetService({ db, approvals, shell }) {
   const rowOf = (c) => widgetRows().find((r) => r.code === c);
 
   /** The widgets this person may put on a dashboard. */
-  const catalogue = (actor) => widgetRows().filter((r) => may(actor, r.permission_key)).map((r) => ({ ...metaOf(r), paramsKey: PARAMS[r.code] ? r.code : null }));
+  const catalogue = (actor) => widgetRows().filter((r) => may(actor, r.permission_key) && widgetRegistry.available(r.code, db, actor)).map((r) => ({ ...metaOf(r), paramsKey: PARAMS[r.code] ? r.code : null }));
 
   /** The default period: the financial year the day is in. */
   const defaultPeriod = () => { const fy = financialYear(todayIST()); return { from: fy.start, to: fy.end }; };
@@ -110,6 +110,7 @@ export function createWidgetService({ db, approvals, shell }) {
     const row = rowOf(widgetCode);
     if (!row) throw notFound(`There is no widget called ${widgetCode}.`);
     if (!may(actor, row.permission_key)) throw forbidden(`Your role does not include ${row.permission_key}, which the widget "${row.title}" needs.`);
+    if (!widgetRegistry.available(widgetCode, db, actor)) throw notFound('That widget is unavailable.');
     let widgetParams = {};
     if (query.params) {
       try { widgetParams = JSON.parse(query.params); } catch { throw badRequest('Some fields are invalid.', [{ field: 'params', message: 'is not valid JSON' }]); }

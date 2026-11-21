@@ -140,5 +140,35 @@ export function createKpiService({ db, base, flags, parts }) {
     notify(companyId, 'hse.kpi.alert', ['role:HSEO', 'role:PD'], 'LTIFR', 'over target', `The lost-time injury frequency rate this year is ${ltifr} against a target of ${T.ltifr} (per ${baseN} man-hours).`, '/hse/dashboard', `ltifr.${period}`, {});
     evt('hse.kpi.breached', { user: 'system' }, companyId, 'hse_dashboard', 0, { metric: 'ltifr', value: ltifr, target: T.ltifr, period, manHours: hours, lti }, null); return { told: 1, ltifr };
   }
-  return { dashboard, monthlyReport, exportCsv, projectWidget, widget, breachCheck };
+  function* approvedMetricFacts(companyId, asOf, projectId = null) {
+    const { from, to } = win(companyId, { to: asOf });
+    const rateBase = Number(param(companyId, 'hse.kpi.rate_base') ?? 1000000);
+    const rows = db.prepare(`WITH projects AS (
+      SELECT id FROM org_projects WHERE company_id = :companyId AND deleted_at IS NULL
+        ${projectId == null ? '' : 'AND id = :projectId'}
+    ), attendance AS (
+      SELECT s.org_project_id AS projectId, SUM(a.worked_minutes) AS minutes
+      FROM att_daily a JOIN org_sites s ON s.id = a.daily_site_id AND s.company_id = a.company_id AND s.deleted_at IS NULL
+      JOIN projects p ON p.id = s.org_project_id
+      WHERE a.company_id = :companyId AND a.work_date BETWEEN :from AND :to AND a.deleted_at IS NULL
+      GROUP BY s.org_project_id
+    ), lost_time AS (
+      SELECT i.org_project_id AS projectId, COUNT(*) AS injuries
+      FROM hse_incidents i JOIN projects p ON p.id = i.org_project_id
+      WHERE i.company_id = :companyId AND i.deleted_at IS NULL AND i.incident_status <> 'CANCELLED'
+        AND i.classification IN ('LTI','FATALITY') AND i.occurred_at BETWEEN :start AND :end
+      GROUP BY i.org_project_id
+    )
+    SELECT p.id AS projectId, COALESCE(a.minutes, 0) AS minutes, COALESCE(i.injuries, 0) AS injuries
+    FROM projects p LEFT JOIN attendance a ON a.projectId = p.id LEFT JOIN lost_time i ON i.projectId = p.id
+    WHERE a.projectId IS NOT NULL OR i.projectId IS NOT NULL`).iterate({
+      companyId, from, to, start: `${from}T00:00`, end: `${to}T23:59`, ...(projectId == null ? {} : { projectId }),
+    });
+    for (const row of rows) {
+      const value = rateOf(row.injuries, Math.round(row.minutes / 60), rateBase);
+      yield { projectId: row.projectId, sourceId: row.projectId, sourcePeriod: asOf, sourceVersion: 1,
+        ltifr: value == null ? null : Math.round(value * 100) };
+    }
+  }
+  return { dashboard, monthlyReport, exportCsv, projectWidget, widget, breachCheck, approvedMetricFacts };
 }

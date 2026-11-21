@@ -64,12 +64,16 @@ export function createApprovalEngine({ db, handlers }) {
       });
     },
 
-    list(actor, { type, status, limit, offset }) {
+    list(actor, { type, status, limit, offset, targetType = undefined }) {
       const where = ['company_id = :c', 'is_active = 1'];
       const params = { c: actor.companyId };
       if (type) {
         where.push('type = :type');
         params.type = type;
+      }
+      if (targetType) {
+        where.push('target_type = :targetType');
+        params.targetType = targetType;
       }
       if (status) {
         where.push('status = :status');
@@ -104,6 +108,7 @@ export function createApprovalEngine({ db, handlers }) {
       // a refusal on segregation-of-duties grounds is kept as a record even though the decision is rolled back
       return sodOf(db).attempt(() => transaction(db, () => {
         const r = loadRequest(id, actor.companyId);
+        handlers[r.type]?.authorize?.(db, actor, r);
         if (r.status !== 'SUBMITTED') throw unprocessable(`This request is ${r.status.toLowerCase()}, so it can no longer be decided.`);
         if (version !== undefined && version !== r.version) throw conflict('This request was changed by someone else. Refresh it and decide again.');
         const chain = JSON.parse(r.chain_json);
@@ -152,6 +157,7 @@ export function createApprovalEngine({ db, handlers }) {
     resubmit(actor, id, { reason }) {
       return transaction(db, () => {
         const r = loadRequest(id, actor.companyId);
+        handlers[r.type]?.authorize?.(db, actor, r);
         if (r.requested_by !== actor.user) throw forbidden('Only the person who raised a request can resubmit it.');
         if (r.status !== 'RETURNED') throw unprocessable('Only a returned request can be resubmitted.');
         db.prepare("UPDATE core_change_requests SET status = 'SUBMITTED', current_step = 1, reason = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(reason, actor.user, new Date().toISOString(), id);

@@ -136,7 +136,7 @@ export const ui = {
     // Part 03.03: the List Report's routes come first, so /sample-requests/export is not read as a record id.
     const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ui_export_jobs'").get());
     const runtime = runtimeOf(db);
-    const exports = createExportService({ db, storagePath: storagePath ?? 'data', jobs: runtime.jobs });
+    const exports = createExportService({ db, storagePath: storagePath ?? 'data', jobs: runtime.jobs, devHeaders: config.authMode === 'dev-headers' });
     exports.register('ui.sample_requests', (actor, req) => requests.exportSource(actor, req));
     bindListExports(db, exports);
     if (migrated) {

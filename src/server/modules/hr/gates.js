@@ -161,7 +161,16 @@ export function createGateService({ db }) {
       .map((r) => ({ event: r.event, step: r.step_code, role: STEP[r.step_code] ?? null, by: r.actor, at: r.at, comment: r.comment }));
   }
 
-  return { gates, ensure };
+  /** Internal readiness check for dependent modules. It never opens or signs a gate. */
+  function hasPassed(companyId, code) {
+    return Boolean(db.prepare(`
+      SELECT 1 FROM hr_gates
+      WHERE company_id = ? AND code = ? AND status = 'PASSED'
+        AND passed_at IS NOT NULL AND is_active = 1 AND deleted_at IS NULL
+    `).get(companyId, code));
+  }
+
+  return { gates, ensure, hasPassed };
 }
 
 const step = (code, name, roles) => ({ code, name, type: 'approval', mode: 'single', approvers: roles.map((role) => ({ kind: 'role', role })), slaHours: 72, requireAttachment: false, checklist: [], when: null, notify: [], action: null });

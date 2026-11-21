@@ -3,7 +3,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { HttpError, badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
-import { countList, defineList, parseListRequest, runList } from '../../platform/list/index.js';
+import { countList, defineList, parseListRequest, runList, whereOf } from '../../platform/list/index.js';
 import { createParameterStore, parameterRegistry } from '../../platform/parameters/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { evidenceProviders, workflowOf, workflowResolvers, workflowTypes } from '../../platform/workflow/index.js';
@@ -243,10 +243,33 @@ export function createProjectService({ db }) {
       need(actor, 'proj.project.view', 'see projects'); const s = scopeSql(actor);
       return runList(db, projectList, parseListRequest(projectList, query), { select: 'x.*', scopeSql: s.sql, params: s.params, tieBreaker: 'x.id', map: (x) => { const v = view(actor, x); return { id: v.id, projectId: v.projectId, code: v.code, name: v.name, type: v.type, client: v.client?.name ?? null, location: v.location, contractType: v.contractTypeLabel, contractValue: v.contractValue, startDate: v.startDate, scheduledCompletion: v.scheduledCompletion, state: v.state, stateLabel: v.stateLabel, status: v.status, statusLabel: v.statusLabel, pm: v.pm, health: v.health, timeElapsedPct: v.timeElapsedPct }; } });
     },
-    exportSource(actor, req) {
-      need(actor, 'proj.project.export', 'export projects'); const s = scopeSql(actor); const opts = { select: 'x.*', scopeSql: s.sql, params: s.params, tieBreaker: 'x.id' };
+    statusCounts(actor, query, dimension, projectId = null) {
+      need(actor, 'proj.project.view', 'see projects');
+      if (!['state', 'status'].includes(dimension)) throw badRequest('Select lifecycle or approval status.');
+      const { sql, params } = scopeSql(actor);
+      const selected = projectId == null ? { scopeSql: sql, params } : {
+        scopeSql: `(${sql}) AND x.project_id = :metricProjectId`, params: { ...params, metricProjectId: projectId },
+      };
+      const where = whereOf(projectList, parseListRequest(projectList, query), selected);
+      const column = projectList.columns[dimension];
+      const rows = db.prepare(`SELECT ${column.sql} AS code, COUNT(*) AS count
+        FROM ${projectList.from} WHERE ${where.sql} GROUP BY ${column.sql}`).all(where.params);
+      const counts = new Map(rows.map(({ code, count }) => [code, count]));
+      return column.options.flatMap(([code, label]) => counts.has(code) ? [{ code, label, count: counts.get(code) }] : []);
+    },
+    // The analytics worker captures only identifiers and lifecycle, using the same register predicates.
+    snapshotLifecycle(companyId) {
+      return db.prepare(`SELECT x.id AS sourceId, x.project_id AS projectId, x.lifecycle_state AS state
+        FROM ${projectList.from} WHERE ${projectList.where} AND x.company_id = ?`).iterate(companyId);
+    },
+    /** @param {any} actor @param {any} req @param {{ project?: (view: any) => any, scopedExport?: boolean }} [options] */
+    exportSource(actor, req, { project = (v) => ({ code: v.code, name: v.name, type: v.type, client: v.client?.name ?? '', location: v.location ?? '', contractType: v.contractTypeLabel, contractValue: v.contractValue, startDate: v.startDate ?? '', scheduledCompletion: v.scheduledCompletion ?? '', state: v.stateLabel, status: v.statusLabel, pm: v.pm ?? '', health: v.health }), scopedExport = false } = {}) {
+      need(actor, 'proj.project.export', 'export projects');
+      const s = scopeSql(actor);
+      const exportScope = scopedExport ? authz.scopeFilter(actor, 'proj.project.export', { project: 'x.project_id' }) : null;
+      const opts = { select: 'x.*', scopeSql: exportScope ? `${s.sql} AND (${exportScope.sql})` : s.sql, params: s.params, tieBreaker: 'x.id' };
       return { title: projectList.label, permission: 'proj.project.export', personal: false, columns: [...Object.entries(projectList.columns).map(([key, c]) => ({ key, label: c.label, type: c.type === 'enum' ? 'text' : c.type })), { key: 'health', label: 'Health', type: 'text' }], count: () => countList(db, projectList, req, opts),
-        rows: () => runList(db, projectList, req, { ...opts, limit: null, map: (x) => { const v = view(actor, x); return { code: v.code, name: v.name, type: v.type, client: v.client?.name ?? '', location: v.location ?? '', contractType: v.contractTypeLabel, contractValue: v.contractValue, startDate: v.startDate ?? '', scheduledCompletion: v.scheduledCompletion ?? '', state: v.stateLabel, status: v.statusLabel, pm: v.pm ?? '', health: v.health }; } }).data, describe: (r) => [r.q ? `search "${r.q}"` : '', ...r.filters.map((f) => `${projectList.columns[f.key]?.label ?? f.key} ${f.op} ${f.raw}`)].filter(Boolean) };
+        rows: () => runList(db, projectList, req, { ...opts, limit: null, map: (x) => project(view(actor, x)) }).data, describe: (r) => [r.q ? `search "${r.q}"` : '', ...r.filters.map((f) => `${projectList.columns[f.key]?.label ?? f.key} ${f.op} ${f.raw}`)].filter(Boolean) };
     },
     options(actor) { need(actor, 'proj.project.view', 'see projects'); return { numbering: templatesOf(actor.companyId).map((t) => ({ code: t.code, name: t.name, docType: t.docType, format: t.format })), folderTemplates: folderTemplates(actor.companyId), folderDefault: param(actor.companyId, 'proj.folder_template'), settingsDefaults: { ...SETTINGS_DEFAULTS, ...(param(actor.companyId, 'proj.settings_defaults') ?? {}) }, checklists: { ACTIVATE: checklistOf(actor.companyId, 'ACTIVATE') }, contractTypes: Object.entries(CONTRACT_TYPES).map(([code, label]) => ({ code, label })), states: Object.entries(STATES).map(([code, label]) => ({ code, label })) }; },
     prefill,

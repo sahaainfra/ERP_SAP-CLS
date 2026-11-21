@@ -142,7 +142,13 @@ export function createWorkOrderService({ db, base, flags }) {
         packages: db.prepare("SELECT id, code, name, project_id AS projectId FROM proj_work_packages WHERE company_id = ? AND deleted_at IS NULL AND wp_type = 'SUBCONTRACT' AND wp_status = 'ACTIVE' ORDER BY code LIMIT 500").all(actor.companyId),
         statements: db.prepare("SELECT id, doc_no AS docNo, org_project_id AS projectId FROM proc_comparative_statements WHERE company_id = ? AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY id DESC LIMIT 200").all(actor.companyId),
         boqLines: db.prepare("SELECT l.id, l.item_code AS code, l.description, l.uom, l.qty, l.rate, v.org_project_id AS projectId FROM proj_boq_lines l JOIN proj_boq_versions v ON v.id = l.version_id WHERE l.company_id = ? AND l.deleted_at IS NULL AND l.line_kind IN ('ITEM', 'SUBITEM') AND v.status = 'APPROVED' AND v.deleted_at IS NULL ORDER BY v.org_project_id, l.item_code LIMIT 2000").all(actor.companyId).map((l) => ({ ...l, qty: d3(l.qty), rate: dr(l.rate) })),
-        items: db.prepare('SELECT id, code, name FROM mdm_items WHERE company_id = ? AND deleted_at IS NULL ORDER BY code LIMIT 500').all(actor.companyId), tdsSections: db.prepare("SELECT section, description FROM mdm_tds_sections WHERE (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND deleted_at IS NULL ORDER BY section").all(actor.companyId), types: Object.entries(WO_TYPE).map(([id, label]) => ({ id, label })) };
+        items: db.prepare('SELECT id, code, name FROM mdm_items WHERE company_id = ? AND deleted_at IS NULL ORDER BY code LIMIT 500').all(actor.companyId),
+        // A work order stores the statutory section, which may cover several tax natures.
+        tdsSections: db.prepare(`SELECT section, CASE WHEN COUNT(DISTINCT description) = 1 THEN MIN(description) END AS description
+          FROM mdm_tds_sections
+          WHERE (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND deleted_at IS NULL
+          GROUP BY section ORDER BY section`).all(actor.companyId),
+        types: Object.entries(WO_TYPE).map(([id, label]) => ({ id, label })) };
     },
     create(actor, b) {
       const pj = projectOk(actor, b.projectId, 'ctr.work_order.create'); const c = termsCols(b); checkLinks(actor, pj.id, c); if (db.prepare('SELECT 1 FROM ctr_work_orders WHERE company_id = ? AND wo_no = ? COLLATE NOCASE AND deleted_at IS NULL').get(actor.companyId, c.wo_no)) throw conflict('This work order number is used already.');

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackPageRequests } from './page-requests.js';
 
 // Development-header mode (port 3100). T-03 of part 03.06: every page of the application opens at 360 px without a horizontal page scroll (a table
 // or a wide grid may scroll inside its own box, the page may not), and without errors in the console. The list of pages is the navigation registry,
@@ -34,11 +35,12 @@ test('T-03 AC-02 every page of the application renders at 360 px without a horiz
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|status of (400|403|404|409|422)/.test(m.text())) errors.push(`${page.url()} ${m.text().slice(0, 120)}`); });
   page.on('pageerror', (e) => errors.push(`${page.url()} ${String(e).slice(0, 120)}`));
   const wide = [];
+  const settled = trackPageRequests(page, { dataOnly: true });
   for (const route of routes) {
     await page.goto(route);
     await page.locator('main').waitFor();
-    await page.waitForLoadState('networkidle').catch(() => null);
-    await page.waitForTimeout(250);
+    await expect(page.getByTestId('page-loading')).toHaveCount(0, { timeout: 30_000 });
+    await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${route}` }).toEqual([]);
     const out = await stickingOut(page);
     if (out.length) wide.push(`${route}: ${out.join(', ')}`);
   }
@@ -51,12 +53,14 @@ test('FR-02 the key pages fit at 768, 1280 and 1920 px as well', async ({ page }
   test.setTimeout(180_000);
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), identity);
   const problems = [];
+  const settled = trackPageRequests(page, { dataOnly: true });
   for (const width of [768, 1280, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     for (const route of ['/home', '/field', '/field/scan', '/admin/sample-requests', '/admin/users', '/admin/navigation', '/admin/console', '/admin/design-system/forms', '/account/profile']) {
       await page.goto(route);
       await page.locator('main').waitFor();
-      await page.waitForLoadState('networkidle').catch(() => null);
+      await expect(page.getByTestId('page-loading')).toHaveCount(0, { timeout: 30_000 });
+      await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${route}` }).toEqual([]);
       const out = await stickingOut(page);
       if (out.length) problems.push(`${width} px ${route}: ${out.join(', ')}`);
     }

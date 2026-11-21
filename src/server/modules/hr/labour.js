@@ -389,7 +389,7 @@ export function createLabourService({ db, dep, vaultKey }) {
       need(actor, 'hr.worker.view', 'see labour contractors');
       const p = partner(actor.companyId, id); if (!p) throw notFound('That is not a labour contractor of the partner master.');
       const row = contractors.list(actor).find((x) => x.id === id);
-      const docs = db.prepare("SELECT doc_type AS type, document_ref AS number, valid_until AS validTo FROM mdm_partner_documents WHERE partner_id = ? AND deleted_at IS NULL ORDER BY valid_until").all(id);
+      const docs = db.prepare("SELECT doc_type AS type, document_ref AS number, valid_until AS validTo FROM mdm_partner_documents WHERE partner_id = ? AND deleted_at IS NULL AND (COALESCE(source_type, '') <> 'supplier_portal' OR verified_at IS NOT NULL) ORDER BY valid_until").all(id);
       return { ...row, documents: docs, can: { edit: may(actor, 'hr.worker.compliance') } };
     },
     setCompliance(actor, id, b) {

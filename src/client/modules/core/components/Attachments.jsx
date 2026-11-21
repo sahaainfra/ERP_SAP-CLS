@@ -129,7 +129,7 @@ function Thumb({ file }) {
 }
 
 /** The files attached to a record: preview, open, download, replace with a new version, remove (unless the record is approved). */
-export function AttachmentList({ entity, entityId, canEdit = false, onReplace = () => {} }) {
+export function AttachmentList({ entity, entityId, canEdit = false, onReplace = () => {}, renderActions = null }) {
   const files = useFiles({ entity, entityId });
   const remove = useDeleteFile();
   const [message, setMessage] = useState('');
@@ -202,6 +202,7 @@ export function AttachmentList({ entity, entityId, canEdit = false, onReplace = 
                   {f.scanStatus === 'INFECTED' && <span className="field-error small"> This file failed the virus scan and cannot be opened.</span>}
                 </div>
                 <div className="attachment-actions">
+                  {renderActions?.(f, files.refetch)}
                   <button type="button" className="link" disabled={f.scanStatus !== 'CLEAN' || busy === f.id} onClick={() => open(f, false)} aria-label={`Open ${f.name}`}>Open</button>
                   <button type="button" className="link" disabled={f.scanStatus !== 'CLEAN' || busy === f.id} onClick={() => open(f, true)} aria-label={`Download ${f.name}`}>Download</button>
                   {canEdit && f.current && <button type="button" className="link" onClick={() => onReplace(f)} aria-label={`Replace ${f.name} with a new version`}>New version</button>}

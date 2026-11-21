@@ -22,6 +22,8 @@ test('Subcontractor measurement, signature, verification, bill with recoveries, 
   await qs.page.getByTestId('bill-submit').click(); await expect(qs.page.getByTestId('bill-sb-object')).toHaveAttribute('data-status', 'SUBMITTED'); await decide(request, c, 'SE', s.u('se')); await decide(request, c, 'QS', s.u('qs2')); await decide(request, c, 'PM', s.u('pm')); await qs.page.reload(); await expect(qs.page.getByTestId('bill-sb-object')).toHaveAttribute('data-status', 'APPROVED'); await expect(qs.page.getByTestId('bill-sb-object')).toHaveAttribute('data-compliance', 'OK'); await shot(qs.page, '5-approved', info);
   const dl = qs.page.waitForEvent('download'); await qs.page.getByTestId('bill-print').click(); expect((await dl).suggestedFilename()).toMatch(/\.pdf$/);
   await qs.page.goto('/bill/sub-bills'); await expect(qs.page.getByTestId('bill-sub-bills')).toBeVisible(); await noOverflow(qs.page); await shot(qs.page, '6-list', info); await qs.page.goto('/bill/sub-measure'); await expect(qs.page.getByTestId('bill-sub-measure')).toBeVisible();
-  const pd = await open(browser, info, c, 'PD', s.u('pd'), '/bill/sub-bill-new'); await pd.page.waitForLoadState('networkidle'); await expect(pd.page.getByTestId('bill-sb-save')).toHaveCount(0); void url;
+  const pd = await open(browser, info, c, 'PD', s.u('pd'), '/bill/sub-bill-new');
+  await expect(pd.page.getByTestId('no-permission')).toBeVisible();
+  await expect(pd.page.getByTestId('bill-sb-save')).toHaveCount(0); void url;
   expect(errors, errors.join('\n')).toEqual([]);
 });

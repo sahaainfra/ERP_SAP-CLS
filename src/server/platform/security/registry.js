@@ -6,7 +6,11 @@ const DEV = new Set(['development', 'test']);
 /** The live routes matched against the policy: which are declared, which are not, and which policy lines name no route. */
 export function buildRegistry(app, policy) {
   const live = collectRoutes(app);
-  const rows = live.map((r) => ({ ...r, rule: policy.exact(r.method, r.path) }));
+  const rows = live.map((r) => {
+    const rule = policy.exact(r.method, r.path);
+    const externalPortal = r.path.startsWith('/api/v1/portal/') && !r.path.startsWith('/api/v1/portal/admin/');
+    return { ...r, rule: externalPortal && rule?.scope !== 'partner' ? null : rule };
+  });
   const liveKeys = new Set(live.map((r) => `${r.method} ${r.path}`));
   return {
     routes: rows,

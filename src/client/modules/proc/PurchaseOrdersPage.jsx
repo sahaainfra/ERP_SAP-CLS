@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { DELIVERY_TONE, PO_TONE, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { AttachmentList } from '../core/components/Attachments.jsx';
 import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Purchase orders (part 15.05): the list with the delivery status; the order with its header, terms, lines with the delivery schedule and the GST split, approvals, amendments (compared), dispatches, goods received and advances.
@@ -62,6 +63,10 @@ function Po({ t, id }) {
           <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="po-approve">{t('o.approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')}>{t('o.return')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')}>{t('o.reject')}</button></div></div>)}
       {r.amendments.length > 0 && <div className="table-scroll"><table className="data-table" data-testid="po-amendments"><caption>{t('o.amendments')}</caption><thead><tr><th>#</th><th>{t('o.kindH')}</th><th>{t('o.reason')}</th>{r.canSeeRates && <th className="num">{t('o.delta')}</th>}<th>{t('o.status')}</th></tr></thead><tbody>{r.amendments.map((a) => <tr key={a.id}><td>{a.amendmentNo}</td><td>{a.kind === 'AMEND' ? <Link to={`/proc/po-amend?id=${r.id}&aid=${a.id}`}>{t('o.kind.AMEND')}</Link> : t(`o.kind.${a.kind}`)}</td><td>{a.reason}</td>{r.canSeeRates && <td className="num">{a.kind === 'AMEND' ? fmtRs(a.deltaAmount) : '—'}</td>}<td>{t(`o.as.${a.status}`)}</td></tr>)}</tbody></table></div>}
       {r.dispatches.length > 0 && <div className="table-scroll"><table className="data-table" data-testid="po-dispatches"><caption>{t('o.dispatches')}</caption><thead><tr><th>ASN</th><th>{t('o.dispatchDate')}</th><th>{t('o.expected')}</th><th>{t('o.vehicle')}</th><th>{t('o.eway')}</th><th>{t('o.by')}</th></tr></thead><tbody>{r.dispatches.map((d) => <tr key={d.id}><td>{d.asnNo}</td><td>{fmtDate(d.dispatchDate)}</td><td>{fmtDate(d.expectedArrival)}</td><td>{d.vehicleNo ?? ''}</td><td>{d.ewayBillNo ?? ''}</td><td>{d.enteredVia === 'VENDOR' ? t('o.byVendor') : t('o.byBuyer')}</td></tr>)}</tbody></table></div>}
+      {r.dispatches.some((dispatch) => dispatch.invoiceFileId) && <details className="mdm-panel no-print">
+        <summary>Supplier dispatch attachments</summary>
+        <AttachmentList entity="proc_purchase_order" entityId={r.id} />
+      </details>}
       {r.receipts.length > 0 && <div className="table-scroll"><table className="data-table" data-testid="po-receipts"><caption>{t('o.grns')}</caption><thead><tr><th>GRN</th><th>{t('o.line')}</th><th>{t('o.receivedOn')}</th><th className="num">{t('o.received')}</th><th className="num">{t('o.accepted')}</th><th>{t('o.onTime')}</th></tr></thead><tbody>{r.receipts.map((x) => <tr key={x.id}><td>{x.grnRef}</td><td>{x.lineNo}</td><td>{fmtDate(x.receivedOn)}</td><td className="num">{fmtQty(x.qty)}</td><td className="num">{fmtQty(x.acceptedQty)}</td><td>{x.onTime ? t('o.yes') : t('o.no')}</td></tr>)}</tbody></table></div>}
       {(r.advances.length > 0 || can.advance) && (
         <div className="mdm-panel" data-testid="po-advances"><h2>{t('o.advances')}</h2>

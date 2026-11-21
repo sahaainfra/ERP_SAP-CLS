@@ -186,6 +186,47 @@ export function createPartnerService({ db, vaultKey }) {
     return { held: false, reason: null, until: null };
   };
   const today = () => todayIST();
+  const portalDocChoice = Object.entries(DOC_TYPES).filter(([type]) => type !== 'CANCELLED_CHEQUE');
+  const hasComplianceGrant = (scope) => scope.projectId === null && scope.siteId === null;
+  const enteredBySupplier = "COALESCE(source_type, '') = 'supplier_portal'";
+  const trustedDoc = (alias) => `(COALESCE(${alias}.source_type, '') <> 'supplier_portal' OR ${alias}.verified_at IS NOT NULL)`;
+  const supplierDocuments = {
+    list(scope) {
+      if (!hasComplianceGrant(scope)) throw notFound('Compliance documents require a company-wide supplier grant.');
+      return { types: portalDocChoice.map(([value, label]) => ({ value, label })), items: db.prepare(`
+        SELECT id, doc_type, document_ref, valid_from, valid_until, verified_at FROM mdm_partner_documents
+        WHERE company_id = ? AND partner_id = ? AND deleted_at IS NULL AND doc_type <> 'CANCELLED_CHEQUE'
+        ORDER BY id DESC LIMIT 100`).all(scope.companyId, scope.partnerId).map((d) => ({
+        id: d.id, type: d.doc_type, label: DOC_TYPES[d.doc_type], reference: d.document_ref, validFrom: d.valid_from,
+        validUntil: d.valid_until, verified: d.verified_at != null,
+      })) };
+    },
+    renew(scope, { docType, docNo, validFrom, validUntil }, attach) {
+      if (!hasComplianceGrant(scope)) throw notFound('Compliance documents require a company-wide supplier grant.');
+      if (!portalDocChoice.some(([type]) => type === docType)) throw badRequest('Choose a compliance document type.');
+      const dateOk = (value) => Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+      if (!dateOk(validFrom) || !dateOk(validUntil) || validUntil < validFrom || validUntil < today()) {
+        throw badRequest('Enter a valid compliance period ending on or after today.');
+      }
+      return transaction(db, () => {
+        const actor = { companyId: scope.companyId, user: `portal-supplier:${scope.accountId}` };
+        const p = row(actor, scope.partnerId);
+        if (db.prepare(`SELECT 1 FROM mdm_partner_documents WHERE company_id = ? AND partner_id = ? AND doc_type = ?
+          AND deleted_at IS NULL AND verified_at IS NULL AND ${enteredBySupplier}`).get(scope.companyId, p.id, docType)) {
+          throw conflict('A renewal of this document is already awaiting verification.');
+        }
+        const [fileId] = attach({ entity: 'mdm_partner', id: p.id });
+        const id = Number(db.prepare(`INSERT INTO mdm_partner_documents
+          (company_id, partner_id, doc_type, document_ref, file_id, valid_from, valid_until, created_by, source_type)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'supplier_portal')`)
+          .run(scope.companyId, p.id, docType, docNo, fileId, validFrom, validUntil, actor.user).lastInsertRowid);
+        writeAudit(db, { entity: 'mdm_partner_documents', entityId: id, action: 'supplier_renewal', actor: actor.user, companyId: scope.companyId });
+        publishEvent(db, { type: 'mdm.partner.changed', entity: 'mdm_partner', entityId: p.id, actorId: actor.user,
+          companyId: scope.companyId, data: { code: p.code, document: docType } });
+        return { id, status: 'AWAITING_VERIFICATION' };
+      });
+    },
+  };
   const docView = (d) => ({ id: d.id, type: d.doc_type, typeLabel: DOC_TYPES[d.doc_type], number: d.document_ref, fileId: d.file_id, validFrom: d.valid_from, validUntil: d.valid_until, verifiedBy: d.verified_by, verifiedAt: d.verified_at, addedBy: d.created_by,
     state: !d.valid_until ? 'NO_EXPIRY' : d.valid_until < today() ? 'EXPIRED' : d.valid_until <= dayPlus(30) ? 'DUE' : 'VALID' });
   function view(actor, p, { full = false } = {}) {
@@ -210,6 +251,71 @@ export function createPartnerService({ db, vaultKey }) {
   // ---- registration and approval (FR-01, FR-06, AC-01) ----
   const tell = (p, what, decision, comment, to = p.requested_by) => notif.notify({ companyId: p.company_id, templateCode: 'mdm.partner.decided', recipients: [`user:${to}`], data: { decision, code: p.code, name: p.legal_name, what, comment: comment ? `: ${comment}` : '' }, link: `/admin/partners/partner?id=${p.id}`, sourceType: 'mdm_partner', sourceId: String(p.id), eventKey: `mdm.partner.decided:${p.id}:${what}:${decision}:${Date.now()}` });
   const head = (b) => [b.legalName.trim(), b.tradeName ?? null, nameKey(b.legalName), b.constitution, b.pan ?? null, b.msmeNo ?? null, b.msmeCategory ?? null, b.cin ?? null];
+  function createRegistration(actor, b, steward) {
+    const pr = prepare(actor, b);
+    const block = pr.dups.filter((d) => d.block);
+    if (block.length) throw new HttpError(409, 'DUPLICATE', `This partner already exists: ${block.map((d) => `${d.code} ${d.name} (${d.rule})`).join('; ')}.`, block.map((d) => ({ field: d.field, message: `${d.rule} as ${d.code}`, partnerId: d.id })));
+    if (pr.dups.length && !b.acknowledgeDuplicates) throw new HttpError(409, 'DUPLICATE_WARNING', `This looks like ${pr.dups.map((d) => `${d.code} ${d.name} (${d.rule})`).join('; ')}. Check it, then confirm it is a different partner.`, pr.dups.map((d) => ({ field: d.field, message: `${d.rule} as ${d.code}`, partnerId: d.id })));
+    return transaction(db, () => {
+      const n = db.prepare('SELECT COUNT(*) AS n FROM mdm_partners WHERE company_id = ?').get(actor.companyId).n + 1;
+      let code = `BP-${String(n).padStart(5, '0')}`;
+      for (let k = n + 1; db.prepare('SELECT 1 FROM mdm_partners WHERE company_id = ? AND code = ?').get(actor.companyId, code); k += 1) code = `BP-${String(k).padStart(5, '0')}`;
+      const id = Number(db.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, name_key, constitution, pan, msme_no, msme_category, cin, partner_status, steward_role, requested_by, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PROSPECT', ?, ?, ?, 'mdm_partner')")
+        .run(actor.companyId, code, ...head(b), steward, actor.user, actor.user).lastInsertRowid);
+      writeChildren(actor, id, b, pr);
+      writeAudit(db, { entity: 'mdm_partners', entityId: id, action: 'create', newValues: { code, legalName: b.legalName, roles: b.roles, status: 'PROSPECT' }, actor: actor.user, companyId: actor.companyId });
+      publishEvent(db, { type: 'mdm.partner.registered', entity: 'mdm_partner', entityId: id, actorId: actor.user, companyId: actor.companyId, data: { code, roles: b.roles } });
+      const out = view(actor, row(actor, id), { full: true });
+      return b.submit ? { ...out, ...submitRegistration(actor, row(actor, id), b.comment) } : out;
+    });
+  }
+
+  function updateRegistration(actor, p, b) {
+    const id = p.id;
+    if (p.version !== b.version) throw conflict('This partner was changed by someone else. Reload it and try again.');
+    const returned = p.partner_status === 'PENDING' && db.prepare("SELECT 1 FROM wf_instances WHERE id = ? AND status = 'RETURNED'").get(p.workflow_instance_id);
+    if (!['PROSPECT', 'REJECTED'].includes(p.partner_status) && !returned) throw conflict(`A partner that is ${STATUS_LABELS[p.partner_status].toLowerCase()} is not edited here: use its own actions (contacts, documents, bank change, status).`);
+    const pr = prepare(actor, b, id);
+    const block = pr.dups.filter((d) => d.block);
+    if (block.length) throw new HttpError(409, 'DUPLICATE', `This partner already exists: ${block.map((d) => `${d.code} ${d.name} (${d.rule})`).join('; ')}.`, []);
+    return transaction(db, () => {
+      db.prepare("UPDATE mdm_partners SET legal_name = ?, trade_name = ?, name_key = ?, constitution = ?, pan = ?, msme_no = ?, msme_category = ?, cin = ?, steward_role = ?, partner_status = CASE partner_status WHEN 'REJECTED' THEN 'PROSPECT' ELSE partner_status END, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?")
+        .run(...head(b), stewardOf(b.roles), actor.user, nowIso(), id);
+      writeChildren(actor, id, b, pr);
+      writeAudit(db, { entity: 'mdm_partners', entityId: id, action: 'update', newValues: { legalName: b.legalName, roles: b.roles }, actor: actor.user, companyId: actor.companyId });
+      if (returned) workflowOf(db).resubmit(actor, p.workflow_instance_id, { comment: b.comment ?? 'Corrected', context: { stewardRole: stewardOf(b.roles) } });
+      return view(actor, row(actor, id), { full: true });
+    });
+  }
+
+  function submitRegistration(actor, p, comment) {
+    if (p.partner_status !== 'PROSPECT') throw conflict(`This partner is ${STATUS_LABELS[p.partner_status].toLowerCase()}.`);
+    const inst = workflowOf(db).submit(actor, { docType: PARTNER_DOC, docId: p.id, comment: comment ?? 'New partner', context: { stewardRole: p.steward_role, roles: rolesOf(p.id) } });
+    db.prepare("UPDATE mdm_partners SET partner_status = 'PENDING', workflow_instance_id = ?, requested_by = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(inst.id, actor.user, actor.user, nowIso(), p.id);
+    writeAudit(db, { entity: 'mdm_partners', entityId: p.id, action: 'submit', actor: actor.user, companyId: actor.companyId, reason: comment ?? null });
+    return { workflow: inst, status: 'PENDING' };
+  }
+
+  /** External vendor intake has one document type and cannot change an approved partner. */
+  const vendorIntake = {
+    create(actor, fields) {
+      const result = createRegistration(actor, { ...fields, roles: ['VENDOR'], submit: true }, 'PROCMGR');
+      return { id: result.id, reference: result.code, status: result.status };
+    },
+    status(actor, partnerId) {
+      const p = row(actor, partnerId);
+      if (p.requested_by !== actor.user) throw notFound('That registration does not exist.');
+      const wf = db.prepare('SELECT status FROM wf_instances WHERE company_id = ? AND id = ?').get(actor.companyId, p.workflow_instance_id);
+      return { reference: p.code, status: wf?.status === 'RETURNED' ? 'RETURNED' : p.partner_status, version: p.version };
+    },
+    revise(actor, partnerId, fields) {
+      const p = row(actor, partnerId);
+      if (vendorIntake.status(actor, partnerId).status !== 'RETURNED') throw conflict('Only a returned registration can be corrected.');
+      updateRegistration(actor, p, { ...fields, roles: ['VENDOR'] });
+      return vendorIntake.status(actor, partnerId);
+    },
+  };
+
   const registration = {
     check(actor, b) {
       need(actor, 'mdm.record.view', 'see partners');
@@ -220,52 +326,20 @@ export function createPartnerService({ db, vaultKey }) {
       need(actor, 'mdm.partner.edit', 'register partners');
       const steward = stewardOf(b.roles);
       if (!roleCodes(actor).includes(steward) && !(roleCodes(actor).includes('BD') && b.roles.every((r) => r === 'CLIENT'))) throw forbidden(`${b.roles.map((r) => ROLE_LABELS[r].toLowerCase()).join(' and ')} are registered by the ${steward === 'PROCMGR' ? 'procurement' : 'commercial'} manager${steward === 'COMMGR' ? ' (business development registers client prospects)' : ''}.`);
-      const pr = prepare(actor, b);
-      const block = pr.dups.filter((d) => d.block);
-      if (block.length) throw new HttpError(409, 'DUPLICATE', `This partner already exists: ${block.map((d) => `${d.code} ${d.name} (${d.rule})`).join('; ')}.`, block.map((d) => ({ field: d.field, message: `${d.rule} as ${d.code}`, partnerId: d.id })));
-      if (pr.dups.length && !b.acknowledgeDuplicates) throw new HttpError(409, 'DUPLICATE_WARNING', `This looks like ${pr.dups.map((d) => `${d.code} ${d.name} (${d.rule})`).join('; ')}. Check it, then confirm it is a different partner.`, pr.dups.map((d) => ({ field: d.field, message: `${d.rule} as ${d.code}`, partnerId: d.id })));
-      return transaction(db, () => {
-        const n = db.prepare('SELECT COUNT(*) AS n FROM mdm_partners WHERE company_id = ?').get(actor.companyId).n + 1;
-        let code = `BP-${String(n).padStart(5, '0')}`;
-        for (let k = n + 1; db.prepare('SELECT 1 FROM mdm_partners WHERE company_id = ? AND code = ?').get(actor.companyId, code); k += 1) code = `BP-${String(k).padStart(5, '0')}`;
-        const id = Number(db.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, name_key, constitution, pan, msme_no, msme_category, cin, partner_status, steward_role, requested_by, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PROSPECT', ?, ?, ?, 'mdm_partner')")
-          .run(actor.companyId, code, ...head(b), steward, actor.user, actor.user).lastInsertRowid);
-        writeChildren(actor, id, b, pr);
-        writeAudit(db, { entity: 'mdm_partners', entityId: id, action: 'create', newValues: { code, legalName: b.legalName, roles: b.roles, status: 'PROSPECT' }, actor: actor.user, companyId: actor.companyId });
-        publishEvent(db, { type: 'mdm.partner.registered', entity: 'mdm_partner', entityId: id, actorId: actor.user, companyId: actor.companyId, data: { code, roles: b.roles } });
-        const out = view(actor, row(actor, id), { full: true });
-        return b.submit ? { ...out, ...registration.submit(actor, id, { comment: b.comment }) } : out;
-      });
+      return createRegistration(actor, b, steward);
     },
     /** A Prospect (or a request returned for correction) is changed before it is sent again. */
     update(actor, id, b) {
       const p = row(actor, id);
       if (!keeps(actor, p)) throw forbidden('Only the steward of this partner changes it.');
-      if (p.version !== b.version) throw conflict('This partner was changed by someone else. Reload it and try again.');
-      const returned = p.partner_status === 'PENDING' && db.prepare("SELECT 1 FROM wf_instances WHERE id = ? AND status = 'RETURNED'").get(p.workflow_instance_id);
-      if (!['PROSPECT', 'REJECTED'].includes(p.partner_status) && !returned) throw conflict(`A partner that is ${STATUS_LABELS[p.partner_status].toLowerCase()} is not edited here: use its own actions (contacts, documents, bank change, status).`);
-      const pr = prepare(actor, b, id);
-      const block = pr.dups.filter((d) => d.block);
-      if (block.length) throw new HttpError(409, 'DUPLICATE', `This partner already exists: ${block.map((d) => `${d.code} ${d.name} (${d.rule})`).join('; ')}.`, []);
-      return transaction(db, () => {
-        db.prepare("UPDATE mdm_partners SET legal_name = ?, trade_name = ?, name_key = ?, constitution = ?, pan = ?, msme_no = ?, msme_category = ?, cin = ?, steward_role = ?, partner_status = CASE partner_status WHEN 'REJECTED' THEN 'PROSPECT' ELSE partner_status END, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?")
-          .run(...head(b), stewardOf(b.roles), actor.user, nowIso(), id);
-        writeChildren(actor, id, b, pr);
-        writeAudit(db, { entity: 'mdm_partners', entityId: id, action: 'update', newValues: { legalName: b.legalName, roles: b.roles }, actor: actor.user, companyId: actor.companyId });
-        if (returned) workflowOf(db).resubmit(actor, p.workflow_instance_id, { comment: b.comment ?? 'Corrected', context: { stewardRole: stewardOf(b.roles) } });
-        return view(actor, row(actor, id), { full: true });
-      });
+      return updateRegistration(actor, p, b);
     },
     /** Send a Prospect for approval: the steward of its roles, then the accounts manager (statutory and bank verification). */
     /** @param {any} actor @param {number} id @param {{ comment?: string }} [opts] */
     submit(actor, id, { comment } = {}) {
       const p = row(actor, id);
       if (!keeps(actor, p)) throw forbidden('Only the steward of this partner sends it for approval.');
-      if (p.partner_status !== 'PROSPECT') throw conflict(`This partner is ${STATUS_LABELS[p.partner_status].toLowerCase()}.`);
-      const inst = workflowOf(db).submit(actor, { docType: PARTNER_DOC, docId: id, comment: comment ?? 'New partner', context: { stewardRole: p.steward_role, roles: rolesOf(id) } });
-      db.prepare("UPDATE mdm_partners SET partner_status = 'PENDING', workflow_instance_id = ?, requested_by = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(inst.id, actor.user, actor.user, nowIso(), id);
-      writeAudit(db, { entity: 'mdm_partners', entityId: id, action: 'submit', actor: actor.user, companyId: actor.companyId, reason: comment ?? null });
-      return { workflow: inst, status: 'PENDING' };
+      return submitRegistration(actor, p, comment);
     },
   };
 
@@ -332,6 +406,9 @@ export function createPartnerService({ db, vaultKey }) {
       row(actor, id);
       const d = db.prepare('SELECT * FROM mdm_partner_documents WHERE id = ? AND partner_id = ? AND deleted_at IS NULL').get(docId, id);
       if (!d) throw notFound('That document is not of this partner.');
+      if (d.source_type === 'supplier_portal' && !db.prepare(`SELECT 1 FROM core_files WHERE id = ? AND company_id = ?
+        AND linked_entity = 'mdm_partner' AND linked_id = ? AND scan_status = 'CLEAN' AND is_active = 1 AND deleted_at IS NULL`)
+        .get(d.file_id, actor.companyId, id)) throw conflict('The submitted renewal file is unavailable.');
       if (d.created_by?.toLowerCase() === actor.user.toLowerCase()) throw forbidden('The person who added a document does not verify it.');
       db.prepare('UPDATE mdm_partner_documents SET verified_by = ?, verified_at = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(actor.user, nowIso(), nowIso(), docId);
       writeAudit(db, { entity: 'mdm_partner_documents', entityId: docId, action: 'verify', actor: actor.user, companyId: actor.companyId });
@@ -477,7 +554,7 @@ export function createPartnerService({ db, vaultKey }) {
     if (role && !rolesOf(id).includes(role)) reasons.push(`${p.code} is not registered as a ${ROLE_LABELS[role].toLowerCase()}`);
     if (['PO', 'WO', 'RFQ'].includes(purpose)) {
       const blocking = param('mdm.partner.blocking_documents', actor.companyId) ?? [];
-      const expired = blocking.length ? db.prepare(`SELECT doc_type, valid_until FROM mdm_partner_documents WHERE partner_id = ? AND deleted_at IS NULL AND valid_until < ? AND doc_type IN (${blocking.map(() => '?').join(',')}) AND NOT EXISTS (SELECT 1 FROM mdm_partner_documents n WHERE n.partner_id = mdm_partner_documents.partner_id AND n.doc_type = mdm_partner_documents.doc_type AND n.deleted_at IS NULL AND (n.valid_until IS NULL OR n.valid_until >= ?))`).all(id, today(), ...blocking, today()) : [];
+      const expired = blocking.length ? db.prepare(`SELECT doc_type, valid_until FROM mdm_partner_documents WHERE partner_id = ? AND deleted_at IS NULL AND ${trustedDoc('mdm_partner_documents')} AND valid_until < ? AND doc_type IN (${blocking.map(() => '?').join(',')}) AND NOT EXISTS (SELECT 1 FROM mdm_partner_documents n WHERE n.partner_id = mdm_partner_documents.partner_id AND n.doc_type = mdm_partner_documents.doc_type AND n.deleted_at IS NULL AND ${trustedDoc('n')} AND (n.valid_until IS NULL OR (n.valid_until >= ? AND (COALESCE(n.source_type, '') <> 'supplier_portal' OR n.valid_from <= ?))))`).all(id, today(), ...blocking, today(), today()) : [];
       for (const d of expired) reasons.push(`its ${DOC_TYPES[d.doc_type].toLowerCase()} expired on ${d.valid_until}`);
     }
     if (purpose === 'PAYMENT') { const h = holdOf(p); if (h.held) reasons.push(`payments are on hold: ${h.reason}`); }
@@ -597,8 +674,14 @@ export function createPartnerService({ db, vaultKey }) {
     if (!kind || kind === 'REGISTRATION') for (const p of db.prepare("SELECT p.*, w.status AS wf FROM mdm_partners p LEFT JOIN wf_instances w ON w.id = p.workflow_instance_id WHERE p.company_id = ? AND p.partner_status = 'PENDING'").all(actor.companyId)) out.push({ kind: 'REGISTRATION', id: p.id, partnerId: p.id, code: p.code, name: p.legal_name, what: `New ${rolesOf(p.id).map((r) => ROLE_LABELS[r].toLowerCase()).join(', ')}`, by: p.requested_by, since: p.updated_at ?? p.created_at, ageHours: age(p.updated_at ?? p.created_at), instanceId: p.workflow_instance_id, returned: p.wf === 'RETURNED' });
     if (!kind || kind === 'BANK') for (const b of db.prepare("SELECT b.*, p.code, p.legal_name FROM mdm_partner_banks b JOIN mdm_partners p ON p.id = b.partner_id WHERE b.company_id = ? AND b.bank_status IN ('PENDING_CONFIRMATION', 'PENDING_APPROVAL') AND b.deleted_at IS NULL AND p.partner_status NOT IN ('PROSPECT', 'PENDING')").all(actor.companyId)) out.push({ kind: 'BANK', id: b.id, partnerId: b.partner_id, code: b.code, name: b.legal_name, what: `Bank change to account ending ${b.account_last4} (${b.ifsc})${b.bank_status === 'PENDING_CONFIRMATION' ? ': waiting for the partner to confirm' : ''}`, by: b.requested_by, since: b.created_at, ageHours: age(b.created_at), instanceId: b.workflow_instance_id, stage: b.bank_status });
     if (!kind || kind === 'STATUS') for (const s of db.prepare("SELECT s.*, p.code, p.legal_name FROM mdm_partner_status_requests s JOIN mdm_partners p ON p.id = s.partner_id WHERE s.company_id = ? AND s.request_status IN ('PENDING', 'RETURNED')").all(actor.companyId)) out.push({ kind: 'STATUS', id: s.id, partnerId: s.partner_id, code: s.code, name: s.legal_name, what: `${s.action === 'BLACKLIST' ? 'Blacklist' : 'Lift the blacklist'}: ${s.reason}`, by: s.requested_by, since: s.created_at, ageHours: age(s.created_at), instanceId: s.workflow_instance_id });
-    if (!kind || kind === 'DOCUMENT') for (const d of db.prepare("SELECT d.*, p.code, p.legal_name FROM mdm_partner_documents d JOIN mdm_partners p ON p.id = d.partner_id WHERE d.company_id = ? AND d.deleted_at IS NULL AND d.valid_until IS NOT NULL AND d.valid_until <= ? AND p.partner_status IN ('ACTIVE', 'ON_HOLD') AND NOT EXISTS (SELECT 1 FROM mdm_partner_documents n WHERE n.partner_id = d.partner_id AND n.doc_type = d.doc_type AND n.deleted_at IS NULL AND n.id != d.id AND (n.valid_until IS NULL OR n.valid_until > d.valid_until))").all(actor.companyId, dayPlus(param('mdm.partner.expiry_warning_days', actor.companyId) ?? 30)))
+    if (!kind || kind === 'DOCUMENT') for (const d of db.prepare(`SELECT d.*, p.code, p.legal_name FROM mdm_partner_documents d JOIN mdm_partners p ON p.id = d.partner_id WHERE d.company_id = ? AND d.deleted_at IS NULL AND ${trustedDoc('d')} AND d.valid_until IS NOT NULL AND d.valid_until <= ? AND p.partner_status IN ('ACTIVE', 'ON_HOLD') AND NOT EXISTS (SELECT 1 FROM mdm_partner_documents n WHERE n.partner_id = d.partner_id AND n.doc_type = d.doc_type AND n.deleted_at IS NULL AND ${trustedDoc('n')} AND n.id != d.id AND (n.valid_until IS NULL OR n.valid_until > d.valid_until))`).all(actor.companyId, dayPlus(param('mdm.partner.expiry_warning_days', actor.companyId) ?? 30)))
       out.push({ kind: 'DOCUMENT', id: d.id, partnerId: d.partner_id, code: d.code, name: d.legal_name, what: `${DOC_TYPES[d.doc_type]} ${d.valid_until < today() ? 'expired' : 'expires'} on ${d.valid_until}`, by: d.created_by, since: d.valid_until, ageHours: d.valid_until < today() ? age(`${d.valid_until}T00:00:00Z`) : 0, expired: d.valid_until < today() });
+    if (!kind || kind === 'DOCUMENT') for (const d of db.prepare(`SELECT d.*, p.code, p.legal_name
+      FROM mdm_partner_documents d JOIN mdm_partners p ON p.id = d.partner_id AND p.company_id = d.company_id
+      WHERE d.company_id = ? AND d.deleted_at IS NULL AND d.source_type = 'supplier_portal' AND d.verified_at IS NULL`).all(actor.companyId)) {
+      out.push({ kind: 'DOCUMENT', id: d.id, partnerId: d.partner_id, code: d.code, name: d.legal_name,
+        what: `${DOC_TYPES[d.doc_type]} renewal awaiting verification`, by: d.created_by, since: d.created_at, ageHours: age(d.created_at) });
+    }
     const mine = new Set((workflowOf(db).listTasks?.(actor, { mine: 'assigned', limit: 200 })?.rows ?? []).map((t) => t.instance?.id));
     const rows = out.map((x) => ({ ...x, tone: x.ageHours >= 96 || x.expired ? 'error' : x.ageHours >= 48 ? 'warning' : 'neutral', mine: Boolean(x.instanceId && mine.has(x.instanceId)) })).sort((a, b) => Number(b.mine) - Number(a.mine) || b.ageHours - a.ageHours);
     const counts = {}; for (const r of rows) counts[r.kind] = (counts[r.kind] ?? 0) + 1;
@@ -615,7 +698,24 @@ export function createPartnerService({ db, vaultKey }) {
     return { rows: rows.map((r) => ({ id: r.id, code: r.code, name: r.legal_name, extra: { trade: r.trade_name ?? '' } })), total };
   }
 
-  return { registration, details, banks, status, decisions, compliance, register, get, summary, queue, selectable, lookup, seesIdentity };
+  /** Active master data used by portal sessions. Keep this projection free of statutory and banking data. */
+  function portalContact(companyId, partnerId, contactId, role) {
+    return db.prepare(`
+      SELECT p.legal_name AS partnerName, p.code AS partnerCode,
+             c.name AS contactName, c.project_id AS projectId, c.site_id AS siteId
+      FROM mdm_partner_contacts c
+      JOIN mdm_partners p ON p.id = c.partner_id AND p.company_id = c.company_id
+      WHERE c.company_id = ? AND c.partner_id = ? AND c.id = ?
+        AND c.deleted_at IS NULL AND c.is_active = 1
+        AND p.deleted_at IS NULL AND p.is_active = 1 AND p.partner_status = 'ACTIVE'
+        AND EXISTS (
+          SELECT 1 FROM mdm_partner_roles r WHERE r.partner_id = p.id AND r.company_id = p.company_id
+            AND r.partner_role = ? AND r.deleted_at IS NULL AND r.is_active = 1
+        )
+    `).get(companyId, partnerId, contactId, role) ?? null;
+  }
+
+  return { registration, supplierDocuments, details, banks, status, decisions, compliance, register, get, summary, queue, selectable, lookup, seesIdentity, portalContact, vendorIntake };
 }
 
 const services = new WeakMap();

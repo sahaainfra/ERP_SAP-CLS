@@ -29,6 +29,11 @@ test('T-01 the margin of an item against the client BOQ and the amount of a line
 
 test('FR-01 FR-02 FR-03 FR-04 a work order is made with server-side totals; selection, subcontractor, terms and mapping are checked; labour-rate and lump-sum rules', async () => {
   const w = await world();
+  const options = await w.call(U.com, 'GET', '/work-orders/options');
+  assert.equal(options.status, 200);
+  const tdsSections = options.json.data.tdsSections;
+  assert.deepEqual(tdsSections.filter(({ section }) => section === '393(1)'), [{ section: '393(1)', description: null }]);
+  assert.ok(tdsSections.some(({ section, description }) => section === '194C' && description));
   assert.equal((await w.call(U.pm, 'POST', '/work-orders', body(w))).status, 403);
   assert.equal((await w.call(U.com, 'POST', '/work-orders', body(w, { value: 1 }))).status, 400, 'the value is worked out by the server');
   const c = await w.call(U.com, 'POST', '/work-orders', body(w, { woNo: 'WO-1' })); assert.equal(c.status, 201, JSON.stringify(c.json)); const x = c.json.data;

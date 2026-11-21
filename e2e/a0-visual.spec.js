@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { pageCode, registeredPages } from './pages.js';
+import { trackPageRequests } from './page-requests.js';
 
 // Development-header mode (port 3100). Part 03.10, FR-05, T-01: the visual regression baseline. Every page of the application, as a super administrator
 // sees it, in the light, dark and high-contrast themes at 360, 768 and 1280 px wide: the first screen of each page is compared with the stored image.
@@ -31,13 +32,13 @@ for (const theme of THEMES) {
     const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: SIZES[2], reducedMotion: 'reduce' });
     await context.addInitScript(([v, th]) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: th, density: 'comfortable', language: 'en' })); localStorage.setItem('erp.shell.closed-groups', JSON.stringify([])); }, [{ user: 'e2e-visual', roles: 'SUPADM', company: String(c) }, theme]);
     const page = await context.newPage();
+    const settled = trackPageRequests(page);
     for (const p of pages) {
       for (const size of SIZES) {
         await page.setViewportSize(size);
         await page.goto(p.route);
         await expect(page.locator('main')).toBeVisible();
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(250);
+        await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${p.route}` }).toEqual([]);
         // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
         if (VOLATILE.has(p.route)) await page.addStyleTag({ content: 'main > *:not(:first-child), .sh-crumbs { visibility: hidden !important; }' }); // a rule, so a page that draws again keeps it
         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {

@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { QUOTE_TONE, RESPONSE_TONE, RFQ_TONE, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
 import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Requests for quotation (part 15.03): the list; the RFQ with its lines, vendors and how each has answered, the quotations and the comparison (to those who may see rates), the clarification log and the actions of the buyer.
@@ -23,6 +24,8 @@ function Links({ t, links }) {
 }
 
 function Rfq({ t, id }) {
+  const [fileRevision, setFileRevision] = useState(0);
+  const session = useSession();
   const qc = useQueryClient(); const q = useQuery({ queryKey: ['proc', 'rfq', id], queryFn: () => pc.rfq(id), retry: false });
   const hq = useQuery({ queryKey: ['proc', 'rfq-history', id, q.data?.status], queryFn: () => pc.rfqHistory(id), enabled: q.isSuccess, retry: false });
   const cq = useQuery({ queryKey: ['proc', 'rfq-compare', id, q.data?.quotations?.length, q.data?.status], queryFn: () => pc.comparison(id), enabled: q.isSuccess && q.data.canSeeRates && q.data.respondedCount > 0, retry: false });
@@ -53,6 +56,16 @@ function Rfq({ t, id }) {
       {r.needsJustification && ['DRAFT', 'RETURNED'].includes(r.status) && <p className="mdm-banner" role="status" data-testid="rfq-needs-justification">{t('q.needsJustification', { n: r.minVendors, v: fmtRs(r.thresholdValue) })}</p>}
       {r.justification && <p data-testid="rfq-justification"><strong>{t('q.justification')}:</strong> {r.justification}{r.justified && <> <StatusBadge status="APPROVED" label={t('q.justified')} /></>}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="rfq-error">{error.form}{error.code === 'EXCEPTION_REQUIRED' && <> <Link to="/controls/exceptions">{t('q.raiseException')}</Link></>}</p>}{note && <p className="mdm-banner" role="status" data-testid="rfq-note">{note}</p>}
+      <details className="mdm-panel no-print">
+        <summary>RFQ attachments</summary>
+        {(can.edit || can.remind) && <FileUploader entity="proc_rfq" entityId={r.id} onDone={() => setFileRevision((value) => value + 1)} />}
+        <AttachmentList key={fileRevision} entity="proc_rfq" entityId={r.id} renderActions={(f, refetch) =>
+          session.data?.permissions?.includes('proc.rfq.edit') && f.current && f.scanStatus === 'CLEAN' &&
+          <button type="button" className="link" disabled={busy} onClick={async () => {
+            await run(() => pc.rfqAct(r.id, `files/${f.id}/share`, { shared: !f.supplierShared }));
+            await refetch();
+          }}>{f.supplierShared ? 'Stop sharing with invited suppliers' : 'Share with invited suppliers'}</button>} />
+      </details>
       {links && <Links t={t} links={links} />}
       <div className="table-scroll"><table className="data-table" data-testid="rfq-lines"><caption>{t('q.lines')}</caption><thead><tr><th>#</th><th>{t('q.item')}</th><th className="num">{t('q.qty')}</th><th>{t('q.requisition')}</th><th>{t('q.requiredBy')}</th>{r.canSeeRates && <th className="num">{t('q.estRate')}</th>}</tr></thead>
         <tbody>{r.lines.map((l) => <tr key={l.id} data-testid="rfq-line"><td>{l.lineNo}</td><td>{l.itemCode ? `${l.itemCode} · ` : ''}{l.itemName}{l.spec ? <div className="muted small">{l.spec}</div> : null}</td><td className="num">{fmtQty(l.qty)} {l.uom}</td><td><Link to={`/proc/requisitions?id=${l.prId}`}>{l.prNo}</Link> #{l.prLineNo}</td><td>{fmtDate(l.requiredBy)}</td>{r.canSeeRates && <td className="num">{fmtRs(l.estRate)}</td>}</tr>)}</tbody></table></div>

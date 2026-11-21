@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { ready as qaReady, as, fill, key, U as QU } from './qa-helpers.js';
 import { glOf } from '../src/server/modules/fin/index.js';
 import { lineOfAccount, plLines } from '../src/server/modules/fin/projectpl.js';
+import { readCloseoutSnapshotEvidence } from '../src/server/modules/close/financials.js';
+import { createFlagService } from '../src/server/modules/core/feature-flags/service.js';
+import { authzOf } from '../src/server/platform/authz/index.js';
 
 // Part 23.12: the project P&L.
 //  T-01 the P&L equals the ledger's totals; a frozen snapshot is not changed (and is frozen only as it was worked out).
@@ -74,4 +77,77 @@ test('AC-01 the project P&L (actual, budget, forecast) equal to the ledger, froz
   // rights and isolation
   assert.equal((await w.call(U.se, 'GET', `/project-pl?projectId=${w.A}&period=2026-10`)).status, 403); assert.equal((await w.call(U.aud, 'GET', '/pl-snapshots')).status, 200);
   assert.equal((await w.call(U.cfo, 'GET', `/pl-snapshots/${snap.id}/print`)).status, 200); assert.equal((await w.call(as('CFO', 'cfo9', '2'), 'GET', `/pl-snapshots/${snap.id}`)).status, 404);
+});
+
+test('26.04 closeout reads the scoped reference to the current Finance-approved snapshot', async () => {
+  const w = await world();
+  const { d } = w;
+  const flags = createFlagService({ db: d, environment: 'test' });
+  const actor = { user: U.cfo.user, roles: ['CFO'], companyId: 1 };
+  const otherCompany = fill(d, 'org_companies', { code: 'CLOSE-OTHER', legal_name: 'Other company', short_name: 'Other' });
+  const sign = d.prepare(`INSERT INTO hr_gates (company_id, code, name, status, catalogue_version, passed_at)
+    VALUES (?, ?, ?, 'PASSED', 'test', CURRENT_TIMESTAMP)`);
+  const override = d.prepare(`INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled)
+    VALUES (?, ?, 'Test company override', 0, ?)`);
+  const deny = { status: 404 };
+  w.post('2026-10-05', w.A, [['140001', 1000, 0], ['410001', 0, 1000]]);
+  const created = await w.call(U.acc, 'POST', '/pl-snapshots', { projectId: w.A, period: '2026-10' });
+  assert.equal(created.status, 201);
+  const snapshotId = created.json.data.id;
+  const input = { projectId: w.A, snapshotId };
+  const read = (selection = input, user = actor) => readCloseoutSnapshotEvidence({ db: d, flags }, { ...user }, selection);
+
+  sign.run(1, 'G1', 'Platform Gate');
+  sign.run(otherCompany, 'G2', 'Workforce Gate');
+  assert.equal(flags.isOn(actor, 'ff.close.p2604'), false);
+  assert.throws(read, deny);
+  const enabled = override.run('ff.close.p2604', 1, 1).lastInsertRowid;
+  assert.throws(read, deny, 'the other company’s sign-off cannot satisfy G2');
+  sign.run(1, 'G2', 'Workforce Gate');
+  assert.throws(read, deny, 'draft');
+  assert.equal((await w.call(U.acc, 'POST', `/pl-snapshots/${snapshotId}/submit`)).status, 202);
+  assert.throws(read, deny, 'awaiting approval');
+  assert.equal((await w.act(U.cfo, w.wf('pl_snapshots', snapshotId))).status, 200);
+  const { json: { data: snapshot } } = await w.call(U.cfo, 'GET', `/pl-snapshots/${snapshotId}`);
+
+  assert.deepEqual(read(), { sourceType: 'pl_snapshots', sourceId: snapshotId, projectId: w.A,
+    docNo: snapshot.docNo, period: snapshot.period, frozenAt: snapshot.frozenAt });
+  const setOverride = d.prepare('UPDATE core_feature_flags SET enabled = ? WHERE id = ?');
+  setOverride.run(0, enabled);
+  assert.throws(read, deny, 'the closeout flag is required even for approved evidence');
+  setOverride.run(1, enabled);
+  assert.throws(() => read({ ...input, projectId: w.B }), deny);
+  assert.throws(() => read({ ...input, snapshotId: 'invalid' }), { status: 400 });
+  assert.throws(() => read(input, { ...actor, user: U.se.user, roles: ['SE'] }), deny);
+  sign.run(otherCompany, 'G1', 'Platform Gate');
+  override.run('ff.close.p2604', otherCompany, 1);
+  override.run('ff.fin.p2312', otherCompany, 1);
+  assert.throws(() => read(input, { ...actor, companyId: otherCompany }), deny);
+  authzOf(d).seed();
+  const userId = fill(d, 'iam_users', { company_id: 1, username: 'close-pm', display_name: 'Closeout PM', roles_json: '[]', email: 'close-pm@example.com' });
+  const roleId = d.prepare("SELECT id FROM iam_roles WHERE code = 'PM' AND company_id IS NULL").get().id;
+  const addScope = d.prepare(`INSERT INTO iam_assignments (company_id, user_id, role_id, scope_type, scope_ids_json, status, created_by)
+    VALUES (1, ?, ?, ?, ?, 'ACTIVE', 'test')`);
+  addScope.run(userId, roleId, 'PROJECT', JSON.stringify([w.B]));
+  addScope.run(userId, roleId, 'SITE', JSON.stringify([w.site]));
+  authzOf(d).invalidate();
+  const scopedPm = { companyId: 1, user: 'close-pm', userId, roles: [] };
+  assert.throws(() => read(input, scopedPm), deny);
+  addScope.run(userId, roleId, 'PROJECT', JSON.stringify([w.A]));
+  authzOf(d).invalidate();
+  assert.deepEqual(read(input, scopedPm), read());
+
+  const disabled = override.run('ff.fin.p2312', 1, 0).lastInsertRowid;
+  assert.throws(read, deny, 'the Finance source flag is required even on internal calls');
+  d.prepare('DELETE FROM core_feature_flags WHERE id = ?').run(disabled);
+  assert.equal(read().sourceId, snapshotId);
+  const amended = await w.call(U.acc, 'POST', `/pl-snapshots/${snapshotId}/amend`, { reason: 'Review after a period adjustment' });
+  assert.equal(amended.status, 201);
+  const replacementId = amended.json.data.id;
+  assert.equal((await w.call(U.acc, 'POST', `/pl-snapshots/${replacementId}/submit`)).status, 202);
+  assert.equal((await w.act(U.cfo, w.wf('pl_snapshots', replacementId))).status, 200);
+  assert.throws(read, deny, 'a superseded snapshot cannot be selected for closeout');
+  assert.equal(read({ projectId: w.A, snapshotId: replacementId }).sourceId, replacementId);
+  assert.equal(w.events('fin.pl_snapshot.frozen').length, 2);
+  assert.equal(d.prepare('SELECT status FROM org_projects WHERE id = ?').get(w.A).status, 'ACTIVE');
 });

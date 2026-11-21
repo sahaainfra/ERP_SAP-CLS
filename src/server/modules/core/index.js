@@ -1,3 +1,4 @@
+import { metricApprovalHandlers } from '../bi/metric-catalogue.js';
 import { Router } from 'express';
 import './search.js';
 import { idempotency } from '../../platform/http/idempotency.js';
@@ -121,7 +122,7 @@ export const core = {
     const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'core_schedules'").get());
     if (migrated) syncEventTypes(db);
     registerOperations({ db, ...runtime, persist: migrated });
-    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config), auth_policy_change: policyChangeHandlerFor(db, config), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers, ...securityHandlers, ...sampleRequestHandlers, ...navHandlers, ...dashboardHandlers, ...translationHandlers, ...pageRouteHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config), auth_policy_change: policyChangeHandlerFor(db, config), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers, ...securityHandlers, ...sampleRequestHandlers, ...navHandlers, ...dashboardHandlers, ...translationHandlers, ...pageRouteHandlers, ...metricApprovalHandlers(config.environment) } });
     const opts = { idempotent, idempotentRequired };
 
     api.use('/core', sessionRoutes({ config }));

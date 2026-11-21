@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { RESPONSES, VDR_TONE, ep, openPrint } from './api.js';
 import { useSearch } from './parts.jsx';
+import { AttachmentList } from '../core/components/Attachments.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // VDR item (part 11.04): one document a vendor owes: the receipt, the review code proposed by the reviewer and approved by the engineering manager, and the cycles.
@@ -31,6 +32,10 @@ export default function VdrItemPage() {
         {error?.form && <p className="field-error" role="alert" data-testid="vdr-act-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="vdr-note">{note}</p>}
         <div className="actions-row no-print">
+          {c.edit && <button type="button" className="btn" onClick={() => run(
+            () => ep.updateVdr(v.id, { shareWithSupplier: !v.shareWithSupplier, rowVersion: v.rowVersion }),
+            v.shareWithSupplier ? 'Supplier sharing removed' : 'Shared with supplier',
+          )}>{v.shareWithSupplier ? 'Stop sharing with supplier' : 'Share with supplier'}</button>}
           {c.receive && <button type="button" className="btn btn-primary" onClick={() => run(() => ep.vdrAct(v.id, 'receive', {}), t('vdr.receivedNote'))} data-testid="vdr-receive">{t('vdr.receive')}</button>}
           {c.withdraw && <button type="button" className="btn" onClick={() => why((x) => ep.vdrAct(v.id, 'withdraw', { reason: x }), t('rev.withdrawn'))} data-testid="vdr-withdraw">{t('act.withdraw')}</button>}
           {c.amend && <button type="button" className="btn" onClick={() => why((x) => ep.vdrAct(v.id, 'amend', { reason: x }), t('vdr.reopened'))} data-testid="vdr-amend">{t('act.amend')}</button>}
@@ -40,6 +45,10 @@ export default function VdrItemPage() {
           {v.workflowInstanceId && <Link to={`/workflow/instance?id=${v.workflowInstanceId}`}>{t('rev.approval')}</Link>}
         </div>
       </header>
+      {v.shareWithSupplier && <details className="mdm-panel">
+        <summary>Supplier submissions</summary>
+        <AttachmentList entity="engg_vdr_item" entityId={v.id} />
+      </details>}
       {c.review && (
         <form className="mdm-panel" aria-label={t('vdr.proposeReview')} data-testid="vdr-review-form" onSubmit={(e) => { e.preventDefault(); run(() => ep.vdrAct(v.id, 'submit', { code: rv.code, text: rv.text.trim() || null }), t('vdr.reviewSent')); }}>
           <h2>{t('vdr.proposeReview')}</h2>

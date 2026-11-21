@@ -85,14 +85,34 @@ export function createMmdService({ db, base, mrc, proc, flags }) {
     const months = db.prepare(`SELECT substr(l.txn_date, 1, 7) AS m, SUM(l.value) AS v FROM inv_stock_ledger l JOIN inv_stores s ON s.id = l.store_id WHERE ${w.sql} GROUP BY m ORDER BY m`).all(w.params);
     let run = 0; const all = months.map((r) => ({ month: r.m, value: (run += r.v) })); return all.slice(-12);
   }
+  const turnsSql = `COALESCE(-SUM(CASE WHEN l.txn_type = 'ISSUE' AND l.txn_date >= :from THEN l.value ELSE 0 END), 0) AS issues,
+    COALESCE(SUM(CASE WHEN l.txn_date < :from THEN l.value ELSE 0 END), 0) AS opening,
+    COALESCE(SUM(l.value), 0) AS closing`;
+  const stockTurns = (issues, avg, days) => avg > 0 ? Math.round(((issues * 365) / days / avg) * 100) / 100 : null;
+
   /** Issues at cost over the average stock value, annualised. */
   function turns(actor, c) {
     const w = storeWhere(actor, c); const days = daysBetween(c.from, c.to) + 1;
-    const issues = -db.prepare(`SELECT COALESCE(SUM(l.value), 0) AS v FROM inv_stock_ledger l JOIN inv_stores s ON s.id = l.store_id WHERE ${w.sql} AND l.txn_type = 'ISSUE' AND l.txn_date BETWEEN :from AND :to`).get({ ...w.params, from: c.from, to: c.to }).v;
-    const opening = db.prepare(`SELECT COALESCE(SUM(l.value), 0) AS v FROM inv_stock_ledger l JOIN inv_stores s ON s.id = l.store_id WHERE ${w.sql} AND l.txn_date < :from`).get({ ...w.params, from: c.from }).v;
-    const closing = db.prepare(`SELECT COALESCE(SUM(l.value), 0) AS v FROM inv_stock_ledger l JOIN inv_stores s ON s.id = l.store_id WHERE ${w.sql} AND l.txn_date <= :to`).get({ ...w.params, to: c.to }).v;
-    const avg = (opening + closing) / 2; const target = pn(actor.companyId, 'inv.mmd.target_turns'); const t = avg > 0 ? Math.round(((issues * 365) / days / avg) * 100) / 100 : null;
+    const { issues, opening, closing } = db.prepare(`SELECT ${turnsSql}
+      FROM inv_stock_ledger l JOIN inv_stores s ON s.id = l.store_id WHERE ${w.sql} AND l.txn_date <= :to`)
+      .get({ ...w.params, from: c.from, to: c.to });
+    const avg = (opening + closing) / 2; const target = pn(actor.companyId, 'inv.mmd.target_turns'); const t = stockTurns(issues, avg, days);
     return { turns: canValues(actor) ? t : null, issues: canValues(actor) ? issues : null, averageValue: canValues(actor) ? Math.round(avg) : null, days, target, status: t == null ? 'neutral' : t < target ? 'bad' : 'ok' };
+  }
+  function* approvedMetricFacts(companyId, asOf, projectId = null) {
+    const days = 90;
+    const from = addDays(asOf, 1 - days);
+    const rows = db.prepare(`SELECT s.org_project_id AS projectId, ${turnsSql}
+      FROM inv_stock_ledger l JOIN inv_stores s ON s.id = l.store_id AND s.company_id = l.company_id
+      JOIN org_projects p ON p.id = s.org_project_id AND p.company_id = s.company_id AND p.deleted_at IS NULL
+      WHERE s.company_id = :companyId AND s.deleted_at IS NULL AND s.store_status = 'ACTIVE'
+        AND l.txn_date <= :to ${projectId == null ? '' : 'AND s.org_project_id = :projectId'}
+      GROUP BY s.org_project_id`).iterate({ companyId, from, to: asOf, ...(projectId == null ? {} : { projectId }) });
+    for (const row of rows) {
+      const value = stockTurns(row.issues, (row.opening + row.closing) / 2, days);
+      yield { projectId: row.projectId, sourceId: row.projectId, sourcePeriod: asOf, sourceVersion: 1,
+        stockTurns: value == null ? null : Math.round(value * 100) };
+    }
   }
   function belowReorder(actor, c) {
     const w = storeWhere(actor, c);
@@ -307,5 +327,5 @@ export function createMmdService({ db, base, mrc, proc, flags }) {
   const projects = (actor) => { gate(actor); return db.prepare("SELECT id, code, name FROM org_projects WHERE company_id = ? AND deleted_at IS NULL AND status = 'ACTIVE' ORDER BY code").all(actor.companyId).filter((p) => may(actor, KEY, p.id)); };
   const stores = (actor, projectId) => { gate(actor); return db.prepare("SELECT id, code, name, org_project_id FROM inv_stores WHERE company_id = ? AND deleted_at IS NULL AND store_status = 'ACTIVE' ORDER BY code").all(actor.companyId).filter((s) => (!projectId || s.org_project_id === Number(projectId)) && (s.org_project_id ? may(actor, KEY, s.org_project_id) : may(actor, KEY))); };
   const categories = (actor) => { gate(actor); return db.prepare('SELECT id, name FROM mdm_item_categories WHERE company_id = ? AND deleted_at IS NULL ORDER BY name').all(actor.companyId); };
-  return { dashboard, drill, funnel, stageRecords, exportCsv, projectWidget, projects, stores, categories, figures };
+  return { dashboard, drill, funnel, stageRecords, exportCsv, projectWidget, projects, stores, categories, figures, approvedMetricFacts };
 }

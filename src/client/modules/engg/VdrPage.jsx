@@ -16,12 +16,12 @@ export default function VdrPage() {
   const qc = useQueryClient();
   const session = useSession(); const perms = session.data?.permissions ?? [];
   const [projectId, setProjectId] = useState('');
-  const [open, setOpen] = useState(false); const [error, setError] = useState(null); const [f, setF] = useState({ projectId: '', poRef: '', vendor: '', docType: 'GA_DRAWING', title: '', dueDate: dayIST(14) });
+  const [open, setOpen] = useState(false); const [error, setError] = useState(null); const [f, setF] = useState({ projectId: '', poRef: '', vendor: '', shareWithSupplier: false, docType: 'GA_DRAWING', title: '', dueDate: dayIST(14) });
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const tr = useQuery({ queryKey: ['engg', 'tracker', projectId], queryFn: () => ep.tracker(projectId), retry: false });
   const create = async (e) => {
     e.preventDefault(); setError(null);
-    try { const r = await ep.createVdr({ projectId: Number(f.projectId), poRef: f.poRef.trim(), vendor: f.vendor.trim(), docType: f.docType, title: f.title.trim(), dueDate: f.dueDate }); qc.invalidateQueries({ queryKey: ['engg'] }); navigateTo(`/engg/vdr-item?id=${r.id}`); } catch (x) { setError(errorInfo(x)); }
+    try { const r = await ep.createVdr({ projectId: Number(f.projectId), poRef: f.poRef.trim(), vendor: f.vendor.trim(), shareWithSupplier: f.shareWithSupplier, docType: f.docType, title: f.title.trim(), dueDate: f.dueDate }); qc.invalidateQueries({ queryKey: ['engg'] }); navigateTo(`/engg/vdr-item?id=${r.id}`); } catch (x) { setError(errorInfo(x)); }
   };
   if (tr.error?.status === 403) return <NoPermission what={t('vdr.title')} permission="engg.vdr_item.view" />;
   if (tr.isError) return <ErrorState error={tr.error} onRetry={tr.refetch} />;
@@ -36,6 +36,8 @@ export default function VdrPage() {
           <div className="form-grid">
             <ProjectSelect value={f.projectId} onChange={(v) => set('projectId', v)} required testId="vdr-f-project" error={error} />
             {txt('poRef', t('vdr.po'), { required: true, maxLength: 80 })}{txt('vendor', t('vdr.vendor'), { required: true, maxLength: 160 })}
+            <label><input type="checkbox" checked={f.shareWithSupplier}
+              onChange={(event) => set('shareWithSupplier', event.target.checked)} />Share with supplier on the purchase order</label>
             <Field label={t('vdr.docType')} name="docType" error={error}><select value={f.docType} onChange={(e) => set('docType', e.target.value)} data-testid="vdr-f-docType">{VDR_TYPES.map((k) => <option key={k} value={k}>{t(`vtype.${k}`)}</option>)}</select></Field>
             {txt('title', t('col.title'), { required: true, maxLength: 200 })}
             <Field label={t('vdr.due')} name="dueDate" error={error}><input type="date" value={f.dueDate} onChange={(e) => set('dueDate', e.target.value)} data-testid="vdr-f-dueDate" /></Field>

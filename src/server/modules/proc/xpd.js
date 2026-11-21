@@ -374,9 +374,51 @@ export function createXpdService({ db, base }) {
     const po = db.prepare('SELECT * FROM proc_purchase_orders WHERE ack_token_hash = ? AND deleted_at IS NULL').get(hash(String(token))); if (!po) throw notFound('This link is not valid.'); if (po.status !== 'APPROVED') throw new HttpError(410, 'LINK_EXPIRED', 'This purchase order is no longer open.'); if (po.ack_expires && Date.parse(po.ack_expires) < Date.now()) throw new HttpError(410, 'LINK_EXPIRED', 'This link has expired. Ask the buyer to send you a new one.');
     return po;
   };
-  const portal = {
-    milestones(token) { const po = byToken(token); const plan = db.prepare("SELECT * FROM xpd_expediting_plans WHERE po_id = ? AND status = 'APPROVED' AND deleted_at IS NULL").get(po.id); if (!plan) return { plan: null, milestones: [] }; return { plan: { docNo: plan.doc_no, requiredOnSite: plan.required_on_site }, milestones: msOf(plan.id).map((m) => ({ id: m.id, name: m.name, plannedDate: m.planned_date, forecastDate: m.forecast_date, actualDate: m.actual_date, status: m.ms_status, remarks: m.remarks })) }; },
-    update(token, mid, b) { const po = byToken(token); const plan = db.prepare("SELECT * FROM xpd_expediting_plans WHERE po_id = ? AND status = 'APPROVED' AND deleted_at IS NULL").get(po.id); if (!plan) throw notFound('There is no plan to update.'); progress(plan.id, mid, { forecastDate: b.forecastDate, actualDate: b.actualDate, remarks: b.remarks, ...(b.actualDate === undefined ? {} : {}) }, { user: `vendor:${vname(po.vendor_id).code}`, via: 'VENDOR', companyId: po.company_id }); return { message: 'Thank you. The buyer is told.' }; },
+  const vendorPlan = (po, siteId) => db.prepare(`SELECT id, doc_no, required_on_site FROM xpd_expediting_plans
+    WHERE company_id = ? AND po_id = ? AND org_project_id = ? AND status = 'APPROVED' AND deleted_at IS NULL
+      AND (? IS NULL OR site_id IS NULL OR site_id = ?)`)
+    .get(po.company_id, po.id, po.org_project_id, siteId, siteId);
+  const vendorMilestones = (po, siteId = null) => {
+    const plan = vendorPlan(po, siteId);
+    if (!plan) return { plan: null, milestones: [] };
+    return { plan: { docNo: plan.doc_no, requiredOnSite: plan.required_on_site },
+      milestones: msOf(plan.id).filter((m) => m.company_id === po.company_id &&
+        (siteId === null || m.site_id === null || m.site_id === siteId)).map((m) => ({
+        id: m.id, name: m.name, plannedDate: m.planned_date, forecastDate: m.forecast_date, actualDate: m.actual_date,
+        status: m.ms_status, remarks: m.remarks, version: m.version,
+      })) };
   };
-  return { plans, insps, ships, portal, orders, projects, dashboard, sweep, assess, decide: plans.decide, irnDecide: insps.decide, number_ };
+  const vendorProgress = (po, mid, b, user, version, siteId = null) => {
+    const plan = vendorPlan(po, siteId);
+    if (!plan) throw notFound('There is no plan to update.');
+    if (version !== undefined) {
+      const m = db.prepare(`SELECT version FROM xpd_milestones WHERE id = ? AND plan_id = ? AND company_id = ? AND deleted_at IS NULL
+        AND (? IS NULL OR site_id IS NULL OR site_id = ?)`).get(rid(mid), plan.id, po.company_id, siteId, siteId);
+      if (!m) throw notFound('That milestone does not exist.');
+      if (m.version !== version) throw conflict('The milestone has changed. Reload it before trying again.');
+    }
+    progress(plan.id, mid, b, { user, via: 'VENDOR', companyId: po.company_id });
+    return { message: 'Thank you. The buyer is told.' };
+  };
+  const portal = {
+    milestones(token) {
+      const result = vendorMilestones(byToken(token));
+      return { ...result, milestones: result.milestones.map(({ version: _version, ...m }) => m) };
+    },
+    update(token, mid, b) {
+      const po = byToken(token);
+      return vendorProgress(po, mid, b, `vendor:${vname(po.vendor_id).code}`);
+    },
+  };
+  const supplier = {
+    milestones(po, scope) {
+      audit({ user: `portal-supplier:${scope.accountId}` }, 'proc_purchase_orders', po.id, 'supplier_milestones', po.company_id);
+      return vendorMilestones(po, scope.siteId);
+    },
+    update(po, scope, mid, version, b) {
+      if (po.status !== 'APPROVED') throw conflict('That purchase order is closed.');
+      return vendorProgress(po, mid, b, `portal-supplier:${scope.accountId}`, version, scope.siteId);
+    },
+  };
+  return { plans, insps, ships, portal, supplier, orders, projects, dashboard, sweep, assess, decide: plans.decide, irnDecide: insps.decide, number_ };
 }

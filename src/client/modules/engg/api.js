@@ -101,6 +101,7 @@ export const ep = {
   raiseHold: async (b) => (await api.post('/engg/holds', b, idem())).data,
   clearHold: async (id, b) => (await api.post(`/engg/holds/${id}/clear`, b, idem())).data,
   vdr: async (id) => (await api.get(`/engg/vdr-items/${id}`)).data,
+  updateVdr: async (id, b) => (await api.patch(`/engg/vdr-items/${id}`, b, idem())).data,
   createVdr: async (b) => (await api.post('/engg/vdr-items', b, idem())).data,
   removeVdr: async (id) => (await api.delete(`/engg/vdr-items/${id}`)).data,
   vdrAct: async (id, action, b = {}) => (await api.post(`/engg/vdr-items/${id}/${action}`, b, idem())).data,

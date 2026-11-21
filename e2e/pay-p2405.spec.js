@@ -56,7 +56,7 @@ async function world(request, code) {
 
 test('AC-01 the payroll posted, paid by bank file and its payslips distributed; the full-and-final of a cleared leaver approved', async ({ browser, request }, info) => {
   test.setTimeout(300_000);
-  const phone = info.project.name === 'mobile'; const w = await world(request, phone ? 'PSM' : 'PSD'); const u = (r) => `${w.low}-${r.toLowerCase()}`;
+  const phone = info.project.name === 'mobile'; const w = await world(request, phone ? 'PAYFM' : 'PAYFD'); const u = (r) => `${w.low}-${r.toLowerCase()}`;
   const pay = await as(browser, info, { user: u('PAY'), roles: 'PAY', company: w.company });
   // 1. post
   await pay.page.goto(`/payroll/posting?run=${w.run}`); await expect(pay.page.getByTestId('pp-run')).toBeVisible();

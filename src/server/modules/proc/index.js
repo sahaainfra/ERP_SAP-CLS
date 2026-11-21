@@ -1,3 +1,4 @@
+import { supplierFileScope } from '../portal/supplier-files.js';
 import { createHash } from 'node:crypto';
 import { Router } from 'express';
 import { authzOf } from '../../platform/authz/index.js';
@@ -347,6 +348,11 @@ for (const [entity, table, view, edit, label] of [['proc_rfq', 'proc_rfqs', 'pro
     entity, label,
     resolve(db, actor, id) {
       const r = db.prepare(`SELECT company_id, org_project_id, status FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r) return null;
+      const supplier = supplierFileScope(actor);
+      if (supplier && entity === 'proc_rfq') {
+        procOf(db)?.rfqSvc.supplier.check(supplier, Number(id));
+        return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: false, locked: true };
+      }
       const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at(view)) return null; const open = ['DRAFT', 'RETURNED', 'PLANNED'].includes(r.status);
       return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: at(edit) && (open || (entity === 'proc_rfq' && r.status === 'ISSUED')), locked: !open && r.status !== 'ISSUED' };
     },

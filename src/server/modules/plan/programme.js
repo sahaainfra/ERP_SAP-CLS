@@ -101,6 +101,18 @@ const fontBytes = (k) => { if (!fontCache.has(k)) fontCache.set(k, woffToSfnt(re
 const DEVA = /[ऀ-ॿ]/;
 const LATIN = /^[\u0020-\u007E\u00A0-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D\u2026\u20B9]*$/;
 
+/** Find the longest fitting prefix of the advancing, single-run Latin text. */
+function fittingLatinPrefix(text, fits) {
+  let low = 0;
+  let high = text.length - 1;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (fits(text.slice(0, mid))) low = mid;
+    else high = mid - 1;
+  }
+  return text.slice(0, low);
+}
+
 /** The layout as a PDF: one page per layout page, IBM Plex Sans (Devanagari where a name is in Hindi). */
 export async function programmePdf(layout, { title = 'Programme', author = '' } = {}) {
   const pdf = await PDFDocument.create(); pdf.registerFontkit(fontkit); pdf.setTitle(title); if (author) pdf.setAuthor(author); pdf.setCreator('Construction ERP: plan programme (part 13.02)');
@@ -115,16 +127,33 @@ export async function programmePdf(layout, { title = 'Programme', author = '' } 
       else if (s.t === 'text' && s.s) {
         // runs of one script: Devanagari in its font, the rest in Plex Sans (a character neither has becomes "?"); cut to the width with "..."
         const latin = s.bold ? F.b : F.n; let runs = [];
-        for (const ch of s.s) { const dv = DEVA.test(ch) || ((ch === ' ' || ch === '\u200C' || ch === '\u200D') && runs.at(-1)?.dv); const c = dv || LATIN.test(ch) ? ch : '?'; if (runs.at(-1)?.dv === dv) runs.at(-1).t += c; else runs.push({ dv, t: c }); }
+        for (const ch of s.s) {
+          const previous = runs.at(-1);
+          const dv = DEVA.test(ch) || Boolean(previous?.dv && (ch === ' ' || ch === '\u200C' || ch === '\u200D'));
+          const safeChar = dv || LATIN.test(ch) ? ch : '?';
+          if (previous?.dv === dv) previous.t += safeChar;
+          else runs.push({ dv, t: safeChar });
+        }
         if (runs.some((r) => r.dv)) deva ??= await pdf.embedFont(fontBytes('d'), { subset: true });
         const fontOf = (r) => (r.dv ? deva : latin); const widthOf = (rs) => rs.reduce((w, r) => w + fontOf(r).widthOfTextAtSize(r.t, s.size), 0);
         if (s.maxW && widthOf(runs) > s.maxW) {
           const dots = latin.widthOfTextAtSize('...', s.size);
-          while (runs.length && widthOf(runs) + dots > s.maxW) { const last = runs.at(-1); last.t = [...last.t].slice(0, -1).join(''); if (!last.t) runs.pop(); }
+          if (runs.length === 1 && !runs[0].dv) {
+            const prefix = fittingLatinPrefix(runs[0].t, (text) => latin.widthOfTextAtSize(text, s.size) + dots <= s.maxW);
+            if (!prefix) continue;
+            runs[0].t = prefix;
+          } else {
+            while (runs.length && widthOf(runs) + dots > s.maxW) { const last = runs.at(-1); last.t = [...last.t].slice(0, -1).join(''); if (!last.t) runs.pop(); }
+          }
           runs = runs.length ? [...runs, { dv: false, t: '...' }] : [];
         }
         if (!runs.length) continue; let x = s.align === 'right' ? s.x - widthOf(runs) : s.x;
-        for (const r of runs) { if (!r.t) continue; page.drawText(r.t, { x, y: Y(s.y), size: s.size, font: fontOf(r), color: col(s.color) }); x += fontOf(r).widthOfTextAtSize(r.t, s.size); }
+        for (const [index, r] of runs.entries()) {
+          if (!r.t) continue;
+          const font = fontOf(r);
+          page.drawText(r.t, { x, y: Y(s.y), size: s.size, font, color: col(s.color) });
+          if (index < runs.length - 1) x += font.widthOfTextAtSize(r.t, s.size);
+        }
       }
     }
   }

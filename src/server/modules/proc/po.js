@@ -100,7 +100,9 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
           wbsId: l.wbs_id, costCodeId: l.cost_code_id, deliverySiteId: l.delivery_site_id, prLineId: l.pr_line_id, prId: pr?.pr_id ?? null, prNo: pr?.doc_no ?? null, prLineNo: pr?.line_no ?? null, receivedQty: d3(l.received_qty), acceptedQty: d3(l.accepted_qty), invoicedQty: d3(l.invoiced_qty), shortClosedQty: d3(l.short_closed_qty), balanceQty: d3(l.balance_qty),
           schedule: schedOf(l.id).map((s) => ({ id: s.id, dueDate: s.due_date, qty: d3(s.qty), receivedQty: d3(s.received_qty), overdue: s.due_date < todayIST() && s.received_qty < s.qty && r.status === 'APPROVED' })) }; });
       o.amendments = db.prepare('SELECT * FROM proc_po_amendments WHERE po_id = ? AND deleted_at IS NULL ORDER BY id').all(r.id).map((a) => amendView(actor, a));
-      o.dispatches = db.prepare('SELECT * FROM proc_dispatches WHERE po_id = ? AND deleted_at IS NULL ORDER BY id').all(r.id).map((x) => ({ id: x.id, asnNo: x.asn_no, vendorInvoiceNo: x.vendor_invoice_no, lrNo: x.lr_no, vehicleNo: x.vehicle_no, ewayBillNo: x.eway_bill_no, dispatchDate: x.dispatch_date, expectedArrival: x.expected_arrival, enteredVia: x.entered_via, status: x.status, lines: json(x.lines_json, []) }));
+      o.dispatches = db.prepare(`SELECT d.*, i.file_id AS invoice_file_id FROM proc_dispatches d
+        LEFT JOIN ptl_asn_invoices i ON i.dispatch_id = d.id
+        WHERE d.po_id = ? AND d.deleted_at IS NULL ORDER BY d.id`).all(r.id).map((x) => ({ id: x.id, asnNo: x.asn_no, vendorInvoiceNo: x.vendor_invoice_no, lrNo: x.lr_no, vehicleNo: x.vehicle_no, ewayBillNo: x.eway_bill_no, dispatchDate: x.dispatch_date, expectedArrival: x.expected_arrival, enteredVia: x.entered_via, status: x.status, lines: json(x.lines_json, []), ...(x.invoice_file_id ? { invoiceFileId: x.invoice_file_id } : {}) }));
       o.receipts = db.prepare('SELECT t.*, l.line_no FROM proc_po_receipts t JOIN proc_po_lines l ON l.id = t.po_line_id WHERE t.po_id = ? AND t.deleted_at IS NULL ORDER BY t.received_on, t.id').all(r.id).map((x) => ({ id: x.id, grnRef: x.grn_ref, lineNo: x.line_no, receivedOn: x.received_on, qty: d3(x.qty), acceptedQty: d3(x.accepted_qty), onTime: Boolean(x.on_time) }));
       o.advances = db.prepare('SELECT * FROM proc_po_advances WHERE po_id = ? AND deleted_at IS NULL ORDER BY id').all(r.id).map((a) => ({ id: a.id, docNo: a.doc_no, amount: m(a.advance_amount), neededBy: a.needed_by, reason: a.reason, status: a.status, requestedBy: a.requested_by, approvedBy: a.approved_by }));
       o.warnings = []; if (r.supply_type === 'NONE') o.warnings.push({ code: 'NO_GSTIN', message: 'The vendor has no active GSTIN: no GST is charged on this order.' }); if (r.variance_flag) o.warnings.push({ code: 'VARIANCE', message: 'A rate is above the benchmark: the project manager approves this order.' });
@@ -249,17 +251,98 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
     const r = db.prepare('SELECT * FROM proc_purchase_orders WHERE ack_token_hash = ? AND deleted_at IS NULL').get(hash(String(token))); if (!r) throw notFound('This link is not valid.');
     if (!['APPROVED', 'CLOSED'].includes(r.status)) throw gone('This purchase order is no longer open.'); if (r.ack_expires && Date.parse(r.ack_expires) < Date.now()) throw gone('This link has expired. Ask the buyer to send you a new one.'); return r;
   };
+  const vendorInfo = (r) => {
+    const co = db.prepare('SELECT short_name FROM org_companies WHERE id = ?').get(r.company_id)?.short_name ?? ''; const t = currentTerms(r);
+    return { company: co, docNo: r.doc_no, date: r.doc_date, amendmentNo: r.amendment_no, vendor: vname(r.vendor_id).name, status: r.status, acknowledgedAt: r.acknowledged_at, terms: { ...t, deliveryStateCode: r.delivery_state }, totalAmount: rs(r.total_amount), totalTax: rs(r.total_tax), supplyType: r.supply_type,
+      lines: linesOf(r.id).map((l) => ({ id: l.id, lineNo: l.line_no, description: l.description, qty: d3(l.qty), uom: l.uom, rate: rs(l.rate), discountPct: l.discount_pct / 10000, gstPct: l.gst_pct / 10000, amount: rs(l.line_amount), receivedQty: d3(l.received_qty), balanceQty: d3(l.balance_qty), schedule: schedOf(l.id).map((s) => ({ dueDate: s.due_date, qty: d3(s.qty) })) })),
+      dispatches: db.prepare('SELECT asn_no, dispatch_date, expected_arrival, status FROM proc_dispatches WHERE po_id = ? AND deleted_at IS NULL ORDER BY id').all(r.id) };
+  };
+  const acknowledgeVendorOrder = (r, user, note) => {
+    if (r.acknowledged_at) return { message: 'You have acknowledged this order already. Thank you.', acknowledgedAt: r.acknowledged_at };
+    const now = nowIso(); db.prepare('UPDATE proc_purchase_orders SET acknowledged_at = ?, acknowledged_by = ?, remarks = COALESCE(?, remarks), version = version + 1 WHERE id = ?').run(now, user, note ?? null, r.id); audit({ user, companyId: r.company_id }, 'proc_purchase_orders', r.id, 'acknowledge', r.company_id, { reason: note });
+    evt('proc.po.acknowledged', { user }, r, { acknowledgedBy: user }); notify(r.company_id, 'proc.po.acknowledged', [`user:${r.requested_by}`], r.doc_no, r.doc_no, `${vname(r.vendor_id).name} acknowledged ${r.doc_no}${note ? `: ${note}` : ''}.`, `/proc/purchase-orders?id=${r.id}`, r.id, { projectId: r.org_project_id }); return { message: 'Thank you. The order is acknowledged.', acknowledgedAt: now };
+  };
+  const supplierRows = (scope, { id = null, before = null } = {}) => db.prepare(`
+    SELECT p.* FROM proc_purchase_orders p
+    WHERE p.company_id = :companyId AND p.vendor_id = :partnerId AND p.deleted_at IS NULL AND p.is_active = 1
+      AND p.status IN ('APPROVED', 'CLOSED')
+      AND (:projectId IS NULL OR p.org_project_id = :projectId)
+      AND (:siteId IS NULL OR (p.po_site_id = :siteId
+        AND NOT EXISTS (SELECT 1 FROM proc_po_lines l WHERE l.po_id = p.id AND l.deleted_at IS NULL
+          AND COALESCE(l.delivery_site_id, p.po_site_id) IS NOT :siteId)))
+      AND (:id IS NULL OR p.id = :id) AND (:before IS NULL OR p.id < :before)
+    ORDER BY p.id DESC LIMIT 51`).all({
+    companyId: scope.companyId, partnerId: scope.partnerId, projectId: scope.projectId, siteId: scope.siteId, id, before,
+  });
+  const supplierOrder = (scope, id) => {
+    const r = supplierRows(scope, { id })[0];
+    if (!r) throw notFound('That purchase order does not exist.');
+    return r;
+  };
+  const supplierActor = (scope) => ({ user: `portal-supplier:${scope.accountId}`, companyId: scope.companyId });
+  const requireCurrentOrder = (r, version) => {
+    if (r.status !== 'APPROVED') throw conflict('That purchase order is closed.');
+    if (version !== r.version) throw conflict('The purchase order has changed. Reload it before trying again.');
+  };
+  const supplier = {
+    list(scope, before) {
+      const rows = supplierRows(scope, { before });
+      audit(supplierActor(scope), 'proc_purchase_orders', 0, 'supplier_list', scope.companyId);
+      return { items: rows.slice(0, 50).map((r) => ({
+        id: r.id, docNo: r.doc_no, date: r.doc_date, status: r.status, acknowledgedAt: r.acknowledged_at,
+      })), nextBefore: rows.length > 50 ? rows[49].id : null };
+    },
+    order: supplierOrder,
+    info(scope, id) {
+      const r = supplierOrder(scope, id);
+      const receipts = db.prepare(`SELECT t.grn_ref, t.received_on, t.qty, t.accepted_qty, l.line_no,
+          SUM(i.rejected_qty) AS rejected_qty, SUM(i.released_qty) AS released_qty, SUM(i.qc_rejected_qty) AS qc_rejected_qty,
+          CASE WHEN COUNT(i.id) = 0 THEN NULL
+            WHEN MAX(i.inspection_status = 'PENDING') = 1 THEN 'PENDING'
+            WHEN MIN(i.inspection_status) = MAX(i.inspection_status) THEN MAX(i.inspection_status)
+            ELSE 'PARTIAL' END AS inspection_status
+        FROM proc_po_receipts t JOIN proc_po_lines l ON l.id = t.po_line_id AND l.po_id = t.po_id AND l.company_id = t.company_id
+        LEFT JOIN inv_grns g ON g.company_id = t.company_id AND g.po_id = t.po_id AND g.doc_no = t.grn_ref
+          AND g.vendor_id = ? AND g.status = 'APPROVED' AND g.deleted_at IS NULL
+          AND (? IS NULL OR g.org_site_id = ?)
+        LEFT JOIN inv_grn_lines i ON i.grn_id = g.id AND i.company_id = g.company_id AND i.po_line_id = l.id AND i.deleted_at IS NULL
+        WHERE t.company_id = ? AND t.po_id = ? AND t.deleted_at IS NULL GROUP BY t.id ORDER BY t.received_on, t.id`)
+        .all(scope.partnerId, scope.siteId, scope.siteId, r.company_id, r.id)
+        .map((x) => ({ grnRef: x.grn_ref, receivedOn: x.received_on, lineNo: x.line_no, qty: d3(x.qty), acceptedQty: d3(x.accepted_qty),
+          rejectedQty: x.rejected_qty == null ? null : d3(x.rejected_qty), inspection: x.inspection_status,
+          releasedQty: x.released_qty == null ? null : d3(x.released_qty),
+          qcRejectedQty: x.qc_rejected_qty == null ? null : d3(x.qc_rejected_qty) }));
+      audit(supplierActor(scope), 'proc_purchase_orders', r.id, 'supplier_view', scope.companyId);
+      return { ...vendorInfo(r), id: r.id, version: r.version, receipts };
+    },
+    acknowledge(scope, id, version, { note }) {
+      return transaction(db, () => {
+        const r = supplierOrder(scope, id);
+        requireCurrentOrder(r, version);
+        return acknowledgeVendorOrder(r, supplierActor(scope).user, note);
+      });
+    },
+    dispatch(scope, id, version, b, attach) {
+      return transaction(db, () => {
+        const r = supplierOrder(scope, id);
+        requireCurrentOrder(r, version);
+        const result = dispatchPo(supplierActor(scope).user, r, b, 'VENDOR');
+        if (attach) {
+          const [fileId] = attach({ entity: 'proc_purchase_order', id: r.id, projectId: r.org_project_id, siteId: r.po_site_id });
+          db.prepare('INSERT INTO ptl_asn_invoices (dispatch_id, file_id) VALUES (?, ?)').run(result.id, fileId);
+        }
+        db.prepare('UPDATE proc_purchase_orders SET version = version + 1 WHERE id = ?').run(r.id);
+        return result;
+      });
+    },
+  };
   const portal = {
     info(token) {
-      const r = byToken(token); const co = db.prepare('SELECT short_name FROM org_companies WHERE id = ?').get(r.company_id)?.short_name ?? ''; const t = currentTerms(r);
-      return { company: co, docNo: r.doc_no, date: r.doc_date, amendmentNo: r.amendment_no, vendor: vname(r.vendor_id).name, status: r.status, acknowledgedAt: r.acknowledged_at, terms: { ...t, deliveryStateCode: r.delivery_state }, totalAmount: rs(r.total_amount), totalTax: rs(r.total_tax), supplyType: r.supply_type,
-        lines: linesOf(r.id).map((l) => ({ id: l.id, lineNo: l.line_no, description: l.description, qty: d3(l.qty), uom: l.uom, rate: rs(l.rate), discountPct: l.discount_pct / 10000, gstPct: l.gst_pct / 10000, amount: rs(l.line_amount), receivedQty: d3(l.received_qty), balanceQty: d3(l.balance_qty), schedule: schedOf(l.id).map((s) => ({ dueDate: s.due_date, qty: d3(s.qty) })) })),
-        dispatches: db.prepare('SELECT asn_no, dispatch_date, expected_arrival, status FROM proc_dispatches WHERE po_id = ? AND deleted_at IS NULL ORDER BY id').all(r.id) };
+      return vendorInfo(byToken(token));
     },
     acknowledge(token, { note }) {
-      const r = byToken(token); const user = `vendor:${vname(r.vendor_id).code}`; if (r.acknowledged_at) return { message: 'You have acknowledged this order already. Thank you.', acknowledgedAt: r.acknowledged_at };
-      const now = nowIso(); db.prepare('UPDATE proc_purchase_orders SET acknowledged_at = ?, acknowledged_by = ?, remarks = COALESCE(?, remarks), version = version + 1 WHERE id = ?').run(now, user, note ?? null, r.id); audit({ user, companyId: r.company_id }, 'proc_purchase_orders', r.id, 'acknowledge', r.company_id, { reason: note });
-      evt('proc.po.acknowledged', { user }, r, { acknowledgedBy: user }); notify(r.company_id, 'proc.po.acknowledged', [`user:${r.requested_by}`], r.doc_no, r.doc_no, `${vname(r.vendor_id).name} acknowledged ${r.doc_no}${note ? `: ${note}` : ''}.`, `/proc/purchase-orders?id=${r.id}`, r.id, { projectId: r.org_project_id }); return { message: 'Thank you. The order is acknowledged.', acknowledgedAt: now };
+      const r = byToken(token);
+      return acknowledgeVendorOrder(r, `vendor:${vname(r.vendor_id).code}`, note);
     },
     dispatch(token, b) { const r = byToken(token); if (r.status !== 'APPROVED') throw gone('This order is closed: no dispatch is taken.'); return dispatchPo(`vendor:${vname(r.vendor_id).code}`, r, b, 'VENDOR'); },
   };
@@ -437,5 +520,5 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
       db.prepare('UPDATE proc_po_lines SET invoiced_qty = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(next, new Date().toISOString(), l.id); return { lineId: l.id, invoicedQty: next };
     },
   };
-  return { pos, amendments, invoicing, receipts, portal, extra, decide: pos.decide, amendDecide: amendments.decide, advanceDecide: extra.advanceDecide, computeLine };
+  return { pos, amendments, invoicing, receipts, portal, supplier, extra, decide: pos.decide, amendDecide: amendments.decide, advanceDecide: extra.advanceDecide, computeLine };
 }

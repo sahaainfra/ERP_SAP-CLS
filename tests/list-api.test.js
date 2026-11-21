@@ -73,8 +73,9 @@ test('FR-01 FR-02 FR-09 the list describes its columns, searches, filters with o
   await api.close();
 });
 
-test('T-01 filter, sort and pagination on 100,000 rows give the right page, count and totals within the list target', async () => {
+test('T-01 filter, sort and pagination on 100,000 rows give the right page, count and totals within the list target', async (t) => {
   const api = await startApi();
+  t.after(() => api.close());
   seed(api, 100_000);
   const times = [];
   const timed = async (qs) => {
@@ -101,7 +102,6 @@ test('T-01 filter, sort and pagination on 100,000 rows give the right page, coun
   times.sort((a, b) => a - b);
   assert.ok(times[times.length - 1] < 1500, `slowest list request ${times[times.length - 1].toFixed(0)} ms (all ${times.map((t) => t.toFixed(0)).join(', ')})`);
   assert.ok(times[Math.floor(times.length / 2)] < 500, `median ${times[Math.floor(times.length / 2)].toFixed(0)} ms`);
-  await api.close();
 });
 
 test('T-03 the commercial total is masked for a system administrator in rows, totals and every export, and cannot be sorted or filtered', async () => {

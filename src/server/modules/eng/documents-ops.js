@@ -48,6 +48,9 @@ export async function watermark(buffer, extension, text, note) {
   return { buffer, applied: false };
 }
 
+const documentOperations = new WeakMap();
+export const documentOpsOf = (db) => documentOperations.get(db) ?? null;
+
 export function createDocumentOps({ db, service, storage }) {
   const docs = service.documents;
 
@@ -88,6 +91,44 @@ export function createDocumentOps({ db, service, storage }) {
       return { status: 206, headers: { ...headers, 'content-range': `bytes ${start}-${end}/${total}`, 'content-length': String(end - start + 1) }, stream: storage.createReadStream(f.storage_key, { start, end }) };
     }
     return { status: 200, headers: { ...headers, 'content-length': String(total) }, stream: storage.createReadStream(f.storage_key) };
+  }
+
+  /** Candidate revision for an explicit external share. Scope is supplied by the portal account, never the request. */
+  function portalRevision(scope, versionId) {
+    return db.prepare(`
+      SELECT d.id AS documentId, d.title, v.revision, f.storage_key AS storageKey, f.extension, f.size_bytes AS size
+      FROM doc_versions v
+      JOIN doc_documents d ON d.id = v.document_id AND d.company_id = v.company_id AND d.current_version_id = v.id
+      JOIN core_files f ON f.id = v.file_id AND f.company_id = v.company_id
+        AND f.linked_entity = 'doc_version' AND f.linked_id = v.id
+      WHERE v.id = ? AND v.company_id = ? AND (d.project_id IS NULL OR d.project_id = ?)
+        AND (d.site_id IS NULL OR d.site_id = ?)
+        AND v.is_active = 1 AND d.is_active = 1 AND f.is_active = 1
+        AND v.deleted_at IS NULL AND d.deleted_at IS NULL AND f.deleted_at IS NULL
+        AND d.status = 'ISSUED' AND v.status = 'ISSUED' AND d.confidentiality IN ('PUBLIC','INTERNAL')
+        AND f.scan_status = 'CLEAN' AND f.extension IN ('pdf','png','jpg','jpeg','webp')
+        AND f.size_bytes <= ?
+    `).get(versionId, scope.companyId, scope.projectId ?? null, scope.siteId ?? null, WATERMARK_MAX_BYTES) ?? null;
+  }
+
+  function portalShare(actor, scope, versionId) {
+    const revision = portalRevision(scope, versionId);
+    if (!revision) throw notFound('No issued and shareable revision matches the account scope.');
+    const { acc } = service.load(actor, revision.documentId);
+    if (!acc.manage && !acc.owner) throw notFound('No issued and shareable revision matches the account scope.');
+    return revision;
+  }
+
+  async function portalContent(scope, versionId, recipient) {
+    const revision = portalRevision(scope, versionId);
+    if (!revision) throw notFound('That shared revision is no longer available.');
+    const length = await storage.size(revision.storageKey);
+    if (length === null) throw notFound('The stored file is missing.');
+    if (length > WATERMARK_MAX_BYTES) throw unprocessable('The shared revision exceeds the watermark size limit.');
+    const out = await watermark(await readAll(storage.createReadStream(revision.storageKey)), revision.extension,
+      'EXTERNAL COPY', `Issued to ${recipient} on ${new Date().toISOString().slice(0, 10)}`);
+    if (!out.applied) throw unprocessable('The shared revision could not be watermarked.');
+    return { buffer: out.buffer, extension: revision.extension };
   }
 
   /** FR-08: the current files of the chosen documents in one zip, each only if the person may see it. */
@@ -158,5 +199,7 @@ export function createDocumentOps({ db, service, storage }) {
     if (commit && !out.rows.length) throw conflict('The file has no rows to register.');
     return out;
   }
-  return { content, zip, template, bulkImport };
+  const ops = { content, zip, template, bulkImport, portalRevision, portalShare, portalContent };
+  documentOperations.set(db, ops);
+  return ops;
 }

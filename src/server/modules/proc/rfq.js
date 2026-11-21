@@ -126,6 +126,8 @@ export function createRfqService({ db, base, baseUrl = () => '' }) {
       versionNo: q.version_no, parentId: q.parent_id, status: q.status, statusLabel: QUOTE_STATUS[q.status], enteredVia: q.entered_via, enteredBy: q.entered_by, receivedAt: q.received_at, totalLanded: rates ? rs(q.total_landed) : null, canSeeRates: rates, deviations: q.deviations, cancelReason: q.cancel_reason, rowVersion: q.version,
       expired: q.status === 'RECEIVED' && q.valid_until < todayIST(),
       can: { edit: can('proc.quotation.edit') && q.status === 'DRAFT' && open, submit: can('proc.quotation.submit') && q.status === 'DRAFT' && open, withdraw: can('proc.quotation.cancel') && q.status === 'RECEIVED', cancel: can('proc.quotation.cancel') && ['DRAFT', 'RECEIVED'].includes(q.status), delete: can('proc.quotation.delete') && q.status === 'DRAFT', amend: can('proc.quotation.amend') && q.status === 'RECEIVED' && open, print: can('proc.quotation.print') } };
+    if (detail && db.prepare(`SELECT 1 FROM core_files WHERE company_id = ? AND linked_entity = 'proc_quotation'
+      AND linked_id = ? AND deleted_at IS NULL AND is_active = 1`).get(q.company_id, q.id)) o.hasAttachments = true;
     if (detail) o.lines = db.prepare('SELECT * FROM proc_quotation_lines WHERE quotation_id = ? AND deleted_at IS NULL ORDER BY rfq_line_id').all(q.id).map((l) => { const rl = db.prepare('SELECT line_no, item_id, service_desc, qty, uom FROM proc_rfq_lines WHERE id = ?').get(l.rfq_line_id); const it = rl?.item_id ? itemOf(q.company_id, rl.item_id) : null;
       return { id: l.id, rfqLineId: l.rfq_line_id, lineNo: rl?.line_no, itemCode: it?.code ?? null, itemName: it?.name ?? rl?.service_desc, uom: rl?.uom, rfqQty: d3(rl?.qty ?? 0), offeredQty: d3(l.offered_qty), rate: rates ? rs(l.rate) : null, discountPct: rates ? l.discount_pct / 10000 : null, gstRate: l.gst_rate / 10000, freight: rates ? rs(l.freight) : null, loading: rates ? rs(l.loading) : null, otherCharges: rates ? rs(l.other_charges) : null, landedRate: rates ? rs(l.landed_rate) : null, landedAmount: rates ? rs(l.landed_amount) : null, make: l.make, deviation: l.deviation }; });
     return o;
@@ -176,6 +178,19 @@ export function createRfqService({ db, base, baseUrl = () => '' }) {
     },
     exportSource(actor, req) { return rfqs.list(actor, { ...req, page: 1, pageSize: 100 }); },
     get: (actor, id) => { const v = view(actor, row(actor, id), { detail: true }); if (v.can.approve && v.workflowInstanceId) v.taskId = workflowOf(db).listTasks(actor, { mine: 'assigned', limit: 200 }).rows.find((t) => t.instance?.id === v.workflowInstanceId)?.id ?? null; return v; },
+    shareFile(actor, id, fileId, shared) {
+      return transaction(db, () => {
+        const r = row(actor, id, 'proc.rfq.edit');
+        const file = db.prepare(`SELECT id FROM core_files WHERE id = ? AND company_id = ? AND linked_entity = 'proc_rfq'
+          AND linked_id = ? AND deleted_at IS NULL AND is_active = 1 AND (? = 0 OR scan_status = 'CLEAN')`)
+          .get(fileId, r.company_id, r.id, Number(shared));
+        if (!file) throw notFound('That scanned RFQ file does not exist.');
+        if (shared) db.prepare('INSERT OR IGNORE INTO ptl_rfq_files (file_id) VALUES (?)').run(fileId);
+        else db.prepare('DELETE FROM ptl_rfq_files WHERE file_id = ?').run(fileId);
+        audit(actor, 'core_files', fileId, 'rfq_supplier_share', r.company_id, { newValues: { shared } });
+        return { shared };
+      });
+    },
     /** What the form needs: the approved requisition lines with something left to buy, the rules, and the vendors (matched to the lines chosen). */
     options(actor, projectId, prLineIds = []) {
       const p = project(actor, projectId, 'proc.rfq.view');
@@ -416,20 +431,114 @@ export function createRfqService({ db, base, baseUrl = () => '' }) {
     if (v.token_expires && Date.parse(v.token_expires) < Date.now()) throw gone('This link has expired. Ask the buyer to send you a new one.');
     return { v, r };
   };
+  const vendorInfo = (v, r) => {
+    const co = db.prepare('SELECT short_name FROM org_companies WHERE id = ?').get(r.company_id)?.short_name ?? ''; const prev = db.prepare("SELECT * FROM proc_quotations WHERE rfq_id = ? AND vendor_id = ? AND status = 'RECEIVED' AND deleted_at IS NULL").get(r.id, v.vendor_id);
+    return { company: co, rfq: { docNo: r.doc_no, title: r.title, dueDate: r.due_date, terms: json(r.terms_json, {}) }, vendor: vname(v.vendor_id).name, expires: v.token_expires, revising: Boolean(prev), gstRecoverable: recoverable(r.company_id),
+      lines: linesOf(r.id).map((l) => { const it = l.item_id ? itemOf(r.company_id, l.item_id) : null; return { id: l.id, lineNo: l.line_no, item: it ? `${it.code} ${it.name}` : l.service_desc, qty: d3(l.qty), uom: l.uom, spec: l.spec, requiredBy: l.required_by }; }),
+      clarifications: db.prepare('SELECT question, answer, vendor_id FROM proc_rfq_clarifications WHERE rfq_id = ? AND deleted_at IS NULL AND answer IS NOT NULL AND (share_all = 1 OR vendor_id = ?) ORDER BY id').all(r.id, v.vendor_id).map((c) => ({ question: c.question, answer: c.answer })) };
+  };
+  const submitVendorQuote = (v, r, b, actor) => {
+    const q = insertQ(r, v.vendor_id, { ...b, quoteDate: todayIST() }, { via: 'PORTAL', user: actor.user, status: 'DRAFT' });
+    receive(actor, q);
+    audit(actor, 'proc_quotations', q.id, 'submit', r.company_id, { newValues: { rfq: r.doc_no, version: q.version_no, via: 'PORTAL' } });
+    return { id: q.id, docNo: q.doc_no, versionNo: q.version_no };
+  };
+  const askVendorQuestion = (v, r, question, user) => {
+    const id = Number(db.prepare(`INSERT INTO proc_rfq_clarifications
+      (company_id, rfq_id, vendor_id, asked_by, question, project_id, created_by, source_type)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'portal')`).run(r.company_id, r.id, v.vendor_id, user, question, r.org_project_id, user).lastInsertRowid);
+    audit({ user, companyId: r.company_id }, 'proc_rfq_clarifications', id, 'create', r.company_id);
+    notify(r.company_id, 'proc.rfq.quote_received', [`user:${r.issued_by ?? r.requested_by}`], r.doc_no, r.title,
+      `${vname(v.vendor_id).name} asked: ${question.slice(0, 160)}`, `/proc/rfqs?id=${r.id}`, `${id}.q`, { projectId: r.org_project_id });
+    return { message: 'Your question is sent. The answer will appear on this page.' };
+  };
+  const supplierRows = (scope, { id = null, before = null } = {}) => db.prepare(`
+    SELECT r.*, v.id AS invitation_id, v.response_status
+    FROM proc_rfqs r JOIN proc_rfq_vendors v ON v.company_id = r.company_id AND v.rfq_id = r.id
+    WHERE r.company_id = :companyId AND v.vendor_id = :partnerId
+      AND r.deleted_at IS NULL AND v.deleted_at IS NULL AND r.is_active = 1 AND v.is_active = 1
+      AND r.status IN ('ISSUED', 'CLOSED')
+      AND (:projectId IS NULL OR r.org_project_id = :projectId)
+      AND (:siteId IS NULL OR ((r.site_id IS NULL OR r.site_id = :siteId)
+        AND NOT EXISTS (SELECT 1 FROM proc_rfq_lines l WHERE l.rfq_id = r.id AND l.deleted_at IS NULL
+          AND COALESCE(l.delivery_site_id, r.site_id) IS NOT :siteId)))
+      AND (:id IS NULL OR r.id = :id) AND (:before IS NULL OR r.id < :before)
+    ORDER BY r.id DESC LIMIT 51`).all({
+    companyId: scope.companyId, partnerId: scope.partnerId, projectId: scope.projectId, siteId: scope.siteId, id, before,
+  });
+  const supplierRow = (scope, id) => {
+    const r = supplierRows(scope, { id })[0];
+    if (!r) throw notFound('That request for quotation does not exist.');
+    return r;
+  };
+  const supplierActor = (scope) => ({ user: `portal-supplier:${scope.accountId}`, companyId: scope.companyId, roles: [] });
+  const supplierInvitation = (scope, r) => ({ id: r.invitation_id, vendor_id: scope.partnerId, token_expires: null });
+  const supplierWritable = (r) => r.status === 'ISSUED' && r.due_date >= todayIST() && r.response_status !== 'DECLINED';
+  const revisionOf = (scope, r) => db.prepare(`SELECT COALESCE(MAX(version_no), 0) AS version
+    FROM proc_quotations WHERE company_id = ? AND rfq_id = ? AND vendor_id = ? AND deleted_at IS NULL
+      AND status IN ('RECEIVED', 'DRAFT', 'SUPERSEDED', 'WITHDRAWN')`).get(scope.companyId, r.id, scope.partnerId).version;
+  const supplier = {
+    check(scope, id) { supplierRow(scope, id); },
+    list(scope, before) {
+      const rows = supplierRows(scope, { before });
+      audit(supplierActor(scope), 'proc_rfqs', 0, 'supplier_list', scope.companyId);
+      return { items: rows.slice(0, 50).map((r) => ({
+        id: r.id, docNo: r.doc_no, title: r.title, dueDate: r.due_date, status: r.status, responseStatus: r.response_status,
+      })), nextBefore: rows.length > 50 ? rows[49].id : null };
+    },
+    info(scope, id) {
+      const r = supplierRow(scope, id);
+      const q = db.prepare(`SELECT * FROM proc_quotations WHERE company_id = ? AND rfq_id = ? AND vendor_id = ?
+        AND status = 'RECEIVED' AND deleted_at IS NULL`).get(scope.companyId, id, scope.partnerId);
+      const quote = q ? {
+        docNo: q.doc_no, quoteRef: q.quote_ref, validUntil: q.valid_until, deliveryDays: q.delivery_days,
+        paymentTerms: q.payment_terms, freightTerms: q.freight_terms, gstInclusive: Boolean(q.gst_inclusive), deviations: q.deviations,
+        lines: db.prepare('SELECT * FROM proc_quotation_lines WHERE company_id = ? AND quotation_id = ? AND deleted_at IS NULL')
+          .all(scope.companyId, q.id).map((l) => ({
+            rfqLineId: l.rfq_line_id, offeredQty: Number(d3(l.offered_qty)), rate: Number(rs(l.rate)),
+            discountPct: l.discount_pct / 10000, gstRate: l.gst_rate / 10000,
+            freight: Number(rs(l.freight)), loading: Number(rs(l.loading)), otherCharges: Number(rs(l.other_charges)),
+            make: l.make, deviation: l.deviation,
+          })),
+      } : null;
+      const info = vendorInfo(supplierInvitation(scope, r), r);
+      info.clarifications = db.prepare(`SELECT question, answer FROM proc_rfq_clarifications
+        WHERE company_id = ? AND rfq_id = ? AND deleted_at IS NULL
+          AND (vendor_id = ? OR (share_all = 1 AND answer IS NOT NULL)) ORDER BY id`).all(scope.companyId, r.id, scope.partnerId);
+      audit(supplierActor(scope), 'proc_rfqs', r.id, 'supplier_view', scope.companyId);
+      return { ...info, id: r.id, status: r.status, writable: supplierWritable(r), revision: revisionOf(scope, r), quote };
+    },
+    submit(scope, id, revision, b, attach) {
+      return transaction(db, () => {
+        const r = supplierRow(scope, id);
+        if (!supplierWritable(r)) throw conflict('This RFQ is no longer open for quotations.');
+        if (revision !== revisionOf(scope, r)) throw conflict('The quotation has changed. Reload it before sending a revision.');
+        const q = submitVendorQuote(supplierInvitation(scope, r), r, b, supplierActor(scope));
+        attach?.({ entity: 'proc_quotation', id: q.id, projectId: r.org_project_id, siteId: scope.siteId });
+        return { docNo: q.docNo, versionNo: q.versionNo };
+      });
+    },
+    clarify(scope, id, { question }) {
+      return transaction(db, () => {
+        const r = supplierRow(scope, id);
+        if (!supplierWritable(r)) throw conflict('This RFQ is no longer open for questions.');
+        return askVendorQuestion(supplierInvitation(scope, r), r, question, supplierActor(scope).user);
+      });
+    },
+  };
   const portal = {
     info(token) {
       const { v, r } = byToken(token); if (v.token_used_at) throw gone('You have already sent your quotation through this link. To revise it, ask the buyer to send you a new link.');
       if (v.response_status !== 'VIEWED') db.prepare("UPDATE proc_rfq_vendors SET response_status = CASE WHEN response_status IN ('INVITED', 'SENT') THEN 'VIEWED' ELSE response_status END, viewed_at = COALESCE(viewed_at, ?), updated_at = ? WHERE id = ?").run(nowIso(), nowIso(), v.id);
-      const co = db.prepare('SELECT short_name FROM org_companies WHERE id = ?').get(r.company_id)?.short_name ?? ''; const prev = db.prepare("SELECT * FROM proc_quotations WHERE rfq_id = ? AND vendor_id = ? AND status = 'RECEIVED' AND deleted_at IS NULL").get(r.id, v.vendor_id);
-      return { company: co, rfq: { docNo: r.doc_no, title: r.title, dueDate: r.due_date, terms: json(r.terms_json, {}) }, vendor: vname(v.vendor_id).name, expires: v.token_expires, revising: Boolean(prev), gstRecoverable: recoverable(r.company_id),
-        lines: linesOf(r.id).map((l) => { const it = l.item_id ? itemOf(r.company_id, l.item_id) : null; return { id: l.id, lineNo: l.line_no, item: it ? `${it.code} ${it.name}` : l.service_desc, qty: d3(l.qty), uom: l.uom, spec: l.spec, requiredBy: l.required_by }; }),
-        clarifications: db.prepare('SELECT question, answer, vendor_id FROM proc_rfq_clarifications WHERE rfq_id = ? AND deleted_at IS NULL AND answer IS NOT NULL AND (share_all = 1 OR vendor_id = ?) ORDER BY id').all(r.id, v.vendor_id).map((c) => ({ question: c.question, answer: c.answer })) };
+      return vendorInfo(v, r);
     },
     submit(token, b) {
       const { v, r } = byToken(token); if (v.token_used_at) throw gone('You have already sent your quotation through this link. To revise it, ask the buyer to send you a new link.'); const user = `vendor:${vname(v.vendor_id).code}`; const actor = { user, companyId: r.company_id, roles: ['VENDOR'] };
       return transaction(db, () => {
-        const q = insertQ(r, v.vendor_id, { ...b, quoteDate: todayIST() }, { via: 'PORTAL', user, status: 'DRAFT' }); receive(actor, q); const now = nowIso(); db.prepare('UPDATE proc_rfq_vendors SET token_used_at = ?, updated_at = ? WHERE id = ?').run(now, now, v.id);
-        audit(actor, 'proc_quotations', q.id, 'submit', r.company_id, { newValues: { rfq: r.doc_no, version: q.version_no, via: 'PORTAL' } }); return { docNo: q.doc_no, versionNo: q.version_no, message: 'Your quotation is received. Thank you. This link now stops working; the buyer will contact you.' };
+        const q = submitVendorQuote(v, r, b, actor);
+        const now = nowIso();
+        db.prepare('UPDATE proc_rfq_vendors SET token_used_at = ?, updated_at = ? WHERE id = ?').run(now, now, v.id);
+        return { docNo: q.docNo, versionNo: q.versionNo, message: 'Your quotation is received. Thank you. This link now stops working; the buyer will contact you.' };
       });
     },
     decline(token, { reason }) {
@@ -438,9 +547,9 @@ export function createRfqService({ db, base, baseUrl = () => '' }) {
       notify(r.company_id, 'proc.rfq.quote_received', [`user:${r.issued_by ?? r.requested_by}`], r.doc_no, r.title, `${vname(v.vendor_id).name} declined to quote${reason ? `: ${reason}` : ''}.`, `/proc/rfqs?id=${r.id}`, `${v.id}.d`, { projectId: r.org_project_id }); return { message: 'Thank you for letting us know.' };
     },
     clarify(token, { question }) {
-      const { v, r } = byToken(token); const cid = Number(db.prepare("INSERT INTO proc_rfq_clarifications (company_id, rfq_id, vendor_id, asked_by, question, project_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'portal')").run(r.company_id, r.id, v.vendor_id, `vendor:${vname(v.vendor_id).code}`, question, r.org_project_id, `vendor:${vname(v.vendor_id).code}`).lastInsertRowid);
-      notify(r.company_id, 'proc.rfq.quote_received', [`user:${r.issued_by ?? r.requested_by}`], r.doc_no, r.title, `${vname(v.vendor_id).name} asked: ${question.slice(0, 160)}`, `/proc/rfqs?id=${r.id}`, `${cid}.q`, { projectId: r.org_project_id }); return { message: 'Your question is sent. The answer will appear on this page.' };
+      const { v, r } = byToken(token);
+      return askVendorQuestion(v, r, question, `vendor:${vname(v.vendor_id).code}`);
     },
   };
-  return { rfqs, quotes, portal, decide: rfqs.decide, landed };
+  return { rfqs, quotes, portal, supplier, decide: rfqs.decide, landed };
 }

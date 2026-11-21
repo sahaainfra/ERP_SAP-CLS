@@ -2,6 +2,7 @@ import { transaction } from '../../platform/db/index.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { countList, parseListRequest, runList } from '../../platform/list/index.js';
 import { evidenceProviders, workflowOf, workflowTypes } from '../../platform/workflow/index.js';
+import { fileEntities } from '../../platform/files/entities.js';
 import { enggOf } from './drawings.js';
 import { vdrList } from './deliverables.js';
 import { VDR_DOC, VDR_STATUS, VDR_TYPES, esc, nowIso, rid, same } from './constants.js';
@@ -21,12 +22,32 @@ export function createVdrService({ db, base }) {
   function view(actor, r) {
     const o = orgOf(r.org_project_id); const can = (k) => may(actor, k, r.org_project_id); const day = today(); const editable = ['REQUIRED', 'RETURNED', 'RESUBMIT'].includes(r.status);
     return {
-      id: r.id, vdrNo: r.vdr_no, projectId: r.org_project_id, projectCode: o?.code, projectName: o?.name, poRef: r.po_ref, vendor: r.vendor, docType: r.doc_type, docTypeLabel: VDR_TYPES[r.doc_type], title: r.title, dueDate: r.due_date, submittedOn: r.submitted_on, cycle: r.cycle_no,
+      id: r.id, shareWithSupplier: Boolean(linkedOrder(r.id)), vdrNo: r.vdr_no, projectId: r.org_project_id, projectCode: o?.code, projectName: o?.name, poRef: r.po_ref, vendor: r.vendor, docType: r.doc_type, docTypeLabel: VDR_TYPES[r.doc_type], title: r.title, dueDate: r.due_date, submittedOn: r.submitted_on, cycle: r.cycle_no,
       reviewCode: r.review_code, reviewText: r.review_text, reviewedOn: r.reviewed_on, pendingCode: r.pending_code, pendingText: r.pending_text, status: r.status, statusLabel: VDR_STATUS[r.status], overdue: ['REQUIRED', 'RESUBMIT'].includes(r.status) && r.due_date < day,
       requestedBy: r.requested_by, workflowInstanceId: r.workflow_instance_id, rowVersion: r.version,
       can: { edit: can('engg.vdr_item.edit') && editable, receive: can('engg.vdr_item.edit') && ['REQUIRED', 'RESUBMIT'].includes(r.status), review: can('engg.vdr_item.submit') && r.status === 'RECEIVED', withdraw: r.status === 'IN_REVIEW' && same(r.requested_by, actor.user),
         cancel: can('engg.vdr_item.cancel') && ['REQUIRED', 'RESUBMIT', 'RECEIVED', 'RETURNED'].includes(r.status), delete: can('engg.vdr_item.delete') && r.status === 'REQUIRED' && r.cycle_no === 1 && !r.workflow_instance_id, amend: can('engg.vdr_item.amend') && ['ACCEPTED', 'CANCELLED'].includes(r.status), print: can('engg.vdr_item.print'), export: can('engg.vdr_item.export') },
     };
+  }
+  const linkedOrder = (id) => db.prepare('SELECT po_id FROM ptl_vdr_orders WHERE item_id = ?').get(id)?.po_id ?? null;
+  function markedOrder(companyId, projectId, poRef, vendor) {
+    const order = db.prepare(`SELECT p.id FROM proc_purchase_orders p JOIN mdm_partners v
+      ON v.id = p.vendor_id AND v.company_id = p.company_id WHERE p.company_id = ? AND p.org_project_id = ?
+      AND p.doc_no = ? AND p.status IN ('APPROVED', 'CLOSED') AND p.deleted_at IS NULL
+      AND v.deleted_at IS NULL AND (? COLLATE NOCASE IN (v.legal_name, v.trade_name, v.code))`)
+      .get(companyId, projectId, poRef, vendor);
+    if (!order) throw unprocessable('Sharing requires an approved purchase order number and its exact supplier name or code.');
+    return order.id;
+  }
+  const supplierView = (r) => ({ id: r.id, reference: r.vdr_no, title: r.title, dueDate: r.due_date,
+    status: r.status, reviewCode: r.review_code, reviewText: r.review_text, version: r.version });
+  function receive(actor, r, submittedOn) {
+    if (!['REQUIRED', 'RESUBMIT'].includes(r.status)) throw unprocessable('A submission is recorded on a document the vendor still owes.');
+    const day = submittedOn ?? today();
+    if (day > today()) fail([{ field: 'submittedOn', message: 'The date of a submission is not in the future' }]);
+    db.prepare("UPDATE engg_vdr_items SET status = 'RECEIVED', submitted_on = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?")
+      .run(day, actor.user, nowIso(), r.id);
+    audit(actor, 'engg_vdr_items', r.id, 'receive', r.company_id);
   }
   const COLS = { poRef: 'po_ref', vendor: 'vendor', docType: 'doc_type', title: 'title', dueDate: 'due_date' };
   const vdr = {
@@ -51,21 +72,61 @@ export function createVdrService({ db, base }) {
     create(actor, b) {
       const o = project(actor, b.projectId, 'engg.vdr_item.create', 'engg.vdr_item.view');
       return transaction(db, () => {
+        const poId = b.shareWithSupplier ? markedOrder(o.company_id, o.id, b.poRef, b.vendor) : null;
         const id = Number(db.prepare("INSERT INTO engg_vdr_items (company_id, vdr_no, org_project_id, po_ref, vendor, doc_type, title, due_date, project_id, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'engg_vdr_items', ?)").run(o.company_id, nextNo(o.company_id), o.id, b.poRef, b.vendor, b.docType, b.title, b.dueDate, o.id, actor.user, b.poRef).lastInsertRowid);
+        if (poId) db.prepare('INSERT INTO ptl_vdr_orders (item_id, po_id) VALUES (?, ?)').run(id, poId);
         audit(actor, 'engg_vdr_items', id, 'create', o.company_id, { newValues: { poRef: b.poRef, vendor: b.vendor } }); return vdr.get(actor, id);
       });
     },
     update(actor, id, b) {
-      const r = row(actor, id, 'engg.vdr_item.edit'); if (!['REQUIRED', 'RETURNED', 'RESUBMIT'].includes(r.status)) throw conflict(`${r.vdr_no} is ${VDR_STATUS[r.status].toLowerCase()}: it is not edited now.`);
-      if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this VDR item; reload it.'); const sets = Object.entries(COLS).filter(([k]) => k in b);
-      if (sets.length) db.prepare(`UPDATE engg_vdr_items SET ${sets.map(([, c]) => `${c} = ?`).join(', ')}, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...sets.map(([k]) => b[k]), actor.user, nowIso(), r.id); audit(actor, 'engg_vdr_items', r.id, 'update', r.company_id); return vdr.get(actor, r.id);
+      return transaction(db, () => {
+        const r = row(actor, id, 'engg.vdr_item.edit');
+        if (!['REQUIRED', 'RETURNED', 'RESUBMIT'].includes(r.status)) throw conflict(`${r.vdr_no} is ${VDR_STATUS[r.status].toLowerCase()}: it is not edited now.`);
+        if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this VDR item; reload it.');
+        const link = linkedOrder(r.id);
+        const scopeChanged = (b.poRef !== undefined && b.poRef !== r.po_ref) || (b.vendor !== undefined && b.vendor !== r.vendor);
+        if (scopeChanged && link) throw conflict('Create a new requirement to change the order or supplier on a shared VDR item.');
+        const fields = Object.entries(COLS).filter(([key]) => key in b).map(([key, column]) => [column, b[key]]);
+        if (b.shareWithSupplier === true && !link) {
+          const poId = markedOrder(r.company_id, r.org_project_id, b.poRef ?? r.po_ref, b.vendor ?? r.vendor);
+          db.prepare('INSERT INTO ptl_vdr_orders (item_id, po_id) VALUES (?, ?)').run(r.id, poId);
+        }
+        if (b.shareWithSupplier === false && link) {
+          if (db.prepare("SELECT 1 FROM core_files WHERE linked_entity = 'engg_vdr_item' AND linked_id = ? AND deleted_at IS NULL").get(r.id)) {
+            throw conflict('Sharing is locked after the supplier uploads a document.');
+          }
+          db.prepare('DELETE FROM ptl_vdr_orders WHERE item_id = ?').run(r.id);
+        }
+        const changes = [...fields.map(([column]) => `${column} = ?`), 'updated_by = ?', 'updated_at = ?', 'version = version + 1'];
+        if (fields.length || b.shareWithSupplier !== undefined) db.prepare(`UPDATE engg_vdr_items SET ${changes.join(', ')} WHERE id = ?`)
+          .run(...fields.map(([, value]) => value), actor.user, nowIso(), r.id);
+        audit(actor, 'engg_vdr_items', r.id, 'update', r.company_id, { newValues: { shareWithSupplier: b.shareWithSupplier } });
+        return vdr.get(actor, r.id);
+      });
     },
     remove(actor, id) { const r = row(actor, id, 'engg.vdr_item.delete'); if (r.status !== 'REQUIRED' || r.cycle_no !== 1 || r.workflow_instance_id) throw unprocessable('Only a requirement that was never touched is deleted.'); db.prepare('UPDATE engg_vdr_items SET deleted_at = ?, deleted_by = ?, is_active = 0 WHERE id = ?').run(nowIso(), actor.user, r.id); audit(actor, 'engg_vdr_items', r.id, 'delete', r.company_id); return { id: r.id, deleted: true }; },
-    /** The vendor's submission is recorded (by the portal later; by the design coordinator now). */
     receive(actor, id, b) {
-      const r = row(actor, id, 'engg.vdr_item.edit'); if (!['REQUIRED', 'RESUBMIT'].includes(r.status)) throw unprocessable('A submission is recorded on a document the vendor still owes.');
-      const day = b.submittedOn ?? today(); if (day > today()) fail([{ field: 'submittedOn', message: 'The date of a submission is not in the future' }]);
-      db.prepare("UPDATE engg_vdr_items SET status = 'RECEIVED', submitted_on = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(day, actor.user, nowIso(), r.id); audit(actor, 'engg_vdr_items', r.id, 'receive', r.company_id); return vdr.get(actor, r.id);
+      const r = row(actor, id, 'engg.vdr_item.edit');
+      receive(actor, r, b.submittedOn);
+      return vdr.get(actor, id);
+    },
+    supplierList(scope, order) {
+      return db.prepare(`SELECT * FROM engg_vdr_items WHERE company_id = ? AND org_project_id = ? AND id IN (SELECT item_id FROM ptl_vdr_orders WHERE po_id = ?)
+        AND deleted_at IS NULL AND is_active = 1 AND status <> 'CANCELLED'
+        AND (? IS NULL OR site_id IS NULL OR site_id = ?) ORDER BY id DESC LIMIT 100`)
+        .all(scope.companyId, order.org_project_id, order.id, scope.siteId, scope.siteId).map(supplierView);
+    },
+    supplierReceive(scope, order, id, version, attach) {
+      return transaction(db, () => {
+        const r = db.prepare(`SELECT * FROM engg_vdr_items WHERE company_id = ? AND org_project_id = ? AND id IN (SELECT item_id FROM ptl_vdr_orders WHERE po_id = ?)
+          AND id = ? AND deleted_at IS NULL AND is_active = 1 AND (? IS NULL OR site_id IS NULL OR site_id = ?)`)
+          .get(scope.companyId, order.org_project_id, order.id, id, scope.siteId, scope.siteId);
+        if (!r || !['APPROVED', 'CLOSED'].includes(order.status)) throw notFound('That vendor document requirement is unavailable.');
+        if (r.version !== version) throw conflict('The document requirement changed. Reload the order.');
+        attach({ entity: 'engg_vdr_item', id: r.id, projectId: r.org_project_id, siteId: order.po_site_id });
+        receive({ user: `portal-supplier:${scope.accountId}`, companyId: scope.companyId }, r);
+        return supplierView(fresh(r.id));
+      });
     },
     /** The reviewer proposes the review code; the engineering manager approves it before the vendor is told. */
     review(actor, id, b) {
@@ -118,4 +179,19 @@ workflowTypes.register({
 evidenceProviders.register(VDR_DOC, ({ db, instance }) => {
   const r = vline(db, rid(instance.docId)); if (!r) return { sections: [] };
   return { sections: [{ code: 'engg-vdr', title: 'The vendor document', kind: 'metrics', items: [{ label: 'Item', value: `${r.vdr_no} ${r.title}`, format: 'text' }, { label: 'PO and vendor', value: `${r.po_ref} · ${r.vendor}`, format: 'text' }, { label: 'Due', value: r.due_date, format: 'text' }, { label: 'Submitted', value: r.submitted_on ?? '—', format: 'text' }, { label: 'Cycle', value: String(r.cycle_no), format: 'text' }, { label: 'Proposed code', value: r.pending_code ?? '—', format: 'text' }] }] };
+});
+
+fileEntities.register({
+  entity: 'engg_vdr_item',
+  label: 'Vendor document requirement',
+  resolve(db, actor, id) {
+    try {
+      const item = enggOf(db)?.vdr.get(actor, Number(id));
+      if (!item) return null;
+      return { companyId: actor.companyId, projectId: item.projectId, canView: true, canEdit: false, locked: true };
+    } catch (err) {
+      if (err.status === 403 || err.status === 404) return null;
+      throw err;
+    }
+  },
 });

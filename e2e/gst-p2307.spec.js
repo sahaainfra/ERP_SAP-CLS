@@ -52,14 +52,16 @@ async function world(request, code) {
 
 test('AC-01 an IRN from the worklist through the sandbox with its QR; an e-way bill for the invoice; the register and the settings on desktop and phone', async ({ browser, request }, info) => {
   test.setTimeout(240_000);
-  const phone = info.project.name === 'mobile'; const w = await world(request, phone ? 'GSM' : 'GSD');
+  const phone = info.project.name === 'mobile';
+  const code = phone ? 'IRNM' : 'IRND';
+  const w = await world(request, code);
   const acc = await as(browser, info, { user: w.acc, roles: 'ACCMGR', company: w.company });
   await acc.page.goto('/finance/e-invoices?tab=due');
   await expect(acc.page.getByTestId('gst-due-row')).toHaveCount(1);
   await acc.page.getByTestId(`gst-gen-${w.invoice}`).click();
   await expect(acc.page.getByTestId('gst-due')).toContainText('Every document has its IRN');
   await acc.page.getByTestId('gst-tab-einv').click();
-  await expect(acc.page.getByText(`36/26-27/${phone ? 'GSM' : 'GSD'}01`).first()).toBeVisible();
+  await expect(acc.page.getByText(`36/26-27/${code}01`).first()).toBeVisible();
   if (phone) await noOverflow(acc.page);
   await shot(acc.page, info, 'e-invoice-register');
   const list = await (await request.get('/api/v1/fin/einvoices', { headers: H('ACCMGR', w.company, w.acc) })).json(); expect(list.data[0].status).toBe('GENERATED');

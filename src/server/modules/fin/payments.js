@@ -515,8 +515,15 @@ export function createPaymentService({ db, base, gl, ap, vaultKey }) {
     },
     advicePdf(actor, id) {
       need(actor, 'fin.payment.print', 'print payment advices'); const v = payments.get(actor, id); audit(actor, 'pmt_payments', v.id, 'print', actor.companyId);
-      const rows = [['Payee', v.payee], ['Paid', `${money(paise(v.amount))} by ${v.mode}`], ['UTR / cheque', v.utr ?? v.chequeNo ?? ''], ['Date', v.paidOn ?? v.releasedOn], ['In words', amountInWords(v.amount)], ...(v.bill ? [['Your bill', `${v.bill.billNo ?? ''} of ${v.bill.billDate}`], ['Our reference', v.bill.docNo], ['Bill amount', money(paise(v.bill.total))], ['TDS deducted', `${money(paise(v.bill.tds))} ${v.bill.tdsSection ?? ''}`.trim()], ['Paid against it (all payments)', money(paise(v.bill.paid))]] : []), ['Payment reference', v.docNo]].map(([k, val]) => ({ k, v: String(val ?? '') }));
-      return { buffer: toPdf({ columns: [{ key: 'k', label: '', type: 'text' }, { key: 'v', label: '', type: 'text' }], rows, footer: ['Payment advice'], title: `Payment advice ${v.docNo}` }), contentType: 'application/pdf', fileName: `advice-${v.docNo.replaceAll('/', '-')}.pdf` };
+      return renderAdvice(v);
+    },
+    supplierAdvice(scope, id) {
+      const p = db.prepare(`SELECT * FROM pmt_payments WHERE company_id = ? AND partner_id = ?
+        AND id = ? AND pay_status = 'PAID' AND deleted_at IS NULL`).get(scope.companyId, scope.partnerId, id);
+      if (!p) throw notFound('That payment advice does not exist.');
+      const actor = { user: `portal-supplier:${scope.accountId}`, companyId: scope.companyId, roles: [] };
+      audit(actor, 'pmt_payments', p.id, 'supplier_advice', scope.companyId);
+      return renderAdvice(paymentView(actor, p, true));
     },
     exportCsv(actor, query = {}) { need(actor, 'fin.payment.export', 'export payments'); const l = payments.list(actor, { ...query, page: 1, pageSize: 100 }); audit(actor, 'pmt_payments', 0, 'export', actor.companyId, { reason: `${l.data.length} row(s)` }); return { contentType: 'text/csv; charset=utf-8', fileName: `payments-${todayIST()}.csv`, buffer: Buffer.from(`${String.fromCharCode(0xfeff)}${toCsv(['Payment', 'Payee', 'For', 'Mode', 'Amount', 'Released', 'Paid on', 'UTR', 'Cheque', 'From bank', 'Proposal', 'Status'], l.data.map((x) => [x.docNo, x.payee, x.kindLabel, x.mode, x.amount, x.releasedOn, x.paidOn ?? '', x.utr ?? '', x.chequeNo ?? '', x.bank, x.proposalNo, x.statusLabel]))}`, 'utf8') }; },
     /** The cheque register of a bank account: every cheque issued from its series, with its state. */
@@ -527,6 +534,10 @@ export function createPaymentService({ db, base, gl, ap, vaultKey }) {
       return { bank: { id: b.id, name: b.name, next: b.cheque_next_no, last: b.cheque_last_no, left: b.cheque_next_no != null ? Math.max(0, b.cheque_last_no - b.cheque_next_no + 1) : 0 }, rows, issued: rows.filter((r) => r.status === 'PENDING').length, cleared: rows.filter((r) => r.status === 'PAID').length, cancelled: rows.filter((r) => r.status === 'CANCELLED').length };
     },
   };
+  function renderAdvice(v) {
+    const rows = [['Payee', v.payee], ['Paid', `${money(paise(v.amount))} by ${v.mode}`], ['UTR / cheque', v.utr ?? v.chequeNo ?? ''], ['Date', v.paidOn ?? v.releasedOn], ['In words', amountInWords(v.amount)], ...(v.bill ? [['Your bill', `${v.bill.billNo ?? ''} of ${v.bill.billDate}`], ['Our reference', v.bill.docNo], ['Bill amount', money(paise(v.bill.total))], ['TDS deducted', `${money(paise(v.bill.tds))} ${v.bill.tdsSection ?? ''}`.trim()], ['Paid against it (all payments)', money(paise(v.bill.paid))]] : []), ['Payment reference', v.docNo]].map(([k, val]) => ({ k, v: String(val ?? '') }));
+    return { buffer: toPdf({ columns: [{ key: 'k', label: '', type: 'text' }, { key: 'v', label: '', type: 'text' }], rows, footer: ['Payment advice'], title: `Payment advice ${v.docNo}` }), contentType: 'application/pdf', fileName: `advice-${v.docNo.replaceAll('/', '-')}.pdf` };
+  }
   function paymentView(actor, p, detail = false) {
     const l = db.prepare('SELECT * FROM pmt_proposal_lines WHERE id = ?').get(p.line_id); const pr = db.prepare('SELECT doc_no FROM pmt_proposals WHERE id = ?').get(p.proposal_id); const b = bankRow(p.company_id, p.bank_account_id);
     const o = { id: p.id, docNo: p.doc_no, proposalId: p.proposal_id, proposalNo: pr?.doc_no, kind: l?.line_kind, kindLabel: LINE_KINDS[l?.line_kind], partnerId: p.partner_id, payee: p.payee_name, mode: p.pay_mode, bank: b?.name, amount: rs(p.amount_paise), releasedOn: p.released_on, paidOn: p.paid_on, utr: p.utr, chequeNo: p.cheque_no, status: p.pay_status, statusLabel: PAY_STATUS[p.pay_status], failureReason: p.failure_reason, journalId: p.journal_id, adviceAt: p.advice_at, adviceStatus: p.advice_status,

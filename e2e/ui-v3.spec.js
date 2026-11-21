@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackPageRequests } from './page-requests.js';
 import { registeredPages } from './pages.js';
 import { TEMPLATE_PERMISSIONS } from '../src/server/platform/authz/templates.js';
 
@@ -52,14 +53,15 @@ test('T-01 T-02 T-03 T-04 every registered page has the page header, no key figu
   const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: info.project.use.viewport, hasTouch: info.project.use.hasTouch });
   await context.addInitScript((v) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: 'light', density: 'comfortable', language: 'en' })); }, { user: 'e2e-allroles', roles: ROLES, company: String(c) });
   const page = await context.newPage();
+  const settled = trackPageRequests(page, { dataOnly: true });
   const phone = info.project.name === 'mobile';
   const problems = [];
   let tablesAsCards = 0; let tablesOptedOut = 0;
   for (const p of pages) {
     await page.goto(p.route);
     await expect(page.locator('main')).toBeVisible();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(150);
+    await expect(page.getByTestId('page-loading')).toHaveCount(0, { timeout: 30_000 });
+    await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${p.route}` }).toEqual([]);
     const f = await page.evaluate(facts);
     const at = `${p.route} @${phone ? 360 : 1280}`;
     if (f.denied) problems.push(`${at}: shows the no-access state, so its content was not checked`);

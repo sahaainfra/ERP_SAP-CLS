@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import { trackPageRequests } from './page-requests.js';
 
 // Development-header mode (port 3100). Part 03.09, FR-06 and T-03: the axe engine scans the component gallery and the key pages against WCAG 2.1 A and
 // AA, in the light, dark and high-contrast themes, on a desktop and a phone, and the run fails on any serious or critical finding. Moderate and minor
@@ -34,7 +35,9 @@ const open = async (browser, info, company, roles, user, path, theme = 'light') 
   const context = await browser.newContext({ baseURL, viewport, hasTouch });
   const page = await context.newPage();
   await page.addInitScript(([v, th]) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: th, density: 'comfortable', language: 'en' })); }, [{ user, roles, company: String(company) }, theme]);
+  const settled = trackPageRequests(page);
   await page.goto(path);
+  await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${path}` }).toEqual([]);
   return page;
 };
 /** The serious and critical findings on the page now, as readable lines; moderate and minor ones are only printed. */
@@ -46,7 +49,10 @@ async function scan(page, label) {
   if (minor.length) console.log(`[a11y] ${label}: ${minor.map((v) => `${v.impact} ${v.id}`).join(', ')}`);
   return result.violations.filter((v) => ['serious', 'critical'].includes(v.impact)).map(line);
 }
-const ready = async (page, heading) => { if (heading) await expect(page.getByRole('heading', { name: heading, level: 1 }).first()).toBeVisible(); else await expect(page.locator('main')).toBeVisible(); await page.waitForLoadState('networkidle'); await page.waitForTimeout(300); };
+const ready = async (page, heading) => {
+  if (heading) await expect(page.getByRole('heading', { name: heading, level: 1 }).first()).toBeVisible();
+  else await expect(page.locator('main')).toBeVisible();
+};
 
 test.afterEach(async ({ browser }) => { for (const c of browser.contexts()) await c.close(); });
 
@@ -105,7 +111,7 @@ test('FR-06 the open palette and the shortcut list have no serious or critical f
 test('FR-05 focus returns to what opened the palette, a person who asked for less motion gets none, and the focus ring is visible', async ({ browser, request }, info) => {
   test.setTimeout(90_000);
   const pm = pick(info, 'e2e-pm-fa', 'e2e-pm-fb');
-  const w = await world(request, pick(info, 'FAD', 'FAM'), pm);
+  const w = await world(request, pick(info, 'A11YFD', 'A11YFM'), pm);
   const page = await open(browser, info, w.company, 'PM', pm, '/home');
   await ready(page, 'Home');
   await page.emulateMedia({ reducedMotion: 'reduce' });

@@ -103,7 +103,9 @@ export function useLang() {
 /** t(key, params) for one area of text: `const t = useT('shell'); t('menu.open')`. Plural forms: t('bell.waiting', { count }). */
 export function useT(ns) {
   useSyncExternalStore(subscribe, snapshot);
-  if (!BUILT_IN.en[ns] && AREA_LOADERS[ns]) use(loadArea(ns)); // the area's English text is fetched once; the page shows its skeleton meanwhile
+  // Reuse the settled promise when React retries a suspended render.
+  const area = areaLoading[ns] ?? (!BUILT_IN.en[ns] && AREA_LOADERS[ns] ? loadArea(ns) : null);
+  if (area) use(area);
   const lang = active();
   return useMemo(() => {
     const tr = createTranslator({ catalogue: catalogue(), lang, onMissing: (l, n, k) => missingKeys.add(`${l}.${n}.${k}`) });

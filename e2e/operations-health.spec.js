@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { DatabaseSync } from 'node:sqlite';
 
 // Both viewport projects share one database, so each test uses its own company per project.
 const company = (info, desktop, mobile) => (info.project.name === 'desktop' ? desktop : mobile);
@@ -26,7 +27,13 @@ test('Operations Health: figures, objectives, alert rules, baseline; a forced er
   await expect(page.getByRole('heading', { name: 'Operations Health' })).toBeVisible();
   await expect(page).toHaveTitle(/Operations Health/);
   await expect(page.getByTestId('tile-rpm')).toBeVisible();
-  await expect(page.getByTestId('tile-dlq')).toHaveText('0');
+  const database = new DatabaseSync('data/e2e.sqlite', { readOnly: true });
+  try {
+    const { count } = database.prepare("SELECT COUNT(*) AS count FROM core_inbox WHERE status = 'DEAD'").get();
+    await expect(page.getByTestId('tile-dlq')).toHaveText(String(count));
+  } finally {
+    database.close();
+  }
   await expect(page.getByTestId('slo-login')).toBeVisible();
   await expect(page.getByTestId('slo-bill_calculation')).toContainText('Calculate a bill');
   await expect(page.getByTestId('no-open-alerts')).toBeVisible();

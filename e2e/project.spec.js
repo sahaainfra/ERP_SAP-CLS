@@ -58,8 +58,8 @@ test('AC-01 a project set up with the wizard, activated with approval, and moved
   test.setTimeout(240_000);
   const phone = info.project.name === 'mobile';
   const sfx = phone ? '-mobile' : '';
-  const c = await company(request, phone ? 'PRM' : 'PRD');
-  const t = phone ? 'prm' : 'prd';
+  const t = phone ? 'prjlm' : 'prjld';
+  const c = await company(request, t.toUpperCase());
   const g = seed(c, t);
   const shot = async (page, name) => { await page.waitForTimeout(400); await page.screenshot({ path: `${OUT}/${name}${sfx}.png`, fullPage: true }); };
   const code = phone ? 'NH48-M' : 'NH48-D';

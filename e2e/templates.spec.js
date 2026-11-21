@@ -48,7 +48,10 @@ test('AC-01 AC-02 FR-01 FR-03 BR-01 the library, a new version of the tax invoic
   await expect(sys.getByTestId('template-PO_STANDARD-1')).toBeVisible();
   await noOverflow(sys);
   await sys.getByLabel('Document type').first().selectOption('PAYSLIP');
-  await expect(sys.getByTestId('template-table').locator('tbody tr')).toHaveCount(1);
+  const templates = sys.getByTestId('template-table');
+  await expect(templates.getByRole('link', { name: 'PAYSLIP_STANDARD', exact: true })).toBeVisible();
+  await expect(templates.getByRole('link', { name: 'PAYSLIP_HI', exact: true })).toBeVisible();
+  await expect(sys.getByTestId('template-TAX_INVOICE_STANDARD-1')).toHaveCount(0);
   await sys.getByLabel('Document type').first().selectOption('TAX_INVOICE');
   await sys.getByRole('link', { name: 'TAX_INVOICE_STANDARD' }).click();
   await expect(sys.getByTestId('template-editor')).toBeVisible();

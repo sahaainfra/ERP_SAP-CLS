@@ -374,9 +374,13 @@ test('FR-02 AC-01 a master end to end: download, fill, upload, preview with the 
 test('FR-06 FR-05 the export of the history in xlsx, csv and pdf: the rows the person may see, formulas made inert; a person without the right gets nothing; an upload is idempotent', async () => {
   const t = await setup();
   try {
-    const r = await t.api.raw('POST', `${X}/jobs?type=ORG_DESIGNATION&fileName=${encodeURIComponent('=SUM(A1).xlsx')}`, { ...hr, headers: { 'content-type': XLSX, 'idempotency-key': 'xl-same-key-1' }, body: await book(t, hr, 'ORG_DESIGNATION', [{ code: 'SE-1', name: 'Site Engineer' }]) });
+    const uploadPath = `${X}/jobs?type=ORG_DESIGNATION&fileName=${encodeURIComponent('=SUM(A1).xlsx')}`;
+    const upload = { ...hr, headers: { 'content-type': XLSX, 'idempotency-key': 'xl-same-key-1' },
+      body: await book(t, hr, 'ORG_DESIGNATION', [{ code: 'SE-1', name: 'Site Engineer' }]) };
+    const r = await t.api.raw('POST', uploadPath, upload);
     assert.equal(r.status, 202);
-    const r2 = await t.api.raw('POST', `${X}/jobs?type=ORG_DESIGNATION&fileName=${encodeURIComponent('=SUM(A1).xlsx')}`, { ...hr, headers: { 'content-type': XLSX, 'idempotency-key': 'xl-same-key-1' }, body: await book(t, hr, 'ORG_DESIGNATION', [{ code: 'SE-1', name: 'Site Engineer' }]) });
+    const r2 = await t.api.raw('POST', uploadPath, upload);
+    assert.equal(r2.status, 202, JSON.stringify(r2.json));
     assert.equal(r2.json.data.id, r.json.data.id, 'the same Idempotency-Key makes the same job');
     assert.equal(t.api.db.prepare('SELECT COUNT(*) AS n FROM xl_jobs').get().n, 1);
     assert.equal((await t.api.raw('POST', `${X}/jobs?type=ORG_DESIGNATION&fileName=x.xlsx`, { ...hr, headers: { 'content-type': XLSX }, body: Buffer.from('x') })).status, 400, 'an Idempotency-Key is required');

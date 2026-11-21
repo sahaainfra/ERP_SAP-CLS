@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
+import { useSearch } from '../site/parts.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate } from './api.js';
 import { mm } from './api.js';
@@ -14,7 +15,9 @@ import { KpiRow } from '../../platform/design/Kpi.jsx';
 // and the reconciliation status; the work queues; the alerts. Company, project and store views are the same page with different filters. Every tile opens the records it counts; the server works every figure out from the ledgers.
 const pctText = (p) => (p == null ? '—' : `${p}%`);
 export default function MaterialsDashboardPage() {
-  const t = useT('inv'); usePageTitle(t('md.title')); const [f, setF] = useState({ projectId: '', storeId: '', from: '', to: '' }); const [open, setOpen] = useState(null);
+  const t = useT('inv'); usePageTitle(t('md.title')); const search = useSearch();
+  const [f, setF] = useState(() => ({ projectId: search.get('projectId') ?? '', storeId: '', from: '', to: search.get('to') ?? '' }));
+  const [open, setOpen] = useState(null);
   const q = useQuery({ queryKey: ['inv', 'mm-dash', f], queryFn: () => mm.dashboard(f), retry: false }); const tq = useQuery({ queryKey: ['inv', 'mm-tasks'], queryFn: mm.myTasks, retry: false });
   const dq = useQuery({ queryKey: ['inv', 'mm-drill', f, open], queryFn: () => mm.drill({ ...f, kind: open }), enabled: Boolean(open), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('md.title')} permission="inv.dashboard.view" />;

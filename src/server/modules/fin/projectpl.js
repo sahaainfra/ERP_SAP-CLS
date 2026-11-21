@@ -224,5 +224,21 @@ export function createProjectPlService({ db, base, flags }) {
       for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!on(c.id)) continue; const k = db.prepare("SELECT COUNT(DISTINCT l.project_id) AS n FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE j.company_id = ? AND j.status = 'APPROVED' AND l.project_id IS NOT NULL AND j.voucher_date BETWEEN ? AND ? AND NOT EXISTS (SELECT 1 FROM pl_snapshots s WHERE s.org_project_id = l.project_id AND s.period = ? AND s.status = 'APPROVED' AND s.deleted_at IS NULL)").get(c.id, `${last}-01`, monthEnd(last), last).n; if (!k) continue; n += 1; notify(c.id, 'fin.pl.alert', ['permission:fin.pl_snapshot.create'], last, 'P&L to freeze', `${k} project(s) have no frozen P&L snapshot for ${last}.`, '/finance/project-pl', `${c.id}-${last}`); }
       return { reminded: n }; },
   };
-  return { structure, pl, snapshots, portfolio, widget, jobs };
+  function* approvedMetricFacts(companyId, asOf, projectId = null) {
+    const facts = db.prepare(`SELECT * FROM (
+      SELECT s.org_project_id AS projectId, s.id AS sourceId, s.period AS sourcePeriod,
+        s.version AS sourceVersion, s.revenue_paise AS revenue, s.gross_profit_paise AS profit,
+        ROW_NUMBER() OVER (PARTITION BY s.org_project_id ORDER BY s.period DESC, s.id DESC) AS newest
+      FROM pl_snapshots s JOIN org_projects p ON p.id = s.org_project_id
+        AND p.company_id = s.company_id AND p.deleted_at IS NULL
+      WHERE s.company_id = :companyId AND s.period <= :period AND s.status = 'APPROVED'
+        AND s.frozen_at IS NOT NULL AND s.deleted_at IS NULL
+        ${projectId == null ? '' : 'AND s.org_project_id = :projectId'}
+    ) WHERE newest = 1`).iterate({ companyId, period: asOf.slice(0, 7), ...(projectId == null ? {} : { projectId }) });
+    for (const { revenue, profit, projectId: id, sourceId, sourcePeriod, sourceVersion } of facts) {
+      yield { projectId: id, sourceId, sourcePeriod, sourceVersion,
+        grossMargin: revenue ? Math.round((profit * 10000) / revenue) : null };
+    }
+  }
+  return { structure, pl, snapshots, portfolio, widget, jobs, approvedMetricFacts };
 }

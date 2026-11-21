@@ -7,14 +7,17 @@
  *     ctx = { db, actor, filters: { projectId, siteId, from, to }, params, ... }   what the framework hands every provider
  */
 const providers = new Map();
+const availability = new Map();
 
 export const widgetRegistry = {
-  register({ code, provider }) {
+  register({ code, provider, available = undefined }) {
     if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(code)) throw new Error(`Bad widget code ${code}`);
     if (providers.has(code)) throw new Error(`Widget ${code} is already registered`);
     providers.set(code, provider);
+    if (available) availability.set(code, available);
   },
   get: (code) => providers.get(code),
+  available: (code, db, actor) => availability.get(code)?.(db, actor) ?? true,
   codes: () => [...providers.keys()].sort(),
 };
 

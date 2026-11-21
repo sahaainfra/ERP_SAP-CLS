@@ -100,9 +100,16 @@ test('ITC review: eligible, held, blocked, override with a reason, reversal beyo
   assert.equal(gr.gstr3b.outward.tax, 90000); assert.equal(gr.gstr3b.payable, 81000);
   // D-738: head-wise set-off — CGST credit against CGST, SGST against SGST — the rest in cash; filed on time, no interest or late fee
   assert.deepEqual(gr.gstr3b.setOff.cash, { igst: 0, cgst: 40500, sgst: 40500 }); assert.deepEqual(gr.gstr3b.setOff.utilised.map((u) => [u.from, u.to, u.amount]), [['cgst', 'cgst', 4500], ['sgst', 'sgst', 4500]]);
-  assert.equal(gr.gstr3b.dueDate, '2026-11-20'); assert.equal(gr.gstr3b.daysLate, 0); assert.equal(gr.gstr3b.interest.amount, 0); assert.equal(gr.gstr3b.lateFee.total, 0); assert.equal(gr.gstr3b.totalDue, 81000);
   assert.equal((await w.call(U.acc, 'POST', '/gst-returns/prepare', { period: '2026-10', returnType: 'GSTR3B' })).status, 200);
-  assert.equal((await w.call(U.acc, 'POST', '/gst-returns/file', { period: '2026-10', returnType: 'GSTR3B', arn: 'AA3610260000001', filedOn: '2026-11-18' })).status, 200);
+  const filed = await w.call(U.acc, 'POST', '/gst-returns/file', { period: '2026-10', returnType: 'GSTR3B', arn: 'AA3610260000001', filedOn: '2026-11-18' });
+  assert.equal(filed.status, 200);
+  const { gstr3b } = filed.json.data;
+  assert.equal(gstr3b.dueDate, '2026-11-20');
+  assert.equal(gstr3b.filedOn, '2026-11-18');
+  assert.equal(gstr3b.daysLate, 0);
+  assert.equal(gstr3b.interest.amount, 0);
+  assert.equal(gstr3b.lateFee.total, 0);
+  assert.equal(gstr3b.totalDue, 81000);
   assert.equal((await w.call(U.acc, 'POST', '/gst-returns/prepare', { period: '2026-10', returnType: 'GSTR3B' })).status, 409, 'a filed return is not prepared again');
   assert.equal((await w.call(U.acc, 'GET', '/gst-returns/export?period=2026-10&returnType=GSTR1')).status, 200);
   // TDS: Form 140 for October 2026 (Income-tax Act 2025), 26Q for January 2026; challans; filed; the certificate (Form 131)

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { pageCode, registeredPages } from './pages.js';
+import { trackPageRequests } from './page-requests.js';
 
 // Development-header mode (port 3100). Part 03.10, FR-01, FR-02, FR-03, BR-02: every page of the application is opened by a super administrator and
 // checked against the machine-checkable part of the Page Completion Checklist: it draws inside the shell with one heading and a title, it ends loading,
@@ -40,6 +41,7 @@ test('FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completio
   const context = await browser.newContext({ baseURL, viewport: SIZES[2] });
   await context.addInitScript((v) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: 'light', density: 'comfortable', language: 'en' })); }, { user: 'e2e-super', roles: 'SUPADM', company: String(c) });
   const page = await context.newPage();
+  const settled = trackPageRequests(page, { dataOnly: true });
   const errors = [];
   page.on('console', (m) => m.type() === 'error' && !/Failed to load resource|status of (400|401|403|404|409|422)/.test(m.text()) && errors.push(`${page.url()} ${m.text()}`));
   page.on('pageerror', (e) => errors.push(`${page.url()} ${String(e)}`));
@@ -49,8 +51,8 @@ test('FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completio
       await page.setViewportSize(size);
       await page.goto(p.route);
       await expect(page.locator('main')).toBeVisible();
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(150);
+      await expect(page.getByTestId('page-loading')).toHaveCount(0, { timeout: 30_000 });
+      await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${p.route}` }).toEqual([]);
       const at = `${p.route} @${size.width}`;
       const facts = await page.evaluate(() => ({
         h1: document.querySelectorAll('main h1, #main h1').length, title: document.title, overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,

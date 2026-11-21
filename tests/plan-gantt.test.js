@@ -148,7 +148,12 @@ test('T-02 the programme of 1,000 activities is laid out legibly on A3 and A1 an
   const t = await boot(); const d = t.d;
   const ins = d.prepare("INSERT INTO plan_activities (company_id, schedule_id, code, name, wbs_id, act_type, duration_days, sort_order, project_id, created_by, source_type) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, 't', 't')");
   const link = d.prepare("INSERT INTO plan_dependencies (company_id, schedule_id, pred_id, succ_id, dep_type, lag_days, project_id, created_by) VALUES (1, ?, ?, ?, 'FS', 0, ?, 't')");
-  const ids = []; for (let i = 0; i < 1000; i += 1) ids.push(Number(ins.run(t.sid, `P${String(i).padStart(4, '0')}`, `Activity number ${i} with a long descriptive name for the programme`, [t.w11, t.w2][i % 2], i % 50 === 49 ? 'MILESTONE' : 'TASK', i % 50 === 49 ? 0 : 1 + (i % 4), i, t.pid).lastInsertRowid));
+  const ids = [];
+  for (let i = 0; i < 1000; i += 1) {
+    const name = `${i === 0 ? ' ' : ''}Activity number ${i} with a long descriptive name for the programme`;
+    ids.push(Number(ins.run(t.sid, `P${String(i).padStart(4, '0')}`, name, [t.w11, t.w2][i % 2], i % 50 === 49 ? 'MILESTONE' : 'TASK',
+      i % 50 === 49 ? 0 : 1 + (i % 4), i, t.pid).lastInsertRowid));
+  }
   for (let i = 1; i < 1000; i += 1) if (i % 3) link.run(t.sid, ids[i - 1], ids[i], t.pid);
   d.prepare('UPDATE plan_schedules SET activities_count = 1000, needs_calc = 1 WHERE id = ?').run(t.sid);
   assert.equal((await t.call(plan1, 'POST', `/schedules/${t.sid}/calculate`)).status, 200);

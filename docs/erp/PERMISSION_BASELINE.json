@@ -303,6 +303,9 @@
   "PROCIC",
   "PROCMGR"
  ],
+ "portal.account.manage": [
+  "SYSADM"
+ ],
  "proj.handover.manage": [
   "COMMGR",
   "EST",

@@ -1,0 +1,425 @@
+openapi: 3.1.0
+info:
+  title: ERP Reporting API
+  version: '1.0'
+  description: >
+    The catalogue requires ff.bi.p2701 and current company G1 and G2 sign-offs.
+    Project Status requires ff.proj.p1001 and proj.project.view.
+    The dataset and saved reports also require ff.bi.p2702. Exports require ff.ui.p0303 and proj.project.export.
+    Rows and project counts use the owning project register's company and project scope.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /bi/metrics/project-count:
+    get:
+      summary: Read the diagnostic project count by lifecycle
+      description: >
+        Requires ff.bi.p2703, ff.bi.p2702, ff.bi.p2701, ff.proj.p1001, both company sign-offs and proj.project.view.
+        The result covers the current visible project register and includes its current certification state. The endpoint accepts no query parameters.
+      responses:
+        '200':
+          description: Live scoped project count with source lineage
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [code, name, certified, unit, definition, lineage, evaluatedAt, value, byLifecycle]
+                    properties:
+                      code: { const: project-count }
+                      name: { type: string }
+                      certified: { type: boolean }
+                      unit: { const: projects }
+                      definition: { type: string }
+                      lineage:
+                        type: object
+                        required: [dataset, datasetVersion, source, groupedBy]
+                        properties:
+                          dataset: { const: project-status }
+                          datasetVersion: { type: integer, minimum: 1 }
+                          source: { const: proj.projects }
+                          groupedBy: { const: lifecycle_state }
+                      evaluatedAt: { type: string, format: date-time }
+                      value: { type: integer, minimum: 0 }
+                      byLifecycle:
+                        type: array
+                        items:
+                          type: object
+                          required: [code, label, count]
+                          properties:
+                            code: { type: string }
+                            label: { type: string }
+                            count: { type: integer, minimum: 1 }
+        '400': { description: Unexpected query parameter }
+        '403': { description: Project view permission required }
+        '404': { description: Metric or source unavailable }
+  /bi/metrics:
+    get:
+      summary: Read the Project Count catalogue entry, monthly observations and capture quality
+      responses:
+        '200': { description: 'Metric definition, scoped counts, capture history and permitted actions' }
+        '403': { description: Catalogue view permission required }
+        '404': { description: Metric or source unavailable }
+  /bi/metrics/domains:
+    get:
+      summary: List available project metrics from Site Progress, Finance, Stores and HSE
+      description: >-
+        Requires the company BI gates and catalogue view permission. Each source must be enabled.
+        Company certification reviewers can see definitions without source permission.
+      responses:
+        '200': { description: 'Definitions, formula, owner, refresh cadence, lineage, certification and read access' }
+        '403': { description: Catalogue view permission required }
+        '404': { description: BI catalogue unavailable }
+  /bi/metrics/domains/{code}:
+    get:
+      summary: Read a project metric and its latest 24 observed months
+      description: >-
+        Without projectId the response includes up to 50 projects in the intersection of catalogue and source read scopes.
+        SPI uses site.period.view. CPI also requires site.period.cost. EAC uses fin.forecast.view.
+        Gross margin requires fin.pl.view and fin.pl_snapshot.view. DSO uses fin.invoice.view.
+        Stock turns uses inv.dashboard.view and inv.stock.values. LTIFR uses hse.dashboard.view.
+        Stock turns and LTIFR require scope covering the whole project, including its sites.
+        Record observations contain the source record, date and revision. Aggregate observations identify the project,
+        evaluation date and calculation version and link to the source report.
+        Null values indicate missing source figures or a missing denominator. An absent live observation means the project has no eligible source record.
+      parameters:
+        - { in: path, name: code, required: true, schema: { type: string, enum: [spi, cpi, eac, gross-margin, dso, stock-turns, ltifr] } }
+        - { in: query, name: projectId, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: search, schema: { type: string, maxLength: 80 } }
+      responses:
+        '200': { description: Definition and scoped project choices or project metric and lineage }
+        '400': { description: Invalid query }
+        '403': { description: Required source or catalogue permissions are missing }
+        '404': { description: Project or source unavailable }
+  /bi/metrics/domains/{code}/export:
+    get:
+      summary: Export monthly observations for a certified project metric
+      description: Requires catalogue, source view and source export permission for the selected project. The file includes retained source lineage.
+      parameters:
+        - { in: path, name: code, required: true, schema: { type: string, enum: [spi, cpi, eac, gross-margin, dso, stock-turns, ltifr] } }
+        - { in: query, name: 'filter[projectId]', required: true, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: format, schema: { type: string, enum: [csv, xlsx, pdf], default: csv } }
+      responses:
+        '200': { description: Audited history file }
+        '202': { description: History export queued }
+        '403': { description: Required export or source view permissions are missing }
+        '404': { description: Project, certification or source unavailable }
+  /bi/metrics/domain-quality:
+    get:
+      summary: Read current capture freshness and completeness by metric
+      description: >-
+        Company snapshot operators see the observed row count and null count for the latest capture.
+        Quality reconciles both counts to stored rows. A captured source with no rows is reported as NO_DATA.
+      responses:
+        '200': { description: Captures and quality indicators for enabled sources }
+        '403': { description: Company snapshot operator permission required }
+        '404': { description: BI catalogue unavailable }
+  /bi/metrics/snapshots:
+    post:
+      summary: Queue a capture of the current month
+      parameters: &metric_idempotency
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      responses:
+        '202': { description: Snapshot job accepted }
+        '403': { description: Company snapshot operator permission required }
+        '404': { description: Metric source unavailable }
+  /bi/metrics/history/export:
+    get:
+      summary: Export certified monthly observations under the intersection of project view and export scopes
+      parameters:
+        - { in: query, name: format, schema: { type: string, enum: [csv, xlsx, pdf], default: csv } }
+      responses:
+        '200': { description: History export }
+        '202': { description: History export queued }
+        '403': { description: Project view and export permission required }
+        '404': { description: Certification or required feature unavailable }
+  /bi/metrics/certifications:
+    get:
+      summary: Read recent certification requests and approval history
+      parameters:
+        - { in: query, name: code, schema: { type: string, enum: [project-count, spi, cpi, eac, gross-margin, dso, stock-turns, ltifr], default: project-count } }
+      responses:
+        '200': { description: Recent certification requests and decisions }
+        '403': { description: Company metric certification permission required }
+    post:
+      summary: Submit a request to certify or revoke a metric
+      parameters: *metric_idempotency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [certify, reason]
+              properties:
+                code: { type: string, enum: [project-count, spi, cpi, eac, gross-margin, dso, stock-turns, ltifr], default: project-count }
+                certify: { type: boolean }
+                reason: { type: string, minLength: 5, maxLength: 500 }
+      responses:
+        '201': { description: Certification request submitted }
+        '409': { description: Existing certification status or pending review conflicts }
+  /bi/metrics/certifications/{id}/act:
+    post:
+      summary: Decide a certification request as an independent reviewer
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer, minimum: 1 } }
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action, version]
+              properties:
+                action: { type: string, enum: [approve, reject, return] }
+                version: { type: integer, minimum: 1 }
+                comment: { type: string, maxLength: 500, description: At least five characters for rejection or return. }
+      responses:
+        '200': { description: Recorded decision and updated request }
+        '403': { description: Independent company reviewer required }
+        '404': { description: Request or metric unavailable }
+        '409': { description: Request or metric version changed }
+  /bi/reports:
+    get:
+      summary: List reports available to the current user
+      responses:
+        '200':
+          description: Report descriptors with code, module, title and either an owner route or supported export formats.
+        '404': { description: Report catalogue unavailable }
+  /bi/reports/project-status:
+    get:
+      summary: Run Project Status
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, enum: [10, 25, 50, 100, 200] } }
+        - { name: 'filter[state]', in: query, schema: { type: string } }
+      responses:
+        '200': { description: A page of Project Status rows with pagination metadata in data }
+        '400': { description: Invalid parameter }
+        '403': { description: Project view permission required }
+        '404': { description: Project Status unavailable }
+  /bi/reports/project-status/export:
+    get:
+      summary: Export the filtered Project Status report
+      parameters:
+        - { name: format, in: query, schema: { type: string, enum: [csv, xlsx, pdf], default: csv } }
+        - { name: 'filter[state]', in: query, schema: { type: string } }
+      responses: &exportResponses
+        '200':
+          description: Report attachment
+          content:
+            text/csv: {}
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {}
+            application/pdf: {}
+        '202': { description: Export job queued for the requester in My Exports }
+        '400': { description: Invalid parameter }
+        '403': { description: Project view and export permissions required }
+        '404': { description: Report unavailable }
+  /bi/datasets/project-status:
+    get:
+      summary: Read Project Status dataset version, fields, lifecycle values and grouping options
+      responses:
+        '200': { description: Versioned dataset descriptor in data }
+        '403': { description: Project view permission required }
+        '404': { description: Dataset unavailable }
+  /bi/datasets/project-status/preview:
+    post:
+      summary: Preview selected fields and optionally count projects by lifecycle or approval status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                fields: { $ref: '#/components/schemas/ProjectFields' }
+                page: { type: integer, minimum: 1 }
+                pageSize: { type: integer, enum: [10, 25, 50, 100, 200] }
+                'filter[state]': { type: string }
+                groupBy: { type: string, enum: [state, status] }
+      responses:
+        '200': { description: 'Selected fields, a page of rows and pagination in data, with optional counts across the filtered scope' }
+        '400': { description: Invalid preview }
+        '403': { description: Project view permission required }
+        '404': { description: Dataset unavailable }
+  /bi/datasets/project-status/export:
+    get:
+      summary: Export only the selected project fields
+      parameters:
+        - { name: format, in: query, schema: { type: string, enum: [csv, xlsx, pdf], default: csv } }
+        - { name: 'filter[state]', in: query, schema: { type: string } }
+        - name: fields
+          in: query
+          required: true
+          style: form
+          explode: false
+          schema: { $ref: '#/components/schemas/ProjectFields' }
+      responses: *exportResponses
+  /bi/custom-reports:
+    get:
+      summary: List personal and role-shared report definitions in the current company
+      responses:
+        '200': { description: Visible reports with ownership and version in data }
+        '404': { description: Report builder unavailable }
+    post:
+      summary: Create a saved report
+      parameters:
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportInput' }
+      responses:
+        '201': { description: Saved report in data }
+        '400': { description: Invalid configuration }
+        '403': { description: Sharing requires ui.view.share }
+        '404': { description: Report builder unavailable }
+        '409': { description: Duplicate report name or idempotency conflict }
+  /bi/custom-reports/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    put:
+      summary: Update an owned report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/ReportInput' }
+                - { required: [version] }
+      responses:
+        '200': { description: Updated report with its new version in data }
+        '400': { description: Invalid configuration }
+        '403': { description: Sharing requires ui.view.share }
+        '404': { description: Report unavailable to the requester }
+        '409': { description: Stale report version }
+    delete:
+      summary: Delete an owned report
+      parameters:
+        - { name: version, in: query, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200': { description: Deletion result in data }
+        '404': { description: Report unavailable to the requester }
+        '409': { description: Stale report version }
+  /bi/subscriptions:
+    get:
+      summary: List the signed-in company's user's subscriptions, eligible saved reports, recent runs and delivery status
+      responses:
+        '200': { description: Subscription records and up to 50 recent runs }
+        '403': { description: Active company account and project export permission required }
+        '404': { description: Report subscriptions unavailable }
+    post:
+      summary: Create a personal scheduled report at 08:00 IST
+      parameters:
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubscriptionInput' }
+      responses:
+        '201': { description: Subscription created }
+        '400': { description: Invalid subscription settings }
+        '409': { description: Duplicate subscription name }
+  /bi/subscriptions/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    put:
+      summary: Edit a personal report subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/SubscriptionInput' }
+                - { required: [version] }
+      responses:
+        '200': { description: Updated subscription }
+        '404': { description: Subscription unavailable to caller }
+        '409': { description: Stale version or duplicate name }
+    patch:
+      summary: Pause or resume a personal subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [status, version]
+              properties:
+                status: { type: string, enum: [ACTIVE, PAUSED] }
+                version: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: Updated subscription }
+        '404': { description: Subscription unavailable to caller }
+        '409': { description: Stale version }
+    delete:
+      summary: Remove a personal subscription and retain history
+      parameters:
+        - { name: version, in: query, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200': { description: Removed }
+        '404': { description: Subscription unavailable to caller }
+        '409': { description: Stale version }
+  /bi/usage:
+    get:
+      summary: Summarize audited BI exports and scheduled run outcomes for the current company
+      parameters:
+        - { name: days, in: query, schema: { type: string, enum: ['7', '30', '90'], default: '30' } }
+      responses:
+        '200': { description: Aggregate counts for the chosen period }
+        '403': { description: Company-wide audit view permission required }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    ProjectFields:
+      type: array
+      uniqueItems: true
+      minItems: 1
+      maxItems: 8
+      items: { type: string, enum: [projectId, code, name, state, stateLabel, status, statusLabel, health] }
+    ReportInput:
+      type: object
+      additionalProperties: false
+      required: [name, fields]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        fields: { $ref: '#/components/schemas/ProjectFields' }
+        state: { type: string }
+        groupBy: { type: string, enum: ['', state, status] }
+        shared: { type: boolean, default: false }
+        roles:
+          type: array
+          description: At least one role is required when shared is true.
+          maxItems: 20
+          items: { type: string, pattern: '^[A-Z][A-Z0-9-]{1,19}$' }
+        version: { type: integer, minimum: 1 }
+
+    SubscriptionInput:
+      type: object
+      additionalProperties: false
+      description: Omit savedReportId to schedule Project Status. Saved reports use their own lifecycle filter and approved fields.
+      required: [name, frequency, format, channel]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        savedReportId: { type: integer, minimum: 1 }
+        state: { type: string, maxLength: 80 }
+        frequency: { type: string, enum: [DAILY, WEEKLY, MONTHLY] }
+        format: { type: string, enum: [csv, xlsx, pdf] }
+        channel: { type: string, enum: [IN_APP, EMAIL, WHATSAPP] }
+        version: { type: integer, minimum: 1 }

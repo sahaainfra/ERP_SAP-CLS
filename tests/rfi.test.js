@@ -2,6 +2,7 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import '../src/server/modules/registry.js';
 import { rfiConstraintsOf } from '../src/server/modules/engg/rfis.js';
+import { runtimeOf } from '../src/server/platform/runtime/index.js';
 import { setupCompany, startApi } from './helpers.js';
 
 // Part 11.02: RFI management. T-01 ball in court and ageing are right and a time-impact answer makes a delay-register draft (BR-02). Also: the issue approval (the design coordinator, never the sender), the answer and its rules (a design change names its
@@ -40,6 +41,46 @@ const issue = async (t, over = {}) => {
   await t.act(des, s.json.data.issueWorkflowId);
   return (await t.call(se1, 'GET', `/rfis/${c.json.data.id}`)).json.data;
 };
+
+test('FR-04 the daily RFI sweep respects the company flag and escalates an overdue RFI only once', async () => {
+  const t = await setup();
+  const { db } = t.api;
+  const { jobs, scheduler } = runtimeOf(db);
+  const draft = await issue(t);
+  db.prepare('UPDATE engg_rfis SET issued_on = ? WHERE id = ?').run(plus(-6), draft.id);
+  const designerRole = db.prepare("SELECT id FROM iam_roles WHERE code = 'DESIGN' AND company_id IS NULL").get().id;
+  for (const [username, projectId] of [['rdes-project', t.a], ['rdes-other', t.b]]) {
+    const userId = db.prepare("INSERT INTO iam_users (company_id, username, display_name, roles_json) VALUES (1, ?, ?, '[]')")
+      .run(username, username).lastInsertRowid;
+    db.prepare(`INSERT INTO iam_assignments (company_id, user_id, role_id, scope_type, scope_ids_json, status)
+      VALUES (1, ?, ?, 'PROJECT', ?, 'ACTIVE')`).run(userId, designerRole, JSON.stringify([projectId]));
+  }
+  const schedule = scheduler.list().find((entry) => entry.code === 'engg.rfi_sweep_morning');
+  assert.equal(schedule?.cron, '0 8 * * *');
+  const disable = db.prepare(`INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled)
+    VALUES ('ff.engg.p1102', 1, 'Disabled in the test company', 0, 0)`).run().lastInsertRowid;
+
+  const runSchedule = async (millis) => {
+    const due = new Date(Date.now() - millis).toISOString();
+    db.prepare('UPDATE core_schedules SET next_run_at = ? WHERE id = ?').run(due, schedule.id);
+    scheduler.tick();
+    const { id } = db.prepare('SELECT id FROM core_jobs WHERE schedule_code = ? AND scheduled_for = ?').get(schedule.code, due);
+    await jobs.drain();
+    const job = jobs.get(id);
+    assert.equal(job.status, 'SUCCEEDED');
+    return job.result;
+  };
+  assert.deepEqual(await runSchedule(60_000), { escalated: 0 });
+  db.prepare('UPDATE core_feature_flags SET enabled = 1 WHERE id = ?').run(disable);
+  assert.deepEqual(await runSchedule(120_000), { escalated: 1 });
+  assert.deepEqual(await runSchedule(180_000), { escalated: 0 });
+  const record = (await t.call(des, 'GET', `/rfis/${draft.id}`)).json.data;
+  assert.equal(record.routing.filter((entry) => entry.event === 'ESCALATED').length, 1);
+  const notices = db.prepare(`SELECT user_ref, project_id FROM ntf_notifications
+    WHERE template_code = 'engg.rfi.overdue' ORDER BY user_ref`).all();
+  assert.deepEqual(notices.map((n) => [n.user_ref, n.project_id]), [['rdes-project', t.a], ['rdes1', t.a], ['rdes2', t.a], ['rse1', t.a]]);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM core_outbox WHERE event_type = 'engg.rfi.escalated'").get().n, 1);
+});
 
 test('T-01 ball in court, ageing and the SLA are right; the answer with a time impact makes a delay draft; escalation once', async () => {
   const t = await setup();

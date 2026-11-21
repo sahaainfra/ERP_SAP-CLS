@@ -39,7 +39,7 @@ export const parseVersionBody = (b) => parse(z.object({ version: z.number().int(
  * empty scope means everyone in the company who can open the list). A person sees their own and the shared ones aimed at them, never
  * another person's personal view. One default per person and list. Changes are audited (they are configuration a team relies on).
  */
-export function createSavedViewService({ db }) {
+export function createSavedViewService({ db, managedList = '' }) {
   const authz = authzOf(db);
   const present = (r, actor) => ({ id: r.id, list: r.list_code, name: r.name, isShared: r.is_shared === 1, shareScope: JSON.parse(r.share_scope_json), isDefault: r.is_default === 1, config: JSON.parse(r.config_json), owner: r.owner_ref, mine: r.owner_ref === actor.user, version: r.version, updatedAt: r.updated_at ?? r.created_at });
   const reaches = (actor, scope) => {
@@ -53,11 +53,12 @@ export function createSavedViewService({ db }) {
   const rowOf = (actor, id) => {
     const r = db.prepare('SELECT * FROM ui_saved_views WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(id, actor.companyId);
     if (!r || (r.owner_ref !== actor.user && !(r.is_shared === 1 && reaches(actor, JSON.parse(r.share_scope_json))))) throw notFound('That view does not exist.');
+    if (listRegistry.get(r.list_code)?.managedViews && r.list_code !== managedList) throw notFound('That view does not exist.');
     return r;
   };
   const checkList = (code, config) => {
     const def = listRegistry.get(code);
-    if (!def) throw badRequest('Some fields are invalid.', [{ field: 'list', message: `There is no list called ${code}.` }]);
+    if (!def || (def.managedViews && code !== managedList)) throw badRequest('Some fields are invalid.', [{ field: 'list', message: `There is no list called ${code}.` }]);
     if (!config) return;
     const keys = new Set(Object.keys(def.columns));
     const bad = [...config.columns, ...config.hidden, ...Object.keys(config.widths), ...config.filters.map((f) => f.key)].find((k) => !keys.has(k));
@@ -126,11 +127,17 @@ export function createSavedViewService({ db }) {
  * the same query and masks as its screen. Up to `core.export.max_rows` the file comes back at once; above it a job writes the file and
  * the person finds it under My Exports (and the event ui.export.completed is published). Every export is audited by the export guard.
  */
-export function createExportService({ db, storagePath, jobs }) {
+export function createExportService({ db, storagePath, jobs, devHeaders = false }) {
   const guard = createExportGuard({ db, approvals: null });
   const sources = new Map();
+  const downloadChecks = new Map();
+  const sourceParameters = new Map();
   const dir = join(storagePath, 'exports');
   const fileOf = (key) => join(dir, key);
+  const currentAccount = ({ userId, user, companyId }) => db.prepare(`SELECT roles_json FROM iam_users
+    WHERE id = ? AND username = ? AND (company_id = ? OR company_id IS NULL)
+      AND status = 'ACTIVE' AND is_active = 1 AND deleted_at IS NULL`).get(userId, user, companyId);
+  const changed = () => forbidden('Your report access changed. Request a new export.');
   const present = (r) => ({ id: r.id, list: r.list_code, format: r.format, status: r.status, rows: r.rows_written || r.rows_planned, fileName: r.file_name, bytes: r.bytes, error: r.error, createdAt: r.created_at, finishedAt: r.finished_at, expiresAt: r.expires_at, filters: JSON.parse(r.query_json) });
 
   function build(actor, code, req, format) {
@@ -145,19 +152,24 @@ export function createExportService({ db, storagePath, jobs }) {
   }
 
   const service = {
-    register(code, source) { sources.set(code, source); },
+    register(code, source, { checkAccess = undefined, parameters = [] } = {}) {
+      sources.set(code, source);
+      if (checkAccess) downloadChecks.set(code, checkAccess);
+      if (parameters.length) sourceParameters.set(code, parameters);
+    },
 
     /** Export now, or queue a job when the export is larger than a direct download may be. */
-    start(actor, code, query) {
+    start(actor, code, query, { queued = false } = {}) {
       const src0 = sources.get(code) ?? listExports.source(code);
       if (!src0) throw notFound(`There is no export for ${code}.`);
       const def = listRegistry.get(code);
-      const req = parseListRequest(def, query, { extra: ['format'] });
+      const parameters = sourceParameters.get(code) ?? [];
+      const req = parseListRequest(def, query, { extra: ['format', ...parameters] });
       const format = String(req.format ?? 'csv');
       if (!FORMATS[format]) throw badRequest('Some fields are invalid.', [{ field: 'format', message: 'Use xlsx, csv or pdf' }]);
       const src = src0(actor, req);
       const count = src.count();
-      const background = count > guard.maxRows(actor.companyId);
+      const background = queued || count > guard.maxRows(actor.companyId);
       guard.authorize(actor, { report: code, permission: src.permission, rows: count, personal: Boolean(src.personal), filters: filtersOf(req), anywhere: true, background });
       if (!background) {
         const out = build(actor, code, req, format);
@@ -165,8 +177,13 @@ export function createExportService({ db, storagePath, jobs }) {
         return { kind: 'file', ...out, contentType: FORMATS[format] };
       }
       return transaction(db, () => {
+        const savedQuery = queryOf(req);
+        for (const parameter of parameters) {
+          if (req[parameter] !== undefined) savedQuery[parameter] = req[parameter];
+        }
+        const scope = downloadChecks.get(code)?.(actor, savedQuery);
         const id = Number(db.prepare("INSERT INTO ui_export_jobs (company_id, user_id, user_ref, list_code, format, query_json, actor_json, status, rows_planned, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'QUEUED', ?, ?, 'list_export')")
-          .run(actor.companyId, actor.userId ?? null, actor.user, code, format, JSON.stringify(queryOf(req)), JSON.stringify({ user: actor.user, userId: actor.userId ?? null, roles: actor.roles ?? [], companyId: actor.companyId }), count, actor.user).lastInsertRowid);
+          .run(actor.companyId, actor.userId ?? null, actor.user, code, format, JSON.stringify(savedQuery), JSON.stringify({ user: actor.user, userId: actor.userId ?? null, roles: actor.roles ?? [], companyId: actor.companyId, scope }), count, actor.user).lastInsertRowid);
         const job = jobs.enqueue('ui.export', { exportId: id }, { createdBy: actor.user, companyId: actor.companyId });
         db.prepare('UPDATE ui_export_jobs SET job_id = ? WHERE id = ?').run(job.id, id);
         writeAudit(db, { entity: 'ui_export_jobs', entityId: id, action: 'queue', newValues: { list: code, format, rows: count, filters: filtersOf(req) }, actor: actor.user, companyId: actor.companyId });
@@ -180,9 +197,18 @@ export function createExportService({ db, storagePath, jobs }) {
       const r = db.prepare('SELECT * FROM ui_export_jobs WHERE id = ?').get(exportId);
       if (!r || r.status === 'DONE') return { skipped: true };
       db.prepare("UPDATE ui_export_jobs SET status = 'RUNNING', updated_at = ? WHERE id = ?").run(nowIso(), exportId);
-      const actor = authzOf(db).enrich(JSON.parse(r.actor_json));
       try {
-        const req = parseListRequest(listRegistry.get(r.list_code), { ...JSON.parse(r.query_json), pageSize: '25' });
+        const check = downloadChecks.get(r.list_code);
+        const savedActor = JSON.parse(r.actor_json);
+        if (check && savedActor.userId != null) {
+          const account = currentAccount(savedActor);
+          if (!account) throw changed();
+          savedActor.roles = JSON.parse(account.roles_json);
+        }
+        const actor = authzOf(db).enrich(savedActor);
+        const savedQuery = JSON.parse(r.query_json);
+        if (check && check(actor, savedQuery) !== actor.scope) throw changed();
+        const req = parseListRequest(listRegistry.get(r.list_code), { ...savedQuery, pageSize: '25' }, { extra: sourceParameters.get(r.list_code) ?? [] });
         const out = build(actor, r.list_code, req, r.format);
         mkdirSync(dir, { recursive: true });
         const key = `${r.company_id}-${r.id}-${Date.now().toString(36)}.${r.format}`;
@@ -204,10 +230,29 @@ export function createExportService({ db, storagePath, jobs }) {
       return db.prepare('SELECT * FROM ui_export_jobs WHERE company_id = ? AND user_ref = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 50').all(actor.companyId, actor.user).map(present);
     },
 
-    /** The file of a finished export, for the person who asked only. */
-    download(actor, id) {
+    checkAccess(actor, id) {
       const r = db.prepare('SELECT * FROM ui_export_jobs WHERE id = ? AND company_id = ? AND user_ref = ? AND deleted_at IS NULL').get(id, actor.companyId, actor.user);
       if (!r) throw notFound('That export does not exist.');
+      const check = downloadChecks.get(r.list_code);
+      if (!check) return r;
+      const { scope } = JSON.parse(r.actor_json);
+      const savedQuery = JSON.parse(r.query_json);
+      if (r.user_id != null && r.user_id !== actor.userId) {
+        if (!devHeaders || actor.userId != null) throw notFound('That export does not exist.');
+        const identified = { ...actor, userId: r.user_id };
+        const account = currentAccount(identified);
+        if (!account) throw notFound('That export does not exist.');
+        const authz = authzOf(db);
+        if (check(authz.enrich({ ...identified, roles: JSON.parse(account.roles_json) }), savedQuery) !== scope) throw changed();
+        actor = authz.enrich(identified);
+      }
+      if (check(actor, savedQuery) !== scope) throw changed();
+      return r;
+    },
+
+    /** The file of a finished export, for the person who asked only. */
+    download(actor, id) {
+      const r = service.checkAccess(actor, id);
       if (r.status !== 'DONE') throw unprocessable(r.status === 'FAILED' ? `That export failed: ${r.error}` : 'That export is not ready yet.');
       if (r.expires_at && r.expires_at < nowIso()) throw unprocessable('That export has expired (exports are kept for 7 days). Export again.');
       writeAudit(db, { entity: 'ui_export_jobs', entityId: id, action: 'download', newValues: { list: r.list_code, rows: r.rows_written }, actor: actor.user, companyId: actor.companyId });

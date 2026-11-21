@@ -78,6 +78,10 @@ export const parseSbUpdate = (b) => defined(parse(z.object({ ...Object.fromEntri
 // ---- part 22.06: vendor invoices and the invoice hub ----
 const viLine = z.object({ poLineId: oid, description: opt(300), uom: opt(20), hsn: opt(12), qty: z.number().gt(0).max(1e10), rate: z.number().min(0).max(1e10), gstPct: z.number().min(0).max(100) }).strict();
 const viBase = { projectId: oid, siteId: oid, invoiceKind: z.enum(['PO', 'SERVICE', 'HIRE']).default('PO'), vendorId: id, poId: oid, serviceEntryId: oid, hireBillId: oid, vendorGstin: z.string().trim().toUpperCase().regex(/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/, 'Not a valid GSTIN').nullish().transform((x) => x || null), invoiceNo: text(40).min(1, 'Give the invoice number'), invoiceDate: day, source: z.enum(['MANUAL', 'PORTAL', 'EMAIL', 'OCR']).default('MANUAL'), declaredTotal: z.number().min(0).max(1e12).nullish().transform((x) => x ?? null), irn: z.string().regex(/^[0-9a-fA-F]{64}$/, 'The IRN has 64 hexadecimal characters').nullish().transform((x) => x || null), overrideReason: opt(500), notes: opt(2000), lines: z.array(viLine).min(1, 'Add at least one line').max(500) };
+export const parseSupplierInvoice = (b) => parse(z.object({
+  invoiceNo: viBase.invoiceNo, invoiceDate: viBase.invoiceDate, vendorGstin: viBase.vendorGstin,
+  declaredTotal: z.number().min(0).max(1e12), lines: viBase.lines,
+}).strict(), b);
 export const parseViCreate = (b) => parse(z.object(viBase).strict(), b ?? {});
 export const parseViPreview = (b) => parse(z.object(Object.fromEntries(Object.entries(viBase).filter(([k]) => !['overrideReason', 'notes', 'irn', 'source', 'siteId'].includes(k)))).strict(), b ?? {});
 export const parseViUpdate = (b) => defined(parse(z.object({ invoiceNo: text(40).min(1).optional(), invoiceDate: day.optional(), vendorGstin: viBase.vendorGstin.optional(), declaredTotal: viBase.declaredTotal.optional(), irn: viBase.irn.optional(), overrideReason: viBase.overrideReason.optional(), notes: viBase.notes.optional(), lines: viBase.lines.optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));

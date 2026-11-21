@@ -229,12 +229,13 @@ export function ReceivablesPage() {
   return (
     <section aria-labelledby="ars-h" data-testid="ar-receivables"><PageHeader id="ars-h" title={t('ar.title')} subtitle={t('ar.intro')} meta={<Link to="/finance/collections">{t('ar.collections')}</Link>} actions={can(session.data, 'fin.receipt.create') ? <button type="button" className="btn btn-primary" style={big} onClick={() => navigateTo('/finance/receivables?new=receipt')} data-testid="ar-new-receipt">{t('ar.newReceipt')}</button> : null} />
       <AgeingTiles />
-      <Tabs tabs={[['invoices', t('ar.title')], ['receipts', t('ar.receipts')], ['notes', t('ar.creditNotes')]]} tab={tab} setTab={setTab} label={t('ar.title')} prefix="ar-tab" />
+      <Tabs tabs={[['invoices', t('ar.title')], ['receipts', t('ar.receipts')], ['notes', t('ar.creditNotes')], ['ageing', t('ar.ageingDso')]]} tab={tab} setTab={setTab} label={t('ar.title')} prefix="ar-tab" />
       {tab === 'invoices' && <ListReport listCode="fin.ar_invoices" endpoint="/fin/invoices" title={t('ar.title')} session={session.data} rowHref={(r) => `/finance/receivables?id=${r.id}`} onOpen={(r) => navigateTo(`/finance/receivables?id=${r.id}`)} cardFields={['invoiceNo', 'client', 'dueDate', 'balance', 'overdue', 'status']} statusKey="status" dateKey="dueDate"
         newAction={{ label: t('ar.newIncome'), permission: 'fin.invoice.create', onClick: () => navigateTo('/finance/receivables?new=income') }} empty={{ title: t('ar.emptyTitle'), text: t('ar.emptyBody') }} />}
       {tab === 'receipts' && <ListReport listCode="fin.ar_receipts" endpoint="/fin/receipts" title={t('ar.receipts')} session={session.data} rowHref={(r) => `/finance/receivables?receipt=${r.id}`} onOpen={(r) => navigateTo(`/finance/receivables?receipt=${r.id}`)} cardFields={['docNo', 'client', 'date', 'amount', 'unallocated', 'status']} statusKey="status" dateKey="date"
         newAction={{ label: t('ar.newReceipt'), permission: 'fin.receipt.create', onClick: () => navigateTo('/finance/receivables?new=receipt') }} empty={{ title: t('ar.noReceipts'), text: t('ar.noReceiptsBody') }} />}
       {tab === 'notes' && <CreditNoteList />}
+      {tab === 'ageing' && <Ageing projectId={n('projectId')} />}
     </section>
   );
 }
@@ -272,8 +273,10 @@ function Statement() {
     </div>
   );
 }
-function Ageing() {
-  const t = useT('fin'); const [asOf, setAsOf] = useState(today()); const q = useQuery({ queryKey: ['gl', 'ar-ageing', asOf], queryFn: () => ar.ageing({ asOf }), retry: false });
+function Ageing({ projectId = null } = {}) {
+  const t = useT('fin'); const [asOf, setAsOf] = useState(today()); const q = useQuery({
+    queryKey: ['gl', 'ar-ageing', asOf, projectId], queryFn: () => ar.ageing({ asOf, ...(projectId ? { projectId } : {}) }), retry: false,
+  });
   const g = guardOf(q, t('ar.ageing'), 'fin.invoice.view'); if (g) return g; const x = q.data;
   return (
     <div data-testid="ar-ageing">

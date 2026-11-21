@@ -49,6 +49,43 @@ export function createRfiService({ db, base }) {
 
   // ---- views ------------------------------------------------------------------------------------------------------------------------------------
   const ageOf = (r) => (RFI_OPEN.includes(r.status) ? Math.max(0, diffDays(today(), r.issued_on ?? r.created_at.slice(0, 10))) : 0);
+
+  /** FR-04: use the same overdue rule and outbox event for manual and scheduled escalation. */
+  function escalateOverdue(actor, canView) {
+    return transaction(db, () => {
+      const day = today();
+      const rows = db.prepare(`SELECT * FROM engg_rfis
+        WHERE company_id = ? AND is_active = 1 AND deleted_at IS NULL
+          AND status IN ('ISSUED', 'RESPONDED') AND escalated_at IS NULL
+        ORDER BY activity_critical DESC, id`).all(actor.companyId);
+      const done = [];
+      for (const r of rows) {
+        const slaBreached = r.status === 'ISSUED' && r.issued_on && day > addDays(r.issued_on, RFI_SLA_DAYS[r.priority]);
+        if (!(slaBreached || r.required_by < day) || !canView(r)) continue;
+        const ageDays = ageOf(r);
+        const critical = Boolean(r.activity_critical);
+        const recipients = ['role:DESIGN'];
+        const raiser = r.requested_by ?? r.created_by;
+        if (raiser) recipients.push(`user:${raiser}`);
+        const link = `/engg/rfi?id=${r.id}`;
+        notificationsOf(db)?.notify({
+          companyId: r.company_id, projectId: r.org_project_id, siteId: r.rfi_site_id,
+          templateCode: 'engg.rfi.overdue', recipients,
+          data: { rfi: r.rfi_no, subject: r.subject,
+            detail: `${RFI_PRIORITY[r.priority]} priority, ${ageDays} days old${critical ? ', on the critical path' : ''}, ball with ${BALL[r.ball_in_court]}.`, link },
+          link, sourceType: 'engg_rfi', sourceId: r.id,
+        });
+        const escalatedAt = nowIso();
+        db.prepare('UPDATE engg_rfis SET escalated_at = ? WHERE id = ?').run(escalatedAt, r.id);
+        route(r, 'ESCALATED', r.ball_in_court, actor.user, `${ageDays} days`, r.ball_in_court);
+        audit(actor, 'engg_rfis', r.id, 'escalate', r.company_id, { oldValues: { escalatedAt: null }, newValues: { escalatedAt } });
+        event('engg.rfi.escalated', actor, 'engg_rfi', r.id, r.company_id, r.org_project_id,
+          { projectId: r.org_project_id, rfiId: r.id, rfiNo: r.rfi_no, priority: r.priority, ageDays, critical, ballInCourt: r.ball_in_court });
+        done.push({ id: r.id, rfiNo: r.rfi_no, critical });
+      }
+      return { escalated: done.length, rows: done };
+    });
+  }
   function view(actor, r, { detail = false } = {}) {
     const o = orgOf(r.org_project_id); const can = (k) => may(actor, k, r.org_project_id); const open = RFI_OPEN.includes(r.status); const editable = ['DRAFT', 'RETURNED'].includes(r.status);
     const slaDue = r.issued_on ? addDays(r.issued_on, RFI_SLA_DAYS[r.priority]) : null; const d = r.drawing_id ? db.prepare('SELECT drawing_no, title FROM engg_drawings WHERE id = ?').get(r.drawing_id) : null;
@@ -217,20 +254,9 @@ export function createRfiService({ db, base }) {
       b.rows.forEach((x, i) => { try { const v = rfis.create(actor, { projectId: b.projectId, ...x }); made.push({ row: i + 1, id: v.id, rfiNo: v.rfiNo }); } catch (e) { errors.push({ row: i + 1, subject: x.subject, message: e.details?.[0]?.message ?? e.message }); } });
       return { created: made.length, errors, rows: made };
     },
-    /** FR-04: an RFI that is late against its SLA or its required-by date is escalated once: the design coordinators and the raiser are told. */
     escalate(actor) {
-      need(actor, 'engg.rfi.approve', 'escalate RFIs'); const day = today(); const done = [];
-      const list = db.prepare(`SELECT * FROM engg_rfis WHERE company_id = ? AND deleted_at IS NULL AND status IN ('ISSUED', 'RESPONDED') AND escalated_at IS NULL ORDER BY activity_critical DESC, id`).all(actor.companyId).filter((r) => may(actor, 'engg.rfi.view', r.org_project_id)
-        && ((r.status === 'ISSUED' && r.issued_on && day > addDays(r.issued_on, RFI_SLA_DAYS[r.priority])) || r.required_by < day));
-      const designers = db.prepare('SELECT username, roles_json FROM iam_users WHERE company_id = ? AND is_active = 1').all(actor.companyId).filter((u) => { try { return JSON.parse(u.roles_json ?? '[]').includes('DESIGN'); } catch { return false; } }).map((u) => u.username);
-      for (const r of list) {
-        const to = [...new Set([...designers, r.requested_by ?? r.created_by].filter(Boolean))]; const link = `/engg/rfi?id=${r.id}`;
-        try { notificationsOf(db).notify({ companyId: r.company_id, templateCode: 'engg.rfi.overdue', recipients: to.map((u) => `user:${u}`), data: { rfi: r.rfi_no, subject: r.subject, detail: `${RFI_PRIORITY[r.priority]} priority, ${ageOf(r)} days old${r.activity_critical ? ', on the critical path' : ''}, ball with ${BALL[r.ball_in_court]}.`, link }, link, sourceType: 'engg_rfi', sourceId: r.id }); } catch { /* the escalation is still recorded */ }
-        db.prepare('UPDATE engg_rfis SET escalated_at = ? WHERE id = ?').run(nowIso(), r.id); route(r, 'ESCALATED', r.ball_in_court, actor.user, `${ageOf(r)} days`, r.ball_in_court);
-        event('engg.rfi.escalated', actor, 'engg_rfi', r.id, r.company_id, r.org_project_id, { projectId: r.org_project_id, rfiId: r.id, rfiNo: r.rfi_no, priority: r.priority, ageDays: ageOf(r), critical: Boolean(r.activity_critical), ballInCourt: r.ball_in_court });
-        done.push({ id: r.id, rfiNo: r.rfi_no, critical: Boolean(r.activity_critical) });
-      }
-      return { escalated: done.length, rows: done };
+      need(actor, 'engg.rfi.approve', 'escalate RFIs');
+      return escalateOverdue(actor, (r) => may(actor, 'engg.rfi.view', r.org_project_id));
     },
     /** FR-06: the activities that open RFIs hold, for the look-ahead constraints (13.04). */
     constraints(actor, q = {}) {
@@ -284,7 +310,8 @@ export function createRfiService({ db, base }) {
     db.prepare("UPDATE engg_rfis SET status = 'RESPONDED', close_workflow_id = NULL, ball_in_court = 'VERIFIER', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, nowIso(), r.id);
     route(fresh(r.id), `CLOSE_${outcome}`, 'VERIFIER', actor.user, comment ?? null, 'VERIFIER'); audit(actor, 'engg_rfis', r.id, `close_${outcome.toLowerCase()}`, r.company_id, { reason: comment ?? null });
   }
-  return { rfis, rfiDashboard: dashboard, rfiDecide };
+  return { rfis, rfiDashboard: dashboard, rfiDecide,
+    sweepRfis: (companyId) => escalateOverdue({ companyId, user: 'scheduler' }, () => true) };
 }
 
 

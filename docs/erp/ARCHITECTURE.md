@@ -1608,3 +1608,7 @@ Module `bill`, flag `ff.bill.p2209`, table `bill_cvr_reports`; service `cvr.js`.
 ## The tax engine (part 23.07)
 
 `platform/tax` holds the GST compliance service of a database once the finance module has mounted it (`bindTaxEngine`, `taxEngineOf(db)`): a module that computes tax or needs an e-way bill number asks it — `rateOn(companyId, { code | hsn }, date)` for a rate of the dated masters, `resolveFor(companyId, input)` for the tax lines of a supply, `ewaybills.activeFor(companyId, documentType, documentId)` for the live e-way bill of a document — without importing `modules/fin`. The PO (15.05) takes its GST rate and the stock transfer's dispatch (16.05) its e-way bill number from it.
+
+The payroll module lives in `modules/pay`. It provides payroll configuration, payroll runs, statutory deductions, payslips, bank transfers, and full-and-final settlement.
+
+The external account lifecycle lives in `modules/portal`. External sessions use the portal API namespace and the portal account store.

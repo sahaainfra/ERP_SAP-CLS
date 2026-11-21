@@ -1881,6 +1881,156 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bi_domain_observations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| refresh_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| value_scaled | INTEGER |  |  |  |
+| source_period | TEXT | yes |  |  |
+| source_version | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'CAPTURED' |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  |  |
+| source_id | TEXT | yes |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), refresh_id -> bi_domain_refreshes(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bi_domain_observations_company_status: company_id, status
+- ix_bi_domain_observations_project: project_id, refresh_id
+- sqlite_autoindex_bi_domain_observations_1 (unique): refresh_id, project_id
+
+## bi_domain_refreshes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| metric_code | TEXT | yes |  |  |
+| dataset_version | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| captured_at | TEXT | yes |  |  |
+| row_count | INTEGER | yes |  | 0 |
+| missing_count | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'COMPLETE' |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'metric_capture' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_bi_domain_refreshes_company_status: company_id, status
+- sqlite_autoindex_bi_domain_refreshes_1 (unique): company_id, metric_code, dataset_version, period
+
+## bi_metrics
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| dataset_version | INTEGER | yes |  |  |
+| status | TEXT | yes |  |  |
+| request_id | INTEGER | yes |  |  |
+| version | INTEGER | yes |  |  |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'metric_certification' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bi_metrics_company_status: company_id, status
+- sqlite_autoindex_bi_metrics_2 (unique): request_id
+- sqlite_autoindex_bi_metrics_1 (unique): company_id, code, dataset_version, version
+
+## bi_project_snapshots
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| refresh_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| lifecycle_state | TEXT | yes |  |  |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'CAPTURED' |
+| source_type | TEXT | yes |  | 'project_status' |
+| source_id | TEXT | yes |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), refresh_id -> bi_refresh_log(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bi_project_snapshots_company_refresh: company_id, refresh_id, project_id
+- ix_bi_project_snapshots_company_status: company_id, status
+- ix_bi_project_snapshots_project: project_id
+- sqlite_autoindex_bi_project_snapshots_1 (unique): refresh_id, project_id
+
+## bi_refresh_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| dataset_version | INTEGER | yes |  |  |
+| captured_at | TEXT | yes |  |  |
+| row_count | INTEGER | yes |  |  |
+| status | TEXT | yes |  |  |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'project_snapshot' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_bi_refresh_log_company_status: company_id, status
+- sqlite_autoindex_bi_refresh_log_1 (unique): company_id, period, dataset_version
+
 ## bill_advance_recoveries
 
 | Column | Type | Not null | Key | Default |
@@ -27575,6 +27725,203 @@ Indexes:
 - ix_prs_weights_company: company_id
 - ux_prs_weights (unique): org_project_id, activity_code
 
+## ptl_accounts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| partner_id | INTEGER |  |  |  |
+| contact_id | INTEGER |  |  |  |
+| stakeholder_id | INTEGER |  |  |  |
+| portal_type | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| invite_hash | TEXT |  |  |  |
+| invite_expires_at | INTEGER |  |  |  |
+| password_hash | TEXT |  |  |  |
+| totp_enc | TEXT |  |  |  |
+| last_counter | INTEGER |  |  |  |
+| failed_attempts | INTEGER | yes |  | 0 |
+| locked_until | INTEGER |  |  |  |
+| terms_version | TEXT |  |  |  |
+| terms_accepted_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: stakeholder_id -> proj_stakeholders(id), contact_id -> mdm_partner_contacts(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ptl_accounts_company_role: company_id, portal_type, created_at, id
+- ix_ptl_accounts_company_created: company_id, created_at, id
+- ix_ptl_accounts_company_status: company_id, status, created_at, id
+- ix_ptl_accounts_partner_id: partner_id
+- ix_ptl_accounts_contact_id: contact_id
+- ux_ptl_accounts_stakeholder (unique): stakeholder_id, portal_type
+- ux_ptl_accounts_contact (unique): contact_id, portal_type
+- ux_ptl_accounts_invite (unique): invite_hash
+- ux_ptl_accounts_doc_no (unique): doc_no
+- sqlite_autoindex_ptl_accounts_1 (unique): company_id, doc_no
+
+## ptl_asn_invoices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| dispatch_id | INTEGER |  | PK |  |
+| file_id | INTEGER | yes |  |  |
+
+Foreign keys: file_id -> core_files(id), dispatch_id -> proc_dispatches(id)
+
+Indexes:
+- ix_ptl_asn_invoices_file: file_id
+
+## ptl_messages
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| account_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| subject | TEXT | yes |  |  |
+| body | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| submission_key | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: account_id -> ptl_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ptl_messages_company_kind: company_id, kind, id
+- ix_ptl_messages_company_status: company_id, status, id
+- ix_ptl_messages_account: account_id, id
+- sqlite_autoindex_ptl_messages_2 (unique): account_id, submission_key
+- sqlite_autoindex_ptl_messages_1 (unique): company_id, doc_no
+
+## ptl_registrations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| receipt_hash | TEXT | yes |  |  |
+| submission_hash | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ptl_registrations_partner: partner_id
+- sqlite_autoindex_ptl_registrations_3 (unique): company_id, receipt_hash
+- sqlite_autoindex_ptl_registrations_2 (unique): company_id, doc_no
+- sqlite_autoindex_ptl_registrations_1 (unique): receipt_hash
+
+## ptl_rfq_files
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| file_id | INTEGER |  | PK |  |
+
+Foreign keys: file_id -> core_files(id)
+
+## ptl_sessions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| token_hash | TEXT |  | PK |  |
+| account_id | INTEGER | yes |  |  |
+| expires_at | INTEGER | yes |  |  |
+| last_seen | INTEGER | yes |  |  |
+
+Foreign keys: account_id -> ptl_accounts(id)
+
+Indexes:
+- ix_ptl_sessions_expiry: expires_at
+- ix_ptl_sessions_account: account_id, expires_at
+- sqlite_autoindex_ptl_sessions_1 (unique): token_hash
+
+## ptl_shares
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| account_id | INTEGER | yes |  |  |
+| version_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: version_id -> doc_versions(id), account_id -> ptl_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ptl_shares_company: company_id, id
+- ix_ptl_shares_account: account_id, id
+- ix_ptl_shares_version: version_id
+- ux_ptl_shares_active (unique): account_id, version_id
+- sqlite_autoindex_ptl_shares_1 (unique): company_id, doc_no
+
+## ptl_vdr_orders
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| item_id | INTEGER |  | PK |  |
+| po_id | INTEGER | yes |  |  |
+
+Foreign keys: po_id -> proc_purchase_orders(id), item_id -> engg_vdr_items(id)
+
+Indexes:
+- ix_ptl_vdr_orders_po: po_id
+
 ## qa_capa_actions
 
 | Column | Type | Not null | Key | Default |
@@ -28744,6 +29091,79 @@ Indexes:
 - ix_rp_supply_project: org_project_id
 - ix_rp_supply_company: company_id, week_start
 - ux_rp_supply_key (unique): , week_start, resource_type, res_key
+
+## rpt_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| subscription_id | INTEGER | yes |  |  |
+| subscription_version | INTEGER | yes |  |  |
+| report_name | TEXT | yes |  |  |
+| channel | TEXT | yes |  |  |
+| export_id | INTEGER |  |  |  |
+| notification_id | INTEGER |  |  |  |
+| scheduled_at | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| detail | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| created_by | TEXT | yes |  | 'scheduler' |
+| updated_at | TEXT |  |  |  |
+| updated_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'report_subscription' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: notification_id -> ntf_notifications(id), export_id -> ui_export_jobs(id), subscription_id -> rpt_subscriptions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rpt_runs_pending: status, id
+- ix_rpt_runs_notification: notification_id
+- ix_rpt_runs_export: export_id
+- ux_rpt_runs_slot (unique): subscription_id, scheduled_at
+- ix_rpt_runs_company_date: company_id, scheduled_at
+- ix_rpt_runs_company_status: company_id, status
+
+## rpt_subscriptions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| owner_id | INTEGER | yes |  |  |
+| saved_view_id | INTEGER |  |  |  |
+| name | TEXT | yes |  |  |
+| frequency | TEXT | yes |  |  |
+| format | TEXT | yes |  |  |
+| channel | TEXT | yes |  |  |
+| lifecycle_state | TEXT |  |  |  |
+| next_run_at | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| created_by | TEXT | yes |  |  |
+| updated_at | TEXT |  |  |  |
+| updated_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: saved_view_id -> ui_saved_views(id), owner_id -> iam_users(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_rpt_subscriptions_name (unique): company_id, owner_id, name
+- ix_rpt_subscriptions_due: status, next_run_at
+- ix_rpt_subscriptions_view: saved_view_id
+- ix_rpt_subscriptions_owner: owner_id, company_id
+- ix_rpt_subscriptions_company_status: company_id, status
 
 ## rta_assets
 

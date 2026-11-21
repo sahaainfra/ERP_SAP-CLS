@@ -1,6 +1,6 @@
 import { transaction } from '../../platform/db/index.js';
 import { toPdf } from '../../platform/export/index.js';
-import { conflict, unprocessable } from '../../platform/http/errors.js';
+import { conflict, notFound, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { toCsv } from '../../platform/security/csv.js';
@@ -111,8 +111,50 @@ export function createVinvService({ db, base, flags = null }) {
       const g = db.prepare('SELECT * FROM bill_vendor_invoices WHERE id = ?').get(r.id); const lines = db.prepare('SELECT * FROM bill_vendor_invoice_lines WHERE invoice_id = ?').all(r.id);
       evt('ap.invoice.matched', actor, g.company_id, 'bill_vendor_invoices', g.id, { invoiceId: g.id, docNo: g.doc_no, invoiceNo: g.invoice_no, invoiceDate: g.invoice_date, fy: g.fy, kind: g.invoice_kind, projectId: g.org_project_id, vendorId: g.vendor_id, vendorGstin: g.vendor_gstin, poId: g.po_id, serviceEntryId: g.service_entry_id, hireBillId: g.hire_bill_id, taxable: rs(g.taxable_paise), tax: rs(g.tax_paise), total: rs(g.total_paise), debit: rs(g.debit_paise), payable: rs(g.payable_paise), dueDate: g.due_date, irn: g.irn, matchStatus: g.match_status, overrideReason: g.override_reason, itc: lines.map((l) => ({ hsn: l.hsn, gstPct: l.gst_pct_bp / 100, taxable: rs(l.taxable_paise), tax: rs(l.tax_paise) })) }, g.org_project_id);
     } });
+  function supplierInvoiceStatus(scope, order) {
+    const companyId = scope.companyId;
+    audit({ user: `portal-supplier:${scope.accountId}` }, 'proc_purchase_orders', order.id, 'supplier_invoice_status', companyId);
+    const rows = db.prepare(`SELECT id, doc_no, invoice_no, invoice_date, due_date, total_paise, match_status, status
+      FROM bill_vendor_invoices
+      WHERE company_id = ? AND vendor_id = ? AND po_id = ? AND org_project_id = ? AND invoice_kind = 'PO'
+        AND (? IS NULL OR org_site_id IS NULL OR org_site_id = ?)
+        AND status NOT IN ('DRAFT', 'SUPERSEDED') AND deleted_at IS NULL AND is_active = 1
+      ORDER BY id DESC LIMIT 50`).all(companyId, scope.partnerId, order.id, order.org_project_id, scope.siteId, scope.siteId);
+    return rows.map((r) => {
+      const ap = r.status === 'APPROVED' && flags?.isOn({ companyId }, 'ff.fin.p2303') ? db.prepare(`SELECT id, due_date, net_payable_paise,
+        adjusted_paise, paid_paise FROM ap_bills WHERE company_id = ? AND partner_id = ?
+        AND bill_source = 'VENDOR_INVOICE' AND source_ref = ? AND status = 'APPROVED' AND deleted_at IS NULL
+        AND (org_project_id IS NULL OR org_project_id = ?) AND (? IS NULL OR org_site_id IS NULL OR org_site_id = ?)`)
+        .get(companyId, scope.partnerId, String(r.id), order.org_project_id, scope.siteId, scope.siteId) : null;
+      const payments = ap && flags?.isOn({ companyId }, 'ff.fin.p2304') ? db.prepare(`
+        SELECT p.id, p.doc_no, p.paid_on, p.amount_paise, p.utr
+        FROM pmt_payments p JOIN pmt_proposal_lines l
+          ON l.id = p.line_id AND l.company_id = p.company_id AND l.proposal_id = p.proposal_id
+        WHERE p.company_id = ? AND p.partner_id = ? AND l.partner_id = p.partner_id AND l.ap_bill_id = ?
+          AND p.pay_status = 'PAID' AND p.deleted_at IS NULL AND l.deleted_at IS NULL
+        ORDER BY p.paid_on DESC, p.id DESC`).all(companyId, scope.partnerId, ap.id).map((payment) => ({
+        id: payment.id, docNo: payment.doc_no, paidOn: payment.paid_on, amount: rs(payment.amount_paise),
+        utr: payment.utr,
+      })) : [];
+      return { docNo: r.doc_no, invoiceNo: r.invoice_no, invoiceDate: r.invoice_date, status: r.status,
+        matchStatus: r.match_status, total: rs(r.total_paise), dueDate: ap?.due_date ?? r.due_date,
+        paid: ap ? rs(ap.paid_paise) : null, amountDue: ap ? rs(Math.max(0, ap.net_payable_paise - ap.adjusted_paise - ap.paid_paise)) : null,
+        payments };
+    });
+  }
+  function storeDraft(actor, b, src, projectId) {
+    const fy = fyOf(b.invoiceDate);
+    const dup = dupOf(actor.companyId, b.vendorId, b.invoiceNo, fy, 0);
+    if (dup) throw conflict(`This vendor invoice is registered already as ${dup.doc_no}.`);
+    const no = flow.next(actor);
+    const id = Number(db.prepare('INSERT INTO bill_vendor_invoices (company_id, doc_no, org_project_id, org_site_id, vendor_id, invoice_kind, po_id, so_id, service_entry_id, hire_bill_id, vendor_gstin, invoice_no, invoice_date, fy, source, declared_total_paise, irn, irn_checked, override_reason, notes, requested_by, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(actor.companyId, no, projectId, b.siteId ?? null, b.vendorId, b.invoiceKind, b.invoiceKind === 'PO' ? src.po.id : null, b.invoiceKind === 'SERVICE' ? src.se.so_id : null, b.invoiceKind === 'SERVICE' ? src.se.id : null, b.invoiceKind === 'HIRE' ? src.hb.id : null, b.vendorGstin ?? null, b.invoiceNo, b.invoiceDate, fy, b.source, b.declaredTotal == null ? null : paise(b.declaredTotal), b.irn ?? null, b.irn ? 1 : 0, b.overrideReason ?? null, b.notes ?? null, actor.user, actor.user, b.source === 'MANUAL' ? 'manual' : b.source.toLowerCase()).lastInsertRowid);
+    apply(id, b, b.lines, {}, actor.user);
+    audit(actor, 'bill_vendor_invoices', id, 'create', actor.companyId);
+    return db.prepare('SELECT * FROM bill_vendor_invoices WHERE id = ?').get(id);
+  }
   const invoices = {
     ...flow,
+    supplierStatus: supplierInvoiceStatus,
     list(actor, query) { return runList(db, viList, parseListRequest(viList, query), { select: 'x.*', scopeSql: scopeOf(actor, 'bill.vendor_invoice.view'), params: { c: actor.companyId }, tieBreaker: 'x.id', map: (r) => view(actor, r) }); },
     get: (actor, id) => view(actor, flow.row(actor, id), true),
     options(actor) {
@@ -125,9 +167,36 @@ export function createVinvService({ db, base, flags = null }) {
     /** The match as it would be, without saving. */
     preview(actor, b) { const src = sourceOf(actor.companyId, b); projectOk(actor, src.projectId ?? b.projectId, 'bill.vendor_invoice.create'); const fy = fyOf(b.invoiceDate); const dup = dupOf(actor.companyId, b.vendorId, b.invoiceNo, fy, 0); const m = evaluate({ companyId: actor.companyId, header: b, lines: b.lines }); return { duplicateOf: dup?.doc_no ?? null, taxable: rs(m.taxable), tax: rs(m.tax), total: rs(m.total), matchStatus: m.match, exceptions: m.exceptions, variance: rs(m.variance), lines: m.lines.map((l) => ({ lineNo: l.line_no, poLineId: l.po_line_id, description: l.description, qty: d3(l.qty_th), rate: rs(l.rate_paise), taxable: rs(l.taxable_paise), tax: rs(l.tax_paise), grnQty: d3(l.grn_qty_th), invoicedBefore: d3(l.invoiced_before_th), poRate: rs(l.po_rate_paise), result: l.match_result, notes: l.notes })) }; },
     create(actor, b) {
-      const src = sourceOf(actor.companyId, b); const projectId = src.projectId ?? b.projectId; if (!projectId) fail([{ field: 'projectId', message: 'Choose the project' }]); const pj = projectOk(actor, projectId, 'bill.vendor_invoice.create'); const fy = fyOf(b.invoiceDate); const dup = dupOf(actor.companyId, b.vendorId, b.invoiceNo, fy, 0); if (dup) throw conflict(`This vendor invoice is registered already as ${dup.doc_no}.`);
-      return transaction(db, () => { const no = flow.next(actor); const id = Number(db.prepare('INSERT INTO bill_vendor_invoices (company_id, doc_no, org_project_id, org_site_id, vendor_id, invoice_kind, po_id, so_id, service_entry_id, hire_bill_id, vendor_gstin, invoice_no, invoice_date, fy, source, declared_total_paise, irn, irn_checked, override_reason, notes, requested_by, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(actor.companyId, no, pj.id, b.siteId ?? null, b.vendorId, b.invoiceKind, b.invoiceKind === 'PO' ? src.po.id : null, b.invoiceKind === 'SERVICE' ? src.se.so_id : null, b.invoiceKind === 'SERVICE' ? src.se.id : null, b.invoiceKind === 'HIRE' ? src.hb.id : null, b.vendorGstin ?? null, b.invoiceNo, b.invoiceDate, fy, b.source, b.declaredTotal == null ? null : paise(b.declaredTotal), b.irn ?? null, b.irn ? 1 : 0, b.overrideReason ?? null, b.notes ?? null, actor.user, actor.user, b.source === 'MANUAL' ? 'manual' : b.source.toLowerCase()).lastInsertRowid);
-        apply(id, b, b.lines, {}, actor.user); audit(actor, 'bill_vendor_invoices', id, 'create', actor.companyId); return invoices.get(actor, id); });
+      const src = sourceOf(actor.companyId, b);
+      const projectId = src.projectId ?? b.projectId;
+      if (!projectId) fail([{ field: 'projectId', message: 'Choose the project' }]);
+      const pj = projectOk(actor, projectId, 'bill.vendor_invoice.create');
+      return transaction(db, () => invoices.get(actor, storeDraft(actor, b, src, pj.id).id));
+    },
+    supplierSubmit(scope, orderId, b, attach) {
+      return transaction(db, () => {
+        const order = po()?.supplier.order(scope, orderId);
+        if (!order) throw notFound('That purchase order does not exist.');
+        const actor = { user: `portal-supplier:${scope.accountId}`, companyId: scope.companyId, roles: [] };
+        const input = { ...b, vendorId: scope.partnerId, invoiceKind: 'PO', poId: order.id, siteId: order.po_site_id, source: 'PORTAL' };
+        if (b.invoiceDate > today() || !Number.isFinite(Date.parse(b.invoiceDate)) || addDays(b.invoiceDate, 0) !== b.invoiceDate) {
+          fail([{ field: 'invoiceDate', message: 'Use a valid invoice date on or before today.' }]);
+        }
+        if ((order.vendor_gstin && b.vendorGstin !== order.vendor_gstin) || (b.lines.some((l) => l.gstPct > 0) && !b.vendorGstin)) {
+          fail([{ field: 'vendorGstin', message: 'Enter the GSTIN for this order.' }]);
+        }
+        if (b.vendorGstin && !db.prepare(`SELECT 1 FROM mdm_partner_gstins WHERE company_id = ? AND partner_id = ?
+          AND gstin = ? AND gstin_status = 'ACTIVE' AND deleted_at IS NULL`).get(scope.companyId, scope.partnerId, b.vendorGstin)) {
+          fail([{ field: 'vendorGstin', message: 'Enter an active GSTIN registered for the supplier.' }]);
+        }
+        if (new Set(b.lines.map((l) => l.poLineId)).size !== b.lines.length) {
+          fail([{ field: 'lines', message: 'List each PO line once.' }]);
+        }
+        const r = storeDraft(actor, input, { po: order }, order.org_project_id);
+        attach({ entity: 'bill_vendor_invoices', id: r.id, projectId: order.org_project_id, siteId: order.po_site_id });
+        const result = flow.submitOwnedDraft(actor, r);
+        return { docNo: result.doc_no, status: result.status, matchStatus: result.match_status };
+      });
     },
     update(actor, id, b) {
       const r = flow.row(actor, id, 'bill.vendor_invoice.edit'); if (!flow.EDITABLE.includes(r.status)) throw conflict('An approved invoice is locked.'); if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this; reload it.');

@@ -1,5 +1,5 @@
 import { currentPrefs } from '../i18n/index.js';
-import { formatCompact, formatMoney } from '../../../shared/i18n/format.js';
+import { formatCompact, formatMoney, formatNumber } from '../../../shared/i18n/format.js';
 import Chart from '../charts/Chart.jsx';
 import Icon from '../design/Icon.jsx';
 import { EmptyState } from '../feedback/states.jsx';
@@ -40,10 +40,12 @@ function Kpi({ data, onDrill }) {
   if (data.empty) return <EmptyState compact title={data.emptyTitle ?? 'Nothing to show'} message={data.emptyText ?? ''} />;
   if (data.masked) return <p className="muted wd-masked"><Icon name="erp.action.lock" size={16} /> Hidden for your role.</p>;
   const up = data.trendPct !== null && data.trendPct !== undefined && data.trendPct >= 0;
+  const number = (value) => data.decimals == null ? formatCount(value)
+    : formatNumber(String(value), { decimals: data.decimals, grouping: currentPrefs().grouping });
   return (
     <Open to={data.drill} onDrill={onDrill} className="wd-kpi">
       {data.subtitle && <span className="wd-kpi-sub muted small" data-testid="kpi-subtitle">{data.subtitle}</span>}
-      <span className="wd-kpi-value" data-testid="kpi-value" title={data.kind === 'money' && data.value !== null && data.value !== undefined ? moneyFull(data) : undefined}>{data.value === null || data.value === undefined ? <><span aria-hidden="true">—</span><span className="sr-only">Not measured</span></> : data.kind === 'money' ? <><span aria-hidden="true">{money(data)}</span><span className="sr-only">{moneyFull(data)}</span></> : formatCount(data.value)}</span>
+      <span className="wd-kpi-value" data-testid="kpi-value" title={data.kind === 'money' && data.value !== null && data.value !== undefined ? moneyFull(data) : undefined}>{data.value === null || data.value === undefined ? <><span aria-hidden="true">—</span><span className="sr-only">Not measured</span></> : data.kind === 'money' ? <><span aria-hidden="true">{money(data)}</span><span className="sr-only">{moneyFull(data)}</span></> : number(data.value)}</span>
       {data.kind !== 'money' && data.unit && <span className="wd-kpi-unit">{data.unit}</span>}
       {data.trendPct !== null && data.trendPct !== undefined && (
         <span className={`wd-trend ${up ? 'is-up' : 'is-down'}`}>{up ? '▲' : '▼'} {Math.abs(data.trendPct)}% <span className="muted">vs the period before ({data.kind === 'money' ? money({ ...data, value: data.previous }) : formatCount(data.previous)})</span></span>

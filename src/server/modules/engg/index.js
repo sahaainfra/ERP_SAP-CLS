@@ -4,6 +4,7 @@ import { notFound } from '../../platform/http/errors.js';
 import { idempotency } from '../../platform/http/idempotency.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
 import { listExports, listExportsOf } from '../../platform/list/index.js';
+import { runtimeOf } from '../../platform/runtime/index.js';
 import { createFlagService } from '../core/api.js';
 import { bindEngg, createEnggService } from './drawings.js';
 import { createTransmittalService } from './transmittals.js';
@@ -74,6 +75,18 @@ export const engg = {
     listExports.register('engg.deliverables', { source: (actor, req) => svc.deliverables.exportSource(actor, req), hidden: () => [] });
     listExports.register('engg.vdr_items', { source: (actor, req) => svc.vdr.exportSource(actor, req), hidden: () => [] });
     listExports.register('engg.letters', { source: (actor, req) => svc.letters.exportSource(actor, req), hidden: () => [] });
+    const runtime = runtimeOf(db);
+    runtime.jobs.register('engg.rfi_sweep', (job) => {
+      const companies = db.prepare("SELECT id FROM org_companies WHERE status = 'ACTIVE' AND is_active = 1 AND deleted_at IS NULL").all();
+      let escalated = 0;
+      for (const { id } of companies) {
+        if (flags.isOn({ companyId: id }, 'ff.engg.p1102')) escalated += svc.sweepRfis(id).escalated;
+      }
+      job.log(`Escalated ${escalated} overdue RFI(s)`);
+      return { escalated };
+    }, { maxAttempts: 3, description: 'Escalate overdue RFIs for companies with RFI management enabled' });
+    runtime.scheduler.define({ code: 'engg.rfi_sweep_morning', cron: '0 8 * * *', jobType: 'engg.rfi_sweep',
+      description: 'Escalate overdue RFIs daily at 08:00 IST' });
     const router = Router();
     router.use((req, res, next) => (/^\/(rfis|rfi-dashboard)(\/|$)/.test(req.path) ? gate('ff.engg.p1102', 'RFI management is')(req, res, next) : /^\/(submittals|submittal-schedule|approved-makes)(\/|$)/.test(req.path) ? gate('ff.engg.p1103', 'Submittals are')(req, res, next) : /^\/(deliverables|comments|holds|vdr-items|engineering-progress)(\/|$)/.test(req.path) ? gate('ff.engg.p1104', 'EPC engineering deliverables are')(req, res, next) : /^\/(letters|time-bars|letter-templates)(\/|$)/.test(req.path) ? gate('ff.engg.p1105', 'The correspondence register is')(req, res, next) : gate('ff.engg.p1101', 'Drawing control is')(req, res, next)));
     router.use(enggRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));

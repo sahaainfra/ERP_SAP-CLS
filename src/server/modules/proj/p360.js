@@ -16,7 +16,7 @@ import { HEALTH_DIMENSIONS, P360_TABS, P360_TAB_LABELS, RAG_DEFAULTS, STATES, js
 // of its module (BR-02). The health of the project (time, cost, quality, safety, cash, risk) follows thresholds each company sets (BR-01); a dimension whose module is not live is "no data", not green.
 if (!parameterRegistry.get('proj.rag_thresholds')) parameterRegistry.define({ key: 'proj.rag_thresholds', dataType: 'json', default: RAG_DEFAULTS, scopes: ['system', 'company'], description: 'BR-01: the health thresholds of Project 360: { milestoneLateDaysAmber, milestoneLateDaysRed, riskCriticalRed, riskHighAmber, spiAmber, spiRed, cpiAmber, cpiRed }.' });
 
-/** @type {Map<string, (ctx: any) => any>} widget code -> provider returning { figures: [{ key, label, value, unit?, tone?, drill? }], rows?: [{ title, subtitle?, tone?, drill? }], note? } */
+/** @type {Map<string, (ctx: any) => any>} widget code -> provider returning figures, rows and a note, or null to hide the slot */
 export const project360Providers = new Map();
 /** A module that goes live registers the provider of its slot (the slot is a row of proj_360_widgets). */
 export const registerProject360Widget = (code, provider) => { if (project360Providers.has(code)) throw new Error(`Project 360 widget ${code} is already registered`); project360Providers.set(code, provider); };
@@ -135,25 +135,33 @@ export function createP360Service({ db }) {
     const by = new Map(); for (const r of rows) by.set(r.widget_code, r.company_id == null && by.has(r.widget_code) ? by.get(r.widget_code) : r); // a company's own row beats the platform's
     return [...by.values()].sort((a, b) => P360_TABS.indexOf(a.tab) - P360_TABS.indexOf(b.tab) || a.sort_order - b.sort_order);
   };
-  function widgets(actor, x, period) {
-    const ctx = { db, actor, project: x, period, thresholds: thresholdsOf(x.company_id) }; const out = [];
+  function widgets(actor, x, period, forExport) {
+    const ctx = { db, actor, project: x, period, forExport, thresholds: thresholdsOf(x.company_id) }; const out = [];
     for (const s of slotsOf(x.company_id)) {
       const base = { code: s.widget_code, tab: s.tab, slot: s.slot, title: s.title, titleHi: s.title_hi, ownerPart: s.owner_part, module: s.module };
       const provider = project360Providers.get(s.widget_code) ?? builtins.get(s.widget_code);
       if (!provider) { out.push({ ...base, status: 'NOT_LIVE', emptyText: s.empty_text ?? `This comes from part ${s.owner_part}, which is not live yet.`, figures: [], rows: [] }); continue; }
       if (!may(actor, s.permission_key, x.project_id)) continue; // BR-02: a live widget of a module the person has no right to is not shown at all
-      try { const d = provider(ctx); out.push({ ...base, status: 'LIVE', figures: (d.figures ?? []).map((f) => ({ ...f, drill: drill(f.drill, ctx) })), rows: (d.rows ?? []).map((r) => ({ ...r, drill: drill(r.drill, ctx) })), note: d.note ?? null, drill: drill(s.drill_route, ctx) }); } catch (e) { out.push({ ...base, status: 'ERROR', figures: [], rows: [], emptyText: 'This widget could not be drawn; try again.', error: String(e?.message ?? e).slice(0, 160) }); }
+      try {
+        const data = provider(ctx);
+        if (data == null) continue;
+        const figures = (data.figures ?? []).map((figure) => ({ ...figure, drill: drill(figure.drill, ctx) }));
+        const rows = (data.rows ?? []).map((row) => ({ ...row, drill: drill(row.drill, ctx) }));
+        out.push({ ...base, status: 'LIVE', figures, rows, note: data.note ?? null, drill: drill(s.drill_route, ctx) });
+      } catch (error) {
+        out.push({ ...base, status: 'ERROR', figures: [], rows: [], emptyText: 'This widget could not be drawn; try again.', error: String(error?.message ?? error).slice(0, 160) });
+      }
     }
     return out;
   }
   const p360 = {
-    get(actor, projectId, { period } = /** @type {{ period?: string }} */ ({})) {
-      const x = project(actor, projectId); const t = thresholdsOf(x.company_id); const per = periodOf(period); const w = widgets(actor, x, per);
+    get(actor, projectId, { period, forExport = false } = /** @type {{ period?: string, forExport?: boolean }} */ ({})) {
+      const x = project(actor, projectId); const t = thresholdsOf(x.company_id); const per = periodOf(period); const w = widgets(actor, x, per, forExport);
       return { ...header(actor, x, t), period: per, tabs: P360_TABS.map((k) => ({ key: k, label: P360_TAB_LABELS[k], widgets: w.filter((i) => i.tab === k) })), can: { export: may(actor, 'proj.p360.export', x.project_id) } };
     },
     exportFile(actor, projectId, format = 'pdf', { period } = /** @type {{ period?: string }} */ ({})) {
       const x = project(actor, projectId); if (!may(actor, 'proj.p360.export', x.project_id)) throw forbidden('You may not export Project 360 (permission proj.p360.export).');
-      const d = p360.get(actor, projectId, { period }); const rows = [];
+      const d = p360.get(actor, projectId, { period, forExport: true }); const rows = [];
       rows.push({ tab: 'Header', widget: 'Project', figure: 'Code and name', value: `${d.code} ${d.name}` }, { tab: 'Header', widget: 'Project', figure: 'Client', value: d.client ?? '' }, { tab: 'Header', widget: 'Project', figure: 'Lifecycle state', value: d.lifecycleLabel }, { tab: 'Header', widget: 'Project', figure: 'Project manager', value: d.pm ?? '' },
         { tab: 'Header', widget: 'Project', figure: 'Start, scheduled and forecast completion', value: `${d.startDate ?? '-'} / ${d.scheduledCompletion ?? '-'} / ${d.forecastCompletion ?? '-'}` }, ...(d.valueHidden ? [] : [{ tab: 'Header', widget: 'Project', figure: 'Contract value (₹)', value: d.contractValue }]));
       for (const h of d.healthItems) rows.push({ tab: 'Health', widget: h.label, figure: h.level, value: h.detail });

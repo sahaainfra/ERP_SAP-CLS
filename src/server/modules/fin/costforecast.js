@@ -222,6 +222,17 @@ export function createCostForecastService({ db, base, flags, projectAccounts = (
       for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!on(c.id)) continue; const k = db.prepare("SELECT COUNT(DISTINCT f.org_project_id) AS n FROM ctl_facts f WHERE f.company_id = ? AND f.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM fc_forecasts x WHERE x.org_project_id = f.org_project_id AND x.period = ? AND x.status = 'APPROVED' AND x.deleted_at IS NULL)").get(c.id, last).n; if (!k) continue; n += 1; notify(c.id, 'fin.forecast.alert', ['permission:fin.forecast.create'], last, 'forecast due', `${k} project(s) have no approved cost forecast for ${last}.`, '/finance/cost-forecasts', `${c.id}-${last}`); }
       return { reminded: n }; },
   };
+  function approvedMetricFacts(companyId, asOf, projectId = null) {
+    return db.prepare(`SELECT * FROM (
+      SELECT f.org_project_id AS projectId, f.id AS sourceId, f.period AS sourcePeriod,
+        f.version_no AS sourceVersion, f.eac_total_paise AS eac,
+        ROW_NUMBER() OVER (PARTITION BY f.org_project_id ORDER BY f.period DESC, f.version_no DESC, f.id DESC) AS newest
+      FROM fc_forecasts f JOIN org_projects p ON p.id = f.org_project_id
+        AND p.company_id = f.company_id AND p.deleted_at IS NULL
+      WHERE f.company_id = :companyId AND f.period <= :period AND f.status = 'APPROVED' AND f.deleted_at IS NULL
+        ${projectId == null ? '' : 'AND f.org_project_id = :projectId'}
+    ) WHERE newest = 1`).iterate({ companyId, period: asOf.slice(0, 7), ...(projectId == null ? {} : { projectId }) });
+  }
   void projectAccounts;
-  return { forecasts, reports, approvedEac, jobs };
+  return { forecasts, reports, approvedEac, approvedMetricFacts, jobs };
 }

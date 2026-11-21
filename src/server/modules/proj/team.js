@@ -151,7 +151,19 @@ export function createTeamService({ db }) {
   };
   /** For the parts that follow: the active members of a project's team. */
   const members = (companyId, projectId) => db.prepare("SELECT username, project_role, from_date, to_date FROM proj_team WHERE company_id = ? AND org_project_id = ? AND team_status = 'APPROVED' AND deleted_at IS NULL").all(companyId, projectId).map((t) => ({ username: t.username, projectRole: t.project_role, fromDate: t.from_date, toDate: t.to_date }));
-  return { team, stakeholders, matrix, members, decide: team.decide, userOf };
+  function portalStakeholder(companyId, stakeholderId, kind) {
+    return db.prepare(`
+      SELECT s.name AS contactName, s.organisation AS partnerName, p.code AS partnerCode,
+             s.partner_id AS partnerId, s.org_project_id AS projectId, s.site_id AS siteId
+      FROM proj_stakeholders s JOIN org_projects j ON j.id = s.org_project_id AND j.company_id = s.company_id
+      LEFT JOIN mdm_partners p ON p.id = s.partner_id AND p.company_id = s.company_id
+      WHERE s.company_id = ? AND s.id = ? AND s.skind = ? AND s.sstatus = 'ACTIVE'
+        AND s.is_active = 1 AND s.deleted_at IS NULL AND j.is_active = 1 AND j.deleted_at IS NULL
+        AND (s.partner_id IS NULL OR (p.is_active = 1 AND p.deleted_at IS NULL AND p.partner_status = 'ACTIVE'))
+    `).get(companyId, stakeholderId, kind) ?? null;
+  }
+
+  return { team, stakeholders, matrix, members, decide: team.decide, userOf, portalStakeholder };
 }
 
 const services = new WeakMap();

@@ -446,17 +446,35 @@ export function createArService({ db, base, gl, flags }) {
     },
   };
 
+  const salesDays = (companyId) => Number(param(companyId, 'fin.ar.dso_days') ?? 90);
+  const dsoOf = (total, sales, days) => sales > 0 ? Math.round((total / sales) * days) : null;
+  const outstanding = 'x.amount_paise - x.received_paise - x.credited_paise - x.written_off_paise';
+
   // ---- FR-06: ageing, DSO, the client statement; FR-03 the TDS deducted by clients ----
   function ageing(actor, /** @type {{ asOf?: string, projectId?: any }} */ { asOf, projectId } = {}) {
     const d = asOf ?? todayIST(); const sc = scope(actor, 'fin.invoice.view').replace(/x\.site_id/g, 'NULL');
     const rows = db.prepare(`SELECT p.legal_name AS client, x.partner_id AS partnerId, SUM(CASE WHEN age <= 0 THEN o ELSE 0 END) AS cur, SUM(CASE WHEN age BETWEEN 1 AND 30 THEN o ELSE 0 END) AS b1, SUM(CASE WHEN age BETWEEN 31 AND 60 THEN o ELSE 0 END) AS b31, SUM(CASE WHEN age BETWEEN 61 AND 90 THEN o ELSE 0 END) AS b61, SUM(CASE WHEN age > 90 THEN o ELSE 0 END) AS b91, SUM(o) AS total
-      FROM (SELECT x.*, x.amount_paise - x.received_paise - x.credited_paise - x.written_off_paise AS o, CAST(julianday(:d) - julianday(x.due_date) AS INTEGER) AS age FROM ar_invoices x WHERE ${sc} AND x.status = 'APPROVED' AND x.deleted_at IS NULL AND x.invoice_date <= :d AND (:proj = 0 OR x.org_project_id = :proj)) x
+      FROM (SELECT x.*, ${outstanding} AS o, CAST(julianday(:d) - julianday(x.due_date) AS INTEGER) AS age FROM ar_invoices x WHERE ${sc} AND x.status = 'APPROVED' AND x.deleted_at IS NULL AND x.invoice_date <= :d AND (:proj = 0 OR x.org_project_id = :proj)) x
       JOIN mdm_partners p ON p.id = x.partner_id WHERE x.o > 0 GROUP BY x.partner_id ORDER BY total DESC`).all({ c: actor.companyId, d, proj: Number(projectId ?? 0) });
     const sum = (k) => rows.reduce((s, r) => s + r[k], 0);
-    const days = Number(param(actor.companyId, 'fin.ar.dso_days') ?? 90);
+    const days = salesDays(actor.companyId);
     const sales = db.prepare(`SELECT COALESCE(SUM(x.amount_paise), 0) AS s FROM ar_invoices x WHERE ${sc} AND x.status = 'APPROVED' AND x.deleted_at IS NULL AND x.invoice_date > date(:d, :back) AND x.invoice_date <= :d AND (:proj = 0 OR x.org_project_id = :proj)`).get({ c: actor.companyId, d, back: `-${days} days`, proj: Number(projectId ?? 0) }).s;
     const total = sum('total');
-    return { asOf: d, rows: rows.map((r) => ({ client: r.client, partnerId: r.partnerId, current: rs(r.cur), b1: rs(r.b1), b31: rs(r.b31), b61: rs(r.b61), b91: rs(r.b91), total: rs(r.total) })), totals: { current: rs(sum('cur')), b1: rs(sum('b1')), b31: rs(sum('b31')), b61: rs(sum('b61')), b91: rs(sum('b91')), total: rs(total) }, dso: sales > 0 ? Math.round((total / sales) * days) : null, dsoDays: days, sales: rs(sales) };
+    return { asOf: d, rows: rows.map((r) => ({ client: r.client, partnerId: r.partnerId, current: rs(r.cur), b1: rs(r.b1), b31: rs(r.b31), b61: rs(r.b61), b91: rs(r.b91), total: rs(r.total) })), totals: { current: rs(sum('cur')), b1: rs(sum('b1')), b31: rs(sum('b31')), b61: rs(sum('b61')), b91: rs(sum('b91')), total: rs(total) }, dso: dsoOf(total, sales, days), dsoDays: days, sales: rs(sales) };
+  }
+
+  function* approvedMetricFacts(companyId, asOf, projectId = null) {
+    const days = salesDays(companyId);
+    const rows = db.prepare(`SELECT x.org_project_id AS projectId, SUM(MAX(${outstanding}, 0)) AS total,
+      SUM(CASE WHEN x.invoice_date > date(:asOf, :back) THEN x.amount_paise ELSE 0 END) AS sales
+      FROM ar_invoices x JOIN org_projects p ON p.id = x.org_project_id AND p.company_id = x.company_id AND p.deleted_at IS NULL
+      WHERE x.company_id = :companyId AND x.status = 'APPROVED' AND x.deleted_at IS NULL AND x.invoice_date <= :asOf
+        ${projectId == null ? '' : 'AND x.org_project_id = :projectId'}
+      GROUP BY x.org_project_id`).iterate({ companyId, asOf, back: `-${days} days`, ...(projectId == null ? {} : { projectId }) });
+    for (const row of rows) {
+      yield { projectId: row.projectId, sourceId: row.projectId, sourcePeriod: asOf,
+        sourceVersion: 1, dso: dsoOf(row.total, row.sales, days) };
+    }
   }
   function statement(actor, { partnerId, from, to }) {
     need(actor, 'fin.invoice.view', 'see client statements'); const p = partnerOf(actor.companyId, partnerId); if (!p) throw notFound('That client does not exist.');
@@ -480,5 +498,5 @@ export function createArService({ db, base, gl, flags }) {
   }
   const clients = (actor) => { need(actor, 'fin.invoice.view', 'see clients'); return db.prepare("SELECT p.id, p.code, p.legal_name AS name FROM mdm_partners p WHERE p.company_id = ? AND p.deleted_at IS NULL AND EXISTS (SELECT 1 FROM mdm_partner_roles r WHERE r.partner_id = p.id AND r.partner_role = 'CLIENT' AND r.deleted_at IS NULL) ORDER BY p.legal_name LIMIT 500").all(actor.companyId); };
 
-  return { consumers, invoices, receipts, notes, writeoffs, followups, ageing, statement, statementPdf, tdsReceivable, clients, balance };
+  return { consumers, invoices, receipts, notes, writeoffs, followups, ageing, statement, statementPdf, tdsReceivable, clients, balance, approvedMetricFacts };
 }

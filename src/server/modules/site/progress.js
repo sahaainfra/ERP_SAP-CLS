@@ -418,5 +418,22 @@ export function createProgressService({ db, planOf = () => null }) {
       if (outcome === 'REJECTED') notify(r.company_id, 'site.period.rejected', [`user:${r.requested_by}`], r.doc_no, String(r.period_end), `${r.doc_no} was not approved${comment ? `: ${comment}` : ''}.`, `/site/periods?id=${r.id}`, r.id);
     },
   };
-  return { periods, weights, onDpr, recordMeasured, dashboard, scurve: (actor, q) => scurve(actor, q.projectId, q.asOf ?? todayIST()), report, reportExport, clientReport, clientExport, periodDecide: periods.decide, evaluate, base: { may, param, project } };
+  function approvedMetricFacts(companyId, asOf, projectId = null) {
+    return db.prepare(`WITH latest AS (
+      SELECT p.org_project_id AS projectId, p.id AS sourceId, p.period_end AS sourcePeriod,
+        p.revision_no AS sourceVersion,
+        ROW_NUMBER() OVER (PARTITION BY p.org_project_id ORDER BY p.period_end DESC, p.revision_no DESC, p.id DESC) AS newest
+      FROM prs_periods p
+      JOIN org_projects o ON o.id = p.org_project_id AND o.company_id = p.company_id AND o.deleted_at IS NULL
+      WHERE p.company_id = :companyId AND p.status = 'APPROVED' AND p.deleted_at IS NULL
+        AND p.period_end <= :asOf ${projectId == null ? '' : 'AND p.org_project_id = :projectId'}
+    )
+    SELECT p.projectId, p.sourceId, p.sourcePeriod, p.sourceVersion, e.spi, e.cpi
+    FROM latest p
+    LEFT JOIN prs_evm e INDEXED BY ux_prs_evm ON e.period_id = p.sourceId AND COALESCE(e.wbs_id, 0) = 0
+      AND e.company_id = :companyId AND e.org_project_id = p.projectId AND e.deleted_at IS NULL
+    WHERE p.newest = 1`).iterate({ companyId, asOf, ...(projectId == null ? {} : { projectId }) });
+  }
+
+  return { periods, weights, onDpr, recordMeasured, dashboard, scurve: (actor, q) => scurve(actor, q.projectId, q.asOf ?? todayIST()), report, reportExport, clientReport, clientExport, periodDecide: periods.decide, evaluate, approvedMetricFacts, base: { may, param, project } };
 }

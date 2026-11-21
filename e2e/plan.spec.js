@@ -52,7 +52,7 @@ async function approve(request, c, roles, user, instanceId) {
 // the schedule is calculated on the server and shows its critical path; a selection is edited in bulk; progress is entered at a data date; the schedule is approved and locked; the float report shows the critical chain. A person without the right sees the no-permission state.
 test('AC-01 schedule created from a template, linked, calculated with critical path and progress-updated, in the browser', async ({ browser, request }, info) => {
   test.setTimeout(300_000);
-  const t = info.project.name === 'mobile' ? 'plm' : 'pld';
+  const t = info.project.name === 'mobile' ? 'planm' : 'pland';
   const c = await company(request, t.toUpperCase()); const s = seed(c, t); const planner = s.u('plan');
   // the calendar: drafted on the page, put in force by the project controls manager
   const r = await open(browser, info, c, 'PLAN', planner, '/plan/calendars'); const errors = watch(r.page);

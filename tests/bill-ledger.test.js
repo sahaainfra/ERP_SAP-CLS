@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { U as BASE, approvedContract, as, fill, key, ready } from './ctr-helpers.js';
 import { billOf } from '../src/server/modules/bill/index.js';
 import { recoveryOf } from '../src/server/modules/bill/ledger.js';
+import { readDlpReleaseEvidence } from '../src/server/modules/close/retention.js';
 import { publishEvent } from '../src/server/platform/events/index.js';
 
 // Part 22.07: the retention and deposit ledger is filled by the events of the bills (once for each bill), balances are never negative; the advance recovery schedule over several bills follows the rule and never exceeds what is outstanding (T-01); releases need their checklist and the chain; the summary gives the expected dates and the ageing.
@@ -28,6 +29,52 @@ test('BR-01 the recovery of a bill follows the rule and never exceeds what is ou
   assert.deepEqual(recoveryOf({ rule, billGross: 4_000_000, outstanding: 10_000_000 }), { principal: 800_000, interest: 0, outstandingAfter: 9_200_000 }); assert.equal(recoveryOf({ rule, billGross: 4_000_000, outstanding: 500_000 }).principal, 500_000, 'capped at the outstanding');
   assert.equal(recoveryOf({ rule: { mode: 'FIXED', fixedPaise: 300_000, pctBp: 0 }, billGross: 1, outstanding: 1_000_000 }).principal, 300_000); assert.equal(recoveryOf({ rule: { mode: 'FIXED', fixedPaise: 300_000, pctBp: 0 }, billGross: 1, outstanding: 100_000 }).outstandingAfter, 0);
   assert.equal(recoveryOf({ rule, billGross: 4_000_000, outstanding: 10_000_000, interestBp: 1200, since: '2026-01-01', asOf: '2026-04-11' }).interest, Math.round((10_000_000 * 100 * 1200) / (10000 * 365)), '12% a year on the outstanding for 100 days');
+});
+
+test('Part 26.03 reads scoped DLP-end release evidence through Billing without changing the ledger', async () => {
+  const w = await world();
+  const { d } = w;
+  const flags = billOf(d).flags;
+  const actor = { companyId: 1, user: U.qs.user, roles: ['QS'] };
+  const otherCompanyId = fill(d, 'org_companies', { code: 'DLP-OTHER', legal_name: 'Other company', short_name: 'Other' });
+  const input = { projectId: w.A, partyType: 'SUBCONTRACTOR', woId: w.wo, releaseType: 'RETENTION', basis: 'DLP_END', amount: 600 };
+  const read = (request = input, who = actor) => readDlpReleaseEvidence({ db: d, flags }, who, request);
+  const seed = d.prepare(`SELECT default_enabled, enabled FROM core_feature_flags
+    WHERE key = 'ff.close.p2603' AND company_id IS NULL AND environment IS NULL`).get();
+  assert.deepEqual({ ...seed }, { default_enabled: 0, enabled: 0 });
+  const sign = d.prepare(`INSERT INTO hr_gates (company_id, code, name, status, catalogue_version, passed_at)
+    VALUES (?, ?, ?, 'PASSED', 'test', CURRENT_TIMESTAMP)`);
+  sign.run(1, 'G1', 'Platform Gate');
+  sign.run(otherCompanyId, 'G2', 'Workforce Gate');
+  assert.throws(read, { status: 404 });
+  d.prepare("UPDATE core_feature_flags SET default_enabled = 1 WHERE key = 'ff.close.p2603'").run();
+  assert.throws(read, { status: 404 }, 'G2 must be passed in the caller’s company');
+  sign.run(1, 'G2', 'Workforce Gate');
+  sign.run(otherCompanyId, 'G1', 'Platform Gate');
+  await w.subApproved(1, { retention: 1_000, securityDeposit: 0 });
+
+  const ncrId = fill(d, 'qa_ncrs', { company_id: 1, org_project_id: w.A, responsible_type: 'SUBCONTRACTOR',
+    responsible_id: w.sub, severity: 'MINOR', status: 'OPEN', description: 'Open concrete defect' });
+  const evidence = read();
+  assert.equal(evidence.balance, 1000);
+  assert.equal(evidence.expectedDate, day(-10));
+  assert.equal(evidence.checklist.find(({ code }) => code === 'PERIOD_END').ok, true);
+  assert.equal(evidence.checklist.find(({ code }) => code === 'NO_DEFECTS').ok, false);
+  d.prepare("UPDATE qa_ncrs SET status = 'CLOSED' WHERE id = ?").run(ncrId);
+  assert.equal(read().checklist.find(({ code }) => code === 'NO_DEFECTS').ok, true);
+  assert.equal(read({ ...input, amount: 1001 }).checklist.find(({ code }) => code === 'BALANCE').ok, false);
+
+  assert.throws(() => read({ ...input, basis: 'PARTIAL' }), { status: 400 });
+  assert.throws(() => read({ ...input, projectId: w.B }), { status: 400 }, 'a work order from another project is refused');
+  assert.throws(() => read(input, { companyId: 1, user: U.se.user, roles: ['SE'] }), { status: 404 });
+  assert.throws(() => read(input, { companyId: otherCompanyId, user: actor.user, roles: ['QS'] }), { status: 404 });
+  const ledgerOverride = d.prepare(`INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled)
+    VALUES ('ff.bill.p2207', 1, 'Disable the ledger in this fixture', 0, 0)`).run().lastInsertRowid;
+  assert.throws(read, { status: 404 });
+  d.prepare('DELETE FROM core_feature_flags WHERE id = ?').run(ledgerOverride);
+
+  assert.equal(d.prepare('SELECT COUNT(*) AS n FROM bill_releases').get().n, 0);
+  assert.equal(d.prepare("SELECT COUNT(*) AS n FROM bill_retention_ledger WHERE txn_type = 'RELEASED'").get().n, 0);
 });
 
 test('FR-01 the retention and deposit ledger follows the bills once each; the summary has the balance, the expected date and the ageing', async () => {
