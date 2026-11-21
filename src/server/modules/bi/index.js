@@ -18,6 +18,7 @@ import { createReportSubscriptions, subscriptionStatus, subscriptionUpdate } fro
 import { readProjectCountMetric } from './project-count-metric.js';
 import { createMetricCatalogue, metricExport } from './metric-catalogue.js';
 import { domainHistoryCode, domainMetricDefinition, listDomainMetrics, readDomainMetric, readDomainQuality, registerDomainHistoryExports } from './domain-metrics.js';
+import { bindExecution, createExecution } from './execution.js';
 import { SECTIONS as MR_SECTIONS, CHANNELS as MR_CHANNELS, createMorningReport } from './morning-report.js';
 import { ALERT_STATUSES, RULES, SEVERITIES, DIMENSIONS, bindTower, createControlTower } from './control-tower.js';
 
@@ -37,7 +38,7 @@ defineList({ code: builderExportCode, label: report.title, from: projectList.fro
 integrityRegistry.register({
   statuses: { rpt_subscriptions: ['ACTIVE', 'PAUSED'], rpt_runs: ['QUEUED', 'READY', 'FAILED', 'SKIPPED'],
     bi_metrics: ['CERTIFIED', 'REVOKED'], bi_refresh_log: ['COMPLETE'], bi_project_snapshots: ['CAPTURED'],
-    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'] },
+    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'], dei_daily: ['CAPTURED'] },
 });
 
 const configSchema = z.object({
@@ -56,7 +57,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const bi = {
   code: 'bi', name: 'Reports', routePrefix: '/api/v1/bi', ownerPart: '27.01',
   status: 'Project status catalogue, builder, exports, personal subscriptions and usage.',
-  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings'],
+  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution'],
   mount(api, { db, config }) {
     // The report background jobs are available once the reporting schema has been installed.
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rpt_subscriptions'").get()) return;
@@ -281,6 +282,22 @@ export const bi = {
       const input = parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional(),
         version: z.number().int().positive() }).strict(), req.body);
       return ok(res, morning.decide(req.actor, parseId(req.params.id), input));
+    });
+    // ---- part 27.06: daily execution intelligence and work-done / WIP valuation
+    const execution = createExecution(context, runtime);
+    bindExecution(db, context);
+    const execQuery = z.object({ projectId: z.coerce.number().int().positive().optional(), siteId: z.coerce.number().int().positive().optional(),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), days: z.coerce.number().int().min(7).max(90).optional() }).strict();
+    router.get('/execution', (req, res) => ok(res, execution.overview(req.actor, parse(execQuery, req.query))));
+    router.get('/execution/valuation', (req, res) => ok(res, execution.valuation(req.actor, parse(execQuery.omit({ days: true }), req.query))));
+    router.get('/execution/valuation/export', (req, res) => {
+      const { format, ...q } = parse(execQuery.omit({ days: true }).extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('csv') }), req.query);
+      const out = execution.exportValuation(req.actor, q, format);
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    router.post('/execution/captures', towerIdempotency, (req, res) => {
+      const input = parse(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), projectId: z.number().int().positive().optional() }).strict(), req.body);
+      return ok(res, execution.queue(req.actor, input), 202);
     });
     router.get('/reports/project-status/export', startExport(reportCode, {}));
     router.get('/datasets/project-status', (req, res) => {
