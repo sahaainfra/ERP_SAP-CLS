@@ -29841,6 +29841,49 @@ Indexes:
 - ix_rti_obs_item_id: item_id
 - ux_rti_obs_source (unique): company_id, source_type, source_id
 
+## scn_scenarios
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| scope_json | TEXT | yes |  | '{}' |
+| drivers_json | TEXT | yes |  | '[]' |
+| results_json | TEXT |  |  |  |
+| base_json | TEXT |  |  |  |
+| overhead_per_day | INTEGER | yes |  | 0 |
+| eac_delta | INTEGER |  |  |  |
+| margin_delta | INTEGER |  |  |  |
+| finish_delta_days | INTEGER |  |  |  |
+| cash_low_delta | INTEGER |  |  |  |
+| computed_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| shared_json | TEXT | yes |  | '[]' |
+| actions_json | TEXT | yes |  | '[]' |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_scn_scenarios_owner: company_id, created_by
+- ix_scn_scenarios_project: project_id
+- ix_scn_scenarios_company_status: company_id, status
+- sqlite_autoindex_scn_scenarios_1 (unique): company_id, doc_no
+
 ## scy_checkpoints
 
 | Column | Type | Not null | Key | Default |

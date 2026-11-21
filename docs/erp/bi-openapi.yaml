@@ -796,6 +796,49 @@ paths:
     post:
       summary: Run the scan for hard-coded figures and sample data in the dashboard code again (audited)
       responses: { '201': { description: '{ available, files, findings [rule, file, line, text, why], scannedAt }' } }
+  /bi/scenarios/drivers:
+    get:
+      summary: The scenario drivers with their fields and ranges, the projects in scope and the caller's rights (part 27.11)
+      responses: { '200': { description: '{ drivers [type, label, fields], projects, can }' }, '404': { description: Flag ff.bi.p2711 off } }
+  /bi/scenarios/preview:
+    post:
+      summary: Compute a scenario without saving it — on copies of the approved cost forecast (23.11), the schedule (13.01, CPM recalculated) and the approved 13-week cash forecast (23.13); nothing live changes (BR-01)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [projectId, drivers], properties: { projectId: { type: integer }, overheadPerDay: { type: number }, drivers: { type: array, items: { type: object, required: [type], properties: { type: { type: string, enum: [MATERIAL_PRICE, WAGE_RATE, PRODUCTIVITY_LOSS, EQUIPMENT_BREAKDOWN, PROCUREMENT_DELAY, SCHEDULE_DELAY, CLIENT_PAYMENT_DELAY, QUANTITY_VARIATION, SCOPE_CHANGE, CASH_CONSTRAINT] } } } } } } } } }
+      responses: { '200': { description: '{ cost { baseEac, eac, eacDelta, margin, marginDelta, lines }, schedule { baseFinish, finish, shiftDays }, cash { baseLowest, lowest, weeksBelowFloor, series }, effects, method }' }, '400': { description: A driver out of range } }
+  /bi/scenarios:
+    get:
+      summary: The scenarios the caller may see (their own, shared with them, and saved ones for those who share scenarios), in project scope
+      responses: { '200': { description: '{ rows, total }' } }
+    post:
+      summary: Create a scenario (draft, or saved with save true) and compute it (Idempotency-Key)
+      responses: { '201': { description: The scenario with its results } }
+  /bi/scenarios/compare:
+    get:
+      summary: Two to six scenarios side by side with the base figures
+      parameters: [{ name: ids, in: query, required: true, schema: { type: string, example: '12,15' } }]
+      responses: { '200': { description: '{ scenarios, base, sameProject }' } }
+  /bi/scenarios/compare/export:
+    get:
+      summary: Export the comparison (CSV, XLSX, PDF; audited)
+      responses: { '200': { description: The file } }
+  /bi/scenarios/{id}:
+    get:
+      summary: A scenario with its drivers, results, sharing and actions
+      responses: { '200': { description: The scenario }, '404': { description: Not visible to the caller } }
+    patch:
+      summary: Change the drivers or the status (author only; recomputed; rowVersion, 409 when stale)
+      responses: { '200': { description: The scenario }, '403': { description: Not the author }, '409': { description: Stale version } }
+    delete:
+      summary: Delete (author only)
+      responses: { '200': { description: Deleted } }
+  /bi/scenarios/{id}/share:
+    put:
+      summary: Share with people of the company (author only; they are notified)
+      responses: { '200': { description: The scenario }, '400': { description: Unknown user } }
+  /bi/scenarios/{id}/actions:
+    post:
+      summary: Turn a saved scenario into a task (04.08) or a forecast assumption (a task and the event bi.scenario.assumption_proposed for the forecast owner; the forecast itself is unchanged)
+      responses: { '201': { description: The scenario with its actions }, '422': { description: Not saved yet } }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }

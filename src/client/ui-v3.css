@@ -284,3 +284,12 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
   .drill-meta { grid-column: 1; }
 }
 .why-neg { color: var(--erp-color-status-error-fg); }
+
+/* Part 27.11: the Scenario Builder: numbered step pills, driver groups and the live totals with Save draft / Save sticky at the bottom. */
+.scn-steps { list-style: none; padding: 0; margin: 0 0 var(--erp-space-3); display: flex; flex-wrap: wrap; gap: var(--erp-space-2); }
+.scn-driver { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); margin: 0 0 var(--erp-space-3); display: grid; gap: var(--erp-space-2); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); align-items: end; }
+.scn-sticky { position: sticky; bottom: 0; z-index: 2; background: var(--erp-color-bg-surface); border-top: 1px solid var(--erp-color-border-subtle); padding: var(--erp-space-2) 0; margin-top: var(--erp-space-3); }
+@media (max-width: 599px) {
+  .scn-sticky { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+  .scn-sticky .actions-row .btn-primary { flex: 1 1 100%; min-height: 48px; }
+}

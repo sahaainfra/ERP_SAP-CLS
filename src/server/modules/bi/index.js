@@ -21,6 +21,7 @@ import { domainHistoryCode, domainMetricDefinition, listDomainMetrics, readDomai
 import { bindExecution, createExecution } from './execution.js';
 import { createMonthlyClose } from './monthly-close.js';
 import { bindExplain, createExplain } from './explain.js';
+import { createScenarios } from './scenarios.js';
 import { createRoleDashboards, registerRoleLayouts } from './role-dashboards.js';
 import { FINDING_STATUSES, OUTCOMES, RULES as DET_RULES, createLeakage } from './leakage.js';
 import { SECTIONS as MR_SECTIONS, CHANNELS as MR_CHANNELS, createMorningReport } from './morning-report.js';
@@ -42,7 +43,7 @@ defineList({ code: builderExportCode, label: report.title, from: projectList.fro
 integrityRegistry.register({
   statuses: { rpt_subscriptions: ['ACTIVE', 'PAUSED'], rpt_runs: ['QUEUED', 'READY', 'FAILED', 'SKIPPED'],
     bi_metrics: ['CERTIFIED', 'REVOKED'], bi_refresh_log: ['COMPLETE'], bi_project_snapshots: ['CAPTURED'],
-    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'], dei_daily: ['CAPTURED'], mc_monthly_closes: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], det_rules: ['APPROVED'], det_findings: FINDING_STATUSES },
+    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'], dei_daily: ['CAPTURED'], mc_monthly_closes: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], det_rules: ['APPROVED'], det_findings: FINDING_STATUSES, scn_scenarios: ['DRAFT', 'SAVED', 'ARCHIVED'] },
 });
 
 const configSchema = z.object({
@@ -61,7 +62,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const bi = {
   code: 'bi', name: 'Reports', routePrefix: '/api/v1/bi', ownerPart: '27.01',
   status: 'Project status catalogue, builder, exports, personal subscriptions and usage.',
-  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes', 'det_rules', 'det_findings'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes', 'explain', 'leakage', 'findings', 'detection-rules', 'detection', 'dashboard-inventory', 'role-dashboard'],
+  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes', 'det_rules', 'det_findings', 'scn_scenarios'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes', 'explain', 'leakage', 'findings', 'detection-rules', 'detection', 'dashboard-inventory', 'role-dashboard', 'scenarios'],
   mount(api, { db, config }) {
     // The report background jobs are available once the reporting schema has been installed.
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rpt_subscriptions'").get()) return;
@@ -389,6 +390,29 @@ export const bi = {
       return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
     });
     router.post('/dashboard-inventory/scans', towerIdempotency, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, roleDash.rescan(req.actor), 201); });
+    // ---- part 27.11: scenario and what-if simulation
+    const scn = createScenarios(context);
+    const driver = z.object({ type: z.string().max(30) }).catchall(z.union([z.string().max(60), z.number()]));
+    const scnBody = z.object({ name: z.string().trim().min(3).max(120), projectId: z.number().int().positive(), drivers: z.array(driver).min(1).max(20),
+      overheadPerDay: z.number().nonnegative().max(1e8).optional(), save: z.boolean().optional() }).strict();
+    const idsQ = z.object({ ids: z.string().regex(/^\d+(,\d+){0,5}$/) });
+    router.get('/scenarios/drivers', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, scn.drivers(req.actor)); });
+    router.post('/scenarios/preview', (req, res) => ok(res, scn.preview(req.actor, parse(scnBody.partial({ name: true }), req.body))));
+    router.get('/scenarios', (req, res) => ok(res, scn.list(req.actor, parse(z.object({ projectId: z.coerce.number().int().positive().optional(), status: z.enum(['DRAFT', 'SAVED', 'ARCHIVED']).optional() }).strict(), req.query))));
+    router.post('/scenarios', towerIdempotency, (req, res) => ok(res, scn.create(req.actor, parse(scnBody, req.body)), 201));
+    router.get('/scenarios/compare', (req, res) => ok(res, scn.compare(req.actor, parse(idsQ.strict(), req.query).ids.split(',').map(Number))));
+    router.get('/scenarios/compare/export', (req, res) => {
+      const q = parse(idsQ.extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }).strict(), req.query);
+      const out = scn.exportCompare(req.actor, q.ids.split(',').map(Number), q.format);
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    router.get('/scenarios/:id', (req, res) => ok(res, scn.get(req.actor, parseId(req.params.id))));
+    router.patch('/scenarios/:id', (req, res) => ok(res, scn.update(req.actor, parseId(req.params.id), parse(z.object({ name: z.string().trim().min(3).max(120).optional(), drivers: z.array(driver).min(1).max(20).optional(),
+      overheadPerDay: z.number().nonnegative().max(1e8).optional(), status: z.enum(['DRAFT', 'SAVED', 'ARCHIVED']).optional(), save: z.boolean().optional(), rowVersion: z.number().int().positive() }).strict(), req.body))));
+    router.delete('/scenarios/:id', (req, res) => ok(res, scn.remove(req.actor, parseId(req.params.id))));
+    router.put('/scenarios/:id/share', (req, res) => ok(res, scn.share(req.actor, parseId(req.params.id), parse(z.object({ users: z.array(z.string().min(1).max(80)).max(50) }).strict(), req.body))));
+    router.post('/scenarios/:id/actions', towerIdempotency, (req, res) => ok(res, scn.convert(req.actor, parseId(req.params.id), parse(z.object({ kind: z.enum(['TASK', 'ASSUMPTION']), assignee: z.string().min(1).max(80),
+      note: z.string().trim().min(5).max(1000), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).strict(), req.body)), 201));
     router.get('/reports/project-status/export', startExport(reportCode, {}));
     router.get('/datasets/project-status', (req, res) => {
       verifyBuilder(req.actor);

@@ -39,6 +39,7 @@ import mc from './en/mc.js';
 import why from './en/why.js';
 import lk from './en/lk.js';
 import rd from './en/rd.js';
+import scn from './en/scn.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -96,6 +97,7 @@ export default {
   why: why,
   lk: lk,
   rd: rd,
+  scn: scn,
   fc: fc,
   pa: pa,
 };
