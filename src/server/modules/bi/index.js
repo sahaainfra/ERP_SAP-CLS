@@ -18,6 +18,7 @@ import { createReportSubscriptions, subscriptionStatus, subscriptionUpdate } fro
 import { readProjectCountMetric } from './project-count-metric.js';
 import { createMetricCatalogue, metricExport } from './metric-catalogue.js';
 import { domainHistoryCode, domainMetricDefinition, listDomainMetrics, readDomainMetric, readDomainQuality, registerDomainHistoryExports } from './domain-metrics.js';
+import { SECTIONS as MR_SECTIONS, CHANNELS as MR_CHANNELS, createMorningReport } from './morning-report.js';
 import { ALERT_STATUSES, RULES, SEVERITIES, DIMENSIONS, bindTower, createControlTower } from './control-tower.js';
 
 const reportCode = 'bi.project_status';
@@ -36,7 +37,7 @@ defineList({ code: builderExportCode, label: report.title, from: projectList.fro
 integrityRegistry.register({
   statuses: { rpt_subscriptions: ['ACTIVE', 'PAUSED'], rpt_runs: ['QUEUED', 'READY', 'FAILED', 'SKIPPED'],
     bi_metrics: ['CERTIFIED', 'REVOKED'], bi_refresh_log: ['COMPLETE'], bi_project_snapshots: ['CAPTURED'],
-    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'] },
+    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'] },
 });
 
 const configSchema = z.object({
@@ -55,7 +56,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const bi = {
   code: 'bi', name: 'Reports', routePrefix: '/api/v1/bi', ownerPart: '27.01',
   status: 'Project status catalogue, builder, exports, personal subscriptions and usage.',
-  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings'],
+  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings'],
   mount(api, { db, config }) {
     // The report background jobs are available once the reporting schema has been installed.
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rpt_subscriptions'").get()) return;
@@ -246,6 +247,40 @@ export const bi = {
       const input = parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional(),
         version: z.number().int().positive() }).strict(), req.body);
       return ok(res, tower.decideSettings(req.actor, parseId(req.params.id), input));
+    });
+    // ---- part 27.05: the daily morning management report
+    const morning = createMorningReport(context, { ...runtime, environment: config.environment });
+    const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+    router.get('/morning-reports/current', (req, res) => {
+      const { date } = parse(z.object({ date: isoDate.optional() }).strict(), req.query);
+      return ok(res, morning.open(req.actor, { date }));
+    });
+    router.get('/morning-reports', (req, res) => ok(res, morning.archive(req.actor, parse(z.object({ from: isoDate.optional(), to: isoDate.optional(),
+      page: z.coerce.number().int().positive().max(10000).optional(), pageSize: z.coerce.number().int().positive().max(100).optional() }).strict(), req.query))));
+    router.get('/morning-reports/:id', (req, res) => ok(res, morning.open(req.actor, { id: parseId(req.params.id) })));
+    router.get('/morning-reports/:id/verify', (req, res) => ok(res, morning.verify(req.actor, parseId(req.params.id))));
+    router.get('/morning-reports/:id/export', (req, res) => {
+      const { format } = parse(z.object({ format: z.enum(['csv', 'xlsx', 'pdf']).default('pdf') }).strict(), req.query);
+      const out = morning.exportReport(req.actor, parseId(req.params.id), format);
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    router.post('/morning-reports/deliveries', towerIdempotency, (req, res) => {
+      parse(z.object({}).strict(), req.body ?? {});
+      return ok(res, morning.queueDelivery(req.actor), 202);
+    });
+    router.get('/morning-report-settings', (req, res) => ok(res, morning.settings(req.actor)));
+    const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+    router.post('/morning-report-settings/requests', towerIdempotency, (req, res) => {
+      const input = parse(z.object({ scopeType: z.enum(['ROLE', 'USER']), scopeRef: z.string().trim().min(2).max(80),
+        sections: z.array(z.enum(MR_SECTIONS)).min(1).max(MR_SECTIONS.length).refine((a) => new Set(a).size === a.length, 'Each section once'),
+        cutoff: hhmm, time: hhmm, channels: z.array(z.enum(MR_CHANNELS)).min(1).max(3).refine((a) => a.includes('IN_APP'), 'In-app delivery is always on'),
+        pdf: z.boolean().default(true), active: z.boolean(), reason: z.string().trim().min(5).max(500) }).strict(), req.body);
+      return ok(res, morning.propose(req.actor, input), 201);
+    });
+    router.post('/morning-report-settings/requests/:id/act', towerIdempotency, (req, res) => {
+      const input = parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional(),
+        version: z.number().int().positive() }).strict(), req.body);
+      return ok(res, morning.decide(req.actor, parseId(req.params.id), input));
     });
     router.get('/reports/project-status/export', startExport(reportCode, {}));
     router.get('/datasets/project-status', (req, res) => {
