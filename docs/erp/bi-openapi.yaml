@@ -728,6 +728,53 @@ paths:
         '200': { description: '{ level, id, title, breadcrumb [level, id, label], children [level, id, label, kind, figures, route, restricted] }' }
         '400': { description: Unknown level, or a document without its entity }
         '404': { description: Not found or outside the caller's scope (never named) }
+  /bi/leakage:
+    get:
+      summary: Leakage & controls tower (part 27.09) — findings by type, project and value, controls by mode, findings and exceptions trend, my pending actions
+      parameters: [{ name: projectId, in: query, schema: { type: integer } }]
+      responses: { '200': { description: '{ tiles, byRule, byProject, top, trend, controls, outcomes, pending, projects, can }' }, '403': { description: bi.leakage.view required }, '404': { description: Flag ff.bi.p2709 off } }
+  /bi/findings:
+    get:
+      summary: Findings in scope (bi.finding.view on the project, company-wide for company findings) and always the caller's own; filters status (or ACTIVE), ruleCode, projectId, outcome, severity, mine, overdue; sort value/newest/due; paginated
+      responses: { '200': { description: '{ rows, total, valueAtRisk, page, pageSize }' } }
+  /bi/findings/export:
+    get:
+      summary: Export the filtered findings (CSV, XLSX, PDF; bi.finding.export; audited)
+      responses: { '200': { description: The file } }
+  /bi/findings/{id}:
+    get:
+      summary: A finding with its evidence, owner and basis, method, rights and the auditor's approval task
+      responses: { '200': { description: The finding }, '404': { description: Not found or outside the caller's scope } }
+  /bi/findings/{id}/history:
+    get:
+      summary: The audit trail of the finding
+      responses: { '200': { description: '[{ action, actor, at, oldValues, newValues }]' } }
+  /bi/findings/{id}/review:
+    post:
+      summary: The owner (or bi.finding.act) takes an open finding into review (Idempotency-Key)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { rowVersion: { type: integer }, note: { type: string } } } } } }
+      responses: { '200': { description: The finding }, '403': { description: Not the owner }, '409': { description: Stale version } }
+  /bi/findings/{id}/close:
+    post:
+      summary: Close with an outcome (BR-01). CONFIRMED_LOSS needs lossAmount; FALSE_POSITIVE is sent to the internal auditor through the workflow engine (owner → AUD) and closes on approval
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [outcome, resolution, rowVersion], properties: { outcome: { type: string, enum: [CONFIRMED_LOSS, PREVENTED, FALSE_POSITIVE] }, resolution: { type: string }, lossAmount: { type: number }, rowVersion: { type: integer } } } } } }
+      responses: { '200': { description: The finding (CLOSED, or PENDING_FP) }, '400': { description: Missing loss amount or reason }, '409': { description: Stale version }, '422': { description: Not open } }
+  /bi/detection-rules:
+    get:
+      summary: The rule library with the thresholds in force, false-positive rate per rule and the pending changes
+      responses: { '200': { description: '{ rules, requests, can }' } }
+  /bi/detection-rules/{code}/changes:
+    post:
+      summary: Propose a threshold, severity or active change (bi.det_rule.configure); AUD or CFO approves, never the requester
+      responses: { '201': { description: The change request }, '400': { description: A threshold outside its bounds }, '409': { description: Already in force or already pending } }
+  /bi/detection-rules/changes/{id}/act:
+    post:
+      summary: Approve, reject or return a rule change
+      responses: { '200': { description: The change request } }
+  /bi/detection/runs:
+    post:
+      summary: Queue a run of the rules (all, or one ruleCode) as a background job (bi.det_rule.run); the job also runs daily at 05:30 IST
+      responses: { '202': { description: The job } }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }

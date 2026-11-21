@@ -21,6 +21,7 @@ import { domainHistoryCode, domainMetricDefinition, listDomainMetrics, readDomai
 import { bindExecution, createExecution } from './execution.js';
 import { createMonthlyClose } from './monthly-close.js';
 import { bindExplain, createExplain } from './explain.js';
+import { FINDING_STATUSES, OUTCOMES, RULES as DET_RULES, createLeakage } from './leakage.js';
 import { SECTIONS as MR_SECTIONS, CHANNELS as MR_CHANNELS, createMorningReport } from './morning-report.js';
 import { ALERT_STATUSES, RULES, SEVERITIES, DIMENSIONS, bindTower, createControlTower } from './control-tower.js';
 
@@ -40,7 +41,7 @@ defineList({ code: builderExportCode, label: report.title, from: projectList.fro
 integrityRegistry.register({
   statuses: { rpt_subscriptions: ['ACTIVE', 'PAUSED'], rpt_runs: ['QUEUED', 'READY', 'FAILED', 'SKIPPED'],
     bi_metrics: ['CERTIFIED', 'REVOKED'], bi_refresh_log: ['COMPLETE'], bi_project_snapshots: ['CAPTURED'],
-    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'], dei_daily: ['CAPTURED'], mc_monthly_closes: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'] },
+    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'], dei_daily: ['CAPTURED'], mc_monthly_closes: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], det_rules: ['APPROVED'], det_findings: FINDING_STATUSES },
 });
 
 const configSchema = z.object({
@@ -59,7 +60,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const bi = {
   code: 'bi', name: 'Reports', routePrefix: '/api/v1/bi', ownerPart: '27.01',
   status: 'Project status catalogue, builder, exports, personal subscriptions and usage.',
-  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes', 'explain'],
+  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes', 'det_rules', 'det_findings'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes', 'explain', 'leakage', 'findings', 'detection-rules', 'detection'],
   mount(api, { db, config }) {
     // The report background jobs are available once the reporting schema has been installed.
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rpt_subscriptions'").get()) return;
@@ -350,6 +351,30 @@ export const bi = {
       level: z.enum(['company', 'project', 'site', 'resource', 'wbs', 'activity', 'boq', 'txn', 'document', 'audit']).default('company'),
       id: z.string().trim().min(1).max(64).regex(/^[A-Za-z0-9_.:-]+$/).optional(), projectId: z.coerce.number().int().positive().optional(),
       entity: z.string().regex(/^[a-z][a-z_]{0,63}$/).optional(), txnId: z.coerce.number().int().positive().optional() }).strict(), req.query))));
+    // ---- part 27.09: wastage, leakage and duplication detection, and the controls tower
+    const leakage = createLeakage(context, { ...runtime, environment: config.environment });
+    const findingQ = z.object({ status: z.enum([...FINDING_STATUSES, 'ACTIVE']).optional(), ruleCode: z.enum(DET_RULES.map((r) => r.code)).optional(), projectId: z.coerce.number().int().positive().optional(),
+      outcome: z.enum(OUTCOMES).optional(), severity: z.enum(['INFO', 'WARNING', 'CRITICAL']).optional(), mine: z.enum(['1', 'true']).optional(), overdue: z.enum(['1', 'true']).optional(),
+      sort: z.enum(['value', 'newest', 'due']).optional(), page: z.coerce.number().int().positive().max(10000).optional(), pageSize: z.coerce.number().int().positive().max(100).optional() }).strict();
+    const rv = z.number().int().positive();
+    router.get('/leakage', (req, res) => ok(res, leakage.tower(req.actor, parse(z.object({ projectId: z.coerce.number().int().positive().optional() }).strict(), req.query))));
+    router.get('/findings', (req, res) => ok(res, leakage.list(req.actor, parse(findingQ, req.query))));
+    router.get('/findings/export', (req, res) => {
+      const { format, ...q } = parse(findingQ.extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }), req.query);
+      const out = leakage.exportList(req.actor, q, format);
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    router.get('/findings/:id', (req, res) => ok(res, leakage.get(req.actor, parseId(req.params.id))));
+    router.get('/findings/:id/history', (req, res) => ok(res, leakage.history(req.actor, parseId(req.params.id))));
+    router.post('/findings/:id/review', towerIdempotency, (req, res) => ok(res, leakage.start(req.actor, parseId(req.params.id), parse(z.object({ rowVersion: rv, note: z.string().trim().max(500).optional() }).strict(), req.body))));
+    router.post('/findings/:id/close', towerIdempotency, (req, res) => ok(res, leakage.close(req.actor, parseId(req.params.id), parse(z.object({ outcome: z.enum(OUTCOMES), resolution: z.string().trim().min(5).max(1000),
+      lossAmount: z.number().nonnegative().max(1e12).optional(), rowVersion: rv }).strict(), req.body))));
+    router.get('/detection-rules', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, leakage.rules(req.actor)); });
+    router.post('/detection-rules/:code/changes', towerIdempotency, (req, res) => ok(res, leakage.proposeRule(req.actor, parse(z.enum(DET_RULES.map((r) => r.code)), req.params.code),
+      parse(z.object({ thresholds: z.record(z.string(), z.number()), severity: z.enum(['INFO', 'WARNING', 'CRITICAL']), active: z.boolean(), reason: z.string().trim().min(5).max(500) }).strict(), req.body)), 201));
+    router.post('/detection-rules/changes/:id/act', towerIdempotency, (req, res) => ok(res, leakage.decideRule(req.actor, parseId(req.params.id), parse(z.object({ action: z.enum(['approve', 'reject', 'return']),
+      comment: z.string().trim().max(500).optional(), version: z.number().int().positive() }).strict(), req.body))));
+    router.post('/detection/runs', towerIdempotency, (req, res) => ok(res, leakage.queueRun(req.actor, parse(z.object({ ruleCode: z.enum(DET_RULES.map((r) => r.code)).optional() }).strict(), req.body ?? {}).ruleCode), 202));
     router.get('/reports/project-status/export', startExport(reportCode, {}));
     router.get('/datasets/project-status', (req, res) => {
       verifyBuilder(req.actor);

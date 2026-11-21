@@ -397,6 +397,10 @@
  "pay.stat.bocw.manage": [
   "PAY"
  ],
+ "bi.det_rule.configure": [
+  "CFO",
+  "PCMGR"
+ ],
  "bi.exec_alert.configure": [
   "CFO",
   "DIR"

@@ -37,6 +37,7 @@ import mr from './en/mr.js';
 import ex from './en/ex.js';
 import mc from './en/mc.js';
 import why from './en/why.js';
+import lk from './en/lk.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -92,6 +93,7 @@ export default {
   ex: ex,
   mc: mc,
   why: why,
+  lk: lk,
   fc: fc,
   pa: pa,
 };

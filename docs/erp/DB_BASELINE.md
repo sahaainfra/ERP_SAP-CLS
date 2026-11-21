@@ -8509,6 +8509,109 @@ Indexes:
 - ix_dei_daily_company_status: company_id, status
 - sqlite_autoindex_dei_daily_1 (unique): company_id, project_id, site_key, snap_date
 
+## det_findings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| rule_code | TEXT | yes |  |  |
+| rule_version | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | TEXT | yes |  |  |
+| entity_ref | TEXT |  |  |  |
+| title | TEXT | yes |  |  |
+| value_at_risk | INTEGER | yes |  | 0 |
+| evidence_json | TEXT | yes |  | '{}' |
+| dedupe_key | TEXT | yes |  |  |
+| severity | TEXT | yes |  |  |
+| owner_id | INTEGER |  |  |  |
+| owner_user | TEXT |  |  |  |
+| owner_role | TEXT |  |  |  |
+| owner_basis | TEXT |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| outcome | TEXT |  |  |  |
+| loss_amount | INTEGER |  |  |  |
+| resolution | TEXT |  |  |  |
+| detected_at | TEXT | yes |  |  |
+| last_seen_at | TEXT | yes |  |  |
+| occurrences | INTEGER | yes |  | 1 |
+| due_at | TEXT |  |  |  |
+| escalated_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| task_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'detection' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: owner_id -> iam_users(id), site_id -> org_sites(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_det_findings_workflow: workflow_instance_id
+- ix_det_findings_task: task_id
+- ix_det_findings_value: company_id, value_at_risk
+- ix_det_findings_detected: company_id, detected_at
+- ix_det_findings_owner_user: company_id, owner_user, status
+- ix_det_findings_owner: owner_id
+- ix_det_findings_rule: company_id, rule_code, status
+- ix_det_findings_site: site_id
+- ix_det_findings_project: project_id, status
+- ix_det_findings_company_status: company_id, status
+- sqlite_autoindex_det_findings_2 (unique): company_id, dedupe_key
+- sqlite_autoindex_det_findings_1 (unique): company_id, doc_no
+
+## det_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| query_ref | TEXT | yes |  |  |
+| threshold_json | TEXT | yes |  | '{}' |
+| severity | TEXT | yes |  |  |
+| active | INTEGER | yes |  | 1 |
+| request_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'APPROVED' |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'change_request' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_det_rules_request: request_id
+- ix_det_rules_company_status: company_id, status
+- sqlite_autoindex_det_rules_1 (unique): company_id, code, version
+
 ## doc_annotations
 
 | Column | Type | Not null | Key | Default |
