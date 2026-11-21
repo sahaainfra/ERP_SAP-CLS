@@ -515,6 +515,90 @@ paths:
         '200': { description: The request; on approval the new version is in force and audited }
         '403': { description: Self-approval or a role outside DIR and CFO }
 
+  /bi/morning-reports/current:
+    get:
+      summary: Open (and on first opening, build and freeze) the caller's morning report of a date (part 27.05)
+      description: >
+        Requires ff.bi.p2705 with the 27.03 prerequisites and bi.morning_report.view. The report is built as the caller, from the data as at
+        the configured cut-off of the date, and stored as a snapshot with its SHA-256; every later read returns the same figures (BR-01).
+      parameters: [{ name: date, in: query, schema: { type: string, format: date } }]
+      responses:
+        '200': { description: '{ id, reportNo, reportDate, cutoffAt, generatedAt, deliveredAt, channels, exceptions, hash, snapshot { sections, exceptions, summary } }' }
+        '400': { description: The cut-off of that date has not come yet }
+        '403': { description: bi.morning_report.view required }
+  /bi/morning-reports:
+    get:
+      summary: The caller's archive of morning reports
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: '{ rows, total, page, pageSize }' }
+  /bi/morning-reports/{id}:
+    get:
+      summary: One of the caller's reports (another person's report is 404)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: The report with its snapshot }
+        '404': { description: Not found or not the caller's }
+  /bi/morning-reports/{id}/verify:
+    get:
+      summary: Recompute the hash of the stored snapshot (reproducibility check)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: '{ hash, stored, identical }' }
+  /bi/morning-reports/{id}/export:
+    get:
+      summary: The report as PDF, XLSX or CSV, drawn from the snapshot (audited)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: format, in: query, schema: { type: string, enum: [pdf, xlsx, csv], default: pdf } }
+      responses:
+        '200': { description: The file }
+  /bi/morning-reports/deliveries:
+    post:
+      summary: Queue delivery of the reports now due (bi.morning_report.configure; Idempotency-Key required)
+      responses:
+        '202': { description: The background job }
+  /bi/morning-report-settings:
+    get:
+      summary: The configurations in force, the caller's own, and the change requests for checkers
+      responses:
+        '200': { description: '{ configs, mine, sections, channels, requests, can }' }
+  /bi/morning-report-settings/requests:
+    post:
+      summary: Propose a configuration for a role or a user (maker-checker; DIR or CFO approves; Idempotency-Key required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [scopeType, scopeRef, sections, cutoff, time, channels, active, reason]
+              properties:
+                scopeType: { type: string, enum: [ROLE, USER] }
+                scopeRef: { type: string, minLength: 2, maxLength: 80 }
+                sections: { type: array, items: { type: string, enum: [tower, progress, attendance, stock, receivables, payables, approvals, tasks, risks, incidents] } }
+                cutoff: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+                time: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$', description: Not before the cut-off }
+                channels: { type: array, items: { type: string, enum: [IN_APP, EMAIL, WHATSAPP] }, description: Must include IN_APP }
+                pdf: { type: boolean, default: true }
+                active: { type: boolean }
+                reason: { type: string, minLength: 5, maxLength: 500 }
+      responses:
+        '201': { description: The change request }
+        '409': { description: Already in force, or a change is already waiting }
+  /bi/morning-report-settings/requests/{id}/act:
+    post:
+      summary: Approve, reject or return a configuration change (never by its requester)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: The request; on approval the configuration is in force and audited }
+        '403': { description: Self-approval or a role outside DIR and CFO }
+
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }

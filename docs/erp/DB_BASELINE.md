@@ -19109,6 +19109,84 @@ Indexes:
 - ix_mdm_uoms_company: company_id, row_status
 - ux_mdm_uoms_key (unique): , code
 
+## mr_configs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| scope_type | TEXT | yes |  |  |
+| scope_ref | TEXT | yes |  |  |
+| sections_json | TEXT | yes |  |  |
+| delivery_json | TEXT | yes |  |  |
+| active | INTEGER | yes |  | 1 |
+| request_id | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'APPROVED' |
+| version | INTEGER | yes |  |  |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'change_request' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mr_configs_scope: company_id, scope_type, scope_ref, version
+- ix_mr_configs_company_status: company_id, status
+- sqlite_autoindex_mr_configs_2 (unique): request_id
+- sqlite_autoindex_mr_configs_1 (unique): company_id, scope_type, scope_ref, version
+
+## mr_reports
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| report_no | TEXT | yes |  |  |
+| report_date | TEXT | yes |  |  |
+| recipient_id | INTEGER |  |  |  |
+| recipient_user | TEXT | yes |  |  |
+| config_id | INTEGER |  |  |  |
+| file_id | INTEGER |  |  |  |
+| cutoff_at | TEXT | yes |  |  |
+| snapshot_json | TEXT | yes |  |  |
+| snapshot_hash | TEXT | yes |  |  |
+| data_snapshot_ref | TEXT | yes |  |  |
+| exceptions | INTEGER | yes |  | 0 |
+| generated_at | TEXT | yes |  |  |
+| delivered_at | TEXT |  |  |  |
+| channels_json | TEXT |  |  |  |
+| trigger | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'GENERATED' |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'mr_config' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), config_id -> mr_configs(id), recipient_id -> iam_users(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mr_reports_file: file_id
+- ix_mr_reports_config: config_id
+- ix_mr_reports_recipient_id: recipient_id
+- ix_mr_reports_recipient: company_id, recipient_user, report_date
+- ix_mr_reports_company_status: company_id, status
+- sqlite_autoindex_mr_reports_2 (unique): company_id, report_date, recipient_user
+- sqlite_autoindex_mr_reports_1 (unique): company_id, report_no
+
 ## mrc_contributions
 
 | Column | Type | Not null | Key | Default |
