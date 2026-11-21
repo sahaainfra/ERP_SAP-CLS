@@ -16,7 +16,7 @@ const B = '/api/v1/bi';
 let seq = 0;
 const key = () => ({ 'content-type': 'application/json', 'idempotency-key': `ex-${Date.now().toString(36)}-${(seq += 1)}` });
 const as = (roles, user) => ({ roles, user, company: '1' });
-const dir = as('DIR', 'ex-dir'); const qs = as('QS', 'ex-qs'); const pm = as('PM', 'ex-pm'); const se = as('SE', 'ex-se');
+const dir = as('DIR', 'ex-dir'); const qs = as('QS', 'ex-qs'); const se = as('SE', 'ex-se');
 const opened = [];
 after(async () => { for (const a of opened) await a.close(); });
 

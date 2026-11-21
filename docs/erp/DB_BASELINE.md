@@ -8461,6 +8461,54 @@ Indexes:
 - ux_ctr_wo_no (unique): company_id, wo_no
 - ux_ctr_wo_doc (unique): company_id, doc_no
 
+## dei_daily
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| site_id | INTEGER |  |  |  |
+| site_key | INTEGER | yes |  | 0 |
+| snap_date | TEXT | yes |  |  |
+| planned_value | INTEGER | yes |  | 0 |
+| executed_value | INTEGER | yes |  | 0 |
+| cost_value | INTEGER |  |  |  |
+| wip_value | INTEGER |  |  |  |
+| cum_value | INTEGER |  |  |  |
+| billed_gap_value | INTEGER |  |  |  |
+| balance_value | INTEGER |  |  |  |
+| labour_count | INTEGER | yes |  | 0 |
+| plant_hours | INTEGER | yes |  | 0 |
+| idle_hours | INTEGER | yes |  | 0 |
+| hindrances_open | INTEGER | yes |  | 0 |
+| rfis_raised | INTEGER |  |  |  |
+| rfis_answered | INTEGER |  |  |  |
+| rfis_open | INTEGER |  |  |  |
+| snapshot_json | TEXT | yes |  |  |
+| captured_at | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'CAPTURED' |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'site_dprs' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: site_id -> org_sites(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_dei_daily_site: site_id, snap_date
+- ix_dei_daily_project: project_id, snap_date
+- ix_dei_daily_date: company_id, snap_date, site_key
+- ix_dei_daily_company_status: company_id, status
+- sqlite_autoindex_dei_daily_1 (unique): company_id, project_id, site_key, snap_date
+
 ## doc_annotations
 
 | Column | Type | Not null | Key | Default |

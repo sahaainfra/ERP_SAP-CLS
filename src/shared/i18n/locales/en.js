@@ -34,6 +34,7 @@ import fc from './en/fc.js';
 import pl from './en/pl.js';
 import ct from './en/ct.js';
 import mr from './en/mr.js';
+import ex from './en/ex.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -86,6 +87,7 @@ export default {
   pl: pl,
   ct: ct,
   mr: mr,
+  ex: ex,
   fc: fc,
   pa: pa,
 };

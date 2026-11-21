@@ -599,6 +599,54 @@ paths:
         '200': { description: The request; on approval the configuration is in force and audited }
         '403': { description: Self-approval or a role outside DIR and CFO }
 
+  /bi/execution:
+    get:
+      summary: Daily execution intelligence (part 27.06)
+      description: >
+        Requires ff.bi.p2706 with the 27.03 prerequisites and bi.execution.view. Figures come from the daily snapshots of approved DPRs:
+        work done = Σ approved DPR quantity (apportioned to BOQ items by 22.02) × contract rate. Site rows are scoped by site, project rows by project.
+        Budget cost and margin are null without bi.execution.cost.
+      parameters:
+        - { name: projectId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: siteId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: date, in: query, schema: { type: string, format: date } }
+        - { name: days, in: query, schema: { type: integer, minimum: 7, maximum: 90, default: 30 } }
+      responses:
+        '200': { description: '{ date, lastCapturedAt, costVisible, tiles, trend, sites, projects, exceptions, options, can }' }
+        '403': { description: bi.execution.view required }
+  /bi/execution/valuation:
+    get:
+      summary: Work-done valuation of a project (or one site) for a day, item by item with the DPRs behind it
+      parameters:
+        - { name: projectId, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: siteId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: date, in: query, schema: { type: string, format: date } }
+      responses:
+        '200': { description: '{ items [code, description, uom, qty, rate, value, cost, margin, dprs], totals, captured }' }
+        '400': { description: A project is required }
+        '404': { description: The project or site is outside the caller's scope }
+  /bi/execution/valuation/export:
+    get:
+      summary: The valuation as CSV, XLSX or PDF (cost columns only with bi.execution.cost; audited)
+      parameters:
+        - { name: projectId, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: siteId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: date, in: query, schema: { type: string, format: date } }
+        - { name: format, in: query, schema: { type: string, enum: [csv, xlsx, pdf], default: csv } }
+      responses:
+        '200': { description: The file }
+  /bi/execution/captures:
+    post:
+      summary: Recompute the snapshots of a day (bi.execution.run; Idempotency-Key required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false, required: [date], properties: { date: { type: string, format: date }, projectId: { type: integer, minimum: 1 } } }
+      responses:
+        '202': { description: The background job }
+        '400': { description: A future day }
+
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
