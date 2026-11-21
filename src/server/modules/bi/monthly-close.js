@@ -9,6 +9,7 @@ import { createBase, nowIso, rid } from '../proc/base.js';
 import { STATUS, createFlow } from '../qa/flow.js';
 import { invOf } from '../inv/index.js';
 import { requireMetricCatalogueSource } from './domain-metrics.js';
+import { assertPermissionAnywhere } from '../../platform/auth/index.js';
 
 /**
  * Part 27.07 — the monthly closing protocol of a project, the Project MIS and the Budget Master.
@@ -252,7 +253,7 @@ export function createMonthlyClose(context) {
     flow,
     /** The board: every project in scope × its close of the month (or none), grouped by stage. */
     board(actor, q) {
-      guard(actor); need(actor, 'bi.monthly_close.view', 'see monthly closes');
+      guard(actor); assertPermissionAnywhere(actor, 'bi.monthly_close.view');
       const period = q.period ?? todayIST().slice(0, 7);
       const scope = authz.scopeFilter(actor, 'bi.monthly_close.view', { project: 'p.id' }).sql;
       const projects = db.prepare(`SELECT p.id, p.code, p.name FROM org_projects p WHERE p.company_id = ? AND p.deleted_at IS NULL AND p.status IN ('ACTIVE','ON_HOLD') AND (${scope}) ORDER BY p.code`).all(actor.companyId);
@@ -269,7 +270,7 @@ export function createMonthlyClose(context) {
       return { period, steps: STEPS.map((s) => ({ code: s.code, name: s.name, ownerRole: s.owner })), columns, cards };
     },
     list(actor, q = {}) {
-      guard(actor); need(actor, 'bi.monthly_close.view', 'see monthly closes');
+      guard(actor); assertPermissionAnywhere(actor, 'bi.monthly_close.view');
       const scope = authz.scopeFilter(actor, 'bi.monthly_close.view', { project: 'x.project_id' }).sql;
       const where = ['x.company_id = :c', 'x.deleted_at IS NULL', `(${scope})`]; const params = { c: actor.companyId };
       if (q.period) { where.push('x.period = :period'); params.period = q.period; }
@@ -342,7 +343,7 @@ export function createMonthlyClose(context) {
       return { buffer, contentType: FORMATS[format], fileName: `${part === 'budget' ? 'budget-master' : 'project-mis'}-${v.projectCode}-${v.period}.${format}` };
     },
     exportList(actor, q, format) {
-      guard(actor); need(actor, 'bi.monthly_close.export', 'export monthly closes');
+      guard(actor); assertPermissionAnywhere(actor, 'bi.monthly_close.export');
       const all = []; let page = 1; let total;
       do { const l = closes.list(actor, { ...q, page, pageSize: 100 }); all.push(...l.rows); total = l.total; page += 1; } while (all.length < total);
       const columns = [['docNo', 'Close', 'text'], ['project', 'Project', 'text'], ['period', 'Month', 'text'], ['versionNo', 'Version', 'number'], ['statusLabel', 'Status', 'text'], ['lockState', 'Lock', 'text'], ['lockedAt', 'Locked at', 'text']]
