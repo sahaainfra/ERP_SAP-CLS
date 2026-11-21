@@ -11,6 +11,7 @@ import { useFormat, useT } from '../../platform/i18n/index.js';
 import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../eng/common.js';
 import { downloadReport } from './api.js';
+import { WhyLinks } from './DrillBreadcrumb.jsx';
 
 // Part 27.04: the enterprise control tower (overview page, UI v3 §3.4). One page with four pill tabs: the executive dashboard (certified KPI tiles,
 // health by dimension, alerts, my pending actions, cash outlook), the health matrix (RAG per project with the drill to the project, its WBS and the
@@ -162,6 +163,7 @@ function ProjectDrill({ projectId }) {
   return <Section title={t('d.title', { code: d.code, name: d.name })} testid="ct-drill"
     actions={<><Link to={d.project360}>{t('d.p360')}</Link> <button type="button" className="btn" onClick={() => go({ projectId: '' })}>{t('d.close')}</button></>}>
     <div className="actions-row">{['overall', ...DIMENSIONS].map((k) => <Rag key={k} state={d.health[k]} label={t(`dim.${k}`)} />)}</div>
+    <WhyLinks projectId={projectId} testid="ct-why" />
     <h3>{t('d.metrics')}</h3>
     <ul className="wd-topn" data-testid="ct-drill-metrics">{d.metrics.map((m) => <li key={m.code} className="wd-topn-row" data-code={m.code}>
       <span className="wd-topn-label">{m.name}{m.previous ? <><br /><span className="muted small">{t('d.previous', { v: figure(m.previous.value, m.unit), p: m.previous.sourcePeriod })}</span></> : null}</span>

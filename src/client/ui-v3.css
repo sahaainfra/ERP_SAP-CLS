@@ -249,3 +249,38 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .lr-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--erp-space-3); }
 .lr-sheet-backdrop { position: fixed; inset: 0; z-index: var(--erp-z-modal); background: var(--erp-color-overlay-backdrop); }
 .lr-sheet .lr-quick { flex-wrap: wrap; }
+
+/* Part 27.08: the Variance Explainer waterfall, the drill-down breadcrumb and list (any dashboard can show the breadcrumb). */
+.wf { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.wf-row { display: grid; grid-template-columns: minmax(7rem, 14rem) 1fr minmax(6rem, auto); align-items: center; gap: var(--erp-space-2); min-height: 28px; }
+.wf-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wf-track { position: relative; height: 18px; background: var(--erp-color-bg-surface-sunken); border-radius: 3px; }
+.wf-zero { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--erp-color-border-control); }
+.wf-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; }
+.wf-good { background: var(--erp-color-status-success-solid); }
+.wf-bad { background: var(--erp-color-status-error-solid); }
+.wf-neutral { background: var(--erp-color-status-warning-solid); }
+.wf-total { background: var(--erp-color-text-secondary); }
+.wf-row[data-testid="wf-total"] { border-top: 1px solid var(--erp-color-border-subtle); padding-top: var(--erp-space-2); font-weight: 600; }
+.wf-value { text-align: right; white-space: nowrap; }
+@media (max-width: 599px) {
+  .wf-row { grid-template-columns: 1fr auto; grid-template-areas: 'label value' 'track track'; row-gap: 2px; }
+  .wf-label { grid-area: label; white-space: normal; }
+  .wf-value { grid-area: value; }
+  .wf-track { grid-area: track; }
+}
+.drill-crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: var(--erp-space-1) var(--erp-space-2); margin: 0 0 var(--erp-space-3); padding: 0; }
+.drill-crumbs li { display: inline-flex; align-items: baseline; gap: var(--erp-space-1); overflow-wrap: anywhere; }
+.drill-crumbs li + li::before { content: '›'; color: var(--erp-color-text-muted); margin-right: var(--erp-space-1); }
+.drill-crumb-level { font-size: 0.75rem; color: var(--erp-color-text-muted); text-transform: uppercase; letter-spacing: 0.02em; }
+.drill-crumbs li[aria-current='page'] .drill-crumb-label { font-weight: 600; }
+.drill-list { list-style: none; margin: 0; padding: 0; }
+.drill-item { display: grid; grid-template-columns: minmax(6rem, 10rem) 1fr; gap: 2px var(--erp-space-3); padding: var(--erp-space-2) 0; border-bottom: 1px solid var(--erp-color-border-subtle); }
+.drill-name { overflow-wrap: anywhere; }
+.drill-meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: var(--erp-space-2); }
+.drill-figs { display: inline-flex; flex-wrap: wrap; gap: var(--erp-space-2); }
+@media (max-width: 599px) {
+  .drill-item { grid-template-columns: 1fr; }
+  .drill-meta { grid-column: 1; }
+}
+.why-neg { color: var(--erp-color-status-error-fg); }

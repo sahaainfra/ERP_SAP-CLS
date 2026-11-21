@@ -20,6 +20,7 @@ import { createMetricCatalogue, metricExport } from './metric-catalogue.js';
 import { domainHistoryCode, domainMetricDefinition, listDomainMetrics, readDomainMetric, readDomainQuality, registerDomainHistoryExports } from './domain-metrics.js';
 import { bindExecution, createExecution } from './execution.js';
 import { createMonthlyClose } from './monthly-close.js';
+import { bindExplain, createExplain } from './explain.js';
 import { SECTIONS as MR_SECTIONS, CHANNELS as MR_CHANNELS, createMorningReport } from './morning-report.js';
 import { ALERT_STATUSES, RULES, SEVERITIES, DIMENSIONS, bindTower, createControlTower } from './control-tower.js';
 
@@ -58,7 +59,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const bi = {
   code: 'bi', name: 'Reports', routePrefix: '/api/v1/bi', ownerPart: '27.01',
   status: 'Project status catalogue, builder, exports, personal subscriptions and usage.',
-  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes'],
+  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes', 'explain'],
   mount(api, { db, config }) {
     // The report background jobs are available once the reporting schema has been installed.
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rpt_subscriptions'").get()) return;
@@ -335,6 +336,20 @@ export const bi = {
       const out = mc.exportPack(req.actor, parseId(req.params.id), { format, part });
       return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
     });
+    // ---- part 27.08: "Why?" variance explainability and the drill-down
+    const explain = createExplain(context);
+    bindExplain(db, context);
+    const whyQ = z.object({ projectId: z.coerce.number().int().positive(), kpi: z.enum(['cost', 'schedule', 'margin']).default('cost'), period: periodQ.optional() }).strict();
+    router.get('/explain/why', (req, res) => ok(res, explain.why(req.actor, parse(whyQ, req.query))));
+    router.get('/explain/why/export', (req, res) => {
+      const { format, ...q } = parse(whyQ.extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }), req.query);
+      const out = explain.exportWhy(req.actor, q, format);
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    router.get('/explain/drill', (req, res) => ok(res, explain.drill(req.actor, parse(z.object({
+      level: z.enum(['company', 'project', 'site', 'resource', 'wbs', 'activity', 'boq', 'txn', 'document', 'audit']).default('company'),
+      id: z.string().trim().min(1).max(64).regex(/^[A-Za-z0-9_.:-]+$/).optional(), projectId: z.coerce.number().int().positive().optional(),
+      entity: z.string().regex(/^[a-z][a-z_]{0,63}$/).optional(), txnId: z.coerce.number().int().positive().optional() }).strict(), req.query))));
     router.get('/reports/project-status/export', startExport(reportCode, {}));
     router.get('/datasets/project-status', (req, res) => {
       verifyBuilder(req.actor);

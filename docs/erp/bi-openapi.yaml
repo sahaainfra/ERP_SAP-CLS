@@ -700,6 +700,34 @@ paths:
       parameters: [{ name: part, in: query, schema: { type: string, enum: [mis, budget], default: budget } }, { name: format, in: query, schema: { type: string, enum: [csv, xlsx], default: xlsx } }]
       responses: { '200': { description: The file } }
 
+  /bi/explain/why:
+    get:
+      summary: Why? — decomposition of a project's cost, schedule or margin variance (part 27.08; deterministic, components + residual = total)
+      parameters:
+        - { name: projectId, in: query, required: true, schema: { type: integer } }
+        - { name: kpi, in: query, schema: { type: string, enum: [cost, schedule, margin], default: cost } }
+        - { name: period, in: query, schema: { type: string, pattern: '^\\d{4}-(0[1-9]|1[0-2])$' } }
+      responses:
+        '200': { description: '{ kpi, label, total, components [key, group, label, amount, method, drill], residual, explained, check { balanced }, method DETERMINISTIC, narrative null, figures, source, breadcrumb }' }
+        '403': { description: bi.explain.view required, or the owning module (14.07 control facts, 22.09 CVR) refuses the figures to the role }
+        '404': { description: Flag ff.bi.p2708 off, or the project is outside the caller's scope }
+  /bi/explain/why/export:
+    get:
+      summary: Export the decomposition with its residual and total (CSV, XLSX, PDF; bi.explain.export; audited)
+      responses: { '200': { description: The file } }
+  /bi/explain/drill:
+    get:
+      summary: One level of the drill-down with its breadcrumb (Company → Project → Site / WBS / Resource → Activity → BOQ → Transaction → Document → Audit)
+      parameters:
+        - { name: level, in: query, schema: { type: string, enum: [company, project, site, resource, wbs, activity, boq, txn, document, audit], default: company } }
+        - { name: id, in: query, schema: { type: string } }
+        - { name: projectId, in: query, schema: { type: integer }, description: With level resource }
+        - { name: entity, in: query, schema: { type: string }, description: The object type (03.04 registry) with level document or audit }
+        - { name: txnId, in: query, schema: { type: integer }, description: Keeps the transaction in the breadcrumb of a document }
+      responses:
+        '200': { description: '{ level, id, title, breadcrumb [level, id, label], children [level, id, label, kind, figures, route, restricted] }' }
+        '400': { description: Unknown level, or a document without its entity }
+        '404': { description: Not found or outside the caller's scope (never named) }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
