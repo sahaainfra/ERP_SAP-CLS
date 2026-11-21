@@ -1,3 +1,4 @@
+import { assertProjectPeriodOpen } from '../../platform/locks/index.js';
 import { transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
@@ -295,7 +296,7 @@ export function createDprService({ db, dayContext = () => null }) {
         weather: Object.entries(WEATHER).map(([code, label]) => ({ code, label })), noteTypes: Object.entries(NOTE_TYPES).map(([code, label]) => ({ code, label })), categories: Object.entries(CATEGORIES).map(([code, label]) => ({ code, label })) };
     },
     create(actor, b, extra = {}) {
-      const s = siteRow(actor, b.siteId, 'site.dpr.create'); notFuture(b.dprDate); const sc = b.scope ?? 'SITE'; const sup = b.supervisor ?? actor.user;
+      const s = siteRow(actor, b.siteId, 'site.dpr.create'); notFuture(b.dprDate); assertProjectPeriodOpen(db, { companyId: actor.companyId, projectId: s.org_project_id, date: b.dprDate, what: 'daily progress report' }); const sc = b.scope ?? 'SITE'; const sup = b.supervisor ?? actor.user;
       const dup = db.prepare(`SELECT doc_no FROM site_dprs WHERE dpr_site_id = ? AND dpr_date = ? AND scope = ? AND parent_dpr_id IS NULL AND deleted_at IS NULL AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED')${sc === 'SUPERVISOR' ? ' AND lower(supervisor) = lower(?)' : ''}`).get(s.id, b.dprDate, sc, ...(sc === 'SUPERVISOR' ? [sup] : []));
       if (dup) throw conflict(`${dup.doc_no} is already the ${sc === 'SITE' ? 'report of this site' : `report of ${sup}`} for ${b.dprDate}: open it instead.`);
       return transaction(db, () => {
@@ -314,7 +315,7 @@ export function createDprService({ db, dayContext = () => null }) {
       });
     },
     update(actor, id, b) {
-      const r = row(actor, id, 'site.dpr.edit'); mustEdit(r); if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this report; reload it.');
+      const r = row(actor, id, 'site.dpr.edit'); mustEdit(r); assertProjectPeriodOpen(db, { companyId: r.company_id, projectId: r.org_project_id, date: r.dpr_date, what: 'daily progress report' }); if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this report; reload it.');
       return transaction(db, () => {
         const set = []; const vals = []; for (const [k, c] of [['weatherCode', 'weather_code'], ['rainMm', 'rain_mm'], ['weatherRef', 'weather_ref'], ['summary', 'summary'], ['workFrontId', 'work_front_id']]) if (k in b) { set.push(`${c} = ?`); vals.push(b[k]); }
         if ('supervisor' in b && b.supervisor && r.scope === 'SUPERVISOR') { set.push('supervisor = ?'); vals.push(b.supervisor); }
@@ -326,7 +327,7 @@ export function createDprService({ db, dayContext = () => null }) {
     remove(actor, id) { const r = row(actor, id, 'site.dpr.delete'); if (r.status !== 'DRAFT' || r.workflow_instance_id) throw unprocessable('Only a draft that was never sent is deleted. Cancel it instead.'); transaction(db, () => { const now = nowIso(); for (const t of ['site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_notes', 'site_dpr_photos']) db.prepare(`UPDATE ${t} SET deleted_at = ?, deleted_by = ?, is_active = 0 WHERE dpr_id = ? AND deleted_at IS NULL`).run(now, actor.user, r.id); db.prepare('UPDATE site_dprs SET deleted_at = ?, deleted_by = ?, is_active = 0 WHERE id = ?').run(now, actor.user, r.id); audit(actor, 'site_dprs', r.id, 'delete', r.company_id); }); return { id: r.id, deleted: true }; },
     /** Send for approval (FR-05): the sections are worked out again, the reasons asked for, the cut-off judged by the time it was sent (the device's corrected time for an offline report); an amendment goes to the project manager only. */
     submit(actor, id, { effectiveAt = null, via = 'ONLINE' } = {}) {
-      const r = row(actor, id, 'site.dpr.submit'); if (!editable(r)) throw unprocessable('Only a draft or a returned report is sent for approval.'); notFuture(r.dpr_date);
+      const r = row(actor, id, 'site.dpr.submit'); if (!editable(r)) throw unprocessable('Only a draft or a returned report is sent for approval.'); notFuture(r.dpr_date); assertProjectPeriodOpen(db, { companyId: r.company_id, projectId: r.org_project_id, date: r.dpr_date, what: 'daily progress report' });
       return transaction(db, () => {
         const d = derive(r, inputOf(r.id)); fail(d.p); fail(sendProblems(d)); writeSections(actor, r, d);
         const at = effectiveAt && Date.parse(effectiveAt) <= Date.now() + 300_000 ? effectiveAt : nowIso(); const c = cutoffOf(r.company_id, r.dpr_date, at); const amendment = Boolean(r.parent_dpr_id);
@@ -344,7 +345,7 @@ export function createDprService({ db, dayContext = () => null }) {
     },
     /** BR-03: an approved report is locked; an amendment is a copy (with its photos) that the project manager approves and that replaces it. */
     amend(actor, id, { reason }) {
-      const r = row(actor, id, 'site.dpr.amend'); if (r.status !== 'APPROVED') throw unprocessable('Only an approved report is amended.'); if (db.prepare("SELECT 1 FROM site_dprs WHERE parent_dpr_id = ? AND deleted_at IS NULL AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED')").get(r.id)) throw conflict('An amendment of this report is open.');
+      const r = row(actor, id, 'site.dpr.amend'); if (r.status !== 'APPROVED') throw unprocessable('Only an approved report is amended.'); assertProjectPeriodOpen(db, { companyId: r.company_id, projectId: r.org_project_id, date: r.dpr_date, what: 'daily progress report amendment' }); if (db.prepare("SELECT 1 FROM site_dprs WHERE parent_dpr_id = ? AND deleted_at IS NULL AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED')").get(r.id)) throw conflict('An amendment of this report is open.');
       return transaction(db, () => {
         const cols = ['org_project_id', 'dpr_site_id', 'dpr_date', 'supervisor', 'scope', 'work_front_id', 'weather_code', 'rain_mm', 'weather_ref', 'summary', 'project_id', 'site_id'];
         const nid = Number(db.prepare(`INSERT INTO site_dprs (company_id, doc_no, ${cols.join(', ')}, revision_no, parent_dpr_id, status, reason, requested_by, created_by, source_type, source_id) VALUES (?, ?, ${cols.map(() => '?').join(', ')}, ?, ?, 'DRAFT', ?, ?, ?, 'site_dpr', ?)`)

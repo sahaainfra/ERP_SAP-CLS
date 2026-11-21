@@ -19,6 +19,7 @@ import { readProjectCountMetric } from './project-count-metric.js';
 import { createMetricCatalogue, metricExport } from './metric-catalogue.js';
 import { domainHistoryCode, domainMetricDefinition, listDomainMetrics, readDomainMetric, readDomainQuality, registerDomainHistoryExports } from './domain-metrics.js';
 import { bindExecution, createExecution } from './execution.js';
+import { createMonthlyClose } from './monthly-close.js';
 import { SECTIONS as MR_SECTIONS, CHANNELS as MR_CHANNELS, createMorningReport } from './morning-report.js';
 import { ALERT_STATUSES, RULES, SEVERITIES, DIMENSIONS, bindTower, createControlTower } from './control-tower.js';
 
@@ -38,7 +39,7 @@ defineList({ code: builderExportCode, label: report.title, from: projectList.fro
 integrityRegistry.register({
   statuses: { rpt_subscriptions: ['ACTIVE', 'PAUSED'], rpt_runs: ['QUEUED', 'READY', 'FAILED', 'SKIPPED'],
     bi_metrics: ['CERTIFIED', 'REVOKED'], bi_refresh_log: ['COMPLETE'], bi_project_snapshots: ['CAPTURED'],
-    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'], dei_daily: ['CAPTURED'] },
+    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'], mr_configs: ['APPROVED'], mr_reports: ['GENERATED', 'DELIVERED'], dei_daily: ['CAPTURED'], mc_monthly_closes: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'] },
 });
 
 const configSchema = z.object({
@@ -57,7 +58,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const bi = {
   code: 'bi', name: 'Reports', routePrefix: '/api/v1/bi', ownerPart: '27.01',
   status: 'Project status catalogue, builder, exports, personal subscriptions and usage.',
-  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution'],
+  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes'],
   mount(api, { db, config }) {
     // The report background jobs are available once the reporting schema has been installed.
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rpt_subscriptions'").get()) return;
@@ -298,6 +299,41 @@ export const bi = {
     router.post('/execution/captures', towerIdempotency, (req, res) => {
       const input = parse(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), projectId: z.number().int().positive().optional() }).strict(), req.body);
       return ok(res, execution.queue(req.actor, input), 202);
+    });
+    // ---- part 27.07: the monthly closing protocol, the Project MIS and the Budget Master
+    const mc = createMonthlyClose(context);
+    const periodQ = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+    const listQ = z.object({ period: periodQ.optional(), projectId: z.coerce.number().int().positive().optional(), status: z.enum(['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED', 'SUPERSEDED']).optional(),
+      page: z.coerce.number().int().positive().max(10000).optional(), pageSize: z.coerce.number().int().positive().max(100).optional() }).strict();
+    const versionBody = z.object({ rowVersion: z.number().int().positive() }).strict();
+    const reasonBody = z.object({ reason: z.string().trim().min(5).max(500) }).strict();
+    router.get('/monthly-closes/board', (req, res) => ok(res, mc.board(req.actor, parse(z.object({ period: periodQ.optional() }).strict(), req.query))));
+    router.get('/monthly-closes', (req, res) => ok(res, mc.list(req.actor, parse(listQ, req.query))));
+    router.get('/monthly-closes/export', (req, res) => {
+      const { format, ...q } = parse(listQ.extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('csv') }), req.query);
+      const out = mc.exportList(req.actor, q, format);
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    router.post('/monthly-closes', towerIdempotency, (req, res) => ok(res, mc.create(req.actor, parse(z.object({ projectId: z.number().int().positive(), period: periodQ,
+      remarks: z.string().trim().max(500).optional() }).strict(), req.body)), 201));
+    router.get('/monthly-closes/:id', (req, res) => ok(res, mc.get(req.actor, parseId(req.params.id))));
+    router.patch('/monthly-closes/:id', (req, res) => ok(res, mc.update(req.actor, parseId(req.params.id), parse(z.object({ remarks: z.string().trim().max(500).nullable(),
+      rowVersion: z.number().int().positive() }).strict(), req.body))));
+    router.delete('/monthly-closes/:id', (req, res) => ok(res, mc.remove(req.actor, parseId(req.params.id))));
+    router.post('/monthly-closes/:id/submit', towerIdempotency, (req, res) => ok(res, mc.submit(req.actor, parseId(req.params.id), parse(versionBody, req.body ?? {}).rowVersion)));
+    router.post('/monthly-closes/:id/withdraw', towerIdempotency, (req, res) => ok(res, mc.withdraw(req.actor, parseId(req.params.id), parse(reasonBody, req.body))));
+    router.post('/monthly-closes/:id/cancel', towerIdempotency, (req, res) => ok(res, mc.cancel(req.actor, parseId(req.params.id), parse(reasonBody, req.body))));
+    router.post('/monthly-closes/:id/amend', towerIdempotency, (req, res) => ok(res, mc.amend(req.actor, parseId(req.params.id), parse(reasonBody, req.body)), 201));
+    router.get('/monthly-closes/:id/history', (req, res) => ok(res, mc.history(req.actor, parseId(req.params.id))));
+    router.get('/monthly-closes/:id/print', (req, res) => {
+      const { part } = parse(z.object({ part: z.enum(['mis', 'budget']).default('mis') }).strict(), req.query);
+      const out = mc.exportPack(req.actor, parseId(req.params.id), { format: 'pdf', part });
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    router.get('/monthly-closes/:id/export', (req, res) => {
+      const { part, format } = parse(z.object({ part: z.enum(['mis', 'budget']).default('budget'), format: z.enum(['csv', 'xlsx']).default('xlsx') }).strict(), req.query);
+      const out = mc.exportPack(req.actor, parseId(req.params.id), { format, part });
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
     });
     router.get('/reports/project-status/export', startExport(reportCode, {}));
     router.get('/datasets/project-status', (req, res) => {
