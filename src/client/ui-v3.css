@@ -159,6 +159,12 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .att-phone-days li { display: flex; justify-content: space-between; gap: var(--erp-space-2); }
 @media (max-width: 767px) {
   :root[data-ui-v3] .ui-phone-only { display: block; }
+  /* a board (UI v3 §3.6) shows one column at a time on a phone; the pill switcher above it picks the column */
+  :root[data-ui-v3] .ui-board > .ui-board-col:not(.is-current) { display: none; }
+}
+/* a board on a desktop: one column per stage, side by side */
+@media (min-width: 768px) {
+  :root[data-ui-v3] .ui-board { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
 }
 @media (max-width: 640px) {
   :root[data-ui-v3] [data-no-cards] table { display: table; width: auto; }

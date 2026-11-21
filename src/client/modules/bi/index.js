@@ -8,6 +8,7 @@ const MetricCatalogue = lazyPage(() => import('./Metrics.jsx'), 'MetricCatalogue
 const ReportUsage = lazyPage(() => import('./Subscriptions.jsx'), 'ReportUsage');
 const ControlTower = lazyPage(() => import('./ControlTower.jsx'), 'ControlTower');
 const ExecutiveAlerts = lazyPage(() => import('./ControlTower.jsx'), 'ExecutiveAlerts');
+const MonthlyClose = lazyPage(() => import('./MonthlyClose.jsx'), 'MonthlyClose');
 const ExecutionIntelligence = lazyPage(() => import('./Execution.jsx'), 'ExecutionIntelligence');
 const MorningReport = lazyPage(() => import('./MorningReport.jsx'), 'MorningReport');
 const ReportArchive = lazyPage(() => import('./MorningReport.jsx'), 'ReportArchive');
@@ -17,6 +18,7 @@ registerModule({
   routes: [
     { path: '/bi/control-tower', label: 'Enterprise Control Tower', labelHi: 'उद्यम नियंत्रण टॉवर', icon: 'erp.insights.rb', permission: 'bi.control_tower.view', flag: 'ff.bi.p2704', Page: ControlTower },
     { path: '/bi/exec-alerts', label: 'Executive Alerts', labelHi: 'कार्यकारी चेतावनियाँ', icon: 'erp.insights.rb', permission: 'bi.exec_alert.view', flag: 'ff.bi.p2704', Page: ExecutiveAlerts },
+    { path: '/bi/monthly-close', label: 'Monthly Close Status', labelHi: 'मासिक समापन स्थिति', icon: 'erp.insights.rb', permission: 'bi.monthly_close.view', flag: 'ff.bi.p2707', Page: MonthlyClose },
     { path: '/bi/execution', label: 'Daily Execution Intelligence', labelHi: 'दैनिक निष्पादन विश्लेषण', icon: 'erp.insights.rb', permission: 'bi.execution.view', flag: 'ff.bi.p2706', Page: ExecutionIntelligence },
     { path: '/bi/morning-report', label: 'Morning Report', labelHi: 'प्रातः प्रबंधन रिपोर्ट', icon: 'erp.insights.rb', permission: 'bi.morning_report.view', flag: 'ff.bi.p2705', Page: MorningReport },
     { path: '/bi/morning-reports', label: 'Report Archive', labelHi: 'रिपोर्ट संग्रह', icon: 'erp.insights.rb', permission: 'bi.morning_report.view', flag: 'ff.bi.p2705', Page: ReportArchive },

@@ -17656,6 +17656,55 @@ Indexes:
 - ix_lv_year_runs_company_id: company_id
 - ux_lv_year_runs_year (unique): company_id, year
 
+## mc_monthly_closes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_id | INTEGER |  |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| parent_close_id | INTEGER |  |  |  |
+| checklist_json | TEXT |  |  |  |
+| mis_json | TEXT |  |  |  |
+| budget_master_json | TEXT |  |  |  |
+| mis_file_id | INTEGER |  |  |  |
+| snapshot_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| lock_state | TEXT | yes |  | 'OPEN' |
+| locked_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: mis_file_id -> core_files(id), parent_close_id -> mc_monthly_closes(id), period_id -> core_periods(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mc_monthly_closes_file: mis_file_id
+- ix_mc_monthly_closes_parent: parent_close_id
+- ix_mc_monthly_closes_period_id: period_id
+- ix_mc_monthly_closes_period: company_id, period
+- ix_mc_monthly_closes_project: project_id, period, lock_state
+- ix_mc_monthly_closes_company_status: company_id, status
+- ux_mc_monthly_closes_active (unique): company_id, project_id, period, version_no
+- sqlite_autoindex_mc_monthly_closes_1 (unique): company_id, doc_no
+
 ## mdm_banks
 
 | Column | Type | Not null | Key | Default |

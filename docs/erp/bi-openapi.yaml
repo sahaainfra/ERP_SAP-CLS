@@ -647,6 +647,59 @@ paths:
         '202': { description: The background job }
         '400': { description: A future day }
 
+  /bi/monthly-closes/board:
+    get:
+      summary: Monthly close status board (part 27.07) — every project in scope with its close of the month, by stage
+      parameters: [{ name: period, in: query, schema: { type: string, pattern: '^\\d{4}-(0[1-9]|1[0-2])$' } }]
+      responses:
+        '200': { description: '{ period, steps, columns, cards [projectId, column, closeId, passed, steps, blocking, can] }' }
+        '403': { description: bi.monthly_close.view required }
+  /bi/monthly-closes:
+    get:
+      summary: List monthly closes (filters period, projectId, status; paginated)
+      responses: { '200': { description: '{ rows, total, page, pageSize }' } }
+    post:
+      summary: Start the close of a project and month (bi.monthly_close.create; Idempotency-Key required)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [projectId, period], properties: { projectId: { type: integer }, period: { type: string }, remarks: { type: string, maxLength: 500 } } } } } }
+      responses: { '201': { description: The draft close with its live checklist }, '400': { description: A future month }, '409': { description: The project already has a close for the month } }
+  /bi/monthly-closes/export:
+    get:
+      summary: Export the list (CSV, XLSX, PDF; audited)
+      responses: { '200': { description: The file } }
+  /bi/monthly-closes/{id}:
+    get:
+      summary: A close with its checklist (live while a draft, frozen once sent), Project MIS, Budget Master, rights and approval task
+      responses: { '200': { description: The close }, '404': { description: Not found or outside the caller's projects } }
+    patch:
+      summary: Change the remarks of a draft or returned close (optimistic locking on rowVersion)
+      responses: { '200': { description: The close }, '409': { description: Stale version }, '422': { description: Not a draft or returned close } }
+    delete:
+      summary: Delete a draft that was never sent
+      responses: { '200': { description: Deleted } }
+  /bi/monthly-closes/{id}/submit:
+    post:
+      summary: Send for approval (QS → PM → PD); refused while a mandatory step is open (BR-01); freezes the MIS and the Budget Master
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { rowVersion: { type: integer } } } } } }
+      responses: { '200': { description: The submitted close }, '409': { description: Stale version }, '422': { description: 'Open mandatory steps, listed in details (field = step code)' } }
+  /bi/monthly-closes/{id}/withdraw:
+    post: { summary: The sender takes a close back, responses: { '200': { description: The close } } }
+  /bi/monthly-closes/{id}/cancel:
+    post: { summary: Cancel a close that is not approved (an approved one is amended), responses: { '200': { description: The close }, '422': { description: Already approved } } }
+  /bi/monthly-closes/{id}/amend:
+    post: { summary: Start an amendment of an approved, locked close (a new version approved again; the month stays locked), responses: { '201': { description: The amendment draft } } }
+  /bi/monthly-closes/{id}/history:
+    get: { summary: Approval history and audit of the close, responses: { '200': { description: '{ approvals, audit }' } } }
+  /bi/monthly-closes/{id}/print:
+    get:
+      summary: Project MIS (part=mis) or Budget Master (part=budget) as PDF from the frozen snapshot
+      parameters: [{ name: part, in: query, schema: { type: string, enum: [mis, budget], default: mis } }]
+      responses: { '200': { description: The PDF } }
+  /bi/monthly-closes/{id}/export:
+    get:
+      summary: Budget Master or Project MIS as XLSX or CSV
+      parameters: [{ name: part, in: query, schema: { type: string, enum: [mis, budget], default: budget } }, { name: format, in: query, schema: { type: string, enum: [csv, xlsx], default: xlsx } }]
+      responses: { '200': { description: The file } }
+
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
