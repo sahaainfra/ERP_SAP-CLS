@@ -131,6 +131,168 @@ Indexes:
 - ix_acc_templates_company: company_id
 - ux_acc_templates (unique): , process_code
 
+## ai_controls
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| kill_switch | INTEGER | yes |  | 0 |
+| kill_reason | TEXT |  |  |  |
+| kill_by | TEXT |  |  |  |
+| kill_at | TEXT |  |  |  |
+| retention_days | INTEGER | yes |  | 180 |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- sqlite_autoindex_ai_controls_1 (unique): company_id
+
+## ai_features
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| provider_code | TEXT | yes |  |  |
+| prompt_version | TEXT | yes |  |  |
+| tools_json | TEXT | yes |  | '[]' |
+| enabled_scope_json | TEXT | yes |  | '{"roles":[],"projects":"ALL"}' |
+| quota_json | TEXT | yes |  | '{}' |
+| eval_json | TEXT |  |  |  |
+| eval_passed_at | TEXT |  |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| parent_id | INTEGER |  |  |  |
+| enabled | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: parent_id -> ai_features(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ai_features_workflow: workflow_instance_id
+- ix_ai_features_parent: parent_id
+- ix_ai_features_company_status: company_id, status
+- ux_ai_features_version (unique): company_id, code, version_no
+- sqlite_autoindex_ai_features_1 (unique): company_id, doc_no
+
+## ai_logs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| feature_code | TEXT | yes |  |  |
+| feature_version | INTEGER |  |  |  |
+| provider_code | TEXT |  |  |  |
+| model | TEXT |  |  |  |
+| user_id | INTEGER |  |  |  |
+| user_name | TEXT | yes |  |  |
+| request_ref | TEXT | yes |  |  |
+| prompt_version | TEXT |  |  |  |
+| context_refs_json | TEXT | yes |  | '[]' |
+| prompt_redacted | TEXT |  |  |  |
+| response_redacted | TEXT |  |  |  |
+| tokens_in | INTEGER | yes |  | 0 |
+| tokens_out | INTEGER | yes |  | 0 |
+| cost | INTEGER | yes |  | 0 |
+| outcome | TEXT | yes |  |  |
+| block_reason | TEXT |  |  |  |
+| latency_ms | INTEGER |  |  |  |
+| redactions | INTEGER | yes |  | 0 |
+| label | TEXT | yes |  | 'AI_GENERATED' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: user_id -> iam_users(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ai_logs_project: project_id
+- ix_ai_logs_outcome: company_id, outcome
+- ix_ai_logs_user_id: user_id
+- ix_ai_logs_user: company_id, user_name, created_at
+- ix_ai_logs_feature: company_id, feature_code, created_at
+- ix_ai_logs_company_created: company_id, created_at
+- sqlite_autoindex_ai_logs_1 (unique): company_id, request_ref
+
+## ai_providers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| provider | TEXT | yes |  |  |
+| model | TEXT | yes |  |  |
+| endpoint_ref | TEXT | yes |  |  |
+| price_in_per_mtok | INTEGER | yes |  | 0 |
+| price_out_per_mtok | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'ACTIVE' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ai_providers_company_status: company_id, status
+- sqlite_autoindex_ai_providers_1 (unique): company_id, code
+
 ## alr_alerts
 
 | Column | Type | Not null | Key | Default |

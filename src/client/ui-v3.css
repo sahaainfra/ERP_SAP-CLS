@@ -293,3 +293,7 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
   .scn-sticky { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
   .scn-sticky .actions-row .btn-primary { flex: 1 1 100%; min-height: 48px; }
 }
+
+/* Part 28.01: the AI page — the redacted prompt and answer of a log entry wrap inside the card on a phone; a stopped AI is shown in red. */
+.ai-pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; background: var(--erp-color-bg-surface-sunken); padding: var(--erp-space-3); border-radius: var(--erp-radius-md); font-size: 0.875rem; }
+.ai-killed { border-left: 4px solid var(--erp-color-status-error-solid); }

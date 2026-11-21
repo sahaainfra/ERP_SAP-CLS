@@ -41,6 +41,7 @@ import './modules/fin/index.js';
 import './modules/pay/index.js';
 import './modules/portal/index.js';
 import './modules/bi/index.js';
+import './modules/ai/index.js';
 import { initAuth, signedInUser } from './platform/api/index.js';
 import { loadLanguage } from './platform/i18n/index.js';
 import { findRoute } from './platform/shell/registry.js';

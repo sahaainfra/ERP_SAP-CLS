@@ -397,6 +397,15 @@
  "pay.stat.bocw.manage": [
   "PAY"
  ],
+ "ai.kill_switch.manage": [
+  "DIR",
+  "ITADM",
+  "SYSADM"
+ ],
+ "ai.provider.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
  "bi.det_rule.configure": [
   "CFO",
   "PCMGR"

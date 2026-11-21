@@ -26,13 +26,14 @@ import { bill } from './bill/index.js';
 import { pay } from './pay/index.js';
 import { portal } from './portal/index.js';
 import { bi } from './bi/index.js';
+import { ai } from './ai/index.js';
 
 /**
  * Every server module, in mount order. A new module adds one line here and one folder under modules/<code>/
  * (routes, controllers, services, repositories, validators, events, jobs, tests). A module owns its tables:
  * other modules call its service or react to its events and never write into its tables.
  */
-export const MODULES = [core, iam, ui, eng, msg, sec, pol, mdm, fin, hr, bd, est, proj, engg, bud, plan, site, proc, inv, plant, qa, hse, rmc, ctr, bill, pay, portal, bi];
+export const MODULES = [core, iam, ui, eng, msg, sec, pol, mdm, fin, hr, bd, est, proj, engg, bud, plan, site, proc, inv, plant, qa, hse, rmc, ctr, bill, pay, portal, bi, ai];
 
 export function mountModules(api, deps) {
   for (const m of MODULES) m.mount(api, { ...deps, modules: MODULES });
