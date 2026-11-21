@@ -41,6 +41,7 @@ import lk from './en/lk.js';
 import rd from './en/rd.js';
 import scn from './en/scn.js';
 import ai from './en/ai.js';
+import aa from './en/aa.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -100,6 +101,7 @@ export default {
   rd: rd,
   scn: scn,
   ai: ai,
+  aa: aa,
   fc: fc,
   pa: pa,
 };

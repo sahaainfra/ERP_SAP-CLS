@@ -392,6 +392,12 @@ export function createAiGateway(context, { jobs, scheduler } = {}) {
       if ([403, 404].includes(e.status)) throw block(actor, code, e.status, 'AI_CONTEXT_REFUSED', e.message, { projectId });
       throw e;
     }
+    // BR-01 (28.02): when the person's data holds no answer, say so without asking a model
+    if (ctxOut.noAnswer) {
+      const ref = randomUUID();
+      const logId = writeLog(actor, { feature: code, version: feature.version_no, ref, promptVersion: def.promptVersion, refs: ctxOut.refs ?? [], outcome: 'BLOCKED', reason: 'NO_DATA', projectId, response: redact(ctxOut.noAnswer).text });
+      return { text: ctxOut.noAnswer, label: AI_LABEL, aiGenerated: false, verify: true, unsure: true, sources: ctxOut.refs ?? [], meta: ctxOut.meta ?? null, feature: code, model: null, tokens: { in: 0, out: 0 }, cost: 0, logId, requestRef: ref };
+    }
     const data = stripSensitive(ctxOut.data);
     const fenced = JSON.stringify(data).replace(/<\/?data>/gi, '');
     const promptRaw = `${def.prompt(input, data)}\n\n<data>${fenced}</data>`;
@@ -412,7 +418,7 @@ export function createAiGateway(context, { jobs, scheduler } = {}) {
     const logId = writeLog(actor, { feature: code, version: feature.version_no, provider: provider.code, model: model ?? provider.model, ref, promptVersion: def.promptVersion, refs: ctxOut.refs,
       prompt: `${pr.text.slice(0, 4000)}\n[sha256 ${createHash('sha256').update(promptRaw).digest('hex').slice(0, 16)}]`, response: rr.text.slice(0, 8000), tokensIn, tokensOut, cost, outcome: 'OK', latency: Date.now() - started, redactions: pr.count + rr.count, projectId });
     if (!opts.evaluation) alertBudget(actor.companyId, code, def.label, JSON.parse(feature.quota_json));
-    return { text: rr.text, label: AI_LABEL, aiGenerated: true, verify: true, sources: ctxOut.refs, feature: code, model: model ?? provider.model, tokens: { in: tokensIn, out: tokensOut }, cost: rs(cost), logId, requestRef: ref };
+    return { text: rr.text, label: AI_LABEL, aiGenerated: true, verify: true, sources: ctxOut.refs, meta: ctxOut.meta ?? null, feature: code, model: model ?? provider.model, tokens: { in: tokensIn, out: tokensOut }, cost: rs(cost), logId, requestRef: ref };
   }
   function alertBudget(companyId, code, label, quota) {
     if (!quota.monthlyBudget || !quota.alertPct) return;

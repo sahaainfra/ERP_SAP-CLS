@@ -161,6 +161,44 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - sqlite_autoindex_ai_controls_1 (unique): company_id
 
+## ai_drafts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| log_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| owner_user | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| body | TEXT | yes |  |  |
+| target_entity | TEXT |  |  |  |
+| target_id | TEXT |  |  |  |
+| target_ref | TEXT |  |  |  |
+| status | TEXT | yes |  | 'PROPOSED' |
+| applied_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'ai_assistant' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), log_id -> ai_logs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ai_drafts_project: project_id
+- ix_ai_drafts_company_status: company_id, status
+- ix_ai_drafts_log: log_id
+- ix_ai_drafts_owner: company_id, owner_user, status
+
 ## ai_features
 
 | Column | Type | Not null | Key | Default |
@@ -209,6 +247,37 @@ Indexes:
 - ix_ai_features_company_status: company_id, status
 - ux_ai_features_version (unique): company_id, code, version_no
 - sqlite_autoindex_ai_features_1 (unique): company_id, doc_no
+
+## ai_feedback
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| log_id | INTEGER | yes |  |  |
+| feature_code | TEXT | yes |  |  |
+| user_name | TEXT | yes |  |  |
+| rating | INTEGER | yes |  |  |
+| comment | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'ai_assistant' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: log_id -> ai_logs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ai_feedback_feature: company_id, feature_code, rating
+- sqlite_autoindex_ai_feedback_1 (unique): log_id, user_name
 
 ## ai_logs
 

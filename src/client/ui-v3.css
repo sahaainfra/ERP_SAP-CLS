@@ -297,3 +297,18 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 /* Part 28.01: the AI page — the redacted prompt and answer of a log entry wrap inside the card on a phone; a stopped AI is shown in red. */
 .ai-pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; background: var(--erp-color-bg-surface-sunken); padding: var(--erp-space-3); border-radius: var(--erp-radius-md); font-size: 0.875rem; }
 .ai-killed { border-left: 4px solid var(--erp-color-status-error-solid); }
+
+/* Part 28.02: the assistant — a dock button on every page (left, clear of the chat dock and above the phone's bottom bar) and its panel. */
+.aa-fab, .aa-dock { color: var(--erp-color-text-primary); }
+.aa-dock a { color: var(--erp-color-text-link); }
+.aa-fab { position: fixed; left: var(--erp-space-4); bottom: calc(var(--erp-space-4) + env(safe-area-inset-bottom, 0px)); z-index: var(--erp-z-dropdown); border-radius: 999px; box-shadow: var(--erp-elevation-2); background: var(--erp-color-bg-surface); min-height: 44px; }
+.aa-dock { position: fixed; left: var(--erp-space-4); bottom: calc(var(--erp-space-4) + 52px); z-index: var(--erp-z-modal); width: min(420px, calc(100vw - 2 * var(--erp-space-4))); max-height: min(78vh, 720px); overflow: auto; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); box-shadow: var(--erp-elevation-3); padding: var(--erp-space-3); }
+.aa-dock-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--erp-space-2); }
+.aa-answer { border-left: 3px solid var(--erp-color-status-warning-solid); padding: var(--erp-space-2) var(--erp-space-3); margin: var(--erp-space-2) 0; background: var(--erp-color-bg-surface-sunken); border-radius: var(--erp-radius-md); }
+.aa-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.aa-sources { margin: var(--erp-space-1) 0; padding-left: var(--erp-space-4); }
+.aa-ask input { font-size: 16px; }
+@media (max-width: 599px) {
+  .aa-fab { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  .aa-dock { left: 0; right: 0; bottom: 0; width: auto; max-height: 70vh; max-height: 70dvh; border-radius: 16px 16px 0 0; }
+}

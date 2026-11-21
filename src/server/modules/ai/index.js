@@ -6,6 +6,7 @@ import { parse } from '../../platform/validation/index.js';
 import { createFlagService } from '../core/api.js';
 import { createAiGateway } from './gateway.js';
 import './features.js';
+import { createAssistant } from './assistant.js';
 
 // Module M28 (ai): the AI gateway and its governance (part 28.01). Every AI feature of the ERP calls aiOf(db).run(); the routes here configure
 // the providers, the features and their enablement, the kill switch, and show the usage, cost and log.
@@ -15,7 +16,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const ai = {
   code: 'ai', name: 'AI', routePrefix: '/api/v1/ai', ownerPart: '28.01',
   status: 'AI gateway: providers through the integration hub, features with enablement approval, quotas, kill switch, redacted log.',
-  tables: ['ai_providers', 'ai_features', 'ai_logs', 'ai_controls'], companyOptional: [], resources: ['features', 'providers', 'controls', 'run', 'usage', 'logs'],
+  tables: ['ai_providers', 'ai_features', 'ai_logs', 'ai_controls', 'ai_drafts', 'ai_feedback'], companyOptional: [], resources: ['features', 'providers', 'controls', 'run', 'usage', 'logs', 'assistant', 'copilots', 'drafts', 'feedback'],
   mount(api, { db, config }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ai_features'").get()) return;
     const context = { db, flags: createFlagService({ db, environment: config.environment }) };
@@ -60,6 +61,23 @@ export const ai = {
     r.get('/logs', (req, res) => ok(res, svc.logs.list(req.actor, parse(logQ, req.query))));
     r.get('/logs/export', (req, res) => { const { format, ...q } = parse(logQ.extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }), req.query); return send(res, svc.logs.exportList(req.actor, q, format)); });
     r.get('/logs/:id', (req, res) => ok(res, svc.logs.get(req.actor, id(req.params.id))));
+    // ---- part 28.02: the assistant, the role copilots, drafts and feedback (every call through the gateway above)
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ai_drafts'").get()) {
+      const asst = createAssistant(context);
+      const wrap = (fn) => async (req, res, next) => { try { await fn(req, res); } catch (e) { next(e); } };
+      r.get('/assistant/me', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, asst.me(req.actor)); });
+      r.post('/assistant/ask', wrap(async (req, res) => ok(res, await asst.ask(req.actor, parse(z.object({ question: z.string().trim().min(3).max(500), projectId: z.number().int().positive().optional(), route: z.string().max(200).optional() }).strict(), req.body)))));
+      r.post('/copilots/:kind', wrap(async (req, res) => ok(res, await asst.copilot(req.actor, parse(z.enum(['pm', 'qs', 'procurement', 'finance']), req.params.kind),
+        parse(z.object({ projectId: z.number().int().positive().optional(), vendor: z.string().trim().min(2).max(120).optional() }).strict(), req.body)))));
+      r.get('/drafts', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, asst.drafts(req.actor)); });
+      r.post('/drafts', wrap(async (req, res) => ok(res, await asst.draft(req.actor, parse(z.object({ kind: z.enum(['RFI', 'LETTER', 'RFQ', 'MOM', 'DPR_NARRATIVE', 'MIS_COMMENTARY']), projectId: z.number().int().positive().optional(), brief: z.string().trim().min(10).max(1500) }).strict(), req.body)), 201)));
+      r.post('/drafts/:id/save', idem, (req, res) => ok(res, asst.save(req.actor, id(req.params.id), parse(z.object({ subject: z.string().trim().min(3).max(300), body: z.string().trim().min(10).max(20000).optional(),
+        discipline: z.enum(['ARCHITECTURAL', 'STRUCTURAL', 'MEP', 'CIVIL', 'LANDSCAPE']).optional(), requiredBy: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+        party: z.string().trim().min(2).max(160).optional(), letterDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), category: z.enum(['INSTRUCTION', 'NOTICE', 'APPROVAL', 'QUERY', 'PAYMENT', 'OTHER']).optional(), projectId: z.number().int().positive().optional() }).strict(), req.body)), 201));
+      r.post('/drafts/:id/discard', (req, res) => ok(res, asst.discard(req.actor, id(req.params.id))));
+      r.post('/feedback', (req, res) => ok(res, asst.feedback(req.actor, parse(z.object({ logId: z.number().int().positive(), rating: z.union([z.literal(1), z.literal(-1)]), comment: z.string().trim().max(500).optional() }).strict(), req.body))));
+      r.get('/feedback', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, asst.feedbackSummary(req.actor)); });
+    }
     api.use('/ai', r);
   },
 };

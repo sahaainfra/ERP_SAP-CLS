@@ -10,6 +10,8 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../eng/common.js';
 import { downloadReport } from './api.js';
 import DrillBreadcrumb, { drillHref } from './DrillBreadcrumb.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
+import { Answer } from '../ai/Assistant.jsx';
 
 // Part 27.08: the Variance Explainer (UI v3 dashboard page). "Why?" shows the deterministic decomposition of a project's cost, schedule or
 // margin variance as a waterfall and a contributors table whose rows add up, with the residual shown, to the total (BR-01); every component
@@ -43,6 +45,18 @@ function Waterfall({ steps, total, inr }) {
   </ol>;
 }
 
+// Part 28.02 (closes D-779): the plain-words narrative of the decomposition, from the approved ai.variance_narrative feature of the 28.01
+// gateway, as the person; labelled and shown only on request, never replacing the computed figures.
+function Narrative({ projectId, kpi }) {
+  const t = useT('why');
+  const run = useMutation({ mutationFn: async () => (await api.post('/ai/run/ai.variance_narrative', { input: { projectId: Number(projectId), kpi } })).data });
+  return <div data-testid="why-narrative">
+    <button type="button" className="btn" onClick={() => run.mutate()} disabled={run.isPending} data-testid="why-ai">{run.isPending ? t('aiWorking') : t('aiExplain')}</button>
+    {run.error && <ErrorState error={run.error} />}
+    {run.data && <Answer a={run.data} />}
+  </div>;
+}
+
 function Why({ search, projects }) {
   const t = useT('why');
   const { money, number, date: fmtDate } = useFormat();
@@ -51,6 +65,7 @@ function Why({ search, projects }) {
   const kpi = KPIS.includes(search.get('kpi')) ? search.get('kpi') : 'cost';
   const period = search.get('period') ?? '';
   const params = { projectId, kpi, period };
+  const aiOn = useFlagOn('ff.ai.p2802');
   const q = useQuery({ queryKey: ['bi', 'why', params], queryFn: () => read(`/bi/explain/why${qs(params)}`), enabled: Boolean(projectId), retry: false });
   const [format, setFormat] = useState('xlsx');
   const download = useMutation({ mutationFn: () => downloadReport(`/api/v1/bi/explain/why/export${qs({ ...params, format })}`, `why-${kpi}.${format}`) });
@@ -76,7 +91,8 @@ function Why({ search, projects }) {
         <KpiTile label={t('t.explained')} kind="money" amount={w.explained} value={inr(w.explained)} />
         <KpiTile testid="why-residual" label={t('t.residual')} kind="money" amount={w.residual} value={inr(w.residual)} tone={w.residual ? 'warning' : 'success'}>{w.residualNote ?? null}</KpiTile>
       </KpiRow>
-      <p className="muted small" data-testid="why-method"><strong>{t('t.method')}:</strong> {t(`method.${w.method}`)}. {t('noNarrative')} {w.source && <>{t('source')}: <Link to={w.source.route}>{w.source.name}</Link>.</>}</p>
+      <p className="muted small" data-testid="why-method"><strong>{t('t.method')}:</strong> {t(`method.${w.method}`)}. {!aiOn && t('noNarrative')} {w.source && <>{t('source')}: <Link to={w.source.route}>{w.source.name}</Link>.</>}</p>
+      {aiOn && !w.empty && (w.components.length > 0 || w.residual) ? <Narrative key={`${projectId}:${kpi}`} projectId={projectId} kpi={kpi} /> : null}
       {w.empty || (!w.components.length && !w.residual) ? <EmptyState title={t('empty')} message={w.empty ?? t('emptyBody')} action={w.source ? <Link to={w.source.route}>{w.source.name}</Link> : null} /> : <>
         <Card title={t('c.waterfall')} subtitle={t('c.waterfallSub')} testid="why-card-waterfall"><Waterfall steps={steps} total={w.total} inr={inr} /></Card>
         <Card title={t('c.contributors')} count={{ shown: w.components.length, total: w.components.length }} testid="why-card-contributors"

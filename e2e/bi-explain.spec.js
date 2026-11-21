@@ -88,6 +88,37 @@ test('Variance Explainer: Why? waterfall, contributors, margin bridge and drill-
   await page.screenshot({ path: `docs/erp/screenshots/27.08/${phone ? 'mobile' : 'desktop'}-variance-explainer.png`, fullPage: true });
   await checkAppearance(page);
 
+  // Part 28.02 (closes D-779): with the assistant switched on and the variance narrative approved, the page offers the narrative in words,
+  // labelled and written from the decomposition the person may read
+  const aiDb = new DatabaseSync('data/e2e.sqlite');
+  aiDb.exec('PRAGMA busy_timeout = 8000;');
+  try {
+    aiDb.prepare('INSERT INTO iam_users (company_id, username, display_name, roles_json) VALUES (?, ?, ?, ?)').run(company, `why-sys-${suffix}`, 'setup', '["SYSADM"]');
+    const flag = aiDb.prepare("INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES (?, ?, 'Narrative browser fixture', 0, 1)");
+    for (const code of ['ff.ai.p2801', 'ff.ai.p2802']) flag.run(code, company);
+    aiDb.prepare("INSERT INTO core_connectors (company_id, code, name, type, provider, environment, config_json, status) VALUES (?, ?, 'Sandbox model', 'ai', 'sandbox', 'development', ?, 'ENABLED')").run(company, `ai.why-${suffix}`, JSON.stringify({ model: 'sandbox-1' }));
+  } finally {
+    aiDb.close();
+  }
+  const ai = (roles, user, method, path, data) => request.fetch(`/api/v1${path}`, { method, headers: headers(roles, company, user), data });
+  const sys = `why-sys-${suffix}`;
+  expect((await ai('SYSADM', sys, 'POST', '/ai/providers', { code: 'box', provider: 'sandbox', model: 'sandbox-1', connector: `ai.why-${suffix}`, priceInPerMTok: 300, priceOutPerMTok: 1500 })).status()).toBe(201);
+  const feature = (await (await ai('SYSADM', sys, 'POST', '/ai/features', { code: 'ai.variance_narrative', providerCode: 'box', roles: ['DIR'], quota: { perUserDaily: 50, monthlyBudget: 1000, alertPct: 80 } })).json()).data;
+  const evaluated = (await (await ai('SYSADM', sys, 'POST', `/ai/features/${feature.id}/evaluate`)).json()).data;
+  expect(evaluated.evaluation.passed, JSON.stringify(evaluated.evaluation)).toBe(true);
+  expect((await ai('SYSADM', sys, 'POST', `/ai/features/${feature.id}/submit`)).status()).toBe(200);
+  const tasks = (await (await ai('DIR', director, 'GET', '/workflow/tasks?mine=assigned')).json()).data.rows;
+  const task = tasks.find((x) => x.instance?.docId === String(feature.id)) ?? tasks[0];
+  expect((await ai('DIR', director, 'POST', `/workflow/tasks/${task.id}/act`, { action: 'approve', comment: 'ok' })).status()).toBe(200);
+  await page.reload();
+  await page.getByTestId('why-ai').click();
+  const narrative = page.getByTestId('why-narrative').getByTestId('aa-answer');
+  await expect(narrative).toContainText('AI-generated — verify');
+  await expect(narrative).toContainText('Material');
+  await noOverflow();
+  await page.getByTestId('why-narrative').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `docs/erp/screenshots/28.02/${phone ? 'mobile' : 'desktop'}-variance-narrative.png`, fullPage: false });
+
   // the margin bridge
   await page.getByTestId('why-kpis').getByRole('tab', { name: 'Margin' }).click();
   await expect(page.getByTestId('why-row').filter({ hasText: 'Cost: Plant' })).toBeVisible();

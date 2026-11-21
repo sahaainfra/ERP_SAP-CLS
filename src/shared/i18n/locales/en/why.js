@@ -15,6 +15,8 @@ export default {
   "t.residual": "Residual",
   "t.method": "Method",
   "method.DETERMINISTIC": "Deterministic: every figure is computed from the owner's records",
+  "aiExplain": "Explain in words (AI)",
+  "aiWorking": "Writing…",
   "noNarrative": "No AI narrative: the explanation is computed, not written.",
   "c.waterfall": "Waterfall",
   "c.waterfallSub": "From zero, each component moves the variance; the residual closes it to the total.",
