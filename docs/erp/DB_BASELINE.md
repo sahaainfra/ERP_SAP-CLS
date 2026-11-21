@@ -10207,6 +10207,92 @@ Indexes:
 - ix_est_risks_estimate: estimate_id, sort_order
 - ix_est_risks_company_id: company_id
 
+## exec_alert_settings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rule_code | TEXT | yes |  |  |
+| enabled | INTEGER | yes |  |  |
+| threshold | NUMERIC(18,4) | yes |  |  |
+| periods | INTEGER | yes |  | 1 |
+| severity | TEXT | yes |  |  |
+| request_id | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'APPROVED' |
+| version | INTEGER | yes |  |  |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'change_request' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_exec_alert_settings_company_status: company_id, status
+- ix_exec_alert_settings_company: company_id, rule_code, version
+- sqlite_autoindex_exec_alert_settings_2 (unique): request_id
+- sqlite_autoindex_exec_alert_settings_1 (unique): company_id, rule_code, version
+
+## exec_alerts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| alert_no | TEXT | yes |  |  |
+| rule_code | TEXT | yes |  |  |
+| rule_version | INTEGER | yes |  | 0 |
+| dimension | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| severity | TEXT | yes |  |  |
+| message | TEXT | yes |  |  |
+| observed_value | NUMERIC(18,4) |  |  |  |
+| threshold | NUMERIC(18,4) |  |  |  |
+| evidence_key | TEXT | yes |  |  |
+| route | TEXT |  |  |  |
+| raised_at | TEXT | yes |  |  |
+| last_seen_at | TEXT | yes |  |  |
+| occurrences | INTEGER | yes |  | 1 |
+| owner_id | INTEGER |  |  |  |
+| owner_user | TEXT |  |  |  |
+| task_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| acknowledged_by | TEXT |  |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| resolution | TEXT |  |  |  |
+| created_by | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: task_id -> tsk_tasks(id), owner_id -> iam_users(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_exec_alerts_evidence: company_id, rule_code, evidence_key
+- ix_exec_alerts_task: task_id
+- ix_exec_alerts_owner_user: company_id, owner_user, status
+- ix_exec_alerts_owner: owner_id
+- ix_exec_alerts_project: project_id, status
+- ix_exec_alerts_company_status: company_id, status, severity, raised_at
+- ux_exec_alerts_open (unique): company_id, rule_code, 
+- sqlite_autoindex_exec_alerts_1 (unique): company_id, alert_no
+
 ## exp_advance_recoveries
 
 | Column | Type | Not null | Key | Default |

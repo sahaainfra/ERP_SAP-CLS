@@ -18,6 +18,7 @@ import { createReportSubscriptions, subscriptionStatus, subscriptionUpdate } fro
 import { readProjectCountMetric } from './project-count-metric.js';
 import { createMetricCatalogue, metricExport } from './metric-catalogue.js';
 import { domainHistoryCode, domainMetricDefinition, listDomainMetrics, readDomainMetric, readDomainQuality, registerDomainHistoryExports } from './domain-metrics.js';
+import { ALERT_STATUSES, RULES, SEVERITIES, DIMENSIONS, bindTower, createControlTower } from './control-tower.js';
 
 const reportCode = 'bi.project_status';
 const builderExportCode = 'bi.project_status_builder';
@@ -35,7 +36,7 @@ defineList({ code: builderExportCode, label: report.title, from: projectList.fro
 integrityRegistry.register({
   statuses: { rpt_subscriptions: ['ACTIVE', 'PAUSED'], rpt_runs: ['QUEUED', 'READY', 'FAILED', 'SKIPPED'],
     bi_metrics: ['CERTIFIED', 'REVOKED'], bi_refresh_log: ['COMPLETE'], bi_project_snapshots: ['CAPTURED'],
-    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'] },
+    bi_domain_refreshes: ['COMPLETE'], bi_domain_observations: ['CAPTURED'], exec_alerts: ALERT_STATUSES, exec_alert_settings: ['APPROVED'] },
 });
 
 const configSchema = z.object({
@@ -54,7 +55,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const bi = {
   code: 'bi', name: 'Reports', routePrefix: '/api/v1/bi', ownerPart: '27.01',
   status: 'Project status catalogue, builder, exports, personal subscriptions and usage.',
-  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics'],
+  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings'],
   mount(api, { db, config }) {
     // The report background jobs are available once the reporting schema has been installed.
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rpt_subscriptions'").get()) return;
@@ -195,6 +196,56 @@ export const bi = {
       const input = parse(z.object({ action: z.enum(['approve', 'reject', 'return']),
         comment: z.string().trim().max(500).optional(), version: z.number().int().positive() }).strict(), req.body);
       return ok(res, catalogue.decide(req.actor, parseId(req.params.id), input));
+    });
+    // ---- part 27.04: the enterprise control tower, the executive dashboard and the executive alerts
+    const tower = createControlTower(context, { ...runtime, environment: config.environment });
+    bindTower(db, tower);
+    const towerQuery = z.object({
+      regionId: z.coerce.number().int().positive().optional(), sector: z.string().trim().max(40).optional(), pm: z.string().trim().max(80).optional(),
+      rag: z.enum(['RED', 'AMBER', 'GREEN', 'NONE']).optional(), search: z.string().trim().max(80).optional(),
+      sort: z.enum(['overall', 'spi', 'cpi', 'eac', 'revenue', 'margin', 'dso', 'ltifr', 'stock']).optional(),
+      dimension: z.enum(DIMENSIONS).optional(), dimensionRag: z.enum(['RED', 'AMBER', 'GREEN', 'NONE']).optional(),
+      page: z.coerce.number().int().positive().max(10000).optional(), pageSize: z.coerce.number().int().positive().max(100).optional(),
+    }).strict();
+    router.get('/control-tower', (req, res) => ok(res, tower.portfolio(req.actor, parse(towerQuery, req.query))));
+    router.get('/control-tower/projects/:id', (req, res) => {
+      parse(z.object({}).strict(), req.query);
+      return ok(res, tower.project(req.actor, parseId(req.params.id)));
+    });
+    router.get('/control-tower/export', (req, res) => {
+      const { format, ...query } = parse(towerQuery.extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('csv') }), req.query);
+      const out = tower.exportMatrix(req.actor, query, format);
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`,
+        'x-export-rows': String(out.rows), 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    const alertQuery = z.object({
+      status: z.enum([...ALERT_STATUSES, 'ACTIVE']).optional(), severity: z.enum(SEVERITIES).optional(),
+      ruleCode: z.enum(RULES.map((rule) => rule.code)).optional(), projectId: z.coerce.number().int().positive().optional(),
+      mine: z.enum(['1', 'true']).optional(), page: z.coerce.number().int().positive().max(10000).optional(), pageSize: z.coerce.number().int().positive().max(100).optional(),
+    }).strict();
+    const towerIdempotency = idempotency(db, { required: true, actorKey });
+    router.get('/exec-alerts', (req, res) => ok(res, tower.alertsList(req.actor, parse(alertQuery, req.query))));
+    router.get('/exec-alerts/:id', (req, res) => ok(res, tower.getAlert(req.actor, parseId(req.params.id))));
+    router.post('/exec-alerts/evaluations', towerIdempotency, (req, res) => {
+      parse(z.object({}).strict(), req.body ?? {});
+      return ok(res, tower.queueEvaluation(req.actor), 202);
+    });
+    router.post('/exec-alerts/:id/act', towerIdempotency, (req, res) => {
+      const input = parse(z.object({ action: z.enum(['acknowledge', 'resolve']), note: z.string().trim().max(500).optional(),
+        version: z.number().int().positive() }).strict(), req.body);
+      return ok(res, tower.actOnAlert(req.actor, parseId(req.params.id), input));
+    });
+    router.get('/exec-alert-settings', (req, res) => ok(res, tower.settingsView(req.actor)));
+    router.post('/exec-alert-settings/requests', towerIdempotency, (req, res) => {
+      const input = parse(z.object({ ruleCode: z.enum(RULES.map((rule) => rule.code)), enabled: z.boolean(),
+        threshold: z.number().finite(), periods: z.number().int().min(1).max(6).default(1), severity: z.enum(SEVERITIES),
+        reason: z.string().trim().min(5).max(500) }).strict(), req.body);
+      return ok(res, tower.proposeSettings(req.actor, input), 201);
+    });
+    router.post('/exec-alert-settings/requests/:id/act', towerIdempotency, (req, res) => {
+      const input = parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional(),
+        version: z.number().int().positive() }).strict(), req.body);
+      return ok(res, tower.decideSettings(req.actor, parseId(req.params.id), input));
     });
     router.get('/reports/project-status/export', startExport(reportCode, {}));
     router.get('/datasets/project-status', (req, res) => {

@@ -383,6 +383,138 @@ paths:
         '200': { description: Aggregate counts for the chosen period }
         '403': { description: Company-wide audit view permission required }
 
+  /bi/control-tower:
+    get:
+      summary: Executive dashboard and health matrix (part 27.04)
+      description: >
+        Requires ff.bi.p2704 with the 27.03 prerequisites and bi.control_tower.view; projects are limited to the actor's assignment scope.
+        Every tile aggregates certified 27.03 metrics only (BR-01) and carries the evaluation time and the last monthly capture; an uncertified metric
+        returns state UNCERTIFIED and no value, a metric the role may not read returns MASKED. The cash outlook needs a company-wide fin.cash_forecast.view.
+      parameters:
+        - { name: regionId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: sector, in: query, schema: { type: string, maxLength: 40 } }
+        - { name: pm, in: query, schema: { type: string, maxLength: 80 } }
+        - { name: rag, in: query, schema: { $ref: '#/components/schemas/Rag' } }
+        - { name: dimension, in: query, schema: { type: string, enum: [time, cost, quality, safety, cash] } }
+        - { name: dimensionRag, in: query, schema: { $ref: '#/components/schemas/Rag' } }
+        - { name: sort, in: query, schema: { type: string, enum: [overall, spi, cpi, eac, revenue, margin, dso, ltifr, stock] } }
+        - { name: search, in: query, schema: { type: string, maxLength: 80 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: 'tiles, distribution, dimensions, matrix { rows, total, page, pageSize }, alerts, cash, pending, options, uncertified, can' }
+        '400': { description: Unknown filter value }
+        '403': { description: bi.control_tower.view required }
+        '404': { description: The control tower is not enabled for the company }
+  /bi/control-tower/projects/{id}:
+    get:
+      summary: Drill to one project — certified metrics with source records, earlier observations, WBS rows of the approved progress period, active alerts
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: Project health, metrics, wbs, alerts and the Project 360 link }
+        '404': { description: The project is outside the actor's control tower }
+  /bi/control-tower/export:
+    get:
+      summary: Export the health matrix with the same filters, scope and masks (audited; spreadsheet formulas neutralised)
+      parameters:
+        - { name: format, in: query, schema: { type: string, enum: [csv, xlsx, pdf], default: csv } }
+      responses:
+        '200': { description: The file; x-export-rows gives the number of projects }
+        '403': { description: bi.control_tower.export required }
+  /bi/exec-alerts:
+    get:
+      summary: 'Executive alerts worklist (scope: project alerts by assignment, company-level alerts with a company-wide grant)'
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED, ACTIVE] } }
+        - { name: severity, in: query, schema: { type: string, enum: [INFO, WARNING, CRITICAL] } }
+        - { name: ruleCode, in: query, schema: { $ref: '#/components/schemas/ExecRule' } }
+        - { name: projectId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: mine, in: query, schema: { type: string, enum: ['1', 'true'] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: '{ rows, total, page, pageSize }' }
+        '403': { description: bi.exec_alert.view required }
+  /bi/exec-alerts/{id}:
+    get:
+      summary: One executive alert
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: The alert }
+        '404': { description: Not found or outside the actor's scope }
+  /bi/exec-alerts/{id}/act:
+    post:
+      summary: Acknowledge or resolve an alert (Idempotency-Key required; optimistic locking on version)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action, version]
+              properties:
+                action: { type: string, enum: [acknowledge, resolve] }
+                note: { type: string, maxLength: 500, description: Required (5 characters or more) to resolve }
+                version: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: The alert after the action; a resolved alert completes its task }
+        '400': { description: A resolution needs a note }
+        '409': { description: The alert changed since it was read }
+        '422': { description: The alert is already resolved, or only an open alert can be acknowledged }
+  /bi/exec-alerts/evaluations:
+    post:
+      summary: Queue the early-warning checks for the company now (bi.exec_alert.run; Idempotency-Key required)
+      responses:
+        '202': { description: The background job }
+  /bi/exec-alert-settings:
+    get:
+      summary: The early-warning rules and thresholds in force, with the change requests for checkers
+      responses:
+        '200': { description: '{ rules, requests, can }' }
+  /bi/exec-alert-settings/requests:
+    post:
+      summary: Propose a threshold change (bi.exec_alert.configure; maker-checker, DIR or CFO approves; Idempotency-Key required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [ruleCode, enabled, threshold, severity, reason]
+              properties:
+                ruleCode: { $ref: '#/components/schemas/ExecRule' }
+                enabled: { type: boolean }
+                threshold: { type: number }
+                periods: { type: integer, minimum: 1, maximum: 6, default: 1 }
+                severity: { type: string, enum: [INFO, WARNING, CRITICAL] }
+                reason: { type: string, minLength: 5, maxLength: 500 }
+      responses:
+        '201': { description: The change request }
+        '400': { description: Threshold out of range, or periods on a rule that looks at one period }
+        '409': { description: Already in force, or a change to the rule is already waiting }
+  /bi/exec-alert-settings/requests/{id}/act:
+    post:
+      summary: Approve, reject or return a threshold change (never by its requester)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action, version]
+              properties:
+                action: { type: string, enum: [approve, reject, return] }
+                comment: { type: string, maxLength: 500 }
+                version: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: The request; on approval the new version is in force and audited }
+        '403': { description: Self-approval or a role outside DIR and CFO }
+
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -423,3 +555,5 @@ components:
         format: { type: string, enum: [csv, xlsx, pdf] }
         channel: { type: string, enum: [IN_APP, EMAIL, WHATSAPP] }
         version: { type: integer, minimum: 1 }
+    Rag: { type: string, enum: [RED, AMBER, GREEN, NONE] }
+    ExecRule: { type: string, enum: [SPI_LOW, CPI_LOW, EAC_GROWTH, COLLECTIONS_OVERDUE, CASH_NEGATIVE, LTI, MATERIAL_SHORTAGE] }

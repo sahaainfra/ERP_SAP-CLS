@@ -32,6 +32,7 @@ import fa from './en/fa.js';
 import pa from './en/pa.js';
 import fc from './en/fc.js';
 import pl from './en/pl.js';
+import ct from './en/ct.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -82,6 +83,7 @@ export default {
   pc: pc,
   cf: cf,
   pl: pl,
+  ct: ct,
   fc: fc,
   pa: pa,
 };

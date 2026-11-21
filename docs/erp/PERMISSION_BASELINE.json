@@ -396,5 +396,15 @@
  ],
  "pay.stat.bocw.manage": [
   "PAY"
+ ],
+ "bi.exec_alert.configure": [
+  "CFO",
+  "DIR"
+ ],
+ "bi.exec_alert.manage": [
+  "CFO",
+  "DIR",
+  "PCMGR",
+  "PD"
  ]
 }

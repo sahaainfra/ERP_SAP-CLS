@@ -8,6 +8,7 @@ import { useLowBandwidthSaves } from '../device/lowBandwidth.js';
 // The chart library (part 03.07, FR-08). Every chart is drawn in SVG from the design tokens (--erp-chart-1..8 and the status colours, so
 // light and dark themes both work), has a tooltip on hover and focus, a legend, the same data as a table (the accessible alternative),
 // and exports to CSV and PNG. A mark that has an address (`drill`) is a link: click, Enter or Space opens it.
+// A bar or stacked series may name its own `colour` (a status token, for a RAG chart); otherwise the series palette applies.
 const W = 480;
 const H = 240;
 const PAD = { l: 48, r: 10, t: 12, b: 34 };
@@ -72,7 +73,7 @@ function Cartesian({ kind, data, onDrill, setTip }) {
           base += v;
           return v === 0 ? null : (
             <Mark key={`${c}-${si}`} label={`${c}, ${s.name}: ${formatCount(v)}${unit}`} drill={drillOf(s, i)} onDrill={onDrill} setTip={setTip}>
-              <rect x={x} y={y0} width={Math.max(1, slot)} height={Math.max(1, h)} rx="2" fill={seriesColour(si)} />
+              <rect x={x} y={y0} width={Math.max(1, slot)} height={Math.max(1, h)} rx="2" fill={s.colour ?? seriesColour(si)} />
             </Mark>
           );
         });
@@ -215,13 +216,13 @@ function Legend({ type, data }) {
   const items = type === 'donut' ? data.slices.map((s, i) => ({ label: s.label, value: s.value, i }))
     : type === 'heatmap' || type === 'gauge' || type === 'scatter' ? []
       : type === 'gantt' ? [...new Set(data.rows.map((r) => r.status ?? 'Open'))].map((label) => ({ label, i: GANTT_STATUS[label] ?? 1 }))
-        : data.series.length > 1 ? data.series.map((s, i) => ({ label: s.name, i })) : [];
+        : data.series.length > 1 ? data.series.map((s, i) => ({ label: s.name, i, colour: s.colour })) : [];
   if (type === 'gauge') return <p className="ch-legend muted small"><span className="ch-rag" style={{ background: RAG[data.status] }} aria-hidden="true" />{RAG_WORD[data.status] ?? ''}{data.decided ? `, from ${data.decided} decided approval${data.decided === 1 ? '' : 's'}` : ''}</p>;
   if (type === 'heatmap') return <p className="ch-legend muted small">Darker means more.</p>;
   if (items.length === 0) return null;
   return (
     <ul className="ch-legend" aria-label="Legend">
-      {items.map((it) => <li key={it.label}><span className="ch-swatch" style={{ background: seriesColour(it.i) }} aria-hidden="true" />{it.label}{it.value !== undefined ? <strong>{formatCount(it.value)}</strong> : null}</li>)}
+      {items.map((it) => <li key={it.label}><span className="ch-swatch" style={{ background: it.colour ?? seriesColour(it.i) }} aria-hidden="true" />{it.label}{it.value !== undefined ? <strong>{formatCount(it.value)}</strong> : null}</li>)}
     </ul>
   );
 }

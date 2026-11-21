@@ -227,7 +227,7 @@ export function createProjectPlService({ db, base, flags }) {
   function* approvedMetricFacts(companyId, asOf, projectId = null) {
     const facts = db.prepare(`SELECT * FROM (
       SELECT s.org_project_id AS projectId, s.id AS sourceId, s.period AS sourcePeriod,
-        s.version AS sourceVersion, s.revenue_paise AS revenue, s.gross_profit_paise AS profit,
+        s.version AS sourceVersion, s.revenue_paise AS revenue, s.gross_profit_paise AS profit, s.revenue_cum_paise AS revenueToDate,
         ROW_NUMBER() OVER (PARTITION BY s.org_project_id ORDER BY s.period DESC, s.id DESC) AS newest
       FROM pl_snapshots s JOIN org_projects p ON p.id = s.org_project_id
         AND p.company_id = s.company_id AND p.deleted_at IS NULL
@@ -235,9 +235,9 @@ export function createProjectPlService({ db, base, flags }) {
         AND s.frozen_at IS NOT NULL AND s.deleted_at IS NULL
         ${projectId == null ? '' : 'AND s.org_project_id = :projectId'}
     ) WHERE newest = 1`).iterate({ companyId, period: asOf.slice(0, 7), ...(projectId == null ? {} : { projectId }) });
-    for (const { revenue, profit, projectId: id, sourceId, sourcePeriod, sourceVersion } of facts) {
+    for (const { revenue, profit, revenueToDate, projectId: id, sourceId, sourcePeriod, sourceVersion } of facts) {
       yield { projectId: id, sourceId, sourcePeriod, sourceVersion,
-        grossMargin: revenue ? Math.round((profit * 10000) / revenue) : null };
+        grossMargin: revenue ? Math.round((profit * 10000) / revenue) : null, revenueToDate };
     }
   }
   return { structure, pl, snapshots, portfolio, widget, jobs, approvedMetricFacts };
