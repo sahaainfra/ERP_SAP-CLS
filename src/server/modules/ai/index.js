@@ -7,6 +7,7 @@ import { createFlagService } from '../core/api.js';
 import { createAiGateway } from './gateway.js';
 import './features.js';
 import { createAssistant } from './assistant.js';
+import { createVision } from './vision.js';
 import { createDocIntel, DI_STATUSES, DI_TYPES } from './docintel.js';
 import { ANOMALY_KINDS, createForecasting, METHODS, USE_CASES } from './forecast.js';
 
@@ -18,7 +19,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const ai = {
   code: 'ai', name: 'AI', routePrefix: '/api/v1/ai', ownerPart: '28.01',
   status: 'AI gateway: providers through the integration hub, features with enablement approval, quotas, kill switch, redacted log.',
-  tables: ['ai_providers', 'ai_features', 'ai_logs', 'ai_controls', 'ai_drafts', 'ai_feedback', 'aif_models', 'aif_forecasts', 'aif_anomalies', 'di_extractions'], companyOptional: [], resources: ['features', 'providers', 'controls', 'run', 'usage', 'logs', 'assistant', 'copilots', 'drafts', 'feedback', 'forecasts', 'models', 'anomalies', 'documents'],
+  tables: ['ai_providers', 'ai_features', 'ai_logs', 'ai_controls', 'ai_drafts', 'ai_feedback', 'aif_models', 'aif_forecasts', 'aif_anomalies', 'di_extractions', 'cv_results'], companyOptional: [], resources: ['features', 'providers', 'controls', 'run', 'usage', 'logs', 'assistant', 'copilots', 'drafts', 'feedback', 'forecasts', 'models', 'anomalies', 'documents', 'vision'],
   mount(api, { db, config }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ai_features'").get()) return;
     const context = { db, flags: createFlagService({ db, environment: config.environment }) };
@@ -129,6 +130,21 @@ export const ai = {
           summary: z.string().trim().min(5).max(4000).optional(), timeBarDays: z.number().int().min(0).max(3650).nullish(), confirmed: z.boolean().optional() }).strict()).max(200).optional(),
         note: z.string().trim().max(500).optional(), rowVersion: z.number().int().positive() }).strict(), req.body))));
       r.post('/documents/:id/reject', idem, (req, res) => ok(res, di.reject(req.actor, id(req.params.id), parse(z.object({ reason: z.string().trim().min(5).max(500), rowVersion: z.number().int().positive() }).strict(), req.body))));
+    }
+    // ---- part 28.05: computer vision decision support (analysis of site photographs, review, blurring, model performance)
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'cv_results'").get()) {
+      const cv = createVision(context, { jobs: runtime?.jobs, bus: runtime?.bus });
+      const wrapCv = (fn) => async (req, res, next) => { try { await fn(req, res); } catch (e) { next(e); } };
+      const index = (v) => parse(z.coerce.number().int().min(0).max(49), v);
+      const box = z.array(z.number().min(0).max(1)).length(4);
+      r.get('/vision', (req, res) => ok(res, cv.list(req.actor, parse(z.object({ status: z.enum(['PENDING', 'REVIEWED', 'NO_FINDINGS', 'FAILED', 'ALL']).default('PENDING'), page: z.coerce.number().int().positive().max(10000).default(1), pageSize: z.coerce.number().int().positive().max(100).default(25) }).strict(), req.query))));
+      r.get('/vision/performance', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, cv.performance(req.actor)); });
+      r.post('/vision/run', idem, wrapCv(async (req, res) => ok(res, await cv.run(req.actor, parse(z.object({ fileId: z.number().int().positive() }).strict(), req.body).fileId), 201)));
+      r.get('/vision/:id', (req, res) => ok(res, cv.get(req.actor, id(req.params.id))));
+      r.post('/vision/:id/labels/:index/confirm', idem, wrapCv(async (req, res) => ok(res, await cv.confirm(req.actor, id(req.params.id), index(req.params.index), parse(z.object({ projectId: z.number().int().positive().optional(), siteId: z.number().int().positive().optional(),
+        severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL', 'MINOR', 'MAJOR']).optional(), description: z.string().trim().min(5).max(2000).optional(), actionRequired: z.string().trim().max(1000).optional(), note: z.string().trim().max(500).optional(), rowVersion: z.number().int().positive() }).strict(), req.body)))));
+      r.post('/vision/:id/labels/:index/false-positive', idem, (req, res) => ok(res, cv.falsePositive(req.actor, id(req.params.id), index(req.params.index), parse(z.object({ reason: z.string().trim().min(3).max(300), rowVersion: z.number().int().positive() }).strict(), req.body))));
+      r.post('/vision/:id/blur', idem, wrapCv(async (req, res) => ok(res, await cv.blur(req.actor, id(req.params.id), parse(z.object({ boxes: z.array(box).min(1).max(20) }).strict(), req.body)))));
     }
     api.use('/ai', r);
   },

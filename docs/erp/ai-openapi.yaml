@@ -122,3 +122,19 @@ paths:
       requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { values: { type: object }, confirmed: { type: array, items: { type: string } }, target: { type: object, properties: { projectId: { type: integer }, poId: { type: integer }, contractId: { type: integer } } }, clauses: { type: array, items: { type: object } }, note: { type: string }, rowVersion: { type: integer } } } } } }
       responses: { '200': { description: The extraction with what was applied }, '409': { description: Changed by someone else }, '422': { description: Fields to confirm, or no target } }
   /ai/documents/{id}/reject: { post: { summary: Reject the suggestions with a reason (rowVersion), responses: { '200': { description: The extraction } } } }
+  # part 28.05 — computer vision decision support (ff.ai.p2805): photographs of DPRs and inspections are analysed on upload; suggestions only
+  /ai/vision: { get: { summary: 'The review worklist (ai.vision.view): status PENDING (default), REVIEWED, NO_FINDINGS, FAILED, ALL; oldest first with its SLA; paginated', responses: { '200': { description: '{ rows, total, counts, canReview, canRun, detector }' } } } }
+  /ai/vision/performance: { get: { summary: 'FR-04: per model and finding, suggestions confirmed, wrong and waiting, precision and average confidence', responses: { '200': { description: The rows } } } }
+  /ai/vision/run:
+    post:
+      summary: 'Analyse a photograph now (ai.vision.run) with the company''s detector (ai.cv.detector: builtin.colour or an AI connector of provider vision_http)'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [fileId], properties: { fileId: { type: integer } } } } } }
+      responses: { '201': { description: The result }, '422': { description: Not a photograph } }
+  /ai/vision/{id}: { get: { summary: 'One result: the photograph (the blurred copy when faces or people were found) and the suggestions with label, confidence and box (0..1)', responses: { '200': { description: The result } } } }
+  /ai/vision/{id}/labels/{index}/confirm:
+    post:
+      summary: 'Confirm a suggestion: a PPE gap becomes a safety observation (19.04, naming nobody), a defect an NCR (18.04), a progress or material cue a note — each with the reviewer''s rights and the (blurred) photograph attached'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { projectId: { type: integer }, siteId: { type: integer }, severity: { type: string }, description: { type: string }, actionRequired: { type: string }, note: { type: string }, rowVersion: { type: integer } } } } } }
+      responses: { '200': { description: The result }, '409': { description: Changed by someone else }, '422': { description: Decided already } }
+  /ai/vision/{id}/labels/{index}/false-positive: { post: { summary: 'Mark a suggestion wrong with a reason (FR-04)', responses: { '200': { description: The result } } } }
+  /ai/vision/{id}/blur: { post: { summary: 'FR-03: blur more regions (boxes 0..1); a new copy replaces the shown one', responses: { '200': { description: The result } } } }

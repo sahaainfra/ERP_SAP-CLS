@@ -326,7 +326,7 @@ export function createDocIntel(context, { jobs, bus } = {}) {
       const x = row(actor, id); const th = threshold(actor.companyId);
       const fields = Object.entries(JSON.parse(x.fields_json)).map(([key, v]) => ({ key, ...v, mustConfirm: v.confidence < th }));
       const clauses = JSON.parse(x.clauses_json).map((c, i) => ({ index: i, ...c, mustConfirm: c.confidence < th }));
-      let preview; try { preview = filesOf(db).signedUrl(actor, x.file_id, { variant: 'original', download: false })?.url ?? null; } catch { preview = null; }
+      let preview; try { preview = filesOf(db).signedUrl(actor, x.file_id, { variant: 'file', download: false })?.url ?? null; } catch { preview = null; }
       const vendor = fields.find((f) => f.key === 'vendorGstin') ? db.prepare(`SELECT p.id, p.legal_name FROM mdm_partner_gstins g JOIN mdm_partners p ON p.id = g.partner_id WHERE g.company_id = ? AND g.gstin = ? AND g.deleted_at IS NULL LIMIT 1`).get(actor.companyId, fields.find((f) => f.key === 'vendorGstin').value) ?? null : null;
       const targets = targetsOf(actor, x, vendor);
       return { ...listView(x), text: x.text_content, summary: x.summary, reason: x.reason, fields, clauses, threshold: th, preview, vendor: vendor ? { id: vendor.id, name: vendor.legal_name } : null, targets, applied: x.applied_json ? JSON.parse(x.applied_json) : null,

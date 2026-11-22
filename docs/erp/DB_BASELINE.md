@@ -8817,6 +8817,51 @@ Indexes:
 - ux_ctr_wo_no (unique): company_id, wo_no
 - ux_ctr_wo_doc (unique): company_id, doc_no
 
+## cv_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| file_id | INTEGER | yes |  |  |
+| file_name | TEXT | yes |  |  |
+| linked_entity | TEXT |  |  |  |
+| linked_id | INTEGER |  |  |  |
+| model | TEXT | yes |  |  |
+| labels_json | TEXT | yes |  | '[]' |
+| confidence | NUMERIC(18,4) | yes |  | 0 |
+| status | TEXT | yes |  | 'PENDING' |
+| reason | TEXT |  |  |  |
+| blurred_file_id | INTEGER |  |  |  |
+| blur_regions_json | TEXT |  |  |  |
+| analysed_at | TEXT | yes |  |  |
+| confirmed_by | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'core_files' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: site_id -> org_sites(id), project_id -> org_projects(id), blurred_file_id -> core_files(id), file_id -> core_files(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_cv_results_site: site_id
+- ix_cv_results_project: project_id
+- ix_cv_results_blurred: blurred_file_id
+- ix_cv_results_file: file_id
+- ix_cv_results_queue: company_id, status, analysed_at
+- ux_cv_results_file (unique): company_id, file_id
+- sqlite_autoindex_cv_results_1 (unique): company_id, doc_no
+
 ## dei_daily
 
 | Column | Type | Not null | Key | Default |

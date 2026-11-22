@@ -325,6 +325,23 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .di-confirm { display: inline-flex; align-items: center; gap: var(--erp-space-1); min-height: 44px; }
 .di-clauses { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--erp-space-3); }
 .di-actions .btn { min-height: 48px; }
+/* part 28.05: vision suggestions — the photograph with its boxes beside the suggestions */
+.cv-split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--erp-space-4); align-items: start; }
+.cv-figure { position: relative; margin: 0; }
+.cv-figure img { display: block; width: 100%; height: auto; border-radius: var(--erp-radius-md); }
+.cv-figure svg { position: absolute; left: 0; top: 0; width: 100%; height: calc(100% - 2rem); pointer-events: none; }
+.cv-box { fill: none; stroke-width: 3px; stroke: var(--erp-color-status-info-solid, #2563eb); }
+.cv-box-ppe { stroke: var(--erp-color-status-success-solid, #15803d); }
+.cv-box-defect { stroke: var(--erp-color-status-error-solid, #b91c1c); }
+.cv-box-progress, .cv-box-material { stroke: var(--erp-color-status-warning-solid, #b45309); }
+.cv-sugs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-3); }
+.cv-sug { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
+.cv-sug textarea, .cv-sug input { font-size: 16px; }
+.cv-actions .btn { min-height: 48px; }
+@media (max-width: 899px) {
+  .cv-split { grid-template-columns: minmax(0, 1fr); }
+  .cv-actions .btn { flex: 1 1 100%; }
+}
 @media (max-width: 899px) {
   .di-split { grid-template-columns: minmax(0, 1fr); }
   .di-actions .btn { width: 100%; }
