@@ -58,17 +58,32 @@ const require = createRequire(import.meta.url);
 let pdfjsP = null;
 const pdfjs = () => (pdfjsP ??= import('pdfjs-dist/legacy/build/pdf.mjs'));
 let ocrP = null;
-/** The optional local OCR engine for scanned images; null when it is not installed. */
+const OCR_PAGES = 10;
+const OCR_IDLE_MS = 60_000;
+let ocrIdle = null;
+/** The optional local OCR engine for scanned images (`tesseract.js` with its English data, D-786); null when it is not installed. Its worker thread
+ *  is started on first use and stopped after a minute without work, so an idle server holds no OCR memory. */
 async function ocrEngine() {
   ocrP ??= (async () => {
     try {
       const names = ['tesseract.js', '@tesseract.js-data/eng']; // optional packages: absent unless the server installs them (D-786)
       const [{ createWorker }, data] = await Promise.all(names.map((n) => import(n)));
       const eng = data.default ?? data;
-      return await createWorker('eng', 1, { langPath: eng.langPath, gzip: eng.gzip, cachePath: join(process.cwd(), 'data', 'ocr-cache') });
+      // errorHandler: without one tesseract.js also throws a failed job (an unreadable image) from the worker's message handler, an uncaught
+      // exception that would stop the server; the job's own promise still rejects and textOf reports it
+      return await createWorker('eng', 1, { langPath: eng.langPath, gzip: eng.gzip, cachePath: join(process.cwd(), 'data', 'ocr-cache'), errorHandler: () => {} });
     } catch { return null; }
   })();
-  return ocrP;
+  const w = await ocrP;
+  if (w) { clearTimeout(ocrIdle); ocrIdle = setTimeout(() => { closeOcr().catch(() => {}); }, OCR_IDLE_MS); ocrIdle.unref?.(); }
+  return w;
+}
+/** Stops the OCR worker (idle, shutdown, tests); the next scan starts it again. */
+export async function closeOcr() {
+  clearTimeout(ocrIdle); ocrIdle = null;
+  const p = ocrP; ocrP = null;
+  const w = p ? await p : null;
+  if (w) await w.terminate();
 }
 /** The text of a file: { text, engine, pages, confidence } — engine PDF_TEXT, TEXT, OCR or NONE (with a reason). */
 export async function textOf(buffer, ext) {
@@ -83,16 +98,37 @@ export async function textOf(buffer, ext) {
       const tc = await (await doc.getPage(i)).getTextContent();
       parts.push(tc.items.map((x) => `${x.str}${x.hasEOL ? '\n' : ' '}`).join('').replace(/[ \t]+\n/g, '\n'));
     }
-    await doc.destroy();
     const text = parts.join('\n').trim();
-    if (text.length >= 20) return { text, engine: 'PDF_TEXT', pages: doc.numPages, confidence: 1 };
-    return { text: '', engine: 'NONE', pages: doc.numPages, confidence: 0, reason: 'The PDF has no text layer (a scan); OCR of scanned pages needs the local OCR engine (D-786).' };
+    if (text.length >= 20) { await doc.destroy(); return { text, engine: 'PDF_TEXT', pages: doc.numPages, confidence: 1 }; }
+    // a scan: each page drawn at 2x (about 150 dpi for A4) and read by the OCR engine; the first OCR_PAGES pages (a bill or a certificate is short)
+    const w = await ocrEngine();
+    if (!w) { await doc.destroy(); return { text: '', engine: 'NONE', pages: doc.numPages, confidence: 0, reason: 'The PDF has no text layer (a scan) and the local OCR engine is not installed on this server (D-786).' }; }
+    try {
+      const read = []; const conf = [];
+      for (let i = 1; i <= Math.min(doc.numPages, OCR_PAGES); i += 1) {
+        const page = await doc.getPage(i); const vp = page.getViewport({ scale: 2 });
+        const cc = doc.canvasFactory.create(Math.ceil(vp.width), Math.ceil(vp.height));
+        await page.render({ canvasContext: cc.context, viewport: vp }).promise;
+        const r = await w.recognize(cc.canvas.toBuffer('image/png')); doc.canvasFactory.destroy(cc);
+        read.push(r.data.text.trim()); conf.push(r.data.confidence);
+      }
+      const ocr = read.join('\n').trim();
+      if (!ocr) return { text: '', engine: 'NONE', pages: doc.numPages, confidence: 0, reason: 'The OCR engine found no text in the scanned PDF.' };
+      return { text: ocr, engine: 'OCR', pages: doc.numPages, confidence: Math.round(conf.reduce((a, b) => a + b, 0) / conf.length) / 100 };
+    } catch (err) {
+      return { text: '', engine: 'NONE', pages: doc.numPages, confidence: 0, reason: `The OCR engine could not read the scanned PDF (${String(err?.message ?? err).slice(0, 120)}).` };
+    } finally { await doc.destroy(); }
   }
   if (IMAGES.has(e)) {
     const w = await ocrEngine();
     if (!w) return { text: '', engine: 'NONE', pages: 1, confidence: 0, reason: 'Scanned image: the local OCR engine is not installed on this server (D-786).' };
-    const r = await w.recognize(buffer);
-    return { text: r.data.text.trim(), engine: 'OCR', pages: 1, confidence: Math.round(r.data.confidence) / 100 };
+    try {
+      const r = await w.recognize(buffer); const text = r.data.text.trim();
+      if (!text) return { text: '', engine: 'NONE', pages: 1, confidence: 0, reason: 'The OCR engine found no text in the image.' };
+      return { text, engine: 'OCR', pages: 1, confidence: Math.round(r.data.confidence) / 100 };
+    } catch (err) {
+      return { text: '', engine: 'NONE', pages: 1, confidence: 0, reason: `The OCR engine could not read the image (${String(err?.message ?? err).slice(0, 120)}).` };
+    }
   }
   return { text: '', engine: 'NONE', pages: 0, confidence: 0, reason: `Files of type .${e} are not read.` };
 }

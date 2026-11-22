@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import '../src/server/modules/registry.js';
-import { classify, contractClauses, extract, gstinValid, hamming, parseAmount, parseDate, simhash, textOf } from '../src/server/modules/ai/docintel.js';
+import { classify, closeOcr, contractClauses, extract, gstinValid, hamming, parseAmount, parseDate, simhash, textOf } from '../src/server/modules/ai/docintel.js';
+import { createCanvas } from '@napi-rs/canvas';
 import { runtimeOf } from '../src/server/platform/runtime/index.js';
 import { fill } from './qa-helpers.js';
 import { setupCompany, startApi } from './helpers.js';
@@ -21,7 +22,7 @@ const D = '/api/v1/doc';
 let seq = 0; const key = () => ({ 'content-type': 'application/json', 'idempotency-key': `di-${Date.now().toString(36)}-${(seq += 1)}` });
 const as = (roles, user) => ({ roles, user, company: '1' });
 const fin = as('FINEX', 'di-fin'); const doc = as('DOC', 'di-doc'); const com = as('COMMGR', 'di-com'); const se = as('SE', 'di-se'); const aud = as('AUD', 'di-aud');
-const opened = []; after(async () => { for (const c of opened) await c(); });
+const opened = []; after(async () => { for (const c of opened) await c(); await closeOcr(); });
 const B36 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 /** A GSTIN with its correct check digit. */
 const gstin = (first14) => { let s = 0; for (let i = 0; i < 14; i += 1) { const p = B36.indexOf(first14[i]) * (i % 2 ? 2 : 1); s += Math.floor(p / 36) + (p % 36); } return first14 + B36[(36 - (s % 36)) % 36]; };
@@ -180,12 +181,12 @@ test('FR-02 a certificate sets the validity of its controlled document; contract
   assert.deepEqual(added.map((c) => [c.clause_no, c.category]), [['12', 'PAYMENT'], ['13', 'LD'], ['14', 'VARIATION']]); assert.equal(added[2].time_bar_days, 14);
 });
 
-test('the text of files: a text layer, plain text, and a scan without the OCR engine; volume of the queue', async () => {
+test('the text of files: a text layer, plain text, a file that is not an image; volume of the queue', async () => {
   const p = await textOf(await pdf(['Hello invoice world', 'Second line of text here']), 'pdf');
   assert.equal(p.engine, 'PDF_TEXT'); assert.match(p.text, /Second line/);
   assert.equal((await textOf(Buffer.from('plain words in a file'), 'txt')).engine, 'TEXT');
-  const scan = await textOf(Buffer.from([0x89, 0x50, 0x4e, 0x47]), 'png');
-  assert.ok(['OCR', 'NONE'].includes(scan.engine)); if (scan.engine === 'NONE') assert.match(scan.reason, /OCR engine/);
+  const broken = await textOf(Buffer.from([0x89, 0x50, 0x4e, 0x47]), 'png'); // not an image: said so, never thrown
+  assert.equal(broken.engine, 'NONE'); assert.match(broken.reason, /OCR engine/);
   const t = await setup();
   const fid = Number(t.db.prepare("INSERT INTO core_files (company_id, storage_key, original_name, extension, mime, category, size_bytes, sha256, scan_status, linked_entity, linked_id) VALUES (1, 'k/x', 'x.pdf', 'pdf', 'application/pdf', 'document', 1, 'h', 'CLEAN', 'sample_document', 1)").run().lastInsertRowid);
   t.db.exec('PRAGMA foreign_keys = OFF'); t.db.exec('BEGIN');
@@ -196,4 +197,18 @@ test('the text of files: a text layer, plain text, and a scan without the OCR en
   assert.equal(r.status, 200); assert.equal(r.json.data.rows.length, 25); assert.ok(ms < 500, `${ms} ms`);
   const plan = t.db.prepare("EXPLAIN QUERY PLAN SELECT * FROM di_extractions x WHERE x.company_id = 1 AND x.doc_type = 'INVOICE' AND x.status IN ('EXTRACTED', 'NO_TEXT')").all().map((x) => x.detail).join(' ');
   assert.match(plan, /ix_di_extractions/);
+});
+
+// D-786: scanned images and scanned PDFs (no text layer) are read by the local OCR engine (tesseract.js with its English data)
+const scanned = () => { const c = createCanvas(1240, 1754); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 1240, 1754); g.fillStyle = '#000'; g.font = '34px sans-serif';
+  ['Shree Cement Traders Pvt Ltd', 'TAX INVOICE', 'Invoice No: INV-2026/0457', 'Invoice Date: 14-11-2026', 'Grand Total 1,18,000.00'].forEach((l, i) => g.fillText(l, 100, 150 + i * 60)); return c.toBuffer('image/png'); };
+test('D-786 a scanned invoice is read by OCR, as an image and as a PDF without a text layer, and extracted', async () => {
+  const png = scanned();
+  const img = await textOf(png, 'png');
+  assert.equal(img.engine, 'OCR'); assert.match(img.text, /INV-2026\/0457/); assert.ok(img.confidence >= 0.7, `confidence ${img.confidence}`);
+  const p = await PDFDocument.create(); const page = p.addPage([595, 842]); page.drawImage(await p.embedPng(png), { x: 0, y: 0, width: 595, height: 842 });
+  const scan = await textOf(Buffer.from(await p.save()), 'pdf');
+  assert.equal(scan.engine, 'OCR'); assert.equal(scan.pages, 1); assert.match(scan.text, /TAX INVOICE/);
+  const { type } = classify(scan.text); assert.equal(type, 'INVOICE');
+  const { fields } = extract('INVOICE', scan.text); assert.equal(fields.invoiceNo.value, 'INV-2026/0457'); assert.equal(fields.invoiceDate.value, '2026-11-14');
 });
