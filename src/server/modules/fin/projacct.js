@@ -242,7 +242,8 @@ export function createProjectAccountingService({ db, base, gl, flags, forecast =
       if (!on(companyId)) return null; const r = db.prepare("SELECT r.*, t.end_date, t.name AS to_name FROM bud_alloc_runs r JOIN core_periods t ON t.id = r.to_period_id WHERE r.id = ? AND r.company_id = ? AND r.status = 'POSTED' AND r.deleted_at IS NULL").get(Number(runId), companyId); if (!r) return null;
       if (db.prepare('SELECT 1 FROM pa_overhead_allocations WHERE run_id = ? AND deleted_at IS NULL').get(r.id)) return null;
       const lines = db.prepare('SELECT * FROM bud_alloc_lines WHERE run_id = ? AND deleted_at IS NULL AND amount > 0 ORDER BY org_project_id').all(r.id); if (!lines.length) return null;
-      const dr = acct(companyId, '560030'); const cr = acct(companyId, '560031'); const total = lines.reduce((a, l) => a + l.amount, 0); const period = r.end_date.slice(0, 7);
+      const dr = acct(companyId, '560030'); const cr = acct(companyId, '560031'); if (!dr || !cr) return null; // the company's chart is not set up yet: the catch-up posts the run once it is (a retried event would only dead-letter)
+      const total = lines.reduce((a, l) => a + l.amount, 0); const period = r.end_date.slice(0, 7);
       return transaction(db, () => {
         const j = gl.postEngine(companyId, { voucherType: 'JV', date: r.end_date, narration: `Overhead pool ${r.doc_no} allocated to ${lines.length} project(s) to ${r.to_name}`, sourceType: 'bud_alloc_runs', sourceId: r.id, lines: [...lines.map((l) => ({ accountId: dr, debit: rs(l.amount), ...projectFor(dr, l.org_project_id) })), { accountId: cr, credit: rs(total) }], user });
         const ins = db.prepare("INSERT INTO pa_overhead_allocations (company_id, run_id, pool, period, period_id, org_project_id, basis_value_paise, amount_paise, journal_id, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'bud_alloc_runs', ?)");
