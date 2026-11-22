@@ -78,6 +78,56 @@ export async function colourDetect(buffer) {
   }
   return out.sort((a, b) => b.confidence - a.confidence).slice(0, 20);
 }
+// ------------------------------------------------------------------------------------------------------------- faces and people (D-788)
+/**
+ * The local privacy detector: faces (BlazeFace) and people (CenterNet, COCO) from `@vladmandic/human` on TensorFlow.js with the WASM backend,
+ * models in the package, no network. Runs with whichever detector the company chose, so faces are blurred out of the box (FR-03). Optional
+ * in code like the OCR engine: null when the packages are absent. Calls are serialised (one model instance). Thresholds: a face from 0.6 (real
+ * faces scored 0.77 to 0.92 in the test photographs, a checkerboard 0.51), a person from 0.5; the reviewer can blur more by hand.
+ */
+let peopleP = null; let peopleQ = Promise.resolve();
+async function peopleModel() {
+  peopleP ??= (async () => {
+    try {
+      const { dirname, join } = await import('node:path'); const { readFileSync } = await import('node:fs'); const { pathToFileURL, fileURLToPath } = await import('node:url');
+      const dist = dirname(require.resolve('@vladmandic/human'));
+      const mod = require(join(dist, 'human.node-wasm.js')); const Human = mod.Human ?? mod.default; // the package's exports map lacks "./": loaded by path
+      const human = new Human({ backend: 'wasm', wasmPath: `${dirname(require.resolve('@tensorflow/tfjs-backend-wasm'))}/`, modelBasePath: pathToFileURL(`${join(dist, '..', 'models')}/`).href, debug: false,
+        face: { enabled: true, detector: { rotation: false, maxDetected: 30, minConfidence: 0.6 }, mesh: { enabled: false }, iris: { enabled: false }, description: { enabled: false }, emotion: { enabled: false }, antispoof: { enabled: false }, liveness: { enabled: false } },
+        body: { enabled: false }, hand: { enabled: false }, object: { enabled: true, minConfidence: 0.5, maxDetected: 30 }, gesture: { enabled: false }, segmentation: { enabled: false }, filter: { enabled: false } });
+      // Node's fetch cannot read file:// URLs: the models are read from the package folder by a load router of this TensorFlow.js instance
+      human.tf.io.registerLoadRouter((url) => (typeof url === 'string' && url.startsWith('file://') ? { load: async () => {
+        const path = fileURLToPath(url); const j = JSON.parse(readFileSync(path, 'utf8')); const specs = []; const parts = [];
+        for (const g of j.weightsManifest ?? []) { specs.push(...g.weights); for (const w of g.paths) parts.push(readFileSync(join(dirname(path), w))); }
+        const all = Buffer.concat(parts);
+        return { modelTopology: j.modelTopology, format: j.format, generatedBy: j.generatedBy, convertedBy: j.convertedBy, signature: j.signature, userDefinedMetadata: j.userDefinedMetadata, modelInitializer: j.modelInitializer, weightSpecs: specs, weightData: all.buffer.slice(all.byteOffset, all.byteOffset + all.byteLength) };
+      } } : null));
+      await human.load();
+      return human;
+    } catch { return null; }
+  })();
+  return peopleP;
+}
+const box01 = ([x, y, w, h]) => { const x0 = clamp01(x); const y0 = clamp01(y); return [x0, y0, clamp01(x + w) - x0, clamp01(y + h) - y0].map((v) => Math.round(v * 1000) / 1000); };
+/** Faces and people in a photograph: [{ label: FACE | PERSON, confidence, box }] (boxes in 0..1); null when the local model is not installed. */
+export async function peopleDetect(buffer) {
+  const human = await peopleModel();
+  if (!human) return null;
+  const run = peopleQ.then(async () => {
+    const { data, info } = await sharp()(buffer).rotate().resize({ width: 1280, height: 1280, fit: 'inside', withoutEnlargement: true }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    const t = human.tf.tensor3d(new Uint8Array(data.buffer, data.byteOffset, data.byteLength), [info.height, info.width, 3], 'int32');
+    try {
+      const r = await human.detect(t);
+      if (r.error) throw new Error(String(r.error));
+      return [...r.face.map((f) => ({ label: 'FACE', confidence: f.boxScore ?? f.score, box: box01(f.boxRaw) })),
+        ...r.object.filter((o) => o.label === 'person').map((o) => ({ label: 'PERSON', confidence: o.score, box: box01(o.boxRaw) }))]
+        .filter((d) => d.box[2] > 0 && d.box[3] > 0);
+    } finally { t.dispose(); }
+  });
+  peopleQ = run.then(() => {}, () => {});
+  return run;
+}
+
 /** FR-03: a copy of the image with each box blurred (faces and people, and the reviewer's own boxes). */
 export async function blurRegions(buffer, boxes) {
   const img = sharp()(buffer).rotate();
@@ -149,6 +199,10 @@ export function createVision(context, { jobs, bus } = {}) {
         model = `${detector}/${out.data?.model ?? 'model'}`; found = out.data?.detections ?? [];
       }
     } catch (e) { model = detector; found = []; failure = String(e?.message ?? e).slice(0, 300); }
+    // D-788 FR-03: faces and people found by the local model are added to any detector's findings (a connected model's own are kept)
+    if (!failure && !found.some((d) => ['FACE', 'PERSON'].includes(String(d?.label).toUpperCase()))) {
+      try { const people = await peopleDetect(buffer); if (people) { found = [...found, ...people]; model = `${model}+builtin.people/1`; } } catch { /* the photograph is still analysed by its detector */ }
+    }
     const labels = cleanDetections(found).map((d) => ({ ...d, status: CV_LABELS[d.label].action ? 'PENDING' : 'INFO' }));
     let blurredId = null;
     const privacy = labels.filter((l) => CV_LABELS[l.label].group === 'PRIVACY');

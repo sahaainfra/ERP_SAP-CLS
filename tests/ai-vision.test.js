@@ -1,12 +1,12 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import '../src/server/modules/registry.js';
-import { blurRegions, cleanDetections, colourDetect } from '../src/server/modules/ai/vision.js';
+import { blurRegions, cleanDetections, colourDetect, peopleDetect } from '../src/server/modules/ai/vision.js';
 import { runtimeOf } from '../src/server/platform/runtime/index.js';
 import { fill } from './qa-helpers.js';
 import { setupCompany, startApi } from './helpers.js';
@@ -18,7 +18,8 @@ import { setupCompany, startApi } from './helpers.js';
 // dropped); FR-04 false positives count against the model's precision; section 8 roles; 409 on a stale version.
 const A = '/api/v1/ai';
 const C = '/api/v1/core';
-const sharp = createRequire(import.meta.url)('sharp');
+const require = createRequire(import.meta.url);
+const sharp = require('sharp');
 let seq = 0; const key = () => ({ 'content-type': 'application/json', 'idempotency-key': `cv-${Date.now().toString(36)}-${(seq += 1)}` });
 const as = (roles, user) => ({ roles, user, company: '1' });
 const se = as('SE', 'cv-se'); const hsee = as('HSEE', 'cv-hse'); const qce = as('QCE', 'cv-qce'); const aud = as('AUD', 'cv-aud'); const fin = as('FINEX', 'cv-fin');
@@ -128,7 +129,7 @@ test('T-01 FR-01 FR-02 FR-03 BR-01 a DPR photograph is analysed on upload; faces
 test('the built-in colour detector by default; no actionable suggestion means no review; volume of the queue', async () => {
   const t = await setup();
   const f = await t.upload(await photo(), 'vest.png');
-  const r = t.result(f.id); assert.equal(r.model, 'builtin.colour/1'); assert.equal(r.status, 'NO_FINDINGS', 'a vest worn needs no action');
+  const r = t.result(f.id); assert.equal(r.model, 'builtin.colour/1+builtin.people/1', 'the colour detector, with the local faces-and-people model (D-788)'); assert.equal(r.status, 'NO_FINDINGS', 'a vest worn needs no action');
   assert.equal(JSON.parse(r.labels_json)[0].label, 'VEST'); assert.equal(r.blurred_file_id, null, 'no face, no copy');
   assert.equal((await t.call(se, 'POST', `${A}/vision/run`, { fileId: f.id })).status, 403, 'the site engineer may not run analyses');
   const fid = Number(t.db.prepare("INSERT INTO core_files (company_id, storage_key, original_name, extension, mime, category, size_bytes, sha256, scan_status, linked_entity, linked_id) VALUES (1, 'k/y', 'y.png', 'png', 'image/png', 'image', 1, 'h', 'CLEAN', 'site_dpr', ?)").run(t.dpr).lastInsertRowid);
@@ -139,4 +140,21 @@ test('the built-in colour detector by default; no actionable suggestion means no
   const t0 = performance.now(); const l = await t.call(hsee, 'GET', `${A}/vision?pageSize=25`); const ms = performance.now() - t0;
   assert.equal(l.status, 200); assert.equal(l.json.data.rows.length, 25); assert.ok(ms < 500, `${ms} ms`);
   assert.match(t.db.prepare("EXPLAIN QUERY PLAN SELECT * FROM cv_results r WHERE r.company_id = 1 AND r.status = 'PENDING' ORDER BY r.analysed_at").all().map((x) => x.detail).join(' '), /ix_cv_results_queue/);
+});
+
+// D-788: the local privacy model (BlazeFace and CenterNet from @vladmandic/human, offline) finds faces with any detector, so a photograph of
+// people is blurred out of the box; nobody is identified (labels FACE and PERSON only, boxes)
+test('D-788 faces in a site photograph are found by the local model and blurred with the built-in detector', async () => {
+  const photoOfPeople = join(dirname(require.resolve('@vladmandic/human')), '..', 'assets', 'screenshot-faceid.jpg');
+  const bytes = readFileSync(photoOfPeople);
+  const found = await peopleDetect(bytes);
+  assert.ok(found.some((d) => d.label === 'FACE' && d.confidence >= 0.5), JSON.stringify(found));
+  assert.ok(found.every((d) => ['FACE', 'PERSON'].includes(d.label) && d.box.every((v) => v >= 0 && v <= 1) && !('name' in d)));
+  const t = await setup();
+  const f = await t.upload(bytes, 'gang-at-gate.jpg');
+  const r = t.result(f.id); assert.equal(r.model, 'builtin.colour/1+builtin.people/1');
+  const labels = JSON.parse(r.labels_json); assert.ok(labels.some((l) => l.label === 'FACE' && l.status === 'INFO'));
+  assert.ok(r.blurred_file_id, 'a blurred copy is made'); const face = labels.find((l) => l.label === 'FACE').box;
+  const blurred = await (await import('../src/server/platform/files/registry.js')).filesOf(t.db).bytesOf(r.blurred_file_id);
+  assert.ok(await spread(blurred.buffer, face) < (await spread(bytes, face)) * 0.5, 'the face is blurred');
 });
