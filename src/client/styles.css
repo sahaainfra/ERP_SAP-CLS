@@ -735,6 +735,7 @@ kbd { font: var(--erp-type-caption); border: 1px solid var(--erp-color-border-co
 }
 .field-tiles a:hover { border-color: var(--erp-color-brand-primary); background: var(--erp-color-bg-hover); }
 @media (min-width: 768px) { .field-tiles { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
+.field-tiles a strong, .field-tiles .is-disabled strong { overflow-wrap: anywhere; min-width: 0; } /* a long word of a tile's label wraps at a larger text size (UI v3 T-04) */
 .loc-notice { display: flex; align-items: flex-start; gap: var(--erp-space-2); margin: var(--erp-space-3) 0 0; }
 .loc-hints { margin: var(--erp-space-2) 0 0; padding-left: var(--erp-space-5); color: var(--erp-color-status-warning-fg); }
 .code-scanner { display: flex; flex-direction: column; gap: var(--erp-space-4); }
