@@ -7,6 +7,7 @@ import { createFlagService } from '../core/api.js';
 import { createAiGateway } from './gateway.js';
 import './features.js';
 import { createAssistant } from './assistant.js';
+import { ANOMALY_KINDS, createForecasting, METHODS, USE_CASES } from './forecast.js';
 
 // Module M28 (ai): the AI gateway and its governance (part 28.01). Every AI feature of the ERP calls aiOf(db).run(); the routes here configure
 // the providers, the features and their enablement, the kill switch, and show the usage, cost and log.
@@ -16,7 +17,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const ai = {
   code: 'ai', name: 'AI', routePrefix: '/api/v1/ai', ownerPart: '28.01',
   status: 'AI gateway: providers through the integration hub, features with enablement approval, quotas, kill switch, redacted log.',
-  tables: ['ai_providers', 'ai_features', 'ai_logs', 'ai_controls', 'ai_drafts', 'ai_feedback'], companyOptional: [], resources: ['features', 'providers', 'controls', 'run', 'usage', 'logs', 'assistant', 'copilots', 'drafts', 'feedback'],
+  tables: ['ai_providers', 'ai_features', 'ai_logs', 'ai_controls', 'ai_drafts', 'ai_feedback', 'aif_models', 'aif_forecasts', 'aif_anomalies'], companyOptional: [], resources: ['features', 'providers', 'controls', 'run', 'usage', 'logs', 'assistant', 'copilots', 'drafts', 'feedback', 'forecasts', 'models', 'anomalies'],
   mount(api, { db, config }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ai_features'").get()) return;
     const context = { db, flags: createFlagService({ db, environment: config.environment }) };
@@ -77,6 +78,37 @@ export const ai = {
       r.post('/drafts/:id/discard', (req, res) => ok(res, asst.discard(req.actor, id(req.params.id))));
       r.post('/feedback', (req, res) => ok(res, asst.feedback(req.actor, parse(z.object({ logId: z.number().int().positive(), rating: z.union([z.literal(1), z.literal(-1)]), comment: z.string().trim().max(500).optional() }).strict(), req.body))));
       r.get('/feedback', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, asst.feedbackSummary(req.actor)); });
+    }
+    // ---- part 28.03: forecasting, the model registry with back-testing and approval, and anomaly detection
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'aif_models'").get()) {
+      const fc = createForecasting(context, { jobs: runtime?.jobs, scheduler: runtime?.scheduler });
+      const pos = z.coerce.number().int().positive();
+      const subject = { itemId: pos.optional(), region: z.string().trim().regex(/^[A-Za-z0-9_-]{1,20}$/).optional(), projectId: pos.optional(), activityId: pos.optional() };
+      const useCase = z.enum(Object.keys(USE_CASES));
+      const params = z.record(z.string().max(20), z.number()).optional();
+      r.get('/forecasts/options', (req, res) => ok(res, fc.options(req.actor, parse(z.object({ projectId: pos.optional() }).strict(), req.query))));
+      r.get('/forecasts/latest', (req, res) => ok(res, fc.latest(req.actor, parse(z.object({ projectId: pos.optional() }).strict(), req.query))));
+      r.get('/forecasts', (req, res) => ok(res, fc.forecast(req.actor, parse(z.object({ useCase, ...subject, modelId: pos.optional() }).strict(), req.query))));
+      r.get('/models', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, fc.models.list(req.actor)); });
+      r.post('/models', idem, (req, res) => ok(res, fc.models.create(req.actor, parse(z.object({ code: z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/), name: z.string().trim().min(3).max(120), useCase,
+        method: z.enum(Object.keys(METHODS)), params, horizon: z.number().int().min(1).max(24).optional() }).strict(), req.body)), 201));
+      r.get('/models/:id', (req, res) => ok(res, fc.models.get(req.actor, id(req.params.id))));
+      r.patch('/models/:id', (req, res) => ok(res, fc.models.update(req.actor, id(req.params.id), parse(z.object({ name: z.string().trim().min(3).max(120).optional(), method: z.enum(Object.keys(METHODS)).optional(), params,
+        horizon: z.number().int().min(1).max(24).optional(), rowVersion: z.number().int().positive() }).strict(), req.body))));
+      r.delete('/models/:id', (req, res) => ok(res, fc.models.remove(req.actor, id(req.params.id))));
+      r.post('/models/:id/backtest', idem, (req, res) => ok(res, fc.models.runBacktest(req.actor, id(req.params.id), parse(z.object({ itemId: z.number().int().positive().optional(), region: subject.region,
+        projectId: z.number().int().positive().optional(), activityId: z.number().int().positive().optional() }).strict(), req.body))));
+      r.get('/models/:id/backtest/export', (req, res) => send(res, fc.models.exportBacktest(req.actor, id(req.params.id), parse(z.object({ format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }).strict(), req.query).format)));
+      r.post('/models/:id/submit', idem, (req, res) => ok(res, fc.models.submit(req.actor, id(req.params.id))));
+      r.post('/models/:id/withdraw', idem, (req, res) => ok(res, fc.models.withdraw(req.actor, id(req.params.id), parse(reason, req.body))));
+      r.post('/models/:id/cancel', idem, (req, res) => ok(res, fc.models.cancel(req.actor, id(req.params.id), parse(reason, req.body))));
+      r.post('/models/:id/retire', idem, (req, res) => ok(res, fc.models.retire(req.actor, id(req.params.id), parse(reason, req.body))));
+      r.post('/models/:id/amend', idem, (req, res) => ok(res, fc.models.amend(req.actor, id(req.params.id), parse(reason, req.body)), 201));
+      r.get('/models/:id/history', (req, res) => ok(res, fc.models.history(req.actor, id(req.params.id))));
+      r.get('/anomalies', (req, res) => ok(res, fc.anomalies.list(req.actor, parse(z.object({ status: z.enum(['OPEN', 'CONFIRMED', 'DISMISSED', 'ALL']).default('OPEN'), kind: z.enum(Object.keys(ANOMALY_KINDS)).optional(),
+        projectId: pos.optional(), page: z.coerce.number().int().positive().max(10000).default(1), pageSize: z.coerce.number().int().positive().max(100).default(25) }).strict(), req.query))));
+      r.post('/anomalies/run', idem, (req, res) => ok(res, fc.anomalies.run(req.actor)));
+      r.post('/anomalies/:id/review', idem, (req, res) => ok(res, fc.anomalies.review(req.actor, id(req.params.id), parse(z.object({ outcome: z.enum(['CONFIRMED', 'DISMISSED']), note: z.string().trim().min(5).max(500) }).strict(), req.body))));
     }
     api.use('/ai', r);
   },

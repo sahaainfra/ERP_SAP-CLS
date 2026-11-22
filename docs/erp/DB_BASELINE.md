@@ -362,6 +362,131 @@ Indexes:
 - ix_ai_providers_company_status: company_id, status
 - sqlite_autoindex_ai_providers_1 (unique): company_id, code
 
+## aif_anomalies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| subject | TEXT | yes |  |  |
+| observed | NUMERIC(18,4) |  |  |  |
+| expected | NUMERIC(18,4) |  |  |  |
+| score | NUMERIC(18,4) |  |  |  |
+| detail | TEXT | yes |  |  |
+| route | TEXT |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| detected_at | TEXT | yes |  |  |
+| reviewed_by | TEXT |  |  |  |
+| reviewed_at | TEXT |  |  |  |
+| review_note | TEXT |  |  |  |
+| source_ref | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  |  |
+| source_id | TEXT | yes |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: site_id -> org_sites(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_aif_anomalies_site: site_id
+- ix_aif_anomalies_project: project_id
+- ix_aif_anomalies_status: company_id, status, kind
+- sqlite_autoindex_aif_anomalies_1 (unique): company_id, kind, source_type, source_id
+
+## aif_forecasts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| model_id | INTEGER | yes |  |  |
+| use_case | TEXT | yes |  |  |
+| subject_key | TEXT | yes |  |  |
+| subject_label | TEXT | yes |  |  |
+| as_of | TEXT | yes |  |  |
+| points_json | TEXT | yes |  |  |
+| next_value | NUMERIC(18,4) |  |  |  |
+| next_low | NUMERIC(18,4) |  |  |  |
+| next_high | NUMERIC(18,4) |  |  |  |
+| completion_json | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), model_id -> aif_models(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_aif_forecasts_company_as_of: company_id, as_of
+- ix_aif_forecasts_project: project_id
+- ix_aif_forecasts_model: model_id, subject_key
+- sqlite_autoindex_aif_forecasts_1 (unique): company_id, model_id, subject_key, as_of
+
+## aif_models
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| use_case | TEXT | yes |  |  |
+| method | TEXT | yes |  |  |
+| params_json | TEXT | yes |  | '{}' |
+| horizon | INTEGER | yes |  | 6 |
+| version_no | INTEGER | yes |  | 1 |
+| parent_id | INTEGER |  |  |  |
+| backtest_json | TEXT |  |  |  |
+| backtest_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: parent_id -> aif_models(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_aif_models_workflow: workflow_instance_id
+- ix_aif_models_parent: parent_id
+- ix_aif_models_use_case: company_id, use_case, status
+- ux_aif_models_version (unique): company_id, code, version_no
+- sqlite_autoindex_aif_models_1 (unique): company_id, doc_no
+
 ## alr_alerts
 
 | Column | Type | Not null | Key | Default |

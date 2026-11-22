@@ -78,3 +78,28 @@ paths:
       requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [logId, rating], properties: { logId: { type: integer }, rating: { type: integer, enum: [1, -1] }, comment: { type: string, maxLength: 500 } } } } } }
       responses: { '200': { description: The feedback } }
     get: { summary: 'Feedback by feature: up, down and the latest comments (ai.usage.view)', responses: { '200': { description: The summary } } }
+  # part 28.03 — forecasting, the model registry with back-testing and approval (model owner → CFO/PCMGR), and anomaly detection (ff.ai.p2803)
+  /ai/forecasts:
+    get:
+      summary: 'Forecast of a use case (RATE: itemId, region; COLLECTIONS: projectId optional; PRODUCTIVITY: projectId, activityId; COMPLETION: projectId) with its 80 % range, drivers and the kind of every point (ACTUAL, CALCULATED, FORECAST). Uses the approved model (official, kept in aif_forecasts) or a labelled preview; modelId previews a version (ai.model.view). The history is read from its owner as the person (403 without that right).'
+      responses: { '200': { description: '{ official, label, model, history, points, next, drivers, backtest, completion, sources }' }, '403': { description: No right to the source data }, '422': { description: Subject missing } }
+  /ai/forecasts/options: { get: { summary: The items, regions, projects and activities the person may forecast, and the official model of each use case, responses: { '200': { description: The options } } } }
+  /ai/forecasts/latest: { get: { summary: 'The latest official forecasts the person may see (for dashboards, Project 360 and scenarios); projectId optional', responses: { '200': { description: The forecasts } } } }
+  /ai/models:
+    get: { summary: The model registry (ai.model.view), responses: { '200': { description: '{ rows, useCases, methods, canCreate }' } } }
+    post: { summary: 'New model version: code, name, useCase, method (MOVING_AVERAGE, HOLT, REGRESSION), params within bounds, horizon', responses: { '201': { description: The draft version } } }
+  /ai/models/{id}:
+    get: { summary: One version with its back-test and approval, responses: { '200': { description: The version } } }
+    patch: { summary: Change a draft or returned version (rowVersion); clears its back-test, responses: { '200': { description: The version }, '409': { description: Changed by someone else } } }
+    delete: { summary: Delete a draft, responses: { '200': { description: Deleted } } }
+  /ai/models/{id}/backtest: { post: { summary: 'Rolling-origin back-test on a subject the preparer may see: MAE, MAPE, RMSE, bias, coverage of the 80 % range, naive comparison and the rows (FR-04; audited)', responses: { '200': { description: The version with its back-test }, '403': { description: No right to the source data } } } }
+  /ai/models/{id}/backtest/export: { get: { summary: The back-testing report (xlsx, csv, pdf; ai.forecast.export; audited), responses: { '200': { description: The file } } } }
+  /ai/models/{id}/submit: { post: { summary: 'Send for approval (needs a back-test); the CFO or the project controls manager approves in the inbox, never the preparer', responses: { '200': { description: The version }, '422': { description: Not back-tested } } } }
+  /ai/models/{id}/withdraw: { post: { summary: Withdraw a version waiting for approval (the sender), responses: { '200': { description: The version } } } }
+  /ai/models/{id}/cancel: { post: { summary: Cancel a version, responses: { '200': { description: The version } } } }
+  /ai/models/{id}/retire: { post: { summary: Retire an official version at once (the use case falls back to previews), responses: { '200': { description: The version } } } }
+  /ai/models/{id}/amend: { post: { summary: Prepare a new version from an approved or retired one, responses: { '201': { description: The new draft } } } }
+  /ai/models/{id}/history: { get: { summary: The approval history and audit, responses: { '200': { description: The history } } } }
+  /ai/anomalies: { get: { summary: 'Flagged outliers the person may see (each kind only where the person may see its source): status, kind, projectId, paginated', responses: { '200': { description: '{ rows, total, open, kinds, canReview, canRun, threshold }' } } } }
+  /ai/anomalies/run: { post: { summary: 'Run the detection now (ai.anomaly.run): robust z-score outliers on purchase rates, material issues, site attendance and payments, and paid staff without attendance; also nightly', responses: { '200': { description: '{ candidates, flagged, byKind }' } } } }
+  /ai/anomalies/{id}/review: { post: { summary: 'Confirm or dismiss a flag with a note (ai.anomaly.review and the right to its source; audited, event ai.anomaly.reviewed)', responses: { '200': { description: The flag }, '422': { description: Reviewed already } } } }
