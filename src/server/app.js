@@ -28,6 +28,7 @@ import { assertDeclared, buildRegistry, cors, csrfGuard, enforcePolicy, persistR
 import { staticAssets } from './platform/http/staticAssets.js';
 import { compressJson } from './platform/http/compressJson.js';
 import { readOnlyGuard } from './modules/admin/control.js';
+import { apiPlatformOf } from './modules/admin/apiplatform.js';
 
 const sameToken = (a, b) => {
   const x = Buffer.from(a);
@@ -148,6 +149,8 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   mountModules(api, { db, config, buildInfo, publicApi, storagePath: storage });
   app.use('/api/v1', publicApi);
   app.use('/api/v1', api);
+  // part 29.03: the public API (OAuth2 client credentials), a catalogue of internal routes handed to the internal API as a service account
+  app.use('/api/public', (req, res, next) => { const gw = apiPlatformOf(db); return gw ? gw.handle(req, res, next, api) : next(); });
   app.use('/api', (_req, _res, next) => next(new HttpError(404, 'NOT_FOUND', 'No such API route.')));
 
   const dist = join(ROOT, 'dist');

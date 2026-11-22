@@ -412,6 +412,13 @@
  "adm.connector.configure": [
   "ITADM"
  ],
+ "adm.api.manage": [
+  "ITADM"
+ ],
+ "adm.pack.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
  "bi.det_rule.configure": [
   "CFO",
   "PCMGR"

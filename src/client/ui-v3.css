@@ -363,6 +363,49 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .con-problem { color: var(--erp-color-status-error-fg); }
 .con-result { margin-top: var(--erp-space-2); }
 @media (max-width: 599px) { .con-form .btn, .con-decide .btn { flex: 1 1 100%; } }
+/* 29.03 API clients, webhooks and developer portal */
+.dev-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+.dev-card { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); min-width: 0; overflow-wrap: anywhere; }
+.dev-card p { margin: var(--erp-space-1) 0; }
+.dev-form { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: flex-end; }
+.dev-form > * { flex: 1 1 12rem; min-width: 0; }
+.dev-form input, .dev-form select, .dev-decide input { font-size: 16px; width: 100%; }
+.dev-form .btn, .dev-card .btn, .dev-secret .btn { min-height: 48px; }
+.dev-scopes { flex-basis: 100%; border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-2) var(--erp-space-3); display: grid; gap: var(--erp-space-1); }
+.dev-check { display: flex; gap: var(--erp-space-2); align-items: center; min-height: 44px; }
+.dev-check input { width: 22px; height: 22px; flex: 0 0 auto; }
+.dev-chip { display: inline-block; margin: 0 var(--erp-space-1) var(--erp-space-1) 0; padding: 0 var(--erp-space-2); border-radius: 999px; background: var(--erp-color-bg-surface-sunken); }
+.dev-code { display: block; white-space: pre-wrap; word-break: break-all; padding: var(--erp-space-2); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface-sunken); font-size: 0.875rem; max-height: 24rem; overflow: auto; }
+.dev-secret { padding: var(--erp-space-3); margin-bottom: var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); display: grid; gap: var(--erp-space-2); }
+.dev-problem { color: var(--erp-color-status-error-fg); }
+.dev-url { overflow-wrap: anywhere; }
+.dev-steps, .dev-links { margin: 0; padding-left: var(--erp-space-4); }
+@media (max-width: 599px) { .dev-form .btn, .dev-card .actions-row .btn { flex: 1 1 100%; } }
+/* 29.04 template packs and the bulk data entry workspace */
+.bk-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
+.bk-card { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); min-width: 0; overflow-wrap: anywhere; display: grid; gap: var(--erp-space-2); }
+.bk-card p { margin: 0; }
+.bk-templates { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.bk-templates li { display: flex; justify-content: space-between; align-items: center; gap: var(--erp-space-2); flex-wrap: wrap; }
+.bk-form { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: flex-end; margin: var(--erp-space-2) 0; }
+.bk-form > * { flex: 1 1 14rem; min-width: 0; }
+.bk-form input, .bk-form select, .bk-form textarea, .bk-decide input { font-size: 16px; width: 100%; }
+.bk-card .btn, .bk-form .btn, .bk-bar .btn { min-height: 48px; }
+.bk-grid-frame { overflow: auto; max-height: 60vh; max-width: 100%; border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
+.bk-grid { border-collapse: collapse; min-width: 100%; }
+.bk-grid th, .bk-grid td { border-bottom: 1px solid var(--erp-color-border-subtle); padding: 2px; text-align: left; white-space: nowrap; }
+.bk-grid thead th { position: sticky; top: 0; background: var(--erp-color-bg-surface-sunken); padding: var(--erp-space-1) var(--erp-space-2); font-size: 0.875rem; z-index: 1; }
+.bk-grid tbody th { padding: 0 var(--erp-space-2); color: var(--erp-color-text-muted); font-weight: 400; }
+.bk-grid input, .bk-grid select { font-size: 16px; min-width: 9rem; min-height: 40px; border: 1px solid transparent; background: transparent; padding: 0 var(--erp-space-1); }
+.bk-grid input:focus, .bk-grid select:focus { border-color: var(--erp-color-border-focus, currentColor); background: var(--erp-color-bg-surface); }
+.bk-grid .bk-bad { border-color: var(--erp-color-status-error-fg); background: var(--erp-color-status-error-bg); }
+.bk-x { min-height: 40px; min-width: 40px; }
+.bk-errors { margin: var(--erp-space-2) 0; padding-left: var(--erp-space-4); color: var(--erp-color-status-error-fg); }
+.bk-problem { color: var(--erp-color-status-error-fg); }
+.bk-history summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.bk-desk { display: none; padding: var(--erp-space-2) var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); }
+@media (max-width: 899px) { .bk-desk { display: block; } }
+@media (max-width: 599px) { .bk-card .actions-row .btn, .bk-form .btn { flex: 1 1 100%; } }
 @media (max-width: 899px) {
   .cv-split { grid-template-columns: minmax(0, 1fr); }
   .cv-actions .btn { flex: 1 1 100%; }

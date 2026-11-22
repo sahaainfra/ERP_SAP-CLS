@@ -47,6 +47,8 @@ import di from './en/di.js';
 import cv from './en/cv.js';
 import adm from './en/adm.js';
 import con from './en/con.js';
+import dev from './en/dev.js';
+import bk from './en/bk.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -112,6 +114,8 @@ export default {
   cv: cv,
   adm: adm,
   con: con,
+  dev: dev,
+  bk: bk,
   fc: fc,
   pa: pa,
 };
