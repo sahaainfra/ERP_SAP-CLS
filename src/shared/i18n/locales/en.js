@@ -52,6 +52,7 @@ import bk from './en/bk.js';
 import mig from './en/mig.js';
 import bkp from './en/bkp.js';
 import arc from './en/arc.js';
+import hd from './en/hd.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -122,6 +123,7 @@ export default {
   mig: mig,
   bkp: bkp,
   arc: arc,
+  hd: hd,
   fc: fc,
   pa: pa,
 };

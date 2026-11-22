@@ -9,6 +9,8 @@ const BulkEntry = lazyPage(() => import('./BulkEntry.jsx'), 'BulkEntry');
 const MigrationCockpit = lazyPage(() => import('./Migration.jsx'), 'MigrationCockpit');
 const BackupDr = lazyPage(() => import('./Backups.jsx'), 'BackupDr');
 const RetentionArchive = lazyPage(() => import('./Archive.jsx'), 'RetentionArchive');
+const HelpCenter = lazyPage(() => import('./HelpCenter.jsx'), 'HelpCenter');
+const SupportDesk = lazyPage(() => import('./SupportDesk.jsx'), 'SupportDesk');
 
 registerModule({
   code: 'admin', label: 'Administration',
@@ -20,5 +22,7 @@ registerModule({
     { path: '/admin/data-migration', label: 'Migration Cockpit', labelHi: 'माइग्रेशन कॉकपिट', icon: 'erp.insights.rb', permission: 'adm.migration.view', flag: 'ff.admin.p2905', Page: MigrationCockpit },
     { path: '/admin/backups', label: 'Backup & DR', labelHi: 'बैकअप और डीआर', icon: 'erp.insights.rb', permission: 'adm.backup.view', flag: 'ff.admin.p2906', Page: BackupDr },
     { path: '/admin/archive', label: 'Retention & Archival', labelHi: 'प्रतिधारण और संग्रह', icon: 'erp.insights.rb', permission: 'adm.archive.view', flag: 'ff.admin.p2907', Page: RetentionArchive },
+    { path: '/help', label: 'Help & Support', labelHi: 'सहायता और समर्थन', icon: 'erp.insights.rb', permission: 'hd.ticket.raise', flag: 'ff.admin.p2908', Page: HelpCenter },
+    { path: '/admin/support', label: 'Support Desk', labelHi: 'सपोर्ट डेस्क', icon: 'erp.insights.rb', permission: 'hd.ticket.work', flag: 'ff.admin.p2908', Page: SupportDesk },
   ],
 });

@@ -433,6 +433,10 @@
  "adm.archive.dispose": [
   "AUD"
  ],
+ "hd.article.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
  "bi.det_rule.configure": [
   "CFO",
   "PCMGR"

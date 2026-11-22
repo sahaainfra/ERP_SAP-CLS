@@ -26,7 +26,7 @@ test('FR-01 any signed-in person reads the text of a language; an unknown area o
   const en = await api.call('GET', `${U}/translations/en/field`, as('EMP', 'emp1'));
   assert.equal(en.json.data.strings.title, 'Field Home');
   const all = await api.call('GET', `${U}/translations/hi/all`, pm);
-  assert.deepEqual(Object.keys(all.json.data.namespaces).sort(), ['aa', 'adm', 'af', 'ai', 'arc', 'bd', 'bill', 'bk', 'bkp', 'bud', 'cash', 'cf', 'common', 'con', 'ct', 'ctr', 'cv', 'dev', 'di', 'engg', 'ess', 'est', 'ex', 'exp', 'fa', 'fc', 'field', 'fin', 'format', 'gst', 'hse', 'ic', 'inv', 'lk', 'mc', 'mig', 'mr', 'notify', 'pa', 'palette', 'pc', 'pl', 'plan', 'plant', 'pp', 'pr', 'prf', 'proc', 'proj', 'ps', 'qa', 'rd', 'rmc', 'scn', 'sep', 'shell', 'site', 'st', 'trn', 'why', 'wr']);
+  assert.deepEqual(Object.keys(all.json.data.namespaces).sort(), ['aa', 'adm', 'af', 'ai', 'arc', 'bd', 'bill', 'bk', 'bkp', 'bud', 'cash', 'cf', 'common', 'con', 'ct', 'ctr', 'cv', 'dev', 'di', 'engg', 'ess', 'est', 'ex', 'exp', 'fa', 'fc', 'field', 'fin', 'format', 'gst', 'hd', 'hse', 'ic', 'inv', 'lk', 'mc', 'mig', 'mr', 'notify', 'pa', 'palette', 'pc', 'pl', 'plan', 'plant', 'pp', 'pr', 'prf', 'proc', 'proj', 'ps', 'qa', 'rd', 'rmc', 'scn', 'sep', 'shell', 'site', 'st', 'trn', 'why', 'wr']);
   assert.equal((await api.call('GET', `${U}/translations/hi/nothing`, pm)).status, 400);
   assert.equal((await api.call('GET', `${U}/translations/fr/field`, pm)).status, 400);
   await api.close();

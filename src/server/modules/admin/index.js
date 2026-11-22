@@ -11,6 +11,8 @@ import { PACKS, createBulkWorkspace } from './bulk.js';
 import { PHASES, createMigrationCockpit } from './migration.js';
 import { createBackupService } from './backups.js';
 import { CLASSES, createArchiveService } from './archive.js';
+import { CATEGORIES, PRIORITIES, createHelpdesk } from './helpdesk.js';
+import { fileURLToPath } from 'node:url';
 
 // Module M29 (admin): administration, integration and data operations. Part 29.01 mounts the Enterprise Control Center; the later parts of
 // the module (connectors, public API, bulk entry, migration, backups, archival, help desk) add their routes here behind their own flags.
@@ -21,7 +23,7 @@ const reasonText = z.string().trim().min(5).max(500);
 export const admin = {
   code: 'admin', name: 'Administration & Data Operations', routePrefix: '/api/v1/admin', ownerPart: '29.01',
   status: 'Enterprise Control Center: governance dashboard, maker-checker configuration changes, emergency controls, configuration snapshots and diff, onboarding checklist.',
-  tables: ['adm_controls', 'adm_emergency_actions', 'adm_config_snapshots', 'int_mappings', 'int_sync_runs', 'api_clients', 'api_tokens', 'api_webhooks', 'api_webhook_deliveries', 'api_usage', 'xl_packs', 'xl_bulk_batches', 'mig_objects', 'mig_runs', 'mig_cutovers', 'ops_backups', 'ops_restore_tests', 'ops_backup_alerts', 'ops_restore_requests', 'arc_policies', 'arc_jobs', 'arc_records', 'arc_holds', 'arc_disposals', 'arc_erasures'], companyOptional: ['ops_backups', 'ops_restore_tests', 'ops_backup_alerts'], resources: ['dashboard', 'catalogue', 'areas', 'changes', 'emergency', 'snapshots', 'onboarding', 'connectors', 'api', 'bulk', 'migration', 'backups', 'archive'],
+  tables: ['adm_controls', 'adm_emergency_actions', 'adm_config_snapshots', 'int_mappings', 'int_sync_runs', 'api_clients', 'api_tokens', 'api_webhooks', 'api_webhook_deliveries', 'api_usage', 'xl_packs', 'xl_bulk_batches', 'mig_objects', 'mig_runs', 'mig_cutovers', 'ops_backups', 'ops_restore_tests', 'ops_backup_alerts', 'ops_restore_requests', 'arc_policies', 'arc_jobs', 'arc_records', 'arc_holds', 'arc_disposals', 'arc_erasures', 'hd_tickets', 'hd_ticket_notes', 'hd_corrections', 'hd_articles', 'hd_tour_views'], companyOptional: ['ops_backups', 'ops_restore_tests', 'ops_backup_alerts'], resources: ['dashboard', 'catalogue', 'areas', 'changes', 'emergency', 'snapshots', 'onboarding', 'connectors', 'api', 'bulk', 'migration', 'backups', 'archive', 'help'],
   mount(api, { db, config, storagePath }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'adm_controls'").get()) return;
     const context = { db, environment: config.environment ?? 'development', flags: createFlagService({ db, environment: config.environment }) };
@@ -179,6 +181,33 @@ export const admin = {
       r.post('/archive/erasures', idem, (req, res) => ok(res, ar.erasures.request(req.actor, parse(z.object({ subjectId: z.number().int().positive(), basis: z.string().trim().min(5).max(300), reason: reasonText }).strict(), req.body)), 201));
       r.post('/archive/erasures/:id/act', idem, (req, res) => ok(res, ar.erasures.decide(req.actor, id(req.params.id), parse(decision, req.body))));
       r.get('/archive/report', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, ar.report(req.actor)); });
+    }
+    // ---- part 29.08: help desk, data corrections, knowledge base and in-app help
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'hd_tickets'").get()) {
+      const runtime = runtimeOf(db);
+      const hd = createHelpdesk(context, { jobs: runtime?.jobs, scheduler: runtime?.scheduler, releaseDir: fileURLToPath(new URL('../../../../docs/erp/releases', import.meta.url)) });
+      const txt = (n) => z.string().trim().max(n);
+      const failed = z.object({ correlationId: z.string().max(80).nullable().optional(), status: z.number().int().nullable().optional(), code: z.string().max(60).nullable().optional(), path: z.string().max(300).optional(), at: z.string().max(40).optional() }).strict();
+      r.get('/help/options', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, hd.options()); });
+      r.get('/help/context', (req, res) => ok(res, hd.contextual(req.actor, parse(z.object({ route: z.string().max(300) }).strict(), req.query).route)));
+      r.post('/help/tours/:id/seen', idem, (req, res) => ok(res, hd.tourSeen(req.actor, id(req.params.id))));
+      r.get('/help/releases', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, hd.releaseNotes(req.actor)); });
+      r.get('/help/tickets', (req, res) => ok(res, hd.tickets.list(req.actor, parse(z.object({ scope: z.enum(['mine', 'queue', 'assigned']).default('mine'), status: z.enum(['NEW', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_USER', 'RESOLVED', 'CLOSED', 'CANCELLED']).optional(), team: z.string().max(40).optional(), breached: z.enum(['1']).optional().transform((v) => v === '1'), page: z.coerce.number().int().positive().max(10000).default(1), pageSize: z.coerce.number().int().positive().max(100).default(25) }).strict(), req.query))));
+      r.post('/help/tickets', idem, (req, res) => ok(res, hd.tickets.raise(req.actor, parse(z.object({ subject: txt(160).min(5), description: txt(4000).min(10), category: z.enum(Object.keys(CATEGORIES)), priority: z.enum(PRIORITIES).default('MEDIUM'), pageRef: txt(300).optional(), pageTitle: txt(160).optional(), entity: txt(60).optional(), entityId: txt(60).optional(), correlationId: z.string().max(80).optional(), failedCall: failed.optional(), userAgent: txt(300).optional(), channels: z.array(z.enum(['EMAIL', 'WHATSAPP'])).max(2).default([]) }).strict(), req.body)), 201));
+      r.get('/help/tickets/:id', (req, res) => ok(res, hd.tickets.get(req.actor, id(req.params.id))));
+      r.post('/help/tickets/:id/act', idem, (req, res) => ok(res, hd.tickets.act(req.actor, id(req.params.id), parse(z.object({ action: z.enum(['comment', 'assign', 'start', 'wait', 'resolve', 'close', 'cancel', 'reopen']), assignee: z.string().max(80).optional(), note: txt(2000).optional(), resolution: txt(2000).optional(), internal: z.boolean().default(false) }).strict(), req.body))));
+      r.post('/help/tickets/:id/rating', idem, (req, res) => ok(res, hd.tickets.rate(req.actor, id(req.params.id), parse(z.object({ rating: z.number().int().min(1).max(5), comment: txt(500).optional() }).strict(), req.body))));
+      r.post('/help/tickets/:id/screenshot', idem, (req, res) => ok(res, hd.tickets.screenshot(req.actor, id(req.params.id), parse(z.object({ fileId: z.number().int().positive() }).strict(), req.body).fileId)));
+      r.post('/help/tickets/:id/corrections', idem, (req, res) => ok(res, hd.corrections.request(req.actor, id(req.params.id), parse(z.object({ module: z.string().regex(/^[a-z]{2,8}$/), entity: z.string().regex(/^[a-z][a-z0-9_]{1,59}$/), entityId: txt(60).min(1), recordRef: txt(120).min(1), changes: z.array(z.object({ field: txt(60).min(1), current: txt(500).optional(), proposed: txt(500).min(1) }).strict()).min(1).max(20), reason: reasonText }).strict(), req.body)), 201));
+      r.get('/help/corrections', (req, res) => ok(res, hd.corrections.list(req.actor, parse(z.object({ status: z.enum(['SUBMITTED', 'APPROVED', 'REJECTED', 'IMPLEMENTED']).optional() }).strict(), req.query))));
+      r.post('/help/corrections/:id/act', idem, (req, res) => ok(res, hd.corrections.decide(req.actor, id(req.params.id), parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional() }).strict(), req.body))));
+      r.post('/help/corrections/:id/implement', idem, (req, res) => ok(res, hd.corrections.implement(req.actor, id(req.params.id), parse(z.object({ transactionRef: txt(120).min(3), note: txt(500).optional() }).strict(), req.body))));
+      r.get('/help/articles', (req, res) => ok(res, hd.articles.list(req.actor, parse(z.object({ kind: z.enum(['ARTICLE', 'TOUR', 'ANNOUNCEMENT']).optional(), q: z.string().trim().min(2).max(60).optional(), route: z.string().max(300).optional(), all: z.enum(['1']).optional().transform((v) => v === '1') }).strict(), req.query))));
+      r.get('/help/articles/:id', (req, res) => ok(res, hd.articles.get(req.actor, id(req.params.id))));
+      const article = z.object({ id: z.number().int().positive().optional(), kind: z.enum(['ARTICLE', 'TOUR', 'ANNOUNCEMENT']), title: txt(160).min(3), body: txt(20000).min(3), module: z.string().max(20).optional(), routes: z.array(z.string().regex(/^\/[a-z0-9/_-]*$/)).max(20).default([]), roles: z.array(z.string().regex(/^[A-Z][A-Z0-9_-]{1,19}$/)).max(30).default([]),
+        steps: z.array(z.object({ title: txt(120).min(1), body: txt(1000).min(1), selector: z.string().max(200).optional() }).strict()).max(20).optional(), validFrom: z.string().max(40).optional(), validTo: z.string().max(40).optional(), status: z.enum(['DRAFT', 'PUBLISHED', 'RETIRED']).default('DRAFT') }).strict();
+      r.post('/help/articles', idem, (req, res) => ok(res, hd.articles.save(req.actor, parse(article, req.body)), 201));
+      r.get('/help/dashboard', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, hd.dashboard(req.actor)); });
     }
     api.use('/admin', r);
   },

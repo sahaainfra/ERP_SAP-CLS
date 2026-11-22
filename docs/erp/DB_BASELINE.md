@@ -13872,6 +13872,198 @@ Indexes:
 - ix_gst_settings_list: company_id, status, effective_from
 - ux_gst_settings_doc (unique): company_id, doc_no
 
+## hd_articles
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| body | TEXT | yes |  |  |
+| module | TEXT |  |  |  |
+| page_codes_json | TEXT | yes |  | '[]' |
+| roles_json | TEXT | yes |  | '[]' |
+| steps_json | TEXT |  |  |  |
+| valid_from | TEXT |  |  |  |
+| valid_to | TEXT |  |  |  |
+| article_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'DRAFT' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_hd_articles_company: company_id, status, kind
+
+## hd_corrections
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| ticket_id | INTEGER | yes |  |  |
+| module | TEXT | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | TEXT | yes |  |  |
+| record_ref | TEXT | yes |  |  |
+| changes_json | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| financial | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  |  |
+| request_id | INTEGER |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| transaction_ref | TEXT |  |  |  |
+| implemented_by | TEXT |  |  |  |
+| implemented_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), ticket_id -> hd_tickets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hd_corrections_request: request_id
+- ix_hd_corrections_ticket: ticket_id
+- ix_hd_corrections_company: company_id, status, id
+
+## hd_ticket_notes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| ticket_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| body | TEXT | yes |  |  |
+| internal | INTEGER | yes |  | 0 |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: ticket_id -> hd_tickets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hd_ticket_notes_company: company_id
+- ix_hd_ticket_notes_ticket: ticket_id, id
+
+## hd_tickets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| ticket_no | TEXT | yes |  |  |
+| subject | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| priority | TEXT | yes |  |  |
+| team | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'NEW' |
+| assigned_to | TEXT |  |  |  |
+| sla_due | TEXT | yes |  |  |
+| escalation_level | INTEGER | yes |  | 0 |
+| escalated_at | TEXT |  |  |  |
+| page_ref | TEXT |  |  |  |
+| page_title | TEXT |  |  |  |
+| entity | TEXT |  |  |  |
+| entity_id | TEXT |  |  |  |
+| correlation_id | TEXT |  |  |  |
+| failed_call_json | TEXT |  |  |  |
+| user_agent | TEXT |  |  |  |
+| screenshot_file_id | INTEGER |  |  |  |
+| channels_json | TEXT | yes |  | '[]' |
+| resolution | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| rating | INTEGER |  |  |  |
+| rating_comment | TEXT |  |  |  |
+| raised_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: screenshot_file_id -> core_files(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hd_tickets_shot: screenshot_file_id
+- ix_hd_tickets_sla: status, sla_due
+- ix_hd_tickets_assigned: company_id, assigned_to, status
+- ix_hd_tickets_mine: company_id, raised_by, id
+- ix_hd_tickets_queue: company_id, status, team, sla_due
+- ux_hd_tickets_no (unique): company_id, ticket_no
+
+## hd_tour_views
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| article_id | INTEGER | yes |  |  |
+| user_name | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: article_id -> hd_articles(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hd_tour_views_article: article_id
+- ux_hd_tour_views (unique): company_id, article_id, user_name
+
 ## hr_candidates
 
 | Column | Type | Not null | Key | Default |
