@@ -50,7 +50,8 @@ test('Enterprise Control Center: governance, a maker-checker change, read-only m
   await expect(page.getByRole('heading', { name: 'Enterprise Control Center', level: 1 })).toBeVisible();
   await expect(page.getByTestId('adm-approvals')).toBeVisible();
   await expect(page.getByTestId('adm-m-dormant')).toBeVisible();
-  await expect(page.getByTestId('adm-m-backup')).toContainText('None yet');
+  // backups are platform-wide (29.06): the tile shows the last one, or that there is none yet
+  await expect(page.getByTestId('adm-m-backup')).toContainText(/None yet|Verified|Failed/);
   await noOverflow();
   await page.screenshot({ path: `docs/erp/screenshots/29.01/${phone ? 'mobile' : 'desktop'}-enterprise-control-center.png`, fullPage: true });
   await checkAppearance(page);
