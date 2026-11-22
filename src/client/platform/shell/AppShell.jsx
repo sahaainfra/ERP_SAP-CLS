@@ -1,7 +1,7 @@
 import NotificationBell from '../notifications/NotificationBell.jsx';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
-import { NoPermission, EmptyState, Skeleton, ErrorState } from '../feedback/states.jsx';
+import { NoPermission, EmptyState, Skeleton, ErrorState, useLeadHeading } from '../feedback/states.jsx';
 import { shellKeys, useBell, useFavourites, useFlagOn, useNavigation, useRecent } from './api.js';
 import { labelIn, useT } from '../i18n/index.js';
 import I18nSync from '../i18n/I18nSync.jsx';
@@ -23,21 +23,28 @@ import { accountGroup, consoleGroup, entryFor, forOnboarding, guard, shortcutMap
 
 const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
 
+/** A page whose flag is OFF: the page's level-1 heading and its title (the Page Completion Checklist asks every page for both), unless the page has its own. */
+function FlagOff({ verdict, go }) {
+  const t = useT('shell');
+  const box = useRef(null);
+  const title = t('guard.flagTitle', { page: verdict.label ?? t('guard.page') });
+  const Heading = useLeadHeading(box, title);
+  return (
+    <div className="state" role="status" data-testid="flag-off" ref={box}>
+      <Heading>{title}</Heading>
+      <p>{t('guard.flagBody', { flag: verdict.featureFlag })}</p>
+      <a className="btn" href="/home" onClick={go('/home')}>{t('guard.home')}</a>
+    </div>
+  );
+}
+
 /** What a page that cannot be drawn says (FR-08): the missing right, a flag that is OFF, a project to choose, or no such page. */
 function GuardState({ verdict, path, go }) {
   const t = useT('shell');
   if (verdict.reason === 'permission') {
     return <NoPermission what={verdict.label ?? t('guard.page')} permission={verdict.permissionKey} />;
   }
-  if (verdict.reason === 'flag') {
-    return (
-      <div className="state" role="status" data-testid="flag-off">
-        <h2>{t('guard.flagTitle', { page: verdict.label ?? t('guard.page') })}</h2>
-        <p>{t('guard.flagBody', { flag: verdict.featureFlag })}</p>
-        <a className="btn" href="/home" onClick={go('/home')}>{t('guard.home')}</a>
-      </div>
-    );
-  }
+  if (verdict.reason === 'flag') return <FlagOff verdict={verdict} go={go} />;
   if (verdict.reason === 'context') {
     const need = t(verdict.need === 'site' ? 'need.site' : 'need.project');
     return (
