@@ -103,3 +103,22 @@ paths:
   /ai/anomalies: { get: { summary: 'Flagged outliers the person may see (each kind only where the person may see its source): status, kind, projectId, paginated', responses: { '200': { description: '{ rows, total, open, kinds, canReview, canRun, threshold }' } } } }
   /ai/anomalies/run: { post: { summary: 'Run the detection now (ai.anomaly.run): robust z-score outliers on purchase rates, material issues, site attendance and payments, and paid staff without attendance; also nightly', responses: { '200': { description: '{ candidates, flagged, byKind }' } } } }
   /ai/anomalies/{id}/review: { post: { summary: 'Confirm or dismiss a flag with a note (ai.anomaly.review and the right to its source; audited, event ai.anomaly.reviewed)', responses: { '200': { description: The flag }, '422': { description: Reviewed already } } } }
+  # part 28.04 — document and contract intelligence (ff.ai.p2804): files are read on upload (core.file.available); suggestions are applied only on acceptance
+  /ai/documents:
+    get:
+      summary: 'The review worklist the person may see (ai.docintel.view), oldest first with its SLA: status OPEN (to review), ACCEPTED, REJECTED, ALL; docType; q searches the text; paginated'
+      responses: { '200': { description: '{ rows, total, open, types, canReview, canRun, threshold }' } }
+  /ai/documents/export: { get: { summary: 'The worklist as xlsx, csv or pdf, with its filters and without the document text (audited)', responses: { '200': { description: The file } } } }
+  /ai/documents/accuracy: { get: { summary: 'T-01 in use: of the fields suggested on accepted documents, the share accepted unchanged, by type and field', responses: { '200': { description: '{ rows, overallPct, suggested }' } } } }
+  /ai/documents/extract:
+    post:
+      summary: 'Read a file now (ai.docintel.run), for a file uploaded before the flag was on; the person must be able to open it'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [fileId], properties: { fileId: { type: integer } } } } } }
+      responses: { '201': { description: The extraction }, '422': { description: Type not read } }
+  /ai/documents/{id}: { get: { summary: 'One extraction: the text, the suggested fields with confidence, source position and whether they must be confirmed; clauses; duplicate; a link to open the file; what accepting can create', responses: { '200': { description: The extraction }, '404': { description: Not visible, or the person may not open the file } } } }
+  /ai/documents/{id}/accept:
+    post:
+      summary: 'Accept the reviewed values and create the draft through the owner module with the person''s rights: INVOICE → vendor invoice DRAFT, source OCR (target.poId; 22.06); LETTER → inward letter (target.projectId; 11.05); CONTRACT → chosen clauses in the clause library (target.contractId, clauses; 21.01); CERTIFICATE → validity date of its controlled document (04.10). A field below the confidence threshold used as suggested must be listed in confirmed (BR-01). Idempotency key required.'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { values: { type: object }, confirmed: { type: array, items: { type: string } }, target: { type: object, properties: { projectId: { type: integer }, poId: { type: integer }, contractId: { type: integer } } }, clauses: { type: array, items: { type: object } }, note: { type: string }, rowVersion: { type: integer } } } } } }
+      responses: { '200': { description: The extraction with what was applied }, '409': { description: Changed by someone else }, '422': { description: Fields to confirm, or no target } }
+  /ai/documents/{id}/reject: { post: { summary: Reject the suggestions with a reason (rowVersion), responses: { '200': { description: The extraction } } } }

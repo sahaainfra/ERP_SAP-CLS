@@ -7,6 +7,7 @@ import { createFlagService } from '../core/api.js';
 import { createAiGateway } from './gateway.js';
 import './features.js';
 import { createAssistant } from './assistant.js';
+import { createDocIntel, DI_STATUSES, DI_TYPES } from './docintel.js';
 import { ANOMALY_KINDS, createForecasting, METHODS, USE_CASES } from './forecast.js';
 
 // Module M28 (ai): the AI gateway and its governance (part 28.01). Every AI feature of the ERP calls aiOf(db).run(); the routes here configure
@@ -17,7 +18,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const ai = {
   code: 'ai', name: 'AI', routePrefix: '/api/v1/ai', ownerPart: '28.01',
   status: 'AI gateway: providers through the integration hub, features with enablement approval, quotas, kill switch, redacted log.',
-  tables: ['ai_providers', 'ai_features', 'ai_logs', 'ai_controls', 'ai_drafts', 'ai_feedback', 'aif_models', 'aif_forecasts', 'aif_anomalies'], companyOptional: [], resources: ['features', 'providers', 'controls', 'run', 'usage', 'logs', 'assistant', 'copilots', 'drafts', 'feedback', 'forecasts', 'models', 'anomalies'],
+  tables: ['ai_providers', 'ai_features', 'ai_logs', 'ai_controls', 'ai_drafts', 'ai_feedback', 'aif_models', 'aif_forecasts', 'aif_anomalies', 'di_extractions'], companyOptional: [], resources: ['features', 'providers', 'controls', 'run', 'usage', 'logs', 'assistant', 'copilots', 'drafts', 'feedback', 'forecasts', 'models', 'anomalies', 'documents'],
   mount(api, { db, config }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ai_features'").get()) return;
     const context = { db, flags: createFlagService({ db, environment: config.environment }) };
@@ -109,6 +110,25 @@ export const ai = {
         projectId: pos.optional(), page: z.coerce.number().int().positive().max(10000).default(1), pageSize: z.coerce.number().int().positive().max(100).default(25) }).strict(), req.query))));
       r.post('/anomalies/run', idem, (req, res) => ok(res, fc.anomalies.run(req.actor)));
       r.post('/anomalies/:id/review', idem, (req, res) => ok(res, fc.anomalies.review(req.actor, id(req.params.id), parse(z.object({ outcome: z.enum(['CONFIRMED', 'DISMISSED']), note: z.string().trim().min(5).max(500) }).strict(), req.body))));
+    }
+    // ---- part 28.04: document and contract intelligence (extraction on upload, review, apply to the owner modules)
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'di_extractions'").get()) {
+      const di = createDocIntel(context, { jobs: runtime?.jobs, bus: runtime?.bus });
+      const listQ = z.object({ status: z.enum(['OPEN', 'ALL', ...DI_STATUSES]).default('OPEN'), docType: z.enum(Object.keys(DI_TYPES)).optional(), q: z.string().trim().min(2).max(100).optional(),
+        page: z.coerce.number().int().positive().max(10000).default(1), pageSize: z.coerce.number().int().positive().max(100).default(25) }).strict();
+      const wrapDi = (fn) => async (req, res, next) => { try { await fn(req, res); } catch (e) { next(e); } };
+      r.get('/documents', (req, res) => ok(res, di.list(req.actor, parse(listQ, req.query))));
+      r.get('/documents/export', (req, res) => { const { format, ...q } = parse(listQ.extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }), req.query); return send(res, di.exportList(req.actor, q, format)); });
+      r.get('/documents/accuracy', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, di.accuracy(req.actor)); });
+      r.post('/documents/extract', idem, wrapDi(async (req, res) => ok(res, await di.extract(req.actor, parse(z.object({ fileId: z.number().int().positive() }).strict(), req.body).fileId), 201)));
+      r.get('/documents/:id', (req, res) => ok(res, di.get(req.actor, id(req.params.id))));
+      const val = z.union([z.string().trim().max(300), z.number(), z.null()]);
+      r.post('/documents/:id/accept', idem, (req, res) => ok(res, di.accept(req.actor, id(req.params.id), parse(z.object({ values: z.record(z.string().max(40), val).default({}), confirmed: z.array(z.string().max(40)).max(40).default([]),
+        target: z.object({ projectId: z.number().int().positive().optional(), poId: z.number().int().positive().optional(), contractId: z.number().int().positive().optional() }).strict().default({}),
+        clauses: z.array(z.object({ index: z.number().int().min(0).max(500), clauseNo: z.string().trim().min(1).max(30).optional(), title: z.string().trim().min(2).max(200).optional(), category: z.enum(['NOTICE', 'TIME_BAR', 'VARIATION', 'PAYMENT', 'TERMINATION', 'LD', 'PVC', 'DISPUTE', 'INSURANCE', 'SECURITY', 'OTHER']).optional(),
+          summary: z.string().trim().min(5).max(4000).optional(), timeBarDays: z.number().int().min(0).max(3650).nullish(), confirmed: z.boolean().optional() }).strict()).max(200).optional(),
+        note: z.string().trim().max(500).optional(), rowVersion: z.number().int().positive() }).strict(), req.body))));
+      r.post('/documents/:id/reject', idem, (req, res) => ok(res, di.reject(req.actor, id(req.params.id), parse(z.object({ reason: z.string().trim().min(5).max(500), rowVersion: z.number().int().positive() }).strict(), req.body))));
     }
     api.use('/ai', r);
   },

@@ -287,6 +287,13 @@ export function createFileService({ db, storage, scanners, jobs, signer, approva
      * A copy of a stored file linked to another record (message to task, 05.04): the bytes are copied under a new key, so removing or superseding one file never touches the other. Only a clean file is copied.
      * The caller has already checked that the person may use the target record; the source must be a live file of the same company.
      */
+    /** The bytes of a clean file, for server-side processing such as text extraction (part 28.04). Not routed: callers check the person's rights first. */
+    async bytesOf(fileId) {
+      const r = db.prepare('SELECT * FROM core_files WHERE id = ? AND is_active = 1 AND deleted_at IS NULL').get(Number(fileId));
+      if (!r) throw notFound('That file does not exist.');
+      if (r.scan_status !== 'CLEAN') throw unprocessable(`The file ${r.original_name} has not been cleared by the virus scan.`);
+      return { file: present(r), companyId: r.company_id, projectId: r.project_id, siteId: r.site_id, buffer: await readAll(storage.createReadStream(r.storage_key)) };
+    },
     async copyTo(actor, { fileId, entity, entityId, projectId = null, siteId = null }) {
       const r = db.prepare('SELECT * FROM core_files WHERE id = ? AND company_id = ? AND is_active = 1 AND deleted_at IS NULL').get(Number(fileId), actor.companyId);
       if (!r) throw notFound('That file does not exist.');

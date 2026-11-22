@@ -8968,6 +8968,66 @@ Indexes:
 - ix_det_rules_company_status: company_id, status
 - sqlite_autoindex_det_rules_1 (unique): company_id, code, version
 
+## di_extractions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| file_id | INTEGER | yes |  |  |
+| file_name | TEXT | yes |  |  |
+| linked_entity | TEXT |  |  |  |
+| linked_id | INTEGER |  |  |  |
+| doc_type | TEXT | yes |  |  |
+| class_confidence | NUMERIC(18,4) | yes |  | 0 |
+| engine | TEXT | yes |  |  |
+| ocr_confidence | NUMERIC(18,4) | yes |  | 0 |
+| pages | INTEGER | yes |  | 0 |
+| text_content | TEXT | yes |  | '' |
+| simhash | TEXT |  |  |  |
+| sha256 | TEXT |  |  |  |
+| fields_json | TEXT | yes |  | '{}' |
+| clauses_json | TEXT | yes |  | '[]' |
+| summary | TEXT |  |  |  |
+| duplicate_of_file_id | INTEGER |  |  |  |
+| duplicate_json | TEXT |  |  |  |
+| status | TEXT | yes |  | 'EXTRACTED' |
+| reason | TEXT |  |  |  |
+| extracted_at | TEXT | yes |  |  |
+| final_json | TEXT |  |  |  |
+| changed_json | TEXT |  |  |  |
+| applied_json | TEXT |  |  |  |
+| reviewed_by | TEXT |  |  |  |
+| reviewed_at | TEXT |  |  |  |
+| review_note | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'core_files' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: site_id -> org_sites(id), project_id -> org_projects(id), duplicate_of_file_id -> core_files(id), file_id -> core_files(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_di_extractions_site: site_id
+- ix_di_extractions_project: project_id
+- ix_di_extractions_dup: duplicate_of_file_id
+- ix_di_extractions_file: file_id
+- ix_di_extractions_sha: company_id, sha256
+- ix_di_extractions_type: company_id, doc_type, status
+- ix_di_extractions_queue: company_id, status, extracted_at
+- ux_di_extractions_file (unique): company_id, file_id
+- sqlite_autoindex_di_extractions_1 (unique): company_id, doc_no
+
 ## doc_annotations
 
 | Column | Type | Not null | Key | Default |

@@ -43,6 +43,7 @@ import scn from './en/scn.js';
 import ai from './en/ai.js';
 import aa from './en/aa.js';
 import af from './en/af.js';
+import di from './en/di.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -104,6 +105,7 @@ export default {
   ai: ai,
   aa: aa,
   af: af,
+  di: di,
   fc: fc,
   pa: pa,
 };
