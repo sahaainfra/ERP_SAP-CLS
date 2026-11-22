@@ -427,6 +427,12 @@
   "ITADM",
   "SYSADM"
  ],
+ "adm.archive.manage": [
+  "SYSADM"
+ ],
+ "adm.archive.dispose": [
+  "AUD"
+ ],
  "bi.det_rule.configure": [
   "CFO",
   "PCMGR"

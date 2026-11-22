@@ -10,6 +10,7 @@ import { SCOPES, TIERS, createApiPlatform } from './apiplatform.js';
 import { PACKS, createBulkWorkspace } from './bulk.js';
 import { PHASES, createMigrationCockpit } from './migration.js';
 import { createBackupService } from './backups.js';
+import { CLASSES, createArchiveService } from './archive.js';
 
 // Module M29 (admin): administration, integration and data operations. Part 29.01 mounts the Enterprise Control Center; the later parts of
 // the module (connectors, public API, bulk entry, migration, backups, archival, help desk) add their routes here behind their own flags.
@@ -20,7 +21,7 @@ const reasonText = z.string().trim().min(5).max(500);
 export const admin = {
   code: 'admin', name: 'Administration & Data Operations', routePrefix: '/api/v1/admin', ownerPart: '29.01',
   status: 'Enterprise Control Center: governance dashboard, maker-checker configuration changes, emergency controls, configuration snapshots and diff, onboarding checklist.',
-  tables: ['adm_controls', 'adm_emergency_actions', 'adm_config_snapshots', 'int_mappings', 'int_sync_runs', 'api_clients', 'api_tokens', 'api_webhooks', 'api_webhook_deliveries', 'api_usage', 'xl_packs', 'xl_bulk_batches', 'mig_objects', 'mig_runs', 'mig_cutovers', 'ops_backups', 'ops_restore_tests', 'ops_backup_alerts', 'ops_restore_requests'], companyOptional: ['ops_backups', 'ops_restore_tests', 'ops_backup_alerts'], resources: ['dashboard', 'catalogue', 'areas', 'changes', 'emergency', 'snapshots', 'onboarding', 'connectors', 'api', 'bulk', 'migration', 'backups'],
+  tables: ['adm_controls', 'adm_emergency_actions', 'adm_config_snapshots', 'int_mappings', 'int_sync_runs', 'api_clients', 'api_tokens', 'api_webhooks', 'api_webhook_deliveries', 'api_usage', 'xl_packs', 'xl_bulk_batches', 'mig_objects', 'mig_runs', 'mig_cutovers', 'ops_backups', 'ops_restore_tests', 'ops_backup_alerts', 'ops_restore_requests', 'arc_policies', 'arc_jobs', 'arc_records', 'arc_holds', 'arc_disposals', 'arc_erasures'], companyOptional: ['ops_backups', 'ops_restore_tests', 'ops_backup_alerts'], resources: ['dashboard', 'catalogue', 'areas', 'changes', 'emergency', 'snapshots', 'onboarding', 'connectors', 'api', 'bulk', 'migration', 'backups', 'archive'],
   mount(api, { db, config, storagePath }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'adm_controls'").get()) return;
     const context = { db, environment: config.environment ?? 'development', flags: createFlagService({ db, environment: config.environment }) };
@@ -151,6 +152,33 @@ export const admin = {
       r.get('/backups/tests/:id/report', (req, res) => send(res, bk.report(req.actor, id(req.params.id), parse(z.object({ format: fmt }).strict(), req.query).format)));
       r.post('/backups/restores', idem, (req, res) => ok(res, bk.requestRestore(req.actor, parse(z.object({ backupId: z.number().int().positive(), incidentRef: z.string().trim().min(3).max(60), incident: reasonText }).strict(), req.body)), 201));
       r.post('/backups/restores/:id/act', idem, (req, res) => ok(res, bk.decide(req.actor, id(req.params.id), parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional() }).strict(), req.body))));
+    }
+    // ---- part 29.07: retention, archival, legal holds, disposal and DPDP erasure
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'arc_records'").get() && storagePath) {
+      const ar = createArchiveService(context, { storagePath });
+      const klass = z.enum(Object.keys(CLASSES));
+      const decision = z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional() }).strict();
+      const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+      r.get('/archive/policies', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, ar.policies.list(req.actor)); });
+      r.post('/archive/policies', idem, (req, res) => ok(res, ar.policies.set(req.actor, parse(z.object({ recordClass: klass, archiveAfterMonths: z.number().int().min(0).max(600), retentionYears: z.number().int().min(1).max(100), legalBasis: z.string().trim().min(5).max(300), actionAfter: z.enum(['DISPOSE', 'ANONYMISE', 'REVIEW']) }).strict(), req.body)), 201));
+      r.get('/archive/jobs', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, ar.jobs.list(req.actor)); });
+      r.post('/archive/jobs/preview', (req, res) => ok(res, ar.jobs.preview(req.actor, parse(z.object({ recordClass: klass, closedProjectsOnly: z.boolean().default(false), before: day.optional() }).strict(), req.body))));
+      r.post('/archive/jobs', idem, (req, res) => ok(res, ar.jobs.create(req.actor, parse(z.object({ recordClass: klass, closedProjectsOnly: z.boolean().default(false), before: day.optional(), reason: reasonText }).strict(), req.body)), 201));
+      r.post('/archive/jobs/:id/act', idem, (req, res) => ok(res, ar.jobs.decide(req.actor, id(req.params.id), parse(decision, req.body))));
+      r.get('/archive/records', (req, res) => ok(res, ar.archive.search(req.actor, parse(z.object({ recordClass: klass.optional(), q: z.string().trim().min(1).max(60).optional(), page: z.coerce.number().int().positive().max(10000).default(1), pageSize: z.coerce.number().int().positive().max(100).default(25) }).strict(), req.query))));
+      r.get('/archive/records/:id', (req, res) => ok(res, ar.archive.get(req.actor, id(req.params.id))));
+      r.get('/archive/holds', (req, res) => ok(res, ar.holds.list(req.actor, { active: parse(z.object({ all: z.enum(['1']).optional() }).strict(), req.query).all !== '1' })));
+      r.post('/archive/holds', idem, (req, res) => ok(res, ar.holds.place(req.actor, parse(z.object({ entity: z.union([klass, z.literal('org_projects')]), entityId: z.number().int().positive(), reason: reasonText }).strict(), req.body)), 201));
+      r.post('/archive/holds/:id/release', idem, (req, res) => ok(res, ar.holds.release(req.actor, id(req.params.id), parse(z.object({ reason: reasonText }).strict(), req.body))));
+      r.get('/archive/disposals', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, ar.disposals.list(req.actor)); });
+      r.post('/archive/disposals', idem, (req, res) => ok(res, ar.disposals.propose(req.actor, parse(z.object({ recordClass: klass, reason: reasonText }).strict(), req.body)), 201));
+      r.post('/archive/disposals/:id/act', idem, (req, res) => ok(res, ar.disposals.decide(req.actor, id(req.params.id), parse(decision, req.body))));
+      r.get('/archive/disposals/:id/certificate', (req, res) => { const c = ar.disposals.certificate(req.actor, id(req.params.id)); res.set({ 'content-type': c.contentType, 'content-disposition': `attachment; filename="${c.fileName}"`, 'cache-control': 'no-store' }).sendFile(c.file); });
+      r.get('/archive/erasures', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, ar.erasures.list(req.actor)); });
+      r.get('/archive/erasures/check/:id', (req, res) => ok(res, ar.erasures.check(req.actor, id(req.params.id))));
+      r.post('/archive/erasures', idem, (req, res) => ok(res, ar.erasures.request(req.actor, parse(z.object({ subjectId: z.number().int().positive(), basis: z.string().trim().min(5).max(300), reason: reasonText }).strict(), req.body)), 201));
+      r.post('/archive/erasures/:id/act', idem, (req, res) => ok(res, ar.erasures.decide(req.actor, id(req.params.id), parse(decision, req.body))));
+      r.get('/archive/report', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, ar.report(req.actor)); });
     }
     api.use('/admin', r);
   },

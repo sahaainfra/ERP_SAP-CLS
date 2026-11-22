@@ -8,6 +8,7 @@ const ApiPlatform = lazyPage(() => import('./ApiPlatform.jsx'), 'ApiPlatform');
 const BulkEntry = lazyPage(() => import('./BulkEntry.jsx'), 'BulkEntry');
 const MigrationCockpit = lazyPage(() => import('./Migration.jsx'), 'MigrationCockpit');
 const BackupDr = lazyPage(() => import('./Backups.jsx'), 'BackupDr');
+const RetentionArchive = lazyPage(() => import('./Archive.jsx'), 'RetentionArchive');
 
 registerModule({
   code: 'admin', label: 'Administration',
@@ -18,5 +19,6 @@ registerModule({
     { path: '/admin/bulk', label: 'Template Packs & Bulk Entry', labelHi: 'टेम्पलेट पैक और बल्क एंट्री', icon: 'erp.insights.rb', permission: 'adm.bulk.use', flag: 'ff.admin.p2904', Page: BulkEntry },
     { path: '/admin/data-migration', label: 'Migration Cockpit', labelHi: 'माइग्रेशन कॉकपिट', icon: 'erp.insights.rb', permission: 'adm.migration.view', flag: 'ff.admin.p2905', Page: MigrationCockpit },
     { path: '/admin/backups', label: 'Backup & DR', labelHi: 'बैकअप और डीआर', icon: 'erp.insights.rb', permission: 'adm.backup.view', flag: 'ff.admin.p2906', Page: BackupDr },
+    { path: '/admin/archive', label: 'Retention & Archival', labelHi: 'प्रतिधारण और संग्रह', icon: 'erp.insights.rb', permission: 'adm.archive.view', flag: 'ff.admin.p2907', Page: RetentionArchive },
   ],
 });

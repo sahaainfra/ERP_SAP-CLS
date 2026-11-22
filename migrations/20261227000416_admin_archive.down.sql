@@ -1,0 +1,18 @@
+DELETE FROM ui_page_migration WHERE page_code = 'admin.archive' AND source_type = 'reference_seed';
+DELETE FROM ui_navigation_entries WHERE code = 'admin-archive' AND source_type = 'reference_seed';
+DROP TRIGGER IF EXISTS trg_arc_ro_site_dprs_u;
+DROP TRIGGER IF EXISTS trg_arc_ro_site_dprs_d;
+DROP TRIGGER IF EXISTS trg_arc_ro_fin_journals_u;
+DROP TRIGGER IF EXISTS trg_arc_ro_fin_journals_d;
+DROP TRIGGER IF EXISTS trg_arc_ro_proc_purchase_orders_u;
+DROP TRIGGER IF EXISTS trg_arc_ro_proc_purchase_orders_d;
+DROP TRIGGER IF EXISTS trg_arc_ro_hr_employees_u;
+DROP TRIGGER IF EXISTS trg_arc_ro_hr_employees_d;
+DROP TABLE IF EXISTS arc_bypass;
+DROP TABLE IF EXISTS arc_erasures;
+DROP TABLE IF EXISTS arc_holds;
+DROP TABLE IF EXISTS arc_records;
+DROP TABLE IF EXISTS arc_disposals;
+DROP TABLE IF EXISTS arc_jobs;
+DROP TABLE IF EXISTS arc_policies;
+DELETE FROM core_feature_flags WHERE key = 'ff.admin.p2907' AND company_id IS NULL AND source_type = 'reference_seed';

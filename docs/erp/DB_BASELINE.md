@@ -1358,6 +1358,227 @@ Indexes:
 - ix_ar_writeoffs_list: company_id, status
 - ux_ar_writeoffs_doc (unique): company_id, doc_no
 
+## arc_bypass
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| token | INTEGER | yes |  |  |
+
+## arc_disposals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| record_class | TEXT | yes |  |  |
+| record_ids_json | TEXT | yes |  |  |
+| records | INTEGER | yes |  | 0 |
+| held | INTEGER | yes |  | 0 |
+| action_after | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| request_id | INTEGER |  |  |  |
+| disposed | INTEGER | yes |  | 0 |
+| anonymised | INTEGER | yes |  | 0 |
+| certificate_no | TEXT |  |  |  |
+| certificate_sha256 | TEXT |  |  |  |
+| executed_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_arc_disposals_request: request_id
+- ix_arc_disposals_company: company_id, status, id
+
+## arc_erasures
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| subject_type | TEXT | yes |  |  |
+| subject_id | INTEGER | yes |  |  |
+| subject_label | TEXT | yes |  |  |
+| basis | TEXT | yes |  |  |
+| checks_json | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| request_id | INTEGER |  |  |  |
+| executed_at | TEXT |  |  |  |
+| fields_json | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_arc_erasures_request: request_id
+- ix_arc_erasures_company: company_id, status, id
+
+## arc_holds
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| label | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| placed_by | TEXT | yes |  |  |
+| released_at | TEXT |  |  |  |
+| released_by | TEXT |  |  |  |
+| release_reason | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_arc_holds_entity: company_id, entity, entity_id, released_at
+
+## arc_jobs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| record_class | TEXT | yes |  |  |
+| scope_json | TEXT | yes |  |  |
+| records | INTEGER | yes |  | 0 |
+| held | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  |  |
+| request_id | INTEGER |  |  |  |
+| approved_by | TEXT |  |  |  |
+| executed_at | TEXT |  |  |  |
+| file_name | TEXT |  |  |  |
+| file_sha256 | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_arc_jobs_request: request_id
+- ix_arc_jobs_company: company_id, status, id
+
+## arc_policies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| record_class | TEXT | yes |  |  |
+| archive_after_months | INTEGER | yes |  |  |
+| retention_years | INTEGER | yes |  |  |
+| legal_basis | TEXT | yes |  |  |
+| action_after | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_arc_policies_company: company_id, status
+- ux_arc_policies_active (unique): company_id, record_class
+
+## arc_records
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| record_class | TEXT | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| ref | TEXT | yes |  |  |
+| project_ref | INTEGER |  |  |  |
+| record_date | TEXT |  |  |  |
+| payload_json | TEXT |  |  |  |
+| payload_sha256 | TEXT | yes |  |  |
+| job_id | INTEGER | yes |  |  |
+| archived_at | TEXT | yes |  |  |
+| disposed_at | TEXT |  |  |  |
+| disposal_action | TEXT |  |  |  |
+| disposal_id | INTEGER |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: disposal_id -> arc_disposals(id), job_id -> arc_jobs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_arc_records_disposal: disposal_id
+- ix_arc_records_job: job_id
+- ix_arc_records_search: company_id, record_class, ref
+- ux_arc_records_entity (unique): entity, entity_id
+
 ## ast_custody_log
 
 | Column | Type | Not null | Key | Default |
