@@ -409,6 +409,9 @@
  "adm.snapshot.manage": [
   "SYSADM"
  ],
+ "adm.connector.configure": [
+  "ITADM"
+ ],
  "bi.det_rule.configure": [
   "CFO",
   "PCMGR"

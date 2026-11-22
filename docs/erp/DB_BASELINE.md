@@ -16423,6 +16423,79 @@ Indexes:
 - ix_ic_transactions_list: company_id, txn_date, status
 - ux_ic_transactions_doc (unique): company_id, doc_no
 
+## int_mappings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| connector_code | TEXT | yes |  |  |
+| entity | TEXT | yes |  |  |
+| internal_value | TEXT | yes |  |  |
+| external_value | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| request_id | INTEGER |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_int_mappings_request: request_id
+- ix_int_mappings_lookup: company_id, connector_code, entity, status
+- ux_int_mappings_active (unique): company_id, connector_code, entity, external_value
+
+## int_sync_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| connector_code | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| direction | TEXT | yes |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| records | INTEGER | yes |  | 0 |
+| errors | INTEGER | yes |  | 0 |
+| errors_json | TEXT |  |  |  |
+| params_json | TEXT |  |  |  |
+| detail_json | TEXT |  |  |  |
+| output_text | TEXT |  |  |  |
+| status | TEXT | yes |  | 'RUNNING' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_int_sync_runs_company: company_id, id
+- ix_int_sync_runs_list: company_id, connector_code, status, id
+
 ## inv_adjustments
 
 | Column | Type | Not null | Key | Default |

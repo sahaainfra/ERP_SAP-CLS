@@ -351,6 +351,18 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .adm-steps li[data-done="true"] .adm-step-no { background: var(--erp-color-status-success-bg); color: var(--erp-color-status-success-fg); }
 .adm-links { columns: 2 16rem; margin: 0; padding-left: var(--erp-space-4); }
 @media (max-width: 599px) { .adm-actions .btn { flex: 1 1 100%; } }
+/* 29.02 business connectors */
+.con-cards { list-style: none; margin: 0 0 var(--erp-space-4); padding: 0; display: grid; gap: var(--erp-space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+.con-card { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); min-width: 0; overflow-wrap: anywhere; }
+.con-card p { margin: var(--erp-space-1) 0; }
+.con-actions { display: grid; gap: var(--erp-space-3); margin-top: var(--erp-space-2); }
+.con-form { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: flex-end; }
+.con-form > * { flex: 1 1 10rem; min-width: 0; }
+.con-form input, .con-form select, .con-decide input { font-size: 16px; width: 100%; }
+.con-form .btn, .con-actions .btn, .con-decide .btn { min-height: 48px; }
+.con-problem { color: var(--erp-color-status-error-fg); }
+.con-result { margin-top: var(--erp-space-2); }
+@media (max-width: 599px) { .con-form .btn, .con-decide .btn { flex: 1 1 100%; } }
 @media (max-width: 899px) {
   .cv-split { grid-template-columns: minmax(0, 1fr); }
   .cv-actions .btn { flex: 1 1 100%; }
