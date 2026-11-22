@@ -29,7 +29,7 @@ function Illustration() {
 }
 
 /** A page that is only a state message still needs its one level-1 heading and a title (part 03.10 checklist); a page that has a heading of its own keeps the message as a subheading. */
-export function useLeadHeading(box, title) {
+function useLeadHeading(box, title) {
   const [lead, setLead] = useState(false);
   useLayoutEffect(() => {
     const others = [...document.querySelectorAll('main h1, #main h1')].filter((h) => !box.current?.contains(h));

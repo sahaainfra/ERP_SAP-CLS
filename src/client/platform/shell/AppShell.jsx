@@ -1,7 +1,8 @@
 import NotificationBell from '../notifications/NotificationBell.jsx';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
-import { NoPermission, EmptyState, Skeleton, ErrorState, useLeadHeading } from '../feedback/states.jsx';
+import { NoPermission, EmptyState, Skeleton, ErrorState } from '../feedback/states.jsx';
+import PageHeader from '../design/PageHeader.jsx';
 import { shellKeys, useBell, useFavourites, useFlagOn, useNavigation, useRecent } from './api.js';
 import { labelIn, useT } from '../i18n/index.js';
 import I18nSync from '../i18n/I18nSync.jsx';
@@ -23,17 +24,18 @@ import { accountGroup, consoleGroup, entryFor, forOnboarding, guard, shortcutMap
 
 const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
 
-/** A page whose flag is OFF: the page's level-1 heading and its title (the Page Completion Checklist asks every page for both), unless the page has its own. */
+/** A page whose flag is OFF: its PageHeader (the page's one level-1 heading, as UI v3 and the Page Completion Checklist ask) and its title. */
 function FlagOff({ verdict, go }) {
   const t = useT('shell');
-  const box = useRef(null);
   const title = t('guard.flagTitle', { page: verdict.label ?? t('guard.page') });
-  const Heading = useLeadHeading(box, title);
+  useEffect(() => { document.title = `${title} - ERP`; }, [title]);
   return (
-    <div className="state" role="status" data-testid="flag-off" ref={box}>
-      <Heading>{title}</Heading>
-      <p>{t('guard.flagBody', { flag: verdict.featureFlag })}</p>
-      <a className="btn" href="/home" onClick={go('/home')}>{t('guard.home')}</a>
+    <div data-testid="flag-off">
+      <PageHeader id="flag-off" title={title} />
+      <div className="state" role="status">
+        <p>{t('guard.flagBody', { flag: verdict.featureFlag })}</p>
+        <a className="btn" href="/home" onClick={go('/home')}>{t('guard.home')}</a>
+      </div>
     </div>
   );
 }

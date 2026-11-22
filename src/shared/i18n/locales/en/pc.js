@@ -135,6 +135,8 @@ export default {
   "ye.title": "Year-End Closing",
   "ye.intro": "Close every month, make the closing entries (the year's profit to retained earnings with the balances carried to the next year) and close the year.",
   "ye.year": "Financial year",
+  "ye.noYear": "No financial year yet",
+  "ye.noYearBody": "No financial year of the company covers today. A finance administrator sets the financial years up under periods; the year end is closed here once they are.",
   "ye.step.PERIODS": "Every month closed",
   "ye.step.NEXT_YEAR": "Next financial year set up",
   "ye.step.CARRY_FORWARD": "Closing entries approved",
