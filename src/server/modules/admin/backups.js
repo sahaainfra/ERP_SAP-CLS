@@ -13,6 +13,9 @@ import { notificationsOf } from '../../platform/notify/index.js';
 import { createParameterStore, parameterRegistry } from '../../platform/parameters/index.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
 
+// integrity: the workflow states of this part's tables (the Data Health check)
+integrityRegistry.register({ statuses: { 'ops_restore_requests': ['SUBMITTED', 'APPROVED', 'REJECTED', 'EXECUTED'] } });
+
 /**
  * Part 29.06 — backup, restore and disaster recovery.
  *

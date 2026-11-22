@@ -9,6 +9,10 @@ import { FORMATS, writeExport } from '../../platform/export/index.js';
 import { HttpError, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { integrationsOf } from '../../platform/integrations/index.js';
 import { signWebhook } from '../../platform/integrations/webhooks.js';
+import { integrityRegistry } from '../../platform/integrity/registry.js';
+
+// integrity: the workflow states of this part's tables (the Data Health check)
+integrityRegistry.register({ statuses: { 'api_clients': ['PENDING_APPROVAL', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'REJECTED'], 'api_webhooks': ['ACTIVE', 'DISABLED'], 'api_webhook_deliveries': ['PENDING', 'DELIVERED', 'FAILED', 'DEAD'] } });
 
 /**
  * Part 29.03 — public API, webhooks and developer portal.

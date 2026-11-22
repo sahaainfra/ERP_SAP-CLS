@@ -8,6 +8,10 @@ import { publishEvent } from '../../platform/events/index.js';
 import { writeExport } from '../../platform/export/index.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { excelOf, importTypes } from '../eng/excel.js';
+import { integrityRegistry } from '../../platform/integrity/registry.js';
+
+// integrity: the workflow states of this part's tables (the Data Health check)
+integrityRegistry.register({ statuses: { 'xl_packs': ['ACTIVE', 'RETIRED'], 'xl_bulk_batches': ['DRAFT', 'SUBMITTED', 'RETURNED', 'REJECTED', 'IMPORTED', 'FAILED', 'CANCELLED'] } });
 
 /**
  * Part 29.04 — template packs and the bulk data entry workspace, on the Excel engine (04.13).

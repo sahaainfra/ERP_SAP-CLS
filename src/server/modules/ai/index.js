@@ -10,6 +10,10 @@ import { createAssistant } from './assistant.js';
 import { createVision } from './vision.js';
 import { createDocIntel, DI_STATUSES, DI_TYPES } from './docintel.js';
 import { ANOMALY_KINDS, createForecasting, METHODS, USE_CASES } from './forecast.js';
+import { integrityRegistry } from '../../platform/integrity/registry.js';
+
+// integrity: the workflow states of the AI tables (the Data Health check)
+integrityRegistry.register({ statuses: { ai_providers: ['ACTIVE', 'INACTIVE'], ai_drafts: ['PROPOSED', 'APPLIED', 'DISCARDED'], aif_anomalies: ['OPEN', 'CONFIRMED', 'DISMISSED'], di_extractions: ['EXTRACTED', 'NO_TEXT', 'ACCEPTED', 'REJECTED', 'FAILED'], cv_results: ['PENDING', 'REVIEWED', 'NO_FINDINGS', 'FAILED'] } });
 
 // Module M28 (ai): the AI gateway and its governance (part 28.01). Every AI feature of the ERP calls aiOf(db).run(); the routes here configure
 // the providers, the features and their enablement, the kill switch, and show the usage, cost and log.

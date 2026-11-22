@@ -55,7 +55,7 @@ test('screenshots of the finance master pages', async ({ browser, request }, inf
   const chart = await api(request, c, 'ACCMGR', `${t}-acc`, 'get', '/fin/accounts');
   const mat = chart.accounts.find((a) => a.code === '510001');
   const g = chart.groups.find((x) => x.code === '5600');
-  await api(request, c, 'ACCMGR', `${t}-acc`, 'post', '/fin/accounts', { code: '560030', name: 'Site security services', groupId: g.id, type: 'EXPENSE', normalBalance: 'DR', dimensions: { PROJECT: 'MANDATORY' }, reason: 'security guards at the sites' });
+  await api(request, c, 'ACCMGR', `${t}-acc`, 'post', '/fin/accounts', { code: '560090', name: 'Site security services', groupId: g.id, type: 'EXPENSE', normalBalance: 'DR', dimensions: { PROJECT: 'MANDATORY' }, reason: 'security guards at the sites' });
   const shot = async (path, name, prep) => {
     const { page, context } = await open(browser, info, c, 'ACCMGR', `${t}-acc`, path);
     await page.waitForLoadState('networkidle');

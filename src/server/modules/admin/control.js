@@ -11,6 +11,10 @@ import { createFlagRepository } from '../core/feature-flags/repository.js';
 import { resolveFlag, setFlag } from '../core/feature-flags/service.js';
 import { createParameterService } from '../core/parameters/service.js';
 import { iamAuthOf } from '../iam/index.js';
+import { integrityRegistry } from '../../platform/integrity/registry.js';
+
+// integrity: the workflow states of this part's tables (the Data Health check)
+integrityRegistry.register({ statuses: { 'adm_emergency_actions': ['PENDING', 'RATIFIED'] } });
 
 /**
  * Part 29.01 — the Super Admin Enterprise Control Center.

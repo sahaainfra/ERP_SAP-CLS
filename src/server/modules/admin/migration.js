@@ -10,6 +10,10 @@ import { findFinancialYear } from '../core/api.js';
 import { excelOf, importTypes } from '../eng/excel.js';
 import { glOf } from '../fin/index.js';
 import { invOf } from '../inv/index.js';
+import { integrityRegistry } from '../../platform/integrity/registry.js';
+
+// integrity: the workflow states of this part's tables (the Data Health check)
+integrityRegistry.register({ statuses: { 'mig_objects': ['PLANNED', 'TRIAL', 'READY', 'SIGNOFF', 'SIGNED_OFF', 'LOADED'], 'mig_runs': ['PASSED', 'FAILED', 'LOADED', 'ROLLED_BACK'], 'mig_cutovers': ['PLANNED', 'FROZEN', 'CLOSED'] } });
 
 /**
  * Part 29.05 — legacy data migration and opening balances: the Migration Cockpit.

@@ -9,6 +9,10 @@ import { integrationsOf } from '../../platform/integrations/index.js';
 import { cashOf } from '../fin/index.js';
 import { punchesOf } from '../hr/punches.js';
 import { plantOf } from '../plant/index.js';
+import { integrityRegistry } from '../../platform/integrity/registry.js';
+
+// integrity: the workflow states of this part's tables (the Data Health check)
+integrityRegistry.register({ statuses: { 'int_mappings': ['PENDING', 'ACTIVE', 'REJECTED', 'RETIRED'], 'int_sync_runs': ['RUNNING', 'SUCCEEDED', 'PARTIAL', 'FAILED'] } });
 
 /**
  * Part 29.02 — business connectors on the integration hub (01.08).

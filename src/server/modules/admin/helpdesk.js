@@ -9,6 +9,10 @@ import { fileEntities } from '../../platform/files/entities.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { notificationsOf } from '../../platform/notify/index.js';
 import { createParameterStore, parameterRegistry } from '../../platform/parameters/index.js';
+import { integrityRegistry } from '../../platform/integrity/registry.js';
+
+// integrity: the workflow states of this part's tables (the Data Health check)
+integrityRegistry.register({ statuses: { 'hd_tickets': ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_USER', 'RESOLVED', 'CLOSED', 'CANCELLED'], 'hd_corrections': ['SUBMITTED', 'APPROVED', 'REJECTED', 'IMPLEMENTED'], 'hd_articles': ['DRAFT', 'PUBLISHED', 'RETIRED'] } });
 
 /**
  * Part 29.08 — help desk, knowledge base and in-app help.

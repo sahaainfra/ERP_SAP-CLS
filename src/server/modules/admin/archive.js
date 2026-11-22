@@ -11,6 +11,9 @@ import { writeExport } from '../../platform/export/index.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
 
+// integrity: the workflow states of this part's tables (the Data Health check)
+integrityRegistry.register({ statuses: { 'arc_policies': ['ACTIVE', 'RETIRED'], 'arc_jobs': ['SUBMITTED', 'DONE', 'REJECTED'], 'arc_disposals': ['SUBMITTED', 'DONE', 'REJECTED'], 'arc_erasures': ['SUBMITTED', 'REFUSED', 'REJECTED', 'DONE'] } });
+
 /**
  * Part 29.07 — data retention and archival.
  *
