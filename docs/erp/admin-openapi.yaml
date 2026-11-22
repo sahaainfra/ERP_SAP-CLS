@@ -98,3 +98,16 @@ paths:
   /admin/migration/cutovers: { post: { summary: 'FR-04 plan the cut-over: name, freeze window, rollback point; the runbook steps are created', responses: { '201': { description: The cut-over } } } }
   /admin/migration/cutovers/{id}/status: { post: { summary: 'Start the freeze (FROZEN) or close the cut-over', responses: { '200': { description: The cut-over } } } }
   /admin/migration/cutovers/{id}/steps/{no}: { post: { summary: 'Tick or untick a runbook step with a note', responses: { '200': { description: The cut-over } } } }
+  # part 29.06 — backup, restore and disaster recovery (ff.admin.p2906)
+  /admin/backups/status: { get: { summary: 'FR-05 the health checks (full backup age, newest recovery point vs RPO, last backup failed, off-site copy, drill due) with open alerts, targets, retention, locations, the last drill and the production restore requests (adm.backup.view)', responses: { '200': { description: The status } } } }
+  /admin/backups:
+    get: { summary: 'FR-01 the backups (type, status) with size, rows, encryption, off-site copy, retention tiers and file replication', responses: { '200': { description: '{ rows, total, page, pageSize }' } } }
+    post: { summary: 'Take a FULL or SNAPSHOT backup now (adm.backup.run): VACUUM INTO, checksums, integrity check, encrypted off-site copy verified by hash; a FULL also replicates stored files', responses: { '201': { description: The backup } } }
+  /admin/backups/retention: { post: { summary: 'FR-02 apply the retention policy (daily, weekly, monthly, yearly fulls; 48 hours of snapshots); expired files are deleted, records kept', responses: { '200': { description: '{ kept, expired }' } } } }
+  /admin/backups/monitor: { post: { summary: 'FR-05 run the checks now: raise an alert to ITADM for each failing check, resolve those that recovered', responses: { '200': { description: '{ raised, resolved }' } } } }
+  /admin/backups/tests:
+    get: { summary: 'Restore tests and DR drills (kind)', responses: { '200': { description: '{ rows, total, page, pageSize }' } } }
+    post: { summary: 'FR-03 restore a backup (or the newest) into an isolated folder and validate it (off-site checksum, file checksum, integrity, row counts and table checksums, schema); a DRILL also measures restore time against the RTO and the data-loss window against the RPO (FR-04, T-01)', responses: { '201': { description: The test } } }
+  /admin/backups/tests/{id}/report: { get: { summary: 'FR-04 the test or drill report as PDF or Excel (audited)', responses: { '200': { description: File } } } }
+  /admin/backups/restores: { post: { summary: 'BR-01 request a production restore of a verified backup whose restore test passed, with the incident reference and summary (adm.backup.restore); one open request at a time', responses: { '201': { description: The request }, '409': { description: Another restore is open } } } }
+  /admin/backups/restores/{id}/act: { post: { summary: 'Approve or reject: ITADM, then DIR; once approved the operator runs npm run db:restore -- --approved <id> with the application stopped (a safety copy of the current database is kept, the approval is used once)', responses: { '200': { description: The request } } } }

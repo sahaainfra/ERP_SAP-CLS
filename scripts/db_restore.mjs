@@ -6,6 +6,17 @@ import { resolve } from 'node:path';
 import { restoreBackup } from './lib/backup.mjs';
 
 const args = process.argv.slice(2);
+// part 29.06 (BR-01): a production restore approved by ITADM and DIR in Backup & DR; the application must be stopped
+if (args.includes('--approved')) {
+  const { loadConfig } = await import('../src/server/platform/config/index.js');
+  const { executeApprovedRestore } = await import('../src/server/modules/admin/backups.js');
+  const config = loadConfig();
+  const root = resolve(new URL('..', import.meta.url).pathname);
+  const r = executeApprovedRestore({ dbPath: resolve(root, config.databasePath), requestId: args[args.indexOf('--approved') + 1], secret: config.backupKey ?? config.vaultKey ?? 'development-backup-key-not-for-production-use', storagePath: config.storagePath ?? resolve(root, 'data'), by: process.env.USER ?? 'operator' });
+  if (!r.ok) { console.error(`Restore refused:\n  - ${r.problems.join('\n  - ')}`); process.exit(1); }
+  console.log(`Restored ${r.backup}. The database as it was before is kept at ${r.safetyCopy}.`);
+  process.exit(0);
+}
 const manifest = args[0];
 const to = args.includes('--to') ? args[args.indexOf('--to') + 1] : null;
 if (!manifest || !to) {

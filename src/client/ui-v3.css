@@ -435,6 +435,20 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .mig-desk { display: none; padding: var(--erp-space-2) var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); }
 @media (max-width: 899px) { .mig-desk { display: block; } .mig-board { grid-template-columns: 1fr; } }
 @media (max-width: 599px) { .mig-form .btn, .mig-decide .btn { flex: 1 1 100%; } }
+/* 29.06 backup and DR */
+.bkp-banner { padding: var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-error-bg); color: var(--erp-color-status-error-fg); font-weight: 600; }
+.bkp-actions { margin: var(--erp-space-3) 0; flex-wrap: wrap; }
+.bkp-actions .btn, .bkp-card .btn, .bkp-form .btn, .toolbar .btn { min-height: 48px; }
+.bkp-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+.bkp-card { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); min-width: 0; overflow-wrap: anywhere; }
+.bkp-card p { margin: var(--erp-space-1) 0; }
+.bkp-checks, .bkp-list { list-style: none; margin: var(--erp-space-1) 0; padding: 0; }
+.bkp-problem { color: var(--erp-color-status-error-fg); }
+.bkp-form { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: flex-end; margin: var(--erp-space-2) 0; }
+.bkp-form > * { flex: 1 1 12rem; min-width: 0; }
+.bkp-form input, .bkp-form select { font-size: 16px; width: 100%; }
+.bkp-code { overflow-wrap: anywhere; }
+@media (max-width: 599px) { .bkp-actions .btn, .bkp-form .btn { flex: 1 1 100%; } }
 @media (max-width: 899px) {
   .cv-split { grid-template-columns: minmax(0, 1fr); }
   .cv-actions .btn { flex: 1 1 100%; }

@@ -21782,6 +21782,146 @@ Indexes:
 - ix_off_uploads_device: device_pk, status
 - ux_off_uploads_id (unique): upload_id
 
+## ops_backup_alerts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| check_code | TEXT | yes |  |  |
+| message | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| fired_at | TEXT | yes |  |  |
+| resolved_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_ops_backup_alerts_open: check_code, status
+
+## ops_backups
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| backup_type | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| size_bytes | INTEGER |  |  |  |
+| location | TEXT |  |  |  |
+| offsite_location | TEXT |  |  |  |
+| checksum | TEXT |  |  |  |
+| offsite_checksum | TEXT |  |  |  |
+| encrypted | INTEGER | yes |  | 0 |
+| table_count | INTEGER |  |  |  |
+| row_count | INTEGER |  |  |  |
+| manifest_json | TEXT |  |  |  |
+| tiers_json | TEXT |  |  |  |
+| files_json | TEXT |  |  |  |
+| status | TEXT | yes |  |  |
+| error | TEXT |  |  |  |
+| expired_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_ops_backups_type: backup_type, status, started_at
+- ix_ops_backups_status: status, finished_at
+- ux_ops_backups_name (unique): name
+
+## ops_restore_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| backup_id | INTEGER | yes |  |  |
+| incident_ref | TEXT | yes |  |  |
+| incident_summary | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| request_id | INTEGER |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| executed_at | TEXT |  |  |  |
+| executed_by | TEXT |  |  |  |
+| safety_copy | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), backup_id -> ops_backups(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ops_restore_requests_request: request_id
+- ix_ops_restore_requests_backup: backup_id
+- ix_ops_restore_requests_company: company_id, status
+
+## ops_restore_tests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| backup_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  | 'TEST' |
+| environment | TEXT | yes |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| validated | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  |  |
+| checks_json | TEXT |  |  |  |
+| restore_minutes | TEXT |  |  |  |
+| data_loss_minutes | TEXT |  |  |  |
+| rto_target | INTEGER |  |  |  |
+| rpo_target | INTEGER |  |  |  |
+| report_file_id | INTEGER |  |  |  |
+| note | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: report_file_id -> core_files(id), backup_id -> ops_backups(id)
+
+Indexes:
+- ix_ops_restore_tests_report: report_file_id
+- ix_ops_restore_tests_kind: kind, status, id
+- ix_ops_restore_tests_backup: backup_id
+
 ## org_assignments
 
 | Column | Type | Not null | Key | Default |

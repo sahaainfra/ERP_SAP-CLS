@@ -423,6 +423,10 @@
   "ITADM",
   "SYSADM"
  ],
+ "adm.backup.restore": [
+  "ITADM",
+  "SYSADM"
+ ],
  "bi.det_rule.configure": [
   "CFO",
   "PCMGR"

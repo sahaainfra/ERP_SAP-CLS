@@ -9,6 +9,7 @@ import { runtimeOf } from '../../platform/runtime/index.js';
 import { SCOPES, TIERS, createApiPlatform } from './apiplatform.js';
 import { PACKS, createBulkWorkspace } from './bulk.js';
 import { PHASES, createMigrationCockpit } from './migration.js';
+import { createBackupService } from './backups.js';
 
 // Module M29 (admin): administration, integration and data operations. Part 29.01 mounts the Enterprise Control Center; the later parts of
 // the module (connectors, public API, bulk entry, migration, backups, archival, help desk) add their routes here behind their own flags.
@@ -19,8 +20,8 @@ const reasonText = z.string().trim().min(5).max(500);
 export const admin = {
   code: 'admin', name: 'Administration & Data Operations', routePrefix: '/api/v1/admin', ownerPart: '29.01',
   status: 'Enterprise Control Center: governance dashboard, maker-checker configuration changes, emergency controls, configuration snapshots and diff, onboarding checklist.',
-  tables: ['adm_controls', 'adm_emergency_actions', 'adm_config_snapshots', 'int_mappings', 'int_sync_runs', 'api_clients', 'api_tokens', 'api_webhooks', 'api_webhook_deliveries', 'api_usage', 'xl_packs', 'xl_bulk_batches', 'mig_objects', 'mig_runs', 'mig_cutovers'], companyOptional: [], resources: ['dashboard', 'catalogue', 'areas', 'changes', 'emergency', 'snapshots', 'onboarding', 'connectors', 'api', 'bulk', 'migration'],
-  mount(api, { db, config }) {
+  tables: ['adm_controls', 'adm_emergency_actions', 'adm_config_snapshots', 'int_mappings', 'int_sync_runs', 'api_clients', 'api_tokens', 'api_webhooks', 'api_webhook_deliveries', 'api_usage', 'xl_packs', 'xl_bulk_batches', 'mig_objects', 'mig_runs', 'mig_cutovers', 'ops_backups', 'ops_restore_tests', 'ops_backup_alerts', 'ops_restore_requests'], companyOptional: ['ops_backups', 'ops_restore_tests', 'ops_backup_alerts'], resources: ['dashboard', 'catalogue', 'areas', 'changes', 'emergency', 'snapshots', 'onboarding', 'connectors', 'api', 'bulk', 'migration', 'backups'],
+  mount(api, { db, config, storagePath }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'adm_controls'").get()) return;
     const context = { db, environment: config.environment ?? 'development', flags: createFlagService({ db, environment: config.environment }) };
     const cc = createControlCenter(context);
@@ -134,6 +135,22 @@ export const admin = {
       r.post('/migration/cutovers', idem, (req, res) => ok(res, mc.cutovers.plan(req.actor, parse(z.object({ name: z.string().trim().min(3).max(120), freezeFrom: z.string().datetime(), freezeTo: z.string().datetime(), rollbackPoint: z.string().trim().min(5).max(500) }).strict(), req.body)), 201));
       r.post('/migration/cutovers/:id/status', idem, (req, res) => ok(res, mc.cutovers.setStatus(req.actor, id(req.params.id), parse(z.object({ status: z.enum(['FROZEN', 'CLOSED']) }).strict(), req.body).status)));
       r.post('/migration/cutovers/:id/steps/:no', idem, (req, res) => ok(res, mc.cutovers.step(req.actor, id(req.params.id), parse(z.coerce.number().int().min(1).max(20), req.params.no), parse(z.object({ done: z.boolean(), note: z.string().trim().max(300).optional() }).strict(), req.body))));
+    }
+    // ---- part 29.06: backup, restore and disaster recovery
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ops_backups'").get() && storagePath) {
+      const runtime = runtimeOf(db);
+      const bk = createBackupService(context, { jobs: runtime?.jobs, scheduler: runtime?.scheduler, storagePath, config });
+      const fmt = z.enum(['pdf', 'xlsx']).default('pdf');
+      r.get('/backups/status', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, bk.status(req.actor)); });
+      r.get('/backups', (req, res) => ok(res, bk.list(req.actor, parse(z.object({ type: z.enum(['FULL', 'SNAPSHOT']).optional(), status: z.enum(['RUNNING', 'VERIFIED', 'FAILED', 'EXPIRED']).optional(), page: z.coerce.number().int().positive().max(10000).default(1), pageSize: z.coerce.number().int().positive().max(100).default(25) }).strict(), req.query))));
+      r.post('/backups', idem, (req, res) => ok(res, bk.backupNow(req.actor, parse(z.object({ type: z.enum(['FULL', 'SNAPSHOT']).default('FULL') }).strict(), req.body)), 201));
+      r.post('/backups/retention', idem, (req, res) => ok(res, bk.retention(req.actor)));
+      r.post('/backups/monitor', idem, (req, res) => ok(res, bk.monitor(req.actor)));
+      r.get('/backups/tests', (req, res) => ok(res, bk.tests(req.actor, parse(z.object({ kind: z.enum(['TEST', 'DRILL']).optional(), page: z.coerce.number().int().positive().max(10000).default(1), pageSize: z.coerce.number().int().positive().max(100).default(25) }).strict(), req.query))));
+      r.post('/backups/tests', idem, (req, res) => ok(res, bk.test(req.actor, parse(z.object({ backupId: z.number().int().positive().optional(), kind: z.enum(['TEST', 'DRILL']).default('TEST'), note: z.string().trim().max(300).optional() }).strict(), req.body)), 201));
+      r.get('/backups/tests/:id/report', (req, res) => send(res, bk.report(req.actor, id(req.params.id), parse(z.object({ format: fmt }).strict(), req.query).format)));
+      r.post('/backups/restores', idem, (req, res) => ok(res, bk.requestRestore(req.actor, parse(z.object({ backupId: z.number().int().positive(), incidentRef: z.string().trim().min(3).max(60), incident: reasonText }).strict(), req.body)), 201));
+      r.post('/backups/restores/:id/act', idem, (req, res) => ok(res, bk.decide(req.actor, id(req.params.id), parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional() }).strict(), req.body))));
     }
     api.use('/admin', r);
   },

@@ -50,6 +50,7 @@ import con from './en/con.js';
 import dev from './en/dev.js';
 import bk from './en/bk.js';
 import mig from './en/mig.js';
+import bkp from './en/bkp.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -118,6 +119,7 @@ export default {
   dev: dev,
   bk: bk,
   mig: mig,
+  bkp: bkp,
   fc: fc,
   pa: pa,
 };
