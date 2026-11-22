@@ -6,6 +6,7 @@ const ControlCenter = lazyPage(() => import('./Control.jsx'), 'ControlCenter');
 const BusinessConnectors = lazyPage(() => import('./Connectors.jsx'), 'BusinessConnectors');
 const ApiPlatform = lazyPage(() => import('./ApiPlatform.jsx'), 'ApiPlatform');
 const BulkEntry = lazyPage(() => import('./BulkEntry.jsx'), 'BulkEntry');
+const MigrationCockpit = lazyPage(() => import('./Migration.jsx'), 'MigrationCockpit');
 
 registerModule({
   code: 'admin', label: 'Administration',
@@ -14,5 +15,6 @@ registerModule({
     { path: '/admin/connectors', label: 'Business Connectors', labelHi: 'व्यावसायिक कनेक्टर', icon: 'erp.insights.rb', permission: 'adm.connector.view', flag: 'ff.admin.p2902', Page: BusinessConnectors },
     { path: '/admin/api', label: 'API Clients & Webhooks', labelHi: 'एपीआई क्लाइंट और वेबहुक', icon: 'erp.insights.rb', permission: 'adm.api.view', flag: 'ff.admin.p2903', Page: ApiPlatform },
     { path: '/admin/bulk', label: 'Template Packs & Bulk Entry', labelHi: 'टेम्पलेट पैक और बल्क एंट्री', icon: 'erp.insights.rb', permission: 'adm.bulk.use', flag: 'ff.admin.p2904', Page: BulkEntry },
+    { path: '/admin/data-migration', label: 'Migration Cockpit', labelHi: 'माइग्रेशन कॉकपिट', icon: 'erp.insights.rb', permission: 'adm.migration.view', flag: 'ff.admin.p2905', Page: MigrationCockpit },
   ],
 });

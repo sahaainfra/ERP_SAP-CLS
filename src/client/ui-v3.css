@@ -406,6 +406,35 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .bk-desk { display: none; padding: var(--erp-space-2) var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); }
 @media (max-width: 899px) { .bk-desk { display: block; } }
 @media (max-width: 599px) { .bk-card .actions-row .btn, .bk-form .btn { flex: 1 1 100%; } }
+/* 29.05 migration cockpit */
+.mig-board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--erp-space-3); margin: var(--erp-space-3) 0; }
+.mig-lane { background: var(--erp-color-bg-surface-sunken); border-radius: var(--erp-radius-md); padding: var(--erp-space-2); display: grid; gap: var(--erp-space-2); align-content: start; min-width: 0; }
+.mig-lane-h { font-size: 0.95rem; margin: 0; }
+.mig-tile { text-align: left; display: grid; gap: var(--erp-space-1); padding: var(--erp-space-2) var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); color: inherit; font: inherit; min-height: 48px; cursor: pointer; overflow-wrap: anywhere; }
+.mig-tile.mig-on { outline: 2px solid var(--erp-color-border-focus); }
+.mig-mine { color: var(--erp-color-status-warning-fg); font-weight: 600; }
+.mig-section { margin: var(--erp-space-3) 0; }
+.mig-section > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+.mig-form { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: flex-end; margin: var(--erp-space-2) 0; }
+.mig-form > * { flex: 1 1 12rem; min-width: 0; }
+.mig-form input, .mig-form select, .mig-section textarea, .mig-section input, .mig-decide input { font-size: 16px; width: 100%; }
+.mig-form .btn, .mig-section .btn, .mig-decide .btn, .mig-card .btn { min-height: 48px; }
+.mig-col { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-2) var(--erp-space-3); margin: var(--erp-space-2) 0; min-width: 0; }
+.mig-row { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); align-items: flex-end; }
+.mig-check { display: inline-flex; gap: var(--erp-space-2); align-items: center; min-height: 44px; }
+.mig-check input { width: 22px; height: 22px; flex: 0 0 auto; }
+.mig-h { font-size: 1rem; margin: var(--erp-space-3) 0 var(--erp-space-2); }
+.mig-runs, .mig-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.mig-steps { list-style: decimal; padding-left: var(--erp-space-4); }
+.mig-card { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); min-width: 0; overflow-wrap: anywhere; }
+.mig-card p { margin: var(--erp-space-1) 0; }
+.mig-recon { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-top: var(--erp-space-2); }
+.mig-recon th, .mig-recon td { border-bottom: 1px solid var(--erp-color-border-subtle); padding: var(--erp-space-1); text-align: left; }
+.mig-recon .mig-off td { color: var(--erp-color-status-error-fg); font-weight: 600; }
+.mig-problem { color: var(--erp-color-status-error-fg); }
+.mig-desk { display: none; padding: var(--erp-space-2) var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); }
+@media (max-width: 899px) { .mig-desk { display: block; } .mig-board { grid-template-columns: 1fr; } }
+@media (max-width: 599px) { .mig-form .btn, .mig-decide .btn { flex: 1 1 100%; } }
 @media (max-width: 899px) {
   .cv-split { grid-template-columns: minmax(0, 1fr); }
   .cv-actions .btn { flex: 1 1 100%; }

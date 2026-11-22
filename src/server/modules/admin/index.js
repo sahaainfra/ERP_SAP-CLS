@@ -8,6 +8,7 @@ import { MAP_ENTITIES, createBusinessConnectors } from './connectors.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { SCOPES, TIERS, createApiPlatform } from './apiplatform.js';
 import { PACKS, createBulkWorkspace } from './bulk.js';
+import { PHASES, createMigrationCockpit } from './migration.js';
 
 // Module M29 (admin): administration, integration and data operations. Part 29.01 mounts the Enterprise Control Center; the later parts of
 // the module (connectors, public API, bulk entry, migration, backups, archival, help desk) add their routes here behind their own flags.
@@ -18,7 +19,7 @@ const reasonText = z.string().trim().min(5).max(500);
 export const admin = {
   code: 'admin', name: 'Administration & Data Operations', routePrefix: '/api/v1/admin', ownerPart: '29.01',
   status: 'Enterprise Control Center: governance dashboard, maker-checker configuration changes, emergency controls, configuration snapshots and diff, onboarding checklist.',
-  tables: ['adm_controls', 'adm_emergency_actions', 'adm_config_snapshots', 'int_mappings', 'int_sync_runs', 'api_clients', 'api_tokens', 'api_webhooks', 'api_webhook_deliveries', 'api_usage', 'xl_packs', 'xl_bulk_batches'], companyOptional: [], resources: ['dashboard', 'catalogue', 'areas', 'changes', 'emergency', 'snapshots', 'onboarding', 'connectors', 'api', 'bulk'],
+  tables: ['adm_controls', 'adm_emergency_actions', 'adm_config_snapshots', 'int_mappings', 'int_sync_runs', 'api_clients', 'api_tokens', 'api_webhooks', 'api_webhook_deliveries', 'api_usage', 'xl_packs', 'xl_bulk_batches', 'mig_objects', 'mig_runs', 'mig_cutovers'], companyOptional: [], resources: ['dashboard', 'catalogue', 'areas', 'changes', 'emergency', 'snapshots', 'onboarding', 'connectors', 'api', 'bulk', 'migration'],
   mount(api, { db, config }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'adm_controls'").get()) return;
     const context = { db, environment: config.environment ?? 'development', flags: createFlagService({ db, environment: config.environment }) };
@@ -113,6 +114,26 @@ export const admin = {
       r.post('/bulk/batches/:id/submit', idem, (req, res) => ok(res, bw.batches.submit(req.actor, id(req.params.id), parse(z.object({ reason: reasonText, version: z.number().int().positive().optional() }).strict(), req.body))));
       r.post('/bulk/batches/:id/act', idem, (req, res) => ok(res, bw.batches.decide(req.actor, id(req.params.id), parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional() }).strict(), req.body))));
       r.post('/bulk/batches/:id/cancel', idem, (req, res) => ok(res, bw.batches.cancel(req.actor, id(req.params.id))));
+    }
+    // ---- part 29.05: the migration cockpit (plan, mapping, trial and final loads with reconciliation, sign-off, cut-over runbook)
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mig_objects'").get()) {
+      const mc = createMigrationCockpit(context);
+      const ocode = (v) => parse(z.string().regex(/^[A-Z][A-Z0-9_-]{1,39}$/), v);
+      const role = z.string().regex(/^[A-Z][A-Z0-9_-]{1,19}$/);
+      const col = z.string().max(60);
+      const controls = z.object({ count: z.number().int().min(0).optional(), totalColumn: col.optional(), total: z.string().regex(/^-?\d+(\.\d{1,2})?$/).optional(), totalDebit: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(), totalCredit: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+        stockValue: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), tb: z.array(z.object({ accountCode: z.string().max(40), debit: z.string().max(20).default(''), credit: z.string().max(20).default('') }).strict()).max(5000).optional() }).strict();
+      r.get('/migration', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, mc.objects.board(req.actor)); });
+      r.post('/migration/objects', idem, (req, res) => ok(res, mc.objects.create(req.actor, parse(z.object({ code: z.string().regex(/^[A-Z][A-Z0-9_-]{1,39}$/), name: z.string().trim().min(3).max(120), kind: z.string().max(60), phase: z.enum(Object.keys(PHASES)), sequence: z.number().int().min(1).max(999), ownerRole: role, ownerUser: z.string().max(80).optional() }).strict(), req.body)), 201));
+      r.get('/migration/objects/:code', (req, res) => ok(res, mc.objects.get(req.actor, ocode(req.params.code))));
+      r.put('/migration/objects/:code/mapping', idem, (req, res) => ok(res, mc.objects.setMapping(req.actor, ocode(req.params.code), parse(z.object({ rename: z.record(z.string().max(120), col).default({}), upper: z.array(col).max(50).default([]), defaults: z.record(col, z.string().max(200)).default({}), values: z.record(col, z.record(z.string().max(120), z.string().max(120))).default({}), dropBlank: z.array(col).max(50).default([]) }).strict(), req.body))));
+      r.get('/migration/objects/:code/mapping/export', (req, res) => send(res, mc.objects.mappingWorkbook(req.actor, ocode(req.params.code))));
+      r.post('/migration/objects/:code/runs', idem, (req, res) => ok(res, mc.run(req.actor, ocode(req.params.code), parse(z.object({ type: z.enum(['TRIAL', 'FINAL']), csv: z.string().min(3).max(2_000_000), controls: controls.default({}), delta: z.boolean().default(false) }).strict(), req.body)), 201));
+      r.post('/migration/objects/:code/sign-off', idem, (req, res) => ok(res, mc.objects.requestSignOff(req.actor, ocode(req.params.code), parse(z.object({ reason: reasonText }).strict(), req.body))));
+      r.post('/migration/objects/:code/sign-off/act', idem, (req, res) => ok(res, mc.objects.decide(req.actor, ocode(req.params.code), parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional() }).strict(), req.body))));
+      r.post('/migration/cutovers', idem, (req, res) => ok(res, mc.cutovers.plan(req.actor, parse(z.object({ name: z.string().trim().min(3).max(120), freezeFrom: z.string().datetime(), freezeTo: z.string().datetime(), rollbackPoint: z.string().trim().min(5).max(500) }).strict(), req.body)), 201));
+      r.post('/migration/cutovers/:id/status', idem, (req, res) => ok(res, mc.cutovers.setStatus(req.actor, id(req.params.id), parse(z.object({ status: z.enum(['FROZEN', 'CLOSED']) }).strict(), req.body).status)));
+      r.post('/migration/cutovers/:id/steps/:no', idem, (req, res) => ok(res, mc.cutovers.step(req.actor, id(req.params.id), parse(z.coerce.number().int().min(1).max(20), req.params.no), parse(z.object({ done: z.boolean(), note: z.string().trim().max(300).optional() }).strict(), req.body))));
     }
     api.use('/admin', r);
   },

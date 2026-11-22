@@ -20127,6 +20127,124 @@ Indexes:
 - ix_mdm_uoms_company: company_id, row_status
 - ux_mdm_uoms_key (unique): , code
 
+## mig_cutovers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| freeze_from | TEXT | yes |  |  |
+| freeze_to | TEXT | yes |  |  |
+| rollback_point | TEXT | yes |  |  |
+| steps_json | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PLANNED' |
+| frozen_at | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_mig_cutovers_company: company_id, status
+
+## mig_objects
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| phase | TEXT | yes |  |  |
+| sequence | INTEGER | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| owner_user | TEXT |  |  |  |
+| financial | INTEGER | yes |  | 0 |
+| mapping_json | TEXT | yes |  |  |
+| mapping_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PLANNED' |
+| request_id | INTEGER |  |  |  |
+| signed_off_by | TEXT |  |  |  |
+| signed_off_at | TEXT |  |  |  |
+| last_trial_at | TEXT |  |  |  |
+| loaded_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mig_objects_request: request_id
+- ix_mig_objects_board: company_id, phase, sequence
+- ux_mig_objects_code (unique): company_id, code
+
+## mig_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| object_code | TEXT | yes |  |  |
+| environment | TEXT | yes |  |  |
+| run_type | TEXT | yes |  |  |
+| mode | TEXT | yes |  | 'FULL' |
+| status | TEXT | yes |  |  |
+| records | INTEGER | yes |  | 0 |
+| errors | INTEGER | yes |  | 0 |
+| legacy_rows | INTEGER | yes |  | 0 |
+| dropped | INTEGER | yes |  | 0 |
+| mapping_version | INTEGER | yes |  |  |
+| input_hash | TEXT | yes |  |  |
+| reconciliation_json | TEXT |  |  |  |
+| errors_json | TEXT |  |  |  |
+| detail_json | TEXT |  |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_mig_runs_company: company_id, id
+- ix_mig_runs_object: company_id, object_code, run_type, status, mapping_version
+
 ## mr_configs
 
 | Column | Type | Not null | Key | Default |

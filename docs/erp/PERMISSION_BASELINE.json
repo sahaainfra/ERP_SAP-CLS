@@ -419,6 +419,10 @@
   "ITADM",
   "SYSADM"
  ],
+ "adm.migration.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
  "bi.det_rule.configure": [
   "CFO",
   "PCMGR"
