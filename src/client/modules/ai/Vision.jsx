@@ -91,9 +91,9 @@ function Queue({ status }) {
   const d = q.data;
   return <>
     <KpiRow testid="cv-tiles" label={t('title')}>
-      <KpiTile label={t('toReview')} value={number(d.counts.PENDING ?? 0)} tone={d.counts.PENDING ? 'warning' : 'success'} to="/ai/vision">{t('oldestFirst')}</KpiTile>
-      <KpiTile label={t('reviewed')} value={number(d.counts.REVIEWED ?? 0)} to="/ai/vision?status=REVIEWED" />
-      <KpiTile label={t('noFindings')} value={number(d.counts.NO_FINDINGS ?? 0)} to="/ai/vision?status=NO_FINDINGS" />
+      <KpiTile label={t('toReview')} value={number(d.counts.PENDING ?? 0, { decimals: 0 })} tone={d.counts.PENDING ? 'warning' : 'success'} to="/ai/vision">{t('oldestFirst')}</KpiTile>
+      <KpiTile label={t('reviewed')} value={number(d.counts.REVIEWED ?? 0, { decimals: 0 })} to="/ai/vision?status=REVIEWED" />
+      <KpiTile label={t('noFindings')} value={number(d.counts.NO_FINDINGS ?? 0, { decimals: 0 })} to="/ai/vision?status=NO_FINDINGS" />
     </KpiRow>
     <div className="toolbar"><Field name="cv-status" label={t('status')}><select value={status} onChange={(e) => go({ status: e.target.value === 'PENDING' ? '' : e.target.value })}>{['PENDING', 'REVIEWED', 'NO_FINDINGS', 'FAILED', 'ALL'].map((s) => <option key={s} value={s}>{t(`f.${s}`)}</option>)}</select></Field>
       <p className="muted small">{t('detector', { d: d.detector })}</p></div>
@@ -104,7 +104,7 @@ function Queue({ status }) {
           <tbody>{d.rows.map((r) => <tr key={r.id} data-testid="cv-row">
             <td data-label={t('photo')}><Link to={`/ai/vision?id=${r.id}`}>{r.fileName}</Link><div className="muted small">{r.docNo} · {t(`src.${r.source}`)}</div></td>
             <td data-label={t('waiting')}>{r.sla ? <StatusBadge status={SLA_TONE[r.sla]} label={t(`sla.${r.sla}`, { h: r.ageHours })} size="sm" /> : '—'}</td>
-            <td data-label={t('pending')} className="num">{number(r.pending)}</td>
+            <td data-label={t('pending')} className="num">{number(r.pending, { decimals: 0 })}</td>
             <td data-label={t('found')}>{r.labels.filter((l) => l.group !== 'PRIVACY').map((l) => t(`l.${l.label}`)).join(', ') || '—'}</td>
             <td data-label={t('status')}><StatusBadge status={ST_TONE[r.status]} label={t(`st.${r.status}`)} size="sm" /></td>
             <td data-label={t('analysed')}>{dateTime(r.analysedAt)}</td>
@@ -124,8 +124,8 @@ function Performance() {
   return <Card title={t('tab.performance')} subtitle={t('perfSub')} testid="cv-card-perf">
     <div className="table-scroll"><table className="data-table" data-testid="cv-perf">
       <thead><tr><th>{t('model')}</th><th>{t('label')}</th><th className="num">{t('suggested')}</th><th className="num">{t('confirmed')}</th><th className="num">{t('wrong')}</th><th className="num">{t('precision')}</th><th className="num">{t('avgConf')}</th></tr></thead>
-      <tbody>{q.data.map((p) => <tr key={`${p.model}-${p.label}`}><td data-label={t('model')}>{p.model}</td><td data-label={t('label')}>{t(`l.${p.label}`)}</td><td data-label={t('suggested')} className="num">{number(p.suggested)}</td>
-        <td data-label={t('confirmed')} className="num">{number(p.confirmed)}</td><td data-label={t('wrong')} className="num">{number(p.falsePositive)}</td>
+      <tbody>{q.data.map((p) => <tr key={`${p.model}-${p.label}`}><td data-label={t('model')}>{p.model}</td><td data-label={t('label')}>{t(`l.${p.label}`)}</td><td data-label={t('suggested')} className="num">{number(p.suggested, { decimals: 0 })}</td>
+        <td data-label={t('confirmed')} className="num">{number(p.confirmed, { decimals: 0 })}</td><td data-label={t('wrong')} className="num">{number(p.falsePositive, { decimals: 0 })}</td>
         <td data-label={t('precision')} className="num">{p.precisionPct == null ? '—' : `${fmtNum(number, p.precisionPct)}%`}</td><td data-label={t('avgConf')} className="num">{p.avgConfidence == null ? '—' : pct(p.avgConfidence)}</td></tr>)}</tbody>
     </table></div>
   </Card>;

@@ -137,6 +137,10 @@ recordResolvers.register('user', (db, id) => { const u = db.prepare('SELECT u.id
 export const policyChangeHandlerFor = (db, config) => createPolicyChangeHandler({ identity: identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined }) });
 
 /** Module "iam": who people are and how they prove it. Until 02.03 it also holds a thin user store (defect D-059). */
+// the authentication service of a database, for the emergency force-logout of part 29.01 (sessions stay owned by this module)
+const authServices = new WeakMap();
+export const iamAuthOf = (db) => authServices.get(db) ?? null;
+
 export const iam = {
   code: 'iam',
   name: 'Identity, Organisation, Security & Access Control',
@@ -155,6 +159,7 @@ export const iam = {
     const notifier = createNotifier({ identity, integrations });
     const mfa = createMfaService({ db, identity, notifier, otp: commOf(db).otp });
     const auth = createAuthService({ db, identity, users, mfa, notifier });
+    authServices.set(db, auth);
     const idempotentRequired = idempotency(db, { required: true });
     /** @type {ReturnType<typeof createUserAdminService>} */
     let userAdmin;

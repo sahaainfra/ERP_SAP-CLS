@@ -131,6 +131,103 @@ Indexes:
 - ix_acc_templates_company: company_id
 - ux_acc_templates (unique): , process_code
 
+## adm_config_snapshots
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| environment | TEXT | yes |  |  |
+| taken_at | TEXT | yes |  |  |
+| checksum | TEXT | yes |  |  |
+| content_json | TEXT | yes |  |  |
+| file_id | INTEGER |  |  |  |
+| note | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: file_id -> core_files(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_adm_snapshots_file: file_id
+- ix_adm_snapshots_company: company_id, taken_at
+
+## adm_controls
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| read_only | INTEGER | yes |  | 0 |
+| read_only_reason | TEXT |  |  |  |
+| read_only_by | TEXT |  |  |  |
+| read_only_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- sqlite_autoindex_adm_controls_1 (unique): company_id
+
+## adm_emergency_actions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| action | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| detail_json | TEXT | yes |  | '{}' |
+| executed_by | TEXT | yes |  |  |
+| executed_at | TEXT | yes |  |  |
+| ratify_due | TEXT | yes |  |  |
+| ratification_request_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| ratified_by | TEXT |  |  |  |
+| ratified_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: ratification_request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_adm_emergency_request: ratification_request_id
+- ix_adm_emergency_company: company_id, status, ratify_due
+
 ## ai_controls
 
 | Column | Type | Not null | Key | Default |

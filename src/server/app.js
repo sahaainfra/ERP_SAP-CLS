@@ -27,6 +27,7 @@ import { attachSocketServer } from './platform/realtime/socket.js';
 import { assertDeclared, buildRegistry, cors, csrfGuard, enforcePolicy, persistRegistry, securityHeaders, securityOf } from './platform/security/index.js';
 import { staticAssets } from './platform/http/staticAssets.js';
 import { compressJson } from './platform/http/compressJson.js';
+import { readOnlyGuard } from './modules/admin/control.js';
 
 const sameToken = (a, b) => {
   const x = Buffer.from(a);
@@ -142,6 +143,8 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   // the Authorise stage and the per-person limit come after the logging stages above, so a refusal here is logged as a security event too
   api.use(enforcePolicy({ policy: sec.policy, isFlagOn: (actor, key) => flags.isOn(actor, key) }));
   api.use((req, _res, next) => { try { sec.limiter.check(req, req.routePolicy?.rate ?? (req.method === 'GET' ? 'read' : 'write'), 'user'); next(); } catch (err) { next(err); } });
+  // part 29.01, FR-05: a company in read-only mode (an emergency control) saves nothing until it is ended
+  api.use(readOnlyGuard(db));
   mountModules(api, { db, config, buildInfo, publicApi, storagePath: storage });
   app.use('/api/v1', publicApi);
   app.use('/api/v1', api);

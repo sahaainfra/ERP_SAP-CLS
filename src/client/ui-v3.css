@@ -338,6 +338,19 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .cv-sug { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
 .cv-sug textarea, .cv-sug input { font-size: 16px; }
 .cv-actions .btn { min-height: 48px; }
+/* part 29.x: administration */
+.adm-banner { padding: var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-error-bg); color: var(--erp-color-status-error-fg); font-weight: 600; }
+.adm-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-3); }
+.adm-card { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
+.adm-card p { margin: var(--erp-space-1) 0; }
+.adm-decide input, .adm-cards input, .adm-steps input { font-size: 16px; }
+.adm-actions .btn { min-height: 48px; }
+.adm-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-3); }
+.adm-steps li { display: flex; gap: var(--erp-space-3); align-items: flex-start; }
+.adm-step-no { flex: 0 0 2rem; height: 2rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: var(--erp-color-bg-surface-sunken); font-weight: 600; }
+.adm-steps li[data-done="true"] .adm-step-no { background: var(--erp-color-status-success-bg); color: var(--erp-color-status-success-fg); }
+.adm-links { columns: 2 16rem; margin: 0; padding-left: var(--erp-space-4); }
+@media (max-width: 599px) { .adm-actions .btn { flex: 1 1 100%; } }
 @media (max-width: 899px) {
   .cv-split { grid-template-columns: minmax(0, 1fr); }
   .cv-actions .btn { flex: 1 1 100%; }

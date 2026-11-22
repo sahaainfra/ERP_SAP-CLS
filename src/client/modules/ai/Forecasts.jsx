@@ -132,7 +132,7 @@ function Anomalies({ search }) {
   const d = q.data;
   return <>
     <KpiRow testid="af-anomaly-tiles" label={t('tab.anomalies')}>
-      {d.kinds.map((k) => <KpiTile key={k.code} label={t(`ak.${k.code}`)} value={number(d.open[k.code] ?? 0)} tone={d.open[k.code] ? 'warning' : 'success'} to={`/ai/forecasts?tab=anomalies&kind=${k.code}`}>{t('open')}</KpiTile>)}
+      {d.kinds.map((k) => <KpiTile key={k.code} label={t(`ak.${k.code}`)} value={number(d.open[k.code] ?? 0, { decimals: 0 })} tone={d.open[k.code] ? 'warning' : 'success'} to={`/ai/forecasts?tab=anomalies&kind=${k.code}`}>{t('open')}</KpiTile>)}
     </KpiRow>
     <div className="toolbar">
       <Field name="af-status" label={t('f.status')}><select value={status} onChange={(e) => go({ status: e.target.value === 'OPEN' ? '' : e.target.value })}>{['OPEN', 'CONFIRMED', 'DISMISSED', 'ALL'].map((s) => <option key={s} value={s}>{t(`as.${s}`)}</option>)}</select></Field>

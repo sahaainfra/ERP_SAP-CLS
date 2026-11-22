@@ -137,8 +137,8 @@ export function DocumentsPage() {
     const d = q.data;
     body = <>
       <KpiRow testid="di-tiles" label={t('title')}>
-        <KpiTile label={t('toReview')} value={number(Object.values(d.open).reduce((a, b) => a + b, 0))} tone="warning" to="/ai/documents">{t('oldestFirst')}</KpiTile>
-        {d.types.filter((x) => x.code !== 'OTHER').map((x) => <KpiTile key={x.code} label={t(`type.${x.code}`)} value={number(d.open[x.code] ?? 0)} to={`/ai/documents?docType=${x.code}`} />)}
+        <KpiTile label={t('toReview')} value={number(Object.values(d.open).reduce((a, b) => a + b, 0), { decimals: 0 })} tone="warning" to="/ai/documents">{t('oldestFirst')}</KpiTile>
+        {d.types.filter((x) => x.code !== 'OTHER').map((x) => <KpiTile key={x.code} label={t(`type.${x.code}`)} value={number(d.open[x.code] ?? 0, { decimals: 0 })} to={`/ai/documents?docType=${x.code}`} />)}
       </KpiRow>
       <div className="toolbar">
         <Field name="di-status" label={t('status')}><select value={status} onChange={(e) => go({ status: e.target.value === 'OPEN' ? '' : e.target.value })}>{['OPEN', 'ACCEPTED', 'REJECTED', 'ALL'].map((s) => <option key={s} value={s}>{t(`f.${s}`)}</option>)}</select></Field>
@@ -157,7 +157,7 @@ export function DocumentsPage() {
               <td data-label={t('file')}><Link to={`/ai/documents?id=${r.id}`}>{r.fileName}</Link><div className="muted small">{r.docNo}{r.duplicate ? ` · ${t(r.duplicate.kind === 'EXACT' ? 'dupShortExact' : 'dupShortNear')}` : ''}</div></td>
               <td data-label={t('docType')}>{t(`type.${r.docType}`)} <span className="muted small">{pct(r.classConfidence)}</span></td>
               <td data-label={t('sla')}>{r.sla ? <StatusBadge status={SLA_TONE[r.sla]} label={t(`sla.${r.sla}`, { h: r.ageHours })} size="sm" /> : '—'}</td>
-              <td data-label={t('toConfirm')} className="num">{number(r.lowConfidence)}</td>
+              <td data-label={t('toConfirm')} className="num">{number(r.lowConfidence, { decimals: 0 })}</td>
               <td data-label={t('status')}><StatusBadge status={STATUS_TONE[r.status]} label={t(`st.${r.status}`)} size="sm" /></td>
               <td data-label={t('extracted')}>{dateTime(r.extractedAt)}</td>
             </tr>)}</tbody>

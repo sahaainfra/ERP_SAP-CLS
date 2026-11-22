@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: ERP administration and data operations (module admin, parts 29.x)
+  version: 1.0.0
+  description: Every route needs the module flag of its part, the permission named in its summary and an Idempotency-Key on writes. Errors use the common envelope with a correlation ID.
+servers: [{ url: /api/v1 }]
+paths:
+  # part 29.01 — the Enterprise Control Center (ff.admin.p2901)
+  /admin/dashboard: { get: { summary: 'FR-02 governance metrics with their drill routes: approvals waiting (and mine), SoD violations, privileged access, dormant accounts, failed jobs and integrations, integrity failures, last backup, expiries, AI usage, unratified emergencies (adm.control.view)', responses: { '200': { description: '{ metrics, readOnly, myApprovals, environment }' } } } }
+  /admin/catalogue: { get: { summary: 'FR-01 the settings pages the person may open (q searches label, keywords and route) and the recent configuration change requests', responses: { '200': { description: '{ pages, recent }' } } } }
+  /admin/areas: { get: { summary: The current values of the changeable areas (feature flags, company parameters), responses: { '200': { description: '{ FEATURE_FLAG, PARAMETER }' } } } }
+  /admin/changes:
+    get: { summary: 'Admin change and ratification requests (status), with canDecide for the person', responses: { '200': { description: '{ rows, total, page, pageSize }' } } }
+    post:
+      summary: 'FR-03 BR-01 request a change (adm.change.create); applied only on approval: SYSADM → ITADM, financial keys → ITADM then CFO|DIR, security keys → ITADM then DIR'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [area, key, value, reason], properties: { area: { type: string, enum: [FEATURE_FLAG, PARAMETER] }, key: { type: string }, value: {}, reason: { type: string, minLength: 5 } } } } } }
+      responses: { '201': { description: The request }, '409': { description: Already a request for this key }, '422': { description: Same value or out of range } }
+  /admin/changes/{id}/act: { post: { summary: 'Approve, return or reject at the current step (a comment for return or reject); the maker cannot decide; on the last approval the change is applied, or refused with 409 if the value changed since', responses: { '200': { description: The request }, '409': { description: Changed since raised } } } }
+  /admin/changes/{id}/withdraw: { post: { summary: Withdraw one's own waiting request, responses: { '200': { description: The request } } } }
+  /admin/emergency: { get: { summary: 'Read-only state and the emergency actions with their ratification', responses: { '200': { description: The state } } } }
+  /admin/emergency/read-only: { post: { summary: 'FR-05 turn read-only mode on or off at once (adm.emergency.execute; reason); every write of the company then gets 423 until it is ended; raises a 24-hour ratification', responses: { '200': { description: The state } } } }
+  /admin/emergency/kill: { post: { summary: 'FR-05 switch a feature flag off at once for the company (not the control center itself); ratification', responses: { '200': { description: The state } } } }
+  /admin/emergency/force-logout: { post: { summary: 'FR-05 end every other session of the company; ratification', responses: { '200': { description: '{ ...state, sessionsEnded }' } } } }
+  /admin/snapshots:
+    get: { summary: The configuration snapshots, responses: { '200': { description: The list } } }
+    post: { summary: Take a snapshot of the company's flags and parameters with its checksum (adm.snapshot.manage), responses: { '201': { description: The snapshot } } }
+  /admin/snapshots/{id}/export: { get: { summary: 'The export file: format erp-config/1, environment, takenAt, checksum, content (audited)', responses: { '200': { description: JSON file } } } }
+  /admin/snapshots/diff: { post: { summary: 'T-01 compare an export of another environment with this one: CHANGED, ONLY_HERE, ONLY_INCOMING with both values; a file whose checksum does not match is refused (422)', responses: { '200': { description: '{ from, to, differences }' } } } }
+  /admin/snapshots/import: { post: { summary: 'Raise change requests for the chosen differences (keys area:key); nothing is applied until approved', responses: { '201': { description: The requests } } } }
+  /admin/onboarding: { get: { summary: 'FR-04 the onboarding checklist of a company (adm.onboarding.run): settings, financial year, numbering, chart of accounts, users with roles, projects — each checked against its owner, with the page to complete it', responses: { '200': { description: '{ company, steps, done, total }' } } } }

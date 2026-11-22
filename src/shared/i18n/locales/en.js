@@ -45,6 +45,7 @@ import aa from './en/aa.js';
 import af from './en/af.js';
 import di from './en/di.js';
 import cv from './en/cv.js';
+import adm from './en/adm.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -108,6 +109,7 @@ export default {
   af: af,
   di: di,
   cv: cv,
+  adm: adm,
   fc: fc,
   pa: pa,
 };
