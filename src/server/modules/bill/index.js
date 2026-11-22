@@ -65,6 +65,8 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema, owner: 'bill', description });
 
 integrityRegistry.register({
+  // a CVR margin is negative on a loss-making project
+  allowNegative: ['bill_cvr_reports.margin_paise', 'bill_cvr_reports.margin_bp', 'bill_cvr_reports.budget_margin_bp', 'bill_cvr_reports.prev_margin_bp', 'bill_cvr_reports.forecast_margin_bp'],
   statuses: { bill_mb_entries: Object.keys(STATUS), bill_deviation_statements: Object.keys(STATUS), bill_client_bills: Object.keys(STATUS), bill_certifications: Object.keys(STATUS), bill_tax_invoices: Object.keys(STATUS), bill_sub_bills: Object.keys(STATUS), bill_vendor_invoices: Object.keys(STATUS), bill_advances: Object.keys(STATUS), bill_releases: Object.keys(STATUS), bill_cvr_reports: Object.keys(STATUS) },
   uniqueKeys: [{ table: 'bill_mb_entries', columns: ['company_id', 'doc_no'] }, { table: 'bill_deviation_statements', columns: ['company_id', 'doc_no'] }, { table: 'bill_extra_items', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'bill_no'] }, { table: 'bill_certifications', columns: ['company_id', 'doc_no'] }, { table: 'bill_tax_invoices', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_measurements', columns: ['company_id', 'doc_no'] }, { table: 'bill_vendor_invoices', columns: ['company_id', 'doc_no'] }, { table: 'bill_advances', columns: ['company_id', 'doc_no'] }, { table: 'bill_releases', columns: ['company_id', 'doc_no'] }, { table: 'bill_cvr_reports', columns: ['company_id', 'doc_no'] }],
 });

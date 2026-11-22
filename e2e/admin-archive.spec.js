@@ -29,14 +29,15 @@ test('Retention & archival: a policy, a legal hold, an approved archival job tha
   expect(created.status(), await created.text()).toBe(201);
   const { id: company } = (await created.json()).data;
   const db = new DatabaseSync('data/e2e.sqlite');
-  db.exec('PRAGMA busy_timeout = 8000; PRAGMA foreign_keys = OFF;');
+  db.exec('PRAGMA busy_timeout = 8000;');
   let held;
   try {
     for (const [k, r] of [['sys', 'SYSADM'], ['aud', 'AUD']]) db.prepare('INSERT INTO iam_users (company_id, username, display_name, roles_json) VALUES (?, ?, ?, ?)').run(company, users[k], users[k], JSON.stringify([r]));
     db.prepare("INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.admin.p2907', ?, 'Archive browser fixture', 0, 1)").run(company);
     const project = Number(db.prepare("INSERT INTO org_projects (company_id, code, name, type, status) VALUES (?, ?, 'Old tower', 'BUILDING', 'ACTIVE')").run(company, `AP-${suffix}`).lastInsertRowid);
+    const site = Number(db.prepare("INSERT INTO org_sites (company_id, org_project_id, code, name, status) VALUES (?, ?, ?, 'Old tower site', 'ACTIVE')").run(company, project, `AS-${suffix}`).lastInsertRowid);
     const cols = db.prepare('PRAGMA table_info(site_dprs)').all().filter((c) => c.notnull && c.dflt_value == null && c.name !== 'id');
-    const dpr = (no, date) => { const vals = { company_id: company, doc_no: no, org_project_id: project, dpr_date: date, status: 'APPROVED', dpr_site_id: 900_000 + company }; const names = [...new Set([...cols.map((c) => c.name), ...Object.keys(vals)])]; return Number(db.prepare(`INSERT INTO site_dprs (${names.join(', ')}) VALUES (${names.map(() => '?').join(', ')})`).run(...names.map((n) => (n in vals ? vals[n] : /INT/i.test(cols.find((c) => c.name === n)?.type ?? '') ? 1 : `x-${n}`))).lastInsertRowid); };
+    const dpr = (no, date) => { const vals = { company_id: company, doc_no: no, org_project_id: project, dpr_date: date, status: 'APPROVED', dpr_site_id: site }; const names = [...new Set([...cols.map((c) => c.name), ...Object.keys(vals)])]; return Number(db.prepare(`INSERT INTO site_dprs (${names.join(', ')}) VALUES (${names.map(() => '?').join(', ')})`).run(...names.map((n) => (n in vals ? vals[n] : /INT/i.test(cols.find((c) => c.name === n)?.type ?? '') ? 1 : `x-${n}`))).lastInsertRowid); };
     dpr(`DPR-${suffix}-001`, '2024-02-01'); held = dpr(`DPR-${suffix}-002`, '2024-02-02'); dpr(`DPR-${suffix}-003`, '2024-02-03');
   } finally {
     db.close();

@@ -53,7 +53,7 @@ test('Business connectors: health, a bank statement sync that matches, an approv
     expect(created.status(), await created.text()).toBe(201);
     const { id: company } = (await created.json()).data;
     const db = new DatabaseSync('data/e2e.sqlite');
-    db.exec('PRAGMA busy_timeout = 8000; PRAGMA foreign_keys = OFF;');
+    db.exec('PRAGMA busy_timeout = 8000;');
     try {
       for (const [k, r] of [['it', 'ITADM'], ['acc', 'ACCMGR'], ['hr', 'HRMGR']]) db.prepare('INSERT INTO iam_users (company_id, username, display_name, roles_json) VALUES (?, ?, ?, ?)').run(company, users[k], users[k], JSON.stringify([r]));
       db.prepare("INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.admin.p2902', ?, 'Connectors browser fixture', 0, 1)").run(company);
@@ -64,7 +64,11 @@ test('Business connectors: health, a bank statement sync that matches, an approv
       conn.run(company, `bio.gate-${suffix}-${company}`, 'Gate devices', 'biometric', 'biometric_http', JSON.stringify({ baseUrl: base, siteId: site }));
       const gl = fill(db, 'fin_accounts', { company_id: company, code: '1201', name: 'SBI current account', account_type: 'BANK', normal_side: 'DR' });
       const bank = fill(db, 'fin_bank_accounts', { company_id: company, code: 'SBI-CA', name: 'SBI current', bank_name: 'SBI', ifsc: 'SBIN0001234', account_no_enc: 'enc', account_last4: '4321', gl_account_id: gl });
-      fill(db, 'pmt_payments', { company_id: company, doc_no: `PAY-${suffix}`, proposal_id: 900_000 + company, line_id: 900_000 + company, partner_id: 1, payee_name: 'Shree Cement', pay_mode: 'NEFT', bank_account_id: bank, amount_paise: 11_800_000, released_on: today, paid_on: today, utr: `UTR-${suffix}`, pay_status: 'PAID' });
+      // the paid payment the statement matches, with its proposal, line and payee (no orphan rows for the Data Health check of a whole run)
+      const partner = fill(db, 'mdm_partners', { company_id: company, code: `BC-SC-${suffix}`, legal_name: 'Shree Cement Traders Pvt Ltd', trade_name: 'Shree Cement', constitution: 'PRIVATE_LIMITED', partner_status: 'ACTIVE', steward_role: 'PROCMGR' });
+      const proposal = fill(db, 'pmt_proposals', { company_id: company, doc_no: `PP-${suffix}`, bank_account_id: bank, pay_mode: 'NEFT', pay_date: today, status: 'APPROVED', run_status: 'CONFIRMED' });
+      const line = fill(db, 'pmt_proposal_lines', { company_id: company, proposal_id: proposal, line_no: 1, line_kind: 'ON_ACCOUNT', partner_id: partner, payee_name: 'Shree Cement', amount_paise: 11_800_000, line_status: 'PAID' });
+      fill(db, 'pmt_payments', { company_id: company, doc_no: `PAY-${suffix}`, proposal_id: proposal, line_id: line, partner_id: partner, payee_name: 'Shree Cement', pay_mode: 'NEFT', bank_account_id: bank, amount_paise: 11_800_000, released_on: today, paid_on: today, utr: `UTR-${suffix}`, pay_status: 'PAID' });
       fill(db, 'hr_employees', { company_id: company, emp_code: 'E-101', first_name: 'Ravi', full_name: 'Ravi Kumar', gender: 'MALE', dob: '1990-01-01', mobile: '9000000001', employment_type: 'PERMANENT', doj: '2024-01-01', record_status: 'APPROVED', project_id: project });
     } finally {
       db.close();

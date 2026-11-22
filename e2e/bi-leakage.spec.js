@@ -41,21 +41,23 @@ test('Leakage & Controls Tower: rules run, tower, finding closed with an outcome
     const project = Number(db.prepare("INSERT INTO org_projects (company_id, code, name, type, status) VALUES (?, 'HWY-07', 'Highway package 7', 'ROAD', 'ACTIVE')").run(company).lastInsertRowid);
     const site = Number(db.prepare("INSERT INTO org_sites (company_id, org_project_id, code, name, status) VALUES (?, ?, 'HWY-S1', 'Km 12 camp', 'ACTIVE')").run(company, project).lastInsertRowid);
     db.prepare("INSERT INTO proj_projects (company_id, project_id, pm_user, contract_value, start_date, scheduled_completion, created_by) VALUES (?, ?, ?, 100000000, '2026-01-01', '2027-12-31', 'e2e')").run(company, project, `lk-pm-${suffix}`);
-    // the records the rules read (the detectors only read them, so the chains of foreign keys behind them are not built)
-    db.exec('PRAGMA foreign_keys = OFF');
-    const bill = db.prepare("INSERT INTO ap_bills (company_id, doc_no, bill_source, org_project_id, org_site_id, partner_id, payee_name, bill_no, bill_date, due_date, total_paise, status) VALUES (?, ?, 'DIRECT', ?, ?, 9001, 'Shree Aggregates', 'SA-1042', ?, ?, 18450000, 'APPROVED')");
-    bill.run(company, `APB-${suffix}1`, project, site, ago(12), ago(-18)); bill.run(company, `APB-${suffix}2`, project, site, ago(9), ago(-21));
-    const po = db.prepare("INSERT INTO proc_purchase_orders (company_id, doc_no, doc_date, org_project_id, po_site_id, vendor_id, total_amount, status, requested_by) VALUES (?, ?, ?, ?, ?, 7001, ?, 'APPROVED', 'buyer')");
-    po.run(company, `PO-${suffix}1`, ago(8), project, site, 24_000_000); po.run(company, `PO-${suffix}2`, ago(6), project, site, 23_500_000); po.run(company, `PO-${suffix}3`, ago(4), project, site, 22_000_000);
-    const big = Number(po.run(company, `PO-${suffix}4`, ago(2), project, site, 90_000_000).lastInsertRowid);
+    // the records the rules read, with the masters they point to (the Data Health check of a whole run finds no orphan rows)
+    const vendor = (code, name) => Number(db.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, constitution, partner_status, steward_role, created_by) VALUES (?, ?, ?, ?, 'PRIVATE_LIMITED', 'ACTIVE', 'PROCMGR', 'e2e')").run(company, code, name, name).lastInsertRowid);
+    const aggregates = vendor(`LK-SA-${suffix}`, 'Shree Aggregates'); const bitumen = vendor(`LK-BT-${suffix}`, 'Deccan Bitumen');
+    const item = Number(db.prepare("INSERT INTO mdm_items (company_id, code, name, item_type, category_id, base_uom, effective_from) VALUES (?, ?, 'OPC cement 53 grade', 'MATERIAL', 2, 'bag', '2024-01-01')").run(company, `LK-CEM-${suffix}`).lastInsertRowid);
+    const bill = db.prepare("INSERT INTO ap_bills (company_id, doc_no, bill_source, org_project_id, org_site_id, partner_id, payee_name, bill_no, bill_date, due_date, total_paise, status) VALUES (?, ?, 'DIRECT', ?, ?, ?, 'Shree Aggregates', 'SA-1042', ?, ?, 18450000, 'APPROVED')");
+    bill.run(company, `APB-${suffix}1`, project, site, aggregates, ago(12), ago(-18)); bill.run(company, `APB-${suffix}2`, project, site, aggregates, ago(9), ago(-21));
+    const po = db.prepare("INSERT INTO proc_purchase_orders (company_id, doc_no, doc_date, org_project_id, po_site_id, vendor_id, total_amount, status, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?, 'APPROVED', 'buyer')");
+    po.run(company, `PO-${suffix}1`, ago(8), project, site, bitumen, 24_000_000); po.run(company, `PO-${suffix}2`, ago(6), project, site, bitumen, 23_500_000); po.run(company, `PO-${suffix}3`, ago(4), project, site, bitumen, 22_000_000);
+    const big = Number(po.run(company, `PO-${suffix}4`, ago(2), project, site, bitumen, 90_000_000).lastInsertRowid);
     db.prepare("INSERT INTO proc_po_lines (company_id, po_id, line_no, description, qty, uom, rate, benchmark_rate) VALUES (?, ?, 1, 'Bitumen VG-30', 40000, 't', 5200000, 4600000)").run(company, big);
     const store = Number(db.prepare("INSERT INTO inv_stores (company_id, code, name, store_type, org_project_id, org_site_id, store_status, requested_by) VALUES (?, ?, 'Km 12 store', 'SITE_STORE', ?, ?, 'ACTIVE', 'x')").run(company, `HWY-ST-${suffix}`, project, site).lastInsertRowid);
-    db.prepare("INSERT INTO inv_stock_ledger (company_id, doc_no, store_id, bin_id, item_id, txn_type, txn_date, qty_in, balance_qty, balance_value, posted_by) VALUES (?, ?, ?, 1, 2, 'RECEIPT', ?, 80000, 80000, 6400000, 'x')").run(company, `SL-${suffix}`, store, ago(240));
+    const bin = Number(db.prepare("INSERT INTO inv_bins (company_id, store_id, code, is_default, created_by) VALUES (?, ?, 'MAIN', 1, 'e2e')").run(company, store).lastInsertRowid);
+    db.prepare("INSERT INTO inv_stock_ledger (company_id, doc_no, store_id, bin_id, item_id, txn_type, txn_date, qty_in, balance_qty, balance_value, posted_by) VALUES (?, ?, ?, ?, ?, 'RECEIPT', ?, 80000, 80000, 6400000, 'x')").run(company, `SL-${suffix}`, store, bin, item, ago(240));
     const cp = Number(db.prepare("INSERT INTO pcs_control_points (company_id, code, module, stage, description, rule_ref, enforcement, owner_role, mode) VALUES (?, 'CP-PROC-01', 'proc', 'APPROVE', 'Order above budget', 'x', 'EXCEPTION', 'PROCMGR', 'ENFORCE')").run(company).lastInsertRowid);
     db.prepare("INSERT INTO pcs_control_points (company_id, code, module, stage, description, rule_ref, enforcement, owner_role, mode) VALUES (?, 'CP-INV-02', 'inv', 'RECORD', 'Issue above norm', 'x', 'WARN', 'STOREMGR', 'OBSERVE')").run(company);
     db.prepare("INSERT INTO pcs_exceptions (company_id, exception_no, control_id, control_code, entity, entity_id, reason_code, justification, value_at_risk, status, emergency, regularise_by, raised_by, project_id, created_at) VALUES (?, ?, ?, 'CP-PROC-01', 'po', '1', 'URGENT', 'Breakdown spares', 4500000, 'APPROVED', 1, ?, ?, ?, ?)")
       .run(company, `EXC-${suffix}1`, cp, agoIso(3), `lk-proc-${suffix}`, project, agoIso(12));
-    db.exec('PRAGMA foreign_keys = ON');
   } finally {
     db.close();
   }

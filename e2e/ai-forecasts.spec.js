@@ -41,17 +41,16 @@ test('Forecasts & Anomalies: official rate forecast with range and labels, anoma
     const gate = db.prepare("INSERT INTO hr_gates (company_id, code, name, status, catalogue_version, passed_at) VALUES (?, ?, ?, 'PASSED', 'e2e', CURRENT_TIMESTAMP)");
     gate.run(company, 'G1', 'Platform Gate'); gate.run(company, 'G2', 'Workforce Gate');
     const project = Number(db.prepare("INSERT INTO org_projects (company_id, code, name, type, status) VALUES (?, 'FC-07', 'Metro depot', 'BUILDING', 'ACTIVE')").run(company).lastInsertRowid);
-    db.exec('PRAGMA foreign_keys = OFF');
     const cat = db.prepare("SELECT id FROM mdm_item_categories WHERE code = 'CEMENT'").get()?.id ?? 1;
     item = Number(db.prepare("INSERT INTO mdm_items (company_id, code, name, item_type, category_id, base_uom, effective_from) VALUES (?, 'CEM-OPC', 'OPC cement 53 grade', 'MATERIAL', ?, 'bag', '2024-01-01')").run(company, cat).lastInsertRowid);
     const obs = db.prepare("INSERT INTO rti_observations (company_id, item_id, region_code, obs_date, rate, uom, landed_rate, base_uom, base_landed_rate, source_type, source_id) VALUES (?, ?, 'TS', ?, ?, 'bag', ?, 'bag', ?, 'SURVEY', ?)");
     const ix = db.prepare("INSERT INTO rti_indices (company_id, index_group, region_code, period, index_value) VALUES (?, 'CEMENT', 'TS', ?, ?)");
     for (let k = 23; k >= 1; k -= 1) { const m = 23 - k; const r = 34_000 + 450 * m + (m % 4) * 60 + ((m % 3) - 1) * 40; obs.run(company, item, monthsAgo(k), r, r, r, `e2e-${k}`); ix.run(company, monthsAgo(k).slice(0, 7), Math.round((100 + m * 1.5 + (m % 4) * 0.7) * 10000)); }
-    const po = db.prepare("INSERT INTO proc_purchase_orders (company_id, doc_no, doc_date, org_project_id, vendor_id, status, requested_by) VALUES (?, ?, ?, ?, 7001, 'APPROVED', 'buyer')");
+    const vendor = Number(db.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, constitution, partner_status, steward_role, created_by) VALUES (?, ?, 'Shree Cement Traders Pvt Ltd', 'Shree', 'PRIVATE_LIMITED', 'ACTIVE', 'PROCMGR', 'e2e')").run(company, `FC-V-${suffix}`).lastInsertRowid);
+    const po = db.prepare(`INSERT INTO proc_purchase_orders (company_id, doc_no, doc_date, org_project_id, vendor_id, status, requested_by) VALUES (?, ?, ?, ?, ${vendor}, 'APPROVED', 'buyer')`);
     const line = db.prepare("INSERT INTO proc_po_lines (company_id, po_id, line_no, item_id, description, qty, uom, rate) VALUES (?, ?, 1, ?, 'OPC cement', 500, 'bag', ?)");
     for (let k = 0; k < 12; k += 1) line.run(company, Number(po.run(company, `PO-${suffix}-${k}`, day(100 - k * 5), project).lastInsertRowid), item, 38_000 + ((k % 5) - 2) * 300);
     line.run(company, Number(po.run(company, `PO-${suffix}-OUT`, day(3), project).lastInsertRowid), item, 61_000);
-    db.exec('PRAGMA foreign_keys = ON');
   } finally {
     db.close();
   }
