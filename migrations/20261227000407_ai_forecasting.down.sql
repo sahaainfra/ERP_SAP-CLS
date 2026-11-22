@@ -1,3 +1,5 @@
+DELETE FROM proj_360_widgets WHERE widget_code = 'ai.forecast_anomalies' AND company_id IS NULL AND source_type = 'reference_seed';
+DELETE FROM ui_widgets WHERE code = 'ai.forecast_anomalies' AND source_type = 'reference_seed';
 DELETE FROM ntf_templates WHERE code = 'ai.model.decided' AND company_id IS NULL AND source_type = 'reference_seed';
 DELETE FROM ui_page_migration WHERE page_code = 'ai.forecasts' AND source_type = 'reference_seed';
 DELETE FROM ui_navigation_entries WHERE code = 'ai-forecasts' AND source_type = 'reference_seed';

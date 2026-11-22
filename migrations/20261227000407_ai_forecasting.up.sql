@@ -119,3 +119,9 @@ INSERT OR IGNORE INTO ui_page_migration
 VALUES ('ai.forecasts','ui','Forecasts & Anomalies','/ai/forecasts','/ai/forecasts','DASHBOARD','MIGRATED','PCMGR','28.03','system','2026-11-22T00:00:00.000Z','[]','Forecasts with ranges and drivers, anomalies to review, the model registry and the back-testing report.','migration','reference_seed');
 INSERT OR IGNORE INTO ntf_templates (company_id, code, category, channel, lang, subject, body, variables_json, template_version, status, created_by, source_type) VALUES
   (NULL, 'ai.model.decided', 'approvals', 'IN_APP', 'en', 'Forecast model {{ref}}: {{subject}}', '{{detail}} {{link}}', '["ref","subject","detail","link"]', 1, 'ACTIVE', 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_widgets
+  (code,module,title,title_hi,description,type,data_endpoint,permission_key,default_w,default_h,refresh_sec,drill_route,sort_order,created_by,source_type)
+VALUES ('ai.forecast_anomalies','ai','Anomalies to review','समीक्षा हेतु विसंगतियाँ','Open statistical anomalies and the latest official forecasts.','kpi','/api/v1/ui/widgets/ai.forecast_anomalies/data','ai.forecast.view',3,1,600,'/ai/forecasts?tab=anomalies',545,'migration','reference_seed');
+INSERT OR IGNORE INTO proj_360_widgets
+  (company_id,widget_code,module,tab,slot,sort_order,permission_key,owner_part,title,title_hi,created_by,source_type)
+VALUES (NULL,'ai.forecast_anomalies','ai','cost','side',98,'ai.forecast.view','28.03','Forecasts and anomalies','पूर्वानुमान एवं विसंगतियाँ','migration','reference_seed');
