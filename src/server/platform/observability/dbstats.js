@@ -9,7 +9,7 @@ const TIMED = new Set(['run', 'get', 'all', 'iterate']);
  * ID, and inside a traced request each becomes a child span of the request. SQL text is normalised (literals become ?), so no
  * data reaches the metrics or the traces. Safe to call twice on one database.
  */
-/** @param {any} db @param {{ metrics?: any, tracer?: any, slowMs?: number, spanMs?: number }} [options] */
+/** @param {any} db @param {{ metrics?: any, tracer?: any, slowMs?: number, spanMs?: number, cacheSize?: number }} [options] */
 export function instrumentDb(db, { metrics, tracer, slowMs = 100, spanMs = 0, cacheSize = 2000 } = {}) {
   if (db[WRAPPED]) return db;
   const prepare = db.prepare.bind(db);

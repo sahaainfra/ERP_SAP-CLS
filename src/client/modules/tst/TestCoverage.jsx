@@ -9,7 +9,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { useFormat, useT } from '../../platform/i18n/index.js';
 import { Field, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../eng/common.js';
-import { Pager, ParamPanel, PillTabs, TONE, download, go, post, qs, read } from './common.jsx';
+import { COLOUR, Pager, ParamPanel, PillTabs, TONE, download, go, post, qs, read } from './common.jsx';
 
 // Part 30.04: Test Coverage & Results (technical console, report pattern) and, on its second tab, the sandbox configuration: reset and
 // scenario packs. The chart comes first (tests by type and their last result), then the key figures, the coverage by part (gaps first on
@@ -54,9 +54,9 @@ function Coverage({ t, d, params, tabs }) {
     {sync.error && <ErrorState error={sync.error} />}
     <EmptyState title={t('tc.none')} message={t('tc.noneBody')} action={actions} /></>;
   const chart = { categories: d.byType.map((x) => x.type), series: [
-    { name: t('st.PASS'), values: d.byType.map((x) => x.passed ?? 0), drill: d.byType.map((x) => `${BASE}?type=${x.type}&result=PASS`) },
-    { name: t('st.FAIL'), values: d.byType.map((x) => x.failed ?? 0), drill: d.byType.map((x) => `${BASE}?type=${x.type}&result=FAIL`) },
-    { name: t('tc.notRun'), values: d.byType.map((x) => x.tests - (x.passed ?? 0) - (x.failed ?? 0)), drill: d.byType.map((x) => `${BASE}?type=${x.type}&result=NOT_RUN`) },
+    { name: t('st.PASS'), colour: COLOUR.PASS, values: d.byType.map((x) => x.passed ?? 0), drill: d.byType.map((x) => `${BASE}?type=${x.type}&result=PASS`) },
+    { name: t('st.FAIL'), colour: COLOUR.FAIL, values: d.byType.map((x) => x.failed ?? 0), drill: d.byType.map((x) => `${BASE}?type=${x.type}&result=FAIL`) },
+    { name: t('tc.notRun'), colour: COLOUR.OTHER, values: d.byType.map((x) => x.tests - (x.passed ?? 0) - (x.failed ?? 0)), drill: d.byType.map((x) => `${BASE}?type=${x.type}&result=NOT_RUN`) },
   ] };
   const parts = params.gaps ? d.parts : [...d.parts].sort((a, b) => Number(b.gap) - Number(a.gap) || b.failed - a.failed || a.partId.localeCompare(b.partId, 'en', { numeric: true }));
   const P = d.permission; const W = d.workflow;

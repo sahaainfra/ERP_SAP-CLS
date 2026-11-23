@@ -7279,6 +7279,7 @@ Indexes:
 | remarks | TEXT |  |  |  |
 
 Indexes:
+- ix_core_sample_documents_list: company_id, is_active, id
 - ix_core_sample_documents_project: project_id
 - ix_core_sample_documents_company_status: company_id, status
 - ux_core_sample_documents_doc_no (unique): company_id, doc_no
