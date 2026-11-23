@@ -83,6 +83,49 @@ jobs:
       - run: npm run erp:audit
       - run: npm run erp:secret-scan
 
+  # Part 30.05 FR-02: the dynamic scan of the application started on the runner (headers, CORS, error leakage, injection payloads on
+  # every guarded list, traversal, signed-out access). A Critical or High finding fails the job.
+  dast:
+    name: dast
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/dast_scan.mjs --out reports/dast.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dast-report
+          path: reports/dast.json
+          if-no-files-found: ignore
+
+  # Part 30.06 FR-02: the performance smoke on every change (the load models at small scale against the real server, judged against the
+  # SLOs by the report); the full load and the soak run on a schedule (.github/workflows/perf.yml).
+  perf-smoke:
+    name: perf-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/load_test.mjs --profile smoke --environment ci
+      - run: node scripts/perf_verdict.mjs reports/load-smoke.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-smoke
+          path: reports/load-smoke.json
+          if-no-files-found: ignore
+
   # A pull request that adds or raises a dependency with a known vulnerability, or a licence we cannot ship, is refused (part 02.07, FR-06).
   dependency-review:
     name: dependency-review

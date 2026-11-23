@@ -28,6 +28,8 @@ import { assertDeclared, buildRegistry, cors, csrfGuard, enforcePolicy, persistR
 import { staticAssets } from './platform/http/staticAssets.js';
 import { compressJson } from './platform/http/compressJson.js';
 import { readOnlyGuard } from './modules/admin/control.js';
+import { blockedFetch, markSandbox, sandboxOf } from './platform/sandbox/index.js';
+import { integrationsOf } from './platform/integrations/index.js';
 import { apiPlatformOf } from './modules/admin/apiplatform.js';
 
 const sameToken = (a, b) => {
@@ -40,7 +42,9 @@ const sameToken = (a, b) => {
 export function createApp({ config, db, logger = createLogger(), buildInfo = loadBuildInfo(), storagePath = null, identityOptions = {} }) {
   const app = express();
   // Who is calling (part 02.01): used by every authenticated route when AUTH_MODE=iam; created up front so tests can set its clock and hash cost.
-  const identity = identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined, ...identityOptions });
+  // part 30.04: a sandbox marks its database first, so single sign-on and the breached-password check cannot call out either
+  if (config.sandbox) markSandbox(db, { databasePath: config.databasePath }).wired.push('identity');
+  const identity = identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined, ...(config.sandbox ? { fetchImpl: blockedFetch(db) } : {}), ...identityOptions });
   // What each person may do (part 02.04): computed per request from roles and scoped assignments, cached for 30 seconds.
   const authz = authzOf(db, { now: identity.now });
   setAppLogger(logger);
@@ -146,6 +150,8 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   api.use((req, _res, next) => { try { sec.limiter.check(req, req.routePolicy?.rate ?? (req.method === 'GET' ? 'read' : 'write'), 'user'); next(); } catch (err) { next(err); } });
   // part 29.01, FR-05: a company in read-only mode (an emergency control) saves nothing until it is ended
   api.use(readOnlyGuard(db));
+  // part 30.04 FR-05: in a sandbox the integration hub refuses every outbound call (created here first, so every module gets this one)
+  if (config.sandbox) { integrationsOf(db, { vaultKey: config.vaultKey ?? undefined, fetchImpl: blockedFetch(db) }); sandboxOf(db).wired.push('integrations', 'webhooks', 'push'); }
   mountModules(api, { db, config, buildInfo, publicApi, storagePath: storage });
   app.use('/api/v1', publicApi);
   app.use('/api/v1', api);

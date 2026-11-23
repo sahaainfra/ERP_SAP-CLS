@@ -12,6 +12,8 @@ export function sessionRoutes({ config }) {
         companyId: req.actor.companyId,
         permissions: permissionsOf(req.actor),
         environment: config.environment,
+        // part 30.04: the shell shows the SANDBOX banner
+        ...(config.sandbox ? { sandbox: true } : {}),
         // present only for a person who is signed in but holds no role yet (restricted onboarding, part 02.03)
         ...(req.actor.onboarding ? { onboarding: true } : {}),
       },

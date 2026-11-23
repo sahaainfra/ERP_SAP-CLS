@@ -9,6 +9,8 @@ const schema = z.object({
   ERP_ENVIRONMENT: z.enum(ENVIRONMENTS).optional(),
   AUTH_MODE: z.enum(['dev-headers', 'iam']).default('dev-headers'),
   ERP_DEMO_SEED: z.enum(['true', 'false']).default('false'),
+  // part 30.04: the simulation sandbox (its own database; nothing leaves it)
+  ERP_SANDBOX: z.enum(['true', 'false']).default('false'),
   STORAGE_PATH: z.string().min(1).optional(),
   HEALTH_TOKEN: z.string().min(16, 'must be at least 16 characters').optional(),
   FILE_URL_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
@@ -55,6 +57,7 @@ export function loadConfig(env = process.env) {
     databasePath: c.DATABASE_PATH,
     authMode: c.AUTH_MODE,
     demoSeed: c.ERP_DEMO_SEED === 'true',
+    sandbox: c.ERP_SANDBOX === 'true',
     storagePath: c.STORAGE_PATH ?? null,
     healthToken: c.HEALTH_TOKEN ?? null,
     fileUrlSecret: c.FILE_URL_SECRET ?? null,
@@ -74,6 +77,9 @@ export function loadConfig(env = process.env) {
       `ERP_DEMO_SEED=true is not allowed when NODE_ENV=${nodeEnv}: demo data must never be loaded into staging or production. Set ERP_DEMO_SEED=false.`,
     );
   }
+  // part 30.04 BR-01: a sandbox never runs on production data: not in production, and only on a database of its own named as one
+  if (config.sandbox && nodeEnv === 'production') problems.push('ERP_SANDBOX=true is not allowed when NODE_ENV=production: the sandbox runs on its own installation with synthetic data.');
+  if (config.sandbox && config.databasePath !== ':memory:' && !/sandbox/i.test(config.databasePath)) problems.push(`ERP_SANDBOX=true needs a database of its own whose file name says so (for example data/sandbox.sqlite); DATABASE_PATH is ${config.databasePath}.`);
   if (config.authMode === 'dev-headers' && prodLike) {
     problems.push(
       `AUTH_MODE=dev-headers is not allowed when NODE_ENV=${nodeEnv}: it trusts client-supplied identity headers. The IAM module (part 02.x) must provide AUTH_MODE=iam first.`,

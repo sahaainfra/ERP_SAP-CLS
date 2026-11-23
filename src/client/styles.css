@@ -1349,3 +1349,6 @@ label.btn { position: relative; overflow: hidden; }
 .bd-map li[data-stance="BLOCKER"] { border-color: var(--erp-color-status-danger-fg, currentColor); }
 .bd-map li[data-stance="CHAMPION"] { border-color: var(--erp-color-status-success-fg, currentColor); }
 .exp-code { font: 1.25rem/1.4 var(--erp-font-mono, monospace); letter-spacing: 0.08em; }
+
+/* part 30.04: the sandbox banner (an installation on synthetic data; nothing leaves it) */
+.sh-sandbox { background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); border-bottom: 2px solid var(--erp-color-status-warning-solid); padding: 6px 16px; font-weight: 600; font-size: 0.875rem; text-align: center; }

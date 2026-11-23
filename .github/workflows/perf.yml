@@ -1,0 +1,42 @@
+name: Performance
+
+# Part 30.06 FR-02: the full load (1,000 users, the 2,000-punch burst, 200 DPRs, month-end) every night and the soak every Sunday, against
+# the real server on the runner, judged against the SLOs. The k6 scripts (perf/k6) run the same models against a staging installation
+# when one exists (defect D-009: no hosting target yet). Results are kept as artefacts and, where ERP_PERF_URL is set, recorded on the
+# Performance Test Results page of that installation.
+on:
+  schedule:
+    - cron: '17 20 * * *'   # 01:47 in India, every night: load
+    - cron: '23 18 * * 0'   # Sunday 23:53 in India: soak
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'load, stress or soak'
+        default: load
+
+permissions:
+  contents: read
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 600
+    env:
+      PROFILE: ${{ github.event.inputs.profile || (github.event.schedule == '23 18 * * 0' && 'soak' || 'load') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/load_test.mjs --profile "$PROFILE" --duration 28800 --environment ci-nightly ${{ secrets.ERP_PERF_URL && format('--post {0}', secrets.ERP_PERF_URL) || '' }}
+        env:
+          ERP_TOKEN: ${{ secrets.ERP_PERF_TOKEN }}
+      - run: node scripts/perf_verdict.mjs "reports/load-$PROFILE.json"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-${{ env.PROFILE }}
+          path: reports/load-*.json
+          if-no-files-found: ignore
