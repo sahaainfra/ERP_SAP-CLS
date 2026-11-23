@@ -1,6 +1,6 @@
 // Usage: node scripts/rehearse_zero_downtime.mjs [--post <base url>]
 // Part 30.08 T-01: blue-green deploy and rollback under steady traffic, with the two failure drills, on a local "staging" directory.
-// Writes reports/zero-downtime.json; with --post records the rehearsal on the Operations page of that installation (development headers
+// Writes docs/erp/perf/zero-downtime.json (the evidence of T-01); with --post records the rehearsal on the Operations page of that installation (development headers
 // or ERP_TOKEN). Exit code 1 if any step fails or any request failed.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -11,9 +11,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const result = await rehearseZeroDowntime({ root, workDir: join(root, '.deploy-zero-downtime'), basePort: Number(process.env.ZD_PORT ?? 3392), log: () => {} });
 for (const s of result.steps) console.log(`${s.ok ? 'PASS' : 'FAIL'}  ${s.name} (${s.ms} ms) ${s.detail}${s.traffic ? ` [${s.traffic.requests} requests, ${s.traffic.failed} failed, builds ${s.traffic.builds.join(' → ')}]` : ''}`);
-mkdirSync(join(root, 'reports'), { recursive: true });
+mkdirSync(join(root, 'docs', 'erp', 'perf'), { recursive: true });
 const report = { ...result, at: new Date().toISOString() };
-writeFileSync(join(root, 'reports', 'zero-downtime.json'), `${JSON.stringify(report, null, 2)}\n`);
+writeFileSync(join(root, 'docs', 'erp', 'perf', 'zero-downtime.json'), `${JSON.stringify(report, null, 2)}\n`);
 const i = args.indexOf('--post');
 if (i >= 0) {
   const token = process.env.ERP_TOKEN;

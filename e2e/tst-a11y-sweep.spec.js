@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { trackPageRequests } from './page-requests.js';
 import { allRegisteredPages } from './pages.js';
+import { postSweep } from './a11y-post.js';
 import { TEMPLATE_PERMISSIONS } from '../src/server/platform/authz/templates.js';
 
 // Part 30.07 FR-02 FR-03 T-01: the accessibility and responsive sweep. Every registered page is opened, in a company with every feature on, by a
@@ -22,23 +23,6 @@ const only = process.env.A11Y_ROUTES ? new Set(readFileSync(process.env.A11Y_ROU
 const pages = allRegisteredPages().filter((p) => !p.onboardingOnly && (!only || only.has(p.route)));
 const ROLES = Object.keys(TEMPLATE_PERMISSIONS).filter((c) => !/^(X-.*|GUARD|EMP|SUBCO)$/.test(c)).join(',');
 const H = (company, user, roles = 'SYSADM') => ({ 'x-erp-user': user, 'x-erp-roles': roles, 'x-erp-company': String(company), 'content-type': 'application/json', 'idempotency-key': randomUUID() });
-
-/** The results into one run of the validation results, in batches under the API's 50 kB body limit (null when the part is not mounted). */
-export async function postSweep(request, headers, head, results) {
-  const slim = results.map(({ route, loadMs, violations, overflowPx, smallTargetCount, tinyInputs, error }) => ({ route, loadMs, overflowPx, smallTargets: smallTargetCount ?? 0, tinyInputs: tinyInputs ?? 0, ...(error ? { error } : {}),
-    violations: violations.slice(0, 60).map((v) => ({ rule: v.rule, impact: v.impact, help: v.help.slice(0, 120), nodes: v.nodes, targets: v.targets.slice(0, 1).map((t) => t.slice(0, 100)) })) }));
-  const batches = []; let cur = []; let size = 0;
-  for (const r of slim) { const n = JSON.stringify(r).length; if (cur.length && (size + n > 38_000 || cur.length >= 150)) { batches.push(cur); cur = []; size = 0; } cur.push(r); size += n; }
-  if (cur.length) batches.push(cur);
-  let runId = null; let out = null;
-  for (const [i, b] of batches.entries()) {
-    const res = await request.post('/api/v1/tst/a11y/runs', { headers: { ...headers, 'idempotency-key': randomUUID() }, data: { ...head, ...(runId ? { runId } : {}), final: i === batches.length - 1, results: b } });
-    if (res.status() === 404) return null;
-    expect(res.status(), await res.text()).toBe(201);
-    out = (await res.json()).data; runId = out.id;
-  }
-  return out;
-}
 
 const measure = (phone) => {
   const main = document.querySelector('main');

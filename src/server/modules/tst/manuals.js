@@ -10,6 +10,8 @@ import { transaction } from '../../platform/db/index.js';
 import { eventTypes, publishEvent } from '../../platform/events/index.js';
 import { FORMATS, writeExport, zip } from '../../platform/export/index.js';
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
+import { filesOf } from '../../platform/files/registry.js';
+import { fileEntities } from '../../platform/files/entities.js';
 import { integrityRegistry } from '../../platform/integrity/registry.js';
 import { notificationsOf } from '../../platform/notify/index.js';
 import { workflowTypes } from '../../platform/workflow/registry.js';
@@ -25,8 +27,8 @@ import { PACKS } from './sandbox.js';
  *    flag), the role templates (which pages a role can open, its responsibilities and authority), the workflow types (who approves what, in
  *    which order, within how many hours), the description of each page in the migration tracker, and what each screen shows (its title,
  *    tabs, actions and fields, read by Playwright from the running build). A page that is not registered cannot appear in a manual.
- *  - FR-01 Screens: `e2e/tst-manual-screens.spec.js` opens every registered page (desktop; field-role pages also at phone size) and posts
- *    each screen's signature and a JPEG to a capture; the manuals embed the captured images.
+ *  - FR-01 Screens: `e2e/tst-manual-screens.spec.js` opens every registered page (desktop; field-role pages also at phone size), uploads
+ *    a JPEG of it to the document service on the capture and posts the screen's signature; the manuals embed the captured images.
  *  - FR-03 Drift: a capture is compared with the accepted baseline; a screen whose signature changed (an action, tab, field or title added or
  *    removed) is CHANGED, a new page NEW, a page gone REMOVED, and every current manual that covers such a route becomes STALE until the
  *    package is generated again. The writer accepts the capture as the new baseline.
@@ -53,6 +55,15 @@ for (const [type, description] of [
   ['man.manual.approved', 'A manual was approved by its owner (part 30.09): data { manualId, code, versionNo, packageId }.'],
   ['man.package.approved', 'Every manual of a documentation package is approved (part 30.09 AC-01): data { packageId, packageNo, buildId }.'],
 ]) if (!eventTypes.get(type)) eventTypes.define({ type, version: 1, schema: { type: 'object' }, owner: 'tst', description });
+
+if (!fileEntities.get('man_captures')) {
+  // the screenshots of a capture are files of the document service, linked to the capture: the writer adds them while it is open
+  fileEntities.register({ entity: 'man_captures', label: 'Documentation screen capture', resolve(db, actor, id) {
+    const c = db.prepare('SELECT company_id, status FROM man_captures WHERE id = ? AND deleted_at IS NULL').get(Number(id));
+    if (!c || c.company_id !== actor.companyId) return null;
+    return { companyId: c.company_id, projectId: null, siteId: null, canView: hasPermissionAnywhere(actor, 'man.manual.view_all'), canEdit: c.status === 'OPEN' && hasPermissionAnywhere(actor, 'man.manual.generate'), locked: c.status !== 'OPEN' };
+  } });
+}
 
 export const MODULE_NAMES = {
   core: ['Platform', 'प्लेटफ़ॉर्म'], iam: ['Users and access', 'उपयोगकर्ता और पहुँच'], ui: ['Workspace', 'कार्यक्षेत्र'], eng: ['Workflow and documents', 'वर्कफ़्लो और दस्तावेज़'], msg: ['Messages', 'संदेश'], pol: ['Policies', 'नीतियाँ'],
@@ -228,7 +239,7 @@ export function createManualsService(context, { root = process.cwd(), storagePat
       return captureView(db.prepare('SELECT * FROM man_captures WHERE id = ?').get(id));
     });
   }
-  /** A batch of screens: route, viewport, signature and an optional JPEG (base64). BR-01 a route the build does not register is refused. */
+  /** A batch of screens: route, viewport, signature and optionally the image, uploaded to the document service (04.10) on this capture. BR-01 a route the build does not register is refused. */
   function addScreens(actor, captureId, screens) {
     guard(actor, 'man.manual.generate');
     const c = captureRow(actor, captureId);
@@ -236,24 +247,22 @@ export function createManualsService(context, { root = process.cwd(), storagePat
     const known = new Set(pages().map((p) => p.route));
     const unknown = screens.filter((s) => !known.has(s.route)).map((s) => s.route);
     if (unknown.length) throw unprocessable(`Not pages of this build: ${unknown.slice(0, 5).join(', ')} (BR-01).`);
-    const folder = join(dir, `c${actor.companyId}`, 'screens', c.capture_no); mkdirSync(folder, { recursive: true });
-    let stored = 0;
+    for (const s of screens) {
+      if (!s.fileId) continue;
+      const f = db.prepare("SELECT extension FROM core_files WHERE id = ? AND company_id = ? AND linked_entity = 'man_captures' AND linked_id = ? AND deleted_at IS NULL").get(s.fileId, actor.companyId, String(c.id));
+      if (!f) throw unprocessable(`File ${s.fileId} is not an image uploaded to capture ${c.capture_no}.`);
+      if (!['jpg', 'jpeg', 'png'].includes(String(f.extension).toLowerCase())) throw badRequest(`File ${s.fileId} is not a JPEG or PNG image.`, [{ field: 'fileId', message: 'JPEG or PNG expected' }]);
+    }
     transaction(db, () => {
       for (const s of screens) {
-        const sig = normaliseSignature(s.signature); let image = null;
-        if (s.image) {
-          const buf = Buffer.from(s.image, 'base64');
-          if (buf[0] !== 0xff || buf[1] !== 0xd8) throw badRequest(`The image of ${s.route} is not a JPEG.`, [{ field: 'image', message: 'JPEG expected' }]);
-          const name = `${pageCode(s.route) || 'home'}-${s.viewport.toLowerCase()}.jpg`; writeFileSync(join(folder, name), buf); image = { path: join(`c${actor.companyId}`, 'screens', c.capture_no, name), sha: sha(buf), bytes: buf.length };
-        }
-        db.prepare(`INSERT INTO man_screens (company_id, capture_id, route, viewport, role_code, title, signature_hash, signature_json, image_path, image_sha256, image_bytes, drift, captured_at, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'NEW', ?, ?, 'playwright')
-          ON CONFLICT(capture_id, route, viewport) DO UPDATE SET signature_hash = excluded.signature_hash, signature_json = excluded.signature_json, title = excluded.title, image_path = COALESCE(excluded.image_path, image_path), image_sha256 = COALESCE(excluded.image_sha256, image_sha256), image_bytes = COALESCE(excluded.image_bytes, image_bytes), captured_at = excluded.captured_at, updated_at = excluded.captured_at, version = version + 1`)
-          .run(actor.companyId, c.id, s.route, s.viewport, s.role ?? null, sig.title || null, signatureHash(sig), JSON.stringify(sig), image?.path ?? null, image?.sha ?? null, image?.bytes ?? null, iso(), actor.user);
-        stored += 1;
+        const sig = normaliseSignature(s.signature);
+        db.prepare(`INSERT INTO man_screens (company_id, capture_id, route, viewport, role_code, title, signature_hash, signature_json, image_file_id, drift, captured_at, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'NEW', ?, ?, 'playwright')
+          ON CONFLICT(capture_id, route, viewport) DO UPDATE SET signature_hash = excluded.signature_hash, signature_json = excluded.signature_json, title = excluded.title, image_file_id = COALESCE(excluded.image_file_id, image_file_id), captured_at = excluded.captured_at, updated_at = excluded.captured_at, version = version + 1`)
+          .run(actor.companyId, c.id, s.route, s.viewport, s.role ?? null, sig.title || null, signatureHash(sig), JSON.stringify(sig), s.fileId ?? null, iso(), actor.user);
       }
       db.prepare('UPDATE man_captures SET screens_count = (SELECT COUNT(*) FROM man_screens WHERE capture_id = ?), updated_at = ?, updated_by = ?, version = version + 1 WHERE id = ?').run(c.id, iso(), actor.user, c.id);
     });
-    return { captureId: c.id, stored, screens: db.prepare('SELECT screens_count FROM man_captures WHERE id = ?').get(c.id).screens_count };
+    return { captureId: c.id, stored: screens.length, screens: db.prepare('SELECT screens_count FROM man_captures WHERE id = ?').get(c.id).screens_count };
   }
   /** T-01 compare a capture with the accepted baseline: CHANGED, NEW and REMOVED screens; current manuals covering them become STALE. */
   function compareCapture(actor, captureId) {
@@ -314,22 +323,24 @@ export function createManualsService(context, { root = process.cwd(), storagePat
   function capture(actor, captureId, { drift } = /** @type {{ drift?: string }} */ ({})) {
     guard(actor, 'man.manual.view_all');
     const c = captureRow(actor, captureId);
-    const rows = db.prepare(`SELECT id, route, viewport, title, drift, diff_json, image_path FROM man_screens WHERE capture_id = ? ${drift ? 'AND drift = ?' : ''} ORDER BY CASE drift WHEN 'CHANGED' THEN 0 WHEN 'NEW' THEN 1 ELSE 2 END, route LIMIT 500`).all(...[c.id, ...(drift ? [drift] : [])]);
-    return { ...captureView(c), screens: rows.map((s) => ({ id: s.id, route: s.route, viewport: s.viewport, title: s.title, drift: s.drift, diff: parse(s.diff_json, null), hasImage: Boolean(s.image_path) })) };
+    const rows = db.prepare(`SELECT id, route, viewport, title, drift, diff_json, image_file_id FROM man_screens WHERE capture_id = ? ${drift ? 'AND drift = ?' : ''} ORDER BY CASE drift WHEN 'CHANGED' THEN 0 WHEN 'NEW' THEN 1 ELSE 2 END, route LIMIT 500`).all(...[c.id, ...(drift ? [drift] : [])]);
+    return { ...captureView(c), screens: rows.map((s) => ({ id: s.id, route: s.route, viewport: s.viewport, title: s.title, drift: s.drift, diff: parse(s.diff_json, null), fileId: s.image_file_id ?? null })) };
   }
 
   // ---------------------------------------------------------------- FR-01 FR-02 FR-04 the manuals
   const imageCache = new Map();
-  /** A captured screen, shrunk for the manual (900 px wide JPEG). */
+  /** A captured screen, read from the document service and shrunk for the manual (900 px wide JPEG; a phone screen 360 px). A file not cleared by the virus scan is left out. */
   async function screenImage(s) {
-    if (!s?.image_path) return null;
-    const file = join(dir, s.image_path); if (!existsSync(file)) return null;
-    if (!imageCache.has(file)) {
-      const out = await sharp(readFileSync(file)).resize({ width: s.viewport === 'MOBILE' ? 360 : 900, withoutEnlargement: true }).jpeg({ quality: 60, mozjpeg: true }).toBuffer({ resolveWithObject: true });
+    if (!s?.image_file_id) return null;
+    if (!imageCache.has(s.image_file_id)) {
+      let bytes;
+      try { bytes = (await filesOf(db)?.bytesOf(s.image_file_id))?.buffer; } catch { bytes = null; }
+      if (!bytes) return null;
+      const out = await sharp(bytes).resize({ width: s.viewport === 'MOBILE' ? 360 : 900, withoutEnlargement: true }).jpeg({ quality: 60, mozjpeg: true }).toBuffer({ resolveWithObject: true });
       if (imageCache.size > 400) imageCache.clear();
-      imageCache.set(file, { data: out.data, width: out.info.width, height: out.info.height });
+      imageCache.set(s.image_file_id, { data: out.data, width: out.info.width, height: out.info.height });
     }
-    return imageCache.get(file);
+    return imageCache.get(s.image_file_id);
   }
   const screensOf = (captureId) => new Map(captureId ? db.prepare('SELECT * FROM man_screens WHERE capture_id = ?').all(captureId).map((s) => [`${s.route}|${s.viewport}`, s]) : []);
   /** The steps for one page: from what its screen shows when captured, otherwise how to reach it. */

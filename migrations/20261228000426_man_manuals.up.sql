@@ -49,9 +49,7 @@ CREATE TABLE IF NOT EXISTS man_screens (
   title TEXT,
   signature_hash TEXT NOT NULL,
   signature_json TEXT NOT NULL,
-  image_path TEXT,
-  image_sha256 TEXT,
-  image_bytes INTEGER CHECK (image_bytes IS NULL OR image_bytes >= 0),
+  image_file_id INTEGER REFERENCES core_files(id),
   drift TEXT NOT NULL DEFAULT 'NEW' CHECK (drift IN ('SAME', 'CHANGED', 'NEW')),
   diff_json TEXT,
   captured_at TEXT NOT NULL,
@@ -72,6 +70,7 @@ CREATE TABLE IF NOT EXISTS man_screens (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_man_screens_route ON man_screens(capture_id, route, viewport);
 CREATE INDEX IF NOT EXISTS ix_man_screens_company ON man_screens(company_id, route);
 CREATE INDEX IF NOT EXISTS ix_man_screens_drift ON man_screens(capture_id, drift);
+CREATE INDEX IF NOT EXISTS ix_man_screens_file ON man_screens(image_file_id);
 
 CREATE TABLE IF NOT EXISTS man_packages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

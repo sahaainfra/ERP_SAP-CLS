@@ -80,13 +80,19 @@ test('T-01 FR-03 the drift check flags changed, new and removed screens against 
 });
 
 test('AC-01 FR-01 BR-01 a package: PDF and DOCX of each manual in one ZIP with a manifest, built from the registry and the captured screens, Hindi for field roles', async () => {
-  const { call, raw, generate } = await boot();
+  const { call, raw, generate, api } = await boot();
   const dpr = route('/site/dpr-entry');
   const jpeg = await sharp({ create: { width: 1280, height: 800, channels: 3, background: '#dfe7f1' } }).composite([{ input: Buffer.from('<svg width="600" height="80"><text x="10" y="50" font-size="40">DPR</text></svg>'), top: 40, left: 40 }]).jpeg({ quality: 70 }).toBuffer();
   const cap = (await call(writer, 'POST', '/captures', {})).json.data;
+  // the screenshot goes to the document service (04.10), linked to the capture; the screen names the file
+  const upload = async (name, bytes) => { const form = new FormData(); form.set('entity', 'man_captures'); form.set('entityId', String(cap.id)); form.set('file', new Blob([bytes], { type: 'image/jpeg' }), name); const r = await api.raw('POST', '/api/v1/core/files', { ...writer, headers: key(), body: form }); assert.equal(r.status, 201, JSON.stringify(r.json)); return r.json.data.id; };
+  const desk = await upload('dpr-desktop.jpg', jpeg); const phone = await upload('dpr-phone.jpg', await sharp(jpeg).resize({ width: 360, height: 740, fit: 'cover' }).jpeg().toBuffer());
+  await runtimeOf(api.db).jobs.drain(); // the virus scan of the uploads
+  const outsider = (await call(writer, 'POST', `/captures/${cap.id}/screens`, { screens: [{ route: dpr.route, viewport: 'DESKTOP', signature: sig('x', []), fileId: 999999 }] }));
+  assert.equal(outsider.status, 422, 'a file not uploaded to this capture is refused');
   await call(writer, 'POST', `/captures/${cap.id}/screens`, { screens: [
-    { route: dpr.route, viewport: 'DESKTOP', signature: sig(dpr.label, ['New DPR', 'Export'], { tabs: ['Today', 'History'], fields: ['Project', 'Date'] }), image: jpeg.toString('base64') },
-    { route: dpr.route, viewport: 'MOBILE', signature: sig(dpr.label, ['New DPR']), image: jpeg.toString('base64') },
+    { route: dpr.route, viewport: 'DESKTOP', signature: sig(dpr.label, ['New DPR', 'Export'], { tabs: ['Today', 'History'], fields: ['Project', 'Date'] }), fileId: desk },
+    { route: dpr.route, viewport: 'MOBILE', signature: sig(dpr.label, ['New DPR']), fileId: phone },
   ] });
   await call(writer, 'POST', `/captures/${cap.id}/compare`, {}); await call(writer, 'POST', `/captures/${cap.id}/accept`, {});
   const only = ['role.SE.en', 'role.SE.hi', 'module.site.en', 'guide.api.en', 'guide.recovery.en', 'quickref.SE.hi', 'exercises.sandbox.en'];
@@ -118,8 +124,8 @@ test('AC-01 FR-01 BR-01 a package: PDF and DOCX of each manual in one ZIP with a
   const hiText = docxText((await raw(writer, `/${seHi.id}/download?format=docx`)).buffer);
   assert.match(hiText, /उपयोगकर्ता पुस्तिका/); assert.match(hiText, /मेनू में .+ खोलें/);
   // the API guide lists the operations of the OpenAPI files; the recovery guide is the runbooks
-  const api = docxText((await raw(writer, `/${lib.rows.find((m) => m.code === 'guide.api.en').id}/download?format=docx`)).buffer);
-  assert.match(api, /\/bi\/reports/); assert.match(api, /Idempotency-Key/);
+  const apiGuide = docxText((await raw(writer, `/${lib.rows.find((m) => m.code === 'guide.api.en').id}/download?format=docx`)).buffer);
+  assert.match(apiGuide, /\/bi\/reports/); assert.match(apiGuide, /Idempotency-Key/);
   const rec = docxText((await raw(writer, `/${lib.rows.find((m) => m.code === 'guide.recovery.en').id}/download?format=docx`)).buffer);
   assert.match(rec, /Restore:/); assert.match(rec, /Rollback:/);
   // an altered file on disk is refused (checksum)

@@ -11,6 +11,7 @@ const SecurityFindings = lazyPage(() => import('./SecurityFindings.jsx'), 'Secur
 const PerfResults = lazyPage(() => import('./PerfResults.jsx'), 'PerfResults');
 const A11yValidation = lazyPage(() => import('./A11yValidation.jsx'), 'A11yValidation');
 const Operations = lazyPage(() => import('./Operations.jsx'), 'Operations');
+const DocumentationLibrary = lazyPage(() => import('./DocumentationLibrary.jsx'), 'DocumentationLibrary');
 
 registerModule({
   code: 'tst', label: 'Go-live testing',
@@ -23,5 +24,6 @@ registerModule({
     { path: '/admin/performance-tests', label: 'Performance Test Results', labelHi: 'प्रदर्शन परीक्षण परिणाम', icon: 'erp.insights.rb', permission: 'tst.perf.view', flag: 'ff.qa.p3006', Page: PerfResults },
     { path: '/admin/accessibility-validation', label: 'Accessibility & Device Validation', labelHi: 'सुगम्यता और डिवाइस सत्यापन', icon: 'erp.insights.rb', permission: 'tst.a11y.view', flag: 'ff.qa.p3007', Page: A11yValidation },
     { path: '/admin/operations-runbooks', label: 'Operations Runbooks & Environments', labelHi: 'संचालन रनबुक और परिवेश', icon: 'erp.insights.rb', permission: 'ops.runbook.view', flag: 'ff.qa.p3008', Page: Operations },
+    { path: '/help/documentation', label: 'Documentation Library', labelHi: 'दस्तावेज़ पुस्तकालय', icon: 'erp.insights.rb', permission: 'hd.ticket.raise', flag: 'ff.qa.p3009', Page: DocumentationLibrary },
   ],
 });
