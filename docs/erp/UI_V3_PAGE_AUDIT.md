@@ -10,19 +10,19 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 ## Totals
 | | Pages |
 |---|---|
-| Registered | 735 |
-| With PageHeader | 735 (lint rule `erp/page-header-required`: no `<h1>` outside PageHeader) |
-| Migrated | 443 |
+| Registered | 739 |
+| With PageHeader | 739 (lint rule `erp/page-header-required`: no `<h1>` outside PageHeader) |
+| Migrated | 446 |
 | Migrated (partly) | 219 |
-| Exception | 73 |
+| Exception | 74 |
 
 | Pattern | Pages |
 |---|---|
-| List report | 233 |
+| List report | 234 |
 | Object page | 2 |
 | Form | 328 |
 | Overview page | 49 |
-| Report | 123 |
+| Report | 126 |
 
 ## Pages
 | Route | Page | Module | Pattern | Components | Status | Reason / closing part | Phone check | Screenshots |
@@ -762,3 +762,7 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/admin/test-coverage` | Test Coverage & Results | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/security-findings` | Security Findings & Remediation | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/performance-tests` | Performance Test Results | tst | Form | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/accessibility-validation` | Accessibility & Device Validation | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/operations-runbooks` | Operations Runbooks & Environments | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/help/documentation` | Documentation Library | tst | List report | PageHeader, Card | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
+| `/admin/go-live` | Go-Live Readiness | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
