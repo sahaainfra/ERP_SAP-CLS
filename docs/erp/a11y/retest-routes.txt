@@ -1,0 +1,6 @@
+/training
+/training/compliance
+/plan/weekly
+/inv/scrap
+/bill/deviations
+/bill/vendor-invoices

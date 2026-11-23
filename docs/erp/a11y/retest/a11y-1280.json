@@ -1,0 +1,68 @@
+{
+ "width": 1280,
+ "theme": "light",
+ "axe": true,
+ "at": "2026-11-23T19:40:21.141Z",
+ "results": [
+  {
+   "route": "/training",
+   "loadMs": 3526,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/training/compliance",
+   "loadMs": 3437,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/plan/weekly",
+   "loadMs": 3426,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/inv/scrap",
+   "loadMs": 3426,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/deviations",
+   "loadMs": 3415,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/vendor-invoices",
+   "loadMs": 3432,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  }
+ ]
+}

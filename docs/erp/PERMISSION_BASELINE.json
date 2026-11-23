@@ -306,6 +306,12 @@
   "ITADM",
   "SYSADM"
  ],
+ "ops.oncall.manage": [
+  "ITADM"
+ ],
+ "ops.runbook.manage": [
+  "ITADM"
+ ],
  "org.company.manage": [
   "SUPADM",
   "SYSADM"

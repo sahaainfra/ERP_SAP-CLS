@@ -140,21 +140,34 @@ jobs:
         with:
           fail-on-severity: high
 
-  # Container image scan. The repository has no Dockerfile yet (defect D-110); the job scans one as soon as it exists.
+  # Container image scan (part 30.08 added the Dockerfile, closing D-110): build the image, check the compose file, scan with Trivy.
   container-scan:
     name: container-scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Scan the image
-        if: ${{ hashFiles('Dockerfile') != '' }}
+      - name: Build and scan the image
         run: |
           docker build -t erp:scan .
+          AUTH_SECRET=ci-placeholder-secret-0123456789abcdef VAULT_KEY=ci-placeholder docker compose config --quiet
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.58.0 image --severity HIGH,CRITICAL --exit-code 1 erp:scan
-      - name: No Dockerfile
-        if: ${{ hashFiles('Dockerfile') == '' }}
-        run: echo "No Dockerfile in the repository, nothing to scan (defect D-110)."
+
+  # Part 30.08: environment parity (every environment defined by code, same keys, no secrets) and the zero-downtime blue-green deploy
+  # and rollback rehearsal under traffic, with its two failure drills. Production changes go only through this pipeline (BR-01).
+  deploy-rehearsal:
+    name: deploy-rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/env_parity.mjs
+      - run: node scripts/rehearse_zero_downtime.mjs
 
   # Not blocking until code scanning is enabled in the repository settings (defect D-012); the job then
   # fails at upload with "Code scanning is not enabled". Remove continue-on-error once it is enabled.

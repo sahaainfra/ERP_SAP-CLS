@@ -15,7 +15,7 @@ import { COLOUR, Pager, ParamPanel, PillTabs, download, go, post, qs, read } fro
 // then the key figures (parity, the last production deploy, the zero-downtime rehearsal, runbooks approved, open pages), and three tabs:
 // environments and deployments (cards on a phone, parameters in a bottom sheet, sticky total), runbooks (synced from the repository, submitted
 // by DevOps, approved by the system administrator, readable here), and on call (who is on shift now, the rota, the pages with acknowledgement).
-const BASE = '/admin/operations';
+const BASE = '/admin/operations-runbooks';
 const ENVS = ['production', 'staging', 'test', 'sandbox', 'dev'];
 const DEP_TONE = { SUCCEEDED: 'APPROVED', FAILED: 'REJECTED', ROLLED_BACK: 'AT_RISK' };
 const RB_TONE = { APPROVED: 'APPROVED', SUBMITTED: 'SUBMITTED', DRAFT: 'DRAFT', REJECTED: 'REJECTED', SUPERSEDED: 'CANCELLED', NOT_SYNCED: 'DRAFT' };

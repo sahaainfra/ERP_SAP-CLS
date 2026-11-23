@@ -306,7 +306,8 @@ export async function renderPdf(html, opts = {}) {
   async function embedImages(node) {
     if (node.tag === 'img') {
       const info = imageFor(node);
-      if (info && !info.ref) info.ref = info.type === 'png' ? await pdf.embedPng(info.bytes) : await pdf.embedJpg(info.bytes);
+      // a copy: a small decoded image shares Node's buffer pool, and the JPEG reader of pdf-lib reads the pool from offset 0 (part 30.09)
+      if (info && !info.ref) { const bytes = Uint8Array.from(info.bytes); info.ref = info.type === 'png' ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes); }
     }
     for (const c of node.children ?? []) await embedImages(c);
   }
@@ -471,7 +472,8 @@ export async function renderPdf(html, opts = {}) {
     const leafInline = node.children.every((c) => isInline(c));
     if (node.children.length === 0) { const hh = length(node.style?.height); if (typeof hh === 'number') out.push(...spacer(hh)); }
     if (node.tag === 'li') {
-      const lines = lineAtoms({ ...node, children: [{ text: '• ', parent: node }, ...node.children] }, inner - 10, null);
+      const mark = node.parent?.tag === 'ol' ? `${node.parent.children.filter((c) => c.tag === 'li').indexOf(node) + 1}. ` : '• '; // an ordered list is numbered (part 30.09)
+      const lines = lineAtoms({ ...node, children: [{ text: mark, parent: node }, ...node.children] }, inner - 10, null);
       return [...out, ...lines.map((a) => ({ ...a, draw: (page, x, top) => a.draw(page, x + 10, top) })), ...spacer(m.mb)];
     }
     if (leafInline) {

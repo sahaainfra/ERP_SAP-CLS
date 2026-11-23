@@ -10,9 +10,10 @@ import { TEMPLATE_PERMISSIONS } from '../src/server/platform/authz/templates.js'
 // user holding every internal role, at one width per run (A11Y_WIDTH: 360 by default, also 768, 1280 and 1920). At each page it records the axe
 // findings against WCAG 2.1 A and AA (A11Y_AXE=0 skips them on the wider sweeps), sideways overflow, touch targets under 44 px on a phone,
 // form fields under 16 px on a phone, the load time and the theme. The results go to the validation results (POST /tst/a11y/runs) in batches,
-// and to reports/a11y-<width>.json. A11Y_ROUTES limits the sweep to a file of routes (a re-test after fixes).
+// and to docs/erp/a11y/a11y-<width>.json (A11Y_OUT changes the folder). A11Y_ROUTES limits the sweep to a file of routes (a re-test after fixes).
 const AXE = readFileSync(new URL('../node_modules/axe-core/axe.min.js', import.meta.url), 'utf8');
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+const OUT = process.env.A11Y_OUT ?? 'docs/erp/a11y';
 const WIDTH = Number(process.env.A11Y_WIDTH ?? 360);
 const HEIGHT = WIDTH <= 400 ? 740 : WIDTH <= 800 ? 1024 : WIDTH <= 1300 ? 800 : 1080;
 const AXE_ON = process.env.A11Y_AXE !== '0';
@@ -86,8 +87,8 @@ test(`T-01 FR-02 FR-03 every page at ${WIDTH} px: axe, overflow, touch targets`,
       results.push({ route: p.route, loadMs: Date.now() - started, violations: [], overflowPx: 0, smallTargets: [], smallTargetCount: 0, tinyInputs: 0, h1: 0, error: String(err.message ?? err).slice(0, 300) });
     }
   }
-  mkdirSync('reports', { recursive: true });
-  writeFileSync(`reports/a11y-${WIDTH}${THEME === 'light' ? '' : `-${THEME}`}.json`, JSON.stringify({ width: WIDTH, theme: THEME, axe: AXE_ON, at: new Date().toISOString(), results }, null, 1));
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(`${OUT}/a11y-${WIDTH}${THEME === 'light' ? '' : `-${THEME}`}.json`, JSON.stringify({ width: WIDTH, theme: THEME, axe: AXE_ON, at: new Date().toISOString(), results }, null, 1));
   // the results, in batches into one run of the validation results
   const out = await postSweep(request, H(company, 'a11y-all', 'ITADM'), { kind: AXE_ON ? 'AXE' : 'RESPONSIVE', width: WIDTH, height: HEIGHT, theme: THEME, language: 'en', network: 'FAST' }, results);
   const serious = results.filter((r) => r.violations.some((v) => v.impact === 'serious' || v.impact === 'critical'));

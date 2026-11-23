@@ -180,7 +180,7 @@ export function createOpsService(context, { root = process.cwd(), jobs, schedule
       .run(companyId, alert.id, alert.rule, alert.severity, String(alert.message).slice(0, 500), who, level, who ? 'SENT' : 'UNCOVERED', iso()).lastInsertRowid);
     if (!id) return null;
     if (who) {
-      try { notificationsOf(db).notify({ companyId, templateCode: 'ops.oncall.page', recipients: [`user:${who}`], channels: level === 'L1' ? ['IN_APP'] : ['IN_APP', 'SMS', 'EMAIL'], priority: 'HIGH', category: 'alerts', data: { rule: alert.rule, severity: alert.severity, message: String(alert.message).slice(0, 200) }, link: '/admin/operations?tab=oncall', sourceType: 'ops_pages', sourceId: id }); } catch { /* the page stands; the escalation catches an undelivered one */ }
+      try { notificationsOf(db).notify({ companyId, templateCode: 'ops.oncall.page', recipients: [`user:${who}`], channels: level === 'L1' ? ['IN_APP'] : ['IN_APP', 'SMS', 'EMAIL'], priority: 'HIGH', category: 'alerts', data: { rule: alert.rule, severity: alert.severity, message: String(alert.message).slice(0, 200) }, link: '/admin/operations-runbooks?tab=oncall', sourceType: 'ops_pages', sourceId: id }); } catch { /* the page stands; the escalation catches an undelivered one */ }
     } else writeAudit(db, { companyId, entity: 'ops_pages', entityId: id, action: 'uncovered', newValues: { level, rule: alert.rule }, actor: 'system:on-call' });
     publishEvent(db, { type: 'ops.oncall.paged', entity: 'ops_pages', entityId: id, actorId: 'system:on-call', companyId, data: { pageId: id, alertId: alert.id, level, username: who } });
     return id;

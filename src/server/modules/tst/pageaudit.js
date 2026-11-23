@@ -45,8 +45,8 @@ export const CHECKLIST = Object.freeze([
 ].map(([code, label]) => Object.freeze({ code, label })));
 const RESULTS = ['PASS', 'FAIL', 'NA'];
 /** The owner of each module's pages (approves a rescheduled defect) when the migration tracker names none. */
-const OWNER = { core: 'SYSADM', iam: 'SYSADM', ui: 'SYSADM', eng: 'SYSADM', msg: 'SYSADM', pol: 'SYSADM', mdm: 'PROCMGR', fin: 'ACCMGR', hr: 'HRMGR', bd: 'BD', est: 'EST', proj: 'PD', engg: 'DESIGN', bud: 'PCMGR', plan: 'PCMGR', site: 'PM', proc: 'PROCMGR', inv: 'STOREMGR', plant: 'PLANTMGR', qa: 'QCMGR', hse: 'HSEE', rmc: 'PLANTMGR', ctr: 'COMMGR', bill: 'COMMGR', pay: 'HRMGR', portal: 'SYSADM', bi: 'PCMGR', ai: 'ITADM', admin: 'ITADM', tst: 'ITADM' };
-const CLIENT_MODULES = ['core', 'iam', 'ui', 'eng', 'msg', 'pol', 'mdm', 'fin', 'hr', 'bd', 'est', 'proj', 'engg', 'bud', 'plan', 'site', 'proc', 'inv', 'plant', 'qa', 'hse', 'rmc', 'ctr', 'bill', 'pay', 'portal', 'bi', 'ai', 'admin', 'tst'];
+export const OWNER = { core: 'SYSADM', iam: 'SYSADM', ui: 'SYSADM', eng: 'SYSADM', msg: 'SYSADM', pol: 'SYSADM', mdm: 'PROCMGR', fin: 'ACCMGR', hr: 'HRMGR', bd: 'BD', est: 'EST', proj: 'PD', engg: 'DESIGN', bud: 'PCMGR', plan: 'PCMGR', site: 'PM', proc: 'PROCMGR', inv: 'STOREMGR', plant: 'PLANTMGR', qa: 'QCMGR', hse: 'HSEE', rmc: 'PLANTMGR', ctr: 'COMMGR', bill: 'COMMGR', pay: 'HRMGR', portal: 'SYSADM', bi: 'PCMGR', ai: 'ITADM', admin: 'ITADM', tst: 'ITADM' };
+export const CLIENT_MODULES = ['core', 'iam', 'ui', 'eng', 'msg', 'pol', 'mdm', 'fin', 'hr', 'bd', 'est', 'proj', 'engg', 'bud', 'plan', 'site', 'proc', 'inv', 'plant', 'qa', 'hse', 'rmc', 'ctr', 'bill', 'pay', 'portal', 'bi', 'ai', 'admin', 'tst'];
 export const pageCode = (route) => route.replace(/^\//, '').replace(/\//g, '.').replace(/:/g, '');
 const iso = (d = new Date()) => d.toISOString();
 

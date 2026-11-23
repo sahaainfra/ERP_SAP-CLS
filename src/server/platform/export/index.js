@@ -34,7 +34,7 @@ export function toCsv({ columns, rows, footer }) {
 const xml = (s) => String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c])).split('').filter((ch) => { const n = ch.charCodeAt(0); return n >= 32 || n === 9 || n === 10 || n === 13; }).join(''); // XML 1.0 forbids other control characters
 const colName = (i) => { let s = ''; let n = i + 1; while (n) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
 
-function zip(files) {
+export function zip(files) {
   const parts = [];
   const central = [];
   let offset = 0;

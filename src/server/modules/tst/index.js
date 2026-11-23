@@ -13,6 +13,7 @@ import { CONTROLS, SEVERITIES, SOURCES, STATUSES, createSecurityService } from '
 import { SLO_KINDS, createPerfService } from './perf.js';
 import { createA11yService } from './a11y.js';
 import { ENV_CODES, createOpsService } from './ops.js';
+import { KINDS, createManualsService } from './manuals.js';
 
 // Module M30 (tst): system integration, quality assurance and go-live. The module code `qa` belongs to site quality (M18), so the go-live
 // testing parts use `tst` (the table prefix of the pack, tst_page_audit). Part 30.01 mounts the integration matrix and the latency probe,
@@ -31,7 +32,7 @@ export const tst = {
   code: 'tst', name: 'System Integration, Quality Assurance & Go-Live', routePrefix: '/api/v1/tst', ownerPart: '30.01',
   status: 'Integration matrix and real-time latency (30.01), reconciliation suite and trace completeness (30.02), page completion audit (30.03), test catalogue, coverage and simulation sandbox (30.04), security findings and remediation (30.05), performance test results (30.06), accessibility and device validation (30.07), operations runbooks and environments (30.08).',
   tables: ['tst_integration_runs', 'tst_latency_probes', 'tst_recon_runs', 'tst_recon_results', 'tst_page_audit', 'tst_page_audit_runs', 'tst_test_catalogue', 'tst_test_runs', 'tst_sandbox_runs', 'sct_findings', 'sct_scan_runs', 'sct_reviews', 'tst_perf_runs', 'tst_perf_results', 'tst_devices', 'tst_a11y_runs', 'tst_a11y_results', 'ops_environments', 'ops_deployments', 'ops_runbooks', 'ops_oncall', 'ops_pages'], resources: ['ops', 'a11y', 'integration', 'reconciliation', 'page-audits', 'tests', 'sandbox', 'security', 'perf'],
-  mount(api, { db, config }) {
+  mount(api, { db, config, storagePath, buildInfo }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tst_integration_runs'").get()) return;
     const context = { db, environment: config.environment ?? 'development', flags: createFlagService({ db, environment: config.environment }) };
     const runtime = runtimeOf(db);
@@ -44,7 +45,8 @@ export const tst = {
     const perf = createPerfService(context);
     const a11y = createA11yService(context);
     const ops = createOpsService(context, { jobs: runtime?.jobs, scheduler: runtime?.scheduler, bus: runtime?.bus });
-    services.set(db, { integration, recon, audit, catalogue, sandbox, security, perf, a11y, ops });
+    const manuals = createManualsService(context, { storagePath, buildInfo, jobs: runtime?.jobs });
+    services.set(db, { integration, recon, audit, catalogue, sandbox, security, perf, a11y, ops, manuals });
     const r = Router();
     const ok = (res, data, status = 200) => res.status(status).json({ data });
     const idem = idempotency(db, { required: true, actorKey });
@@ -160,6 +162,24 @@ export const tst = {
     r.post('/ops/oncall', idem, (req, res) => ok(res, ops.addShift(req.actor, parse(z.object({ username: z.string().trim().min(2).max(80), level: z.enum(['L1', 'L2', 'L3']), fromAt: z.string().datetime(), toAt: z.string().datetime() }).strict(), req.body)), 201));
     r.post('/ops/oncall/:id/cancel', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, ops.cancelShift(req.actor, id(req.params.id))); });
     r.post('/ops/pages/:id/acknowledge', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, ops.acknowledge(req.actor, id(req.params.id))); });
+
+    // ---- part 30.09: the documentation library, the screen captures and their drift, the package and its approval
+    const manQ = { kind: z.enum(KINDS).optional(), language: z.enum(['en', 'hi']).optional(), status: z.enum(['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'STALE']).optional(), owner: z.string().regex(/^[A-Z][A-Z0-9-]{1,15}$/).optional(), q: z.string().trim().min(2).max(80).optional(), sort: z.string().regex(/^(title|kind|status|pages|owner|language)(:(asc|desc))?$/).optional() };
+    const signature = z.object({ title: z.string().max(300).optional(), tabs: z.array(z.string().max(200)).max(60).optional(), actions: z.array(z.string().max(200)).max(120).optional(), fields: z.array(z.string().max(200)).max(120).optional(), headings: z.array(z.string().max(200)).max(60).optional(), columns: z.array(z.string().max(200)).max(60).optional() }).strict();
+    const screen = z.object({ route: z.string().regex(/^\/[A-Za-z0-9/_.-]{0,200}$/), viewport: z.enum(['DESKTOP', 'MOBILE']), role: z.string().regex(/^[A-Z][A-Z0-9-]{1,15}$/).optional(), signature, image: z.string().regex(/^[A-Za-z0-9+/=]+$/).max(900_000).optional() }).strict();
+    r.get('/manuals', (req, res) => ok(res, manuals.library(req.actor, parse(z.object({ ...manQ, ...page }).strict(), req.query))));
+    r.get('/manuals/export', (req, res) => { const { format: f, ...q } = parse(z.object({ ...manQ, format }).strict(), req.query); return send(res, manuals.exportList(req.actor, q, f)); });
+    r.get('/manuals/:id/download', (req, res) => send(res, manuals.download(req.actor, id(req.params.id), parse(z.object({ format: z.enum(['pdf', 'docx']).default('pdf') }).strict(), req.query).format)));
+    r.post('/manuals/decisions', idem, (req, res) => ok(res, manuals.decide(req.actor, parse(z.object({ ids: z.array(z.number().int().positive()).min(1).max(200), action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional() }).strict(), req.body))));
+    r.post('/manuals/submissions', idem, (req, res) => ok(res, manuals.submit(req.actor, parse(z.object({ ids: z.array(z.number().int().positive()).min(1).max(500).optional(), reason }).strict(), req.body)), 201));
+    r.post('/manuals/packages', idem, async (req, res, next) => { try { ok(res, await manuals.generate(req.actor, parse(z.object({ captureId: z.number().int().positive().optional(), only: z.array(z.string().regex(/^[a-z]+\.[A-Za-z0-9-]+\.(en|hi)$/)).min(1).max(200).optional() }).strict(), req.body ?? {})), 202); } catch (err) { next(err); } });
+    r.get('/manuals/packages/:id', (req, res) => ok(res, manuals.packageStatus(req.actor, id(req.params.id))));
+    r.get('/manuals/packages/:id/download', (req, res) => send(res, manuals.downloadPackage(req.actor, id(req.params.id))));
+    r.post('/manuals/captures', idem, (req, res) => ok(res, manuals.startCapture(req.actor, parse(z.object({ buildId: z.string().regex(/^[A-Za-z0-9._-]{1,80}$/).optional() }).strict(), req.body ?? {})), 201));
+    r.get('/manuals/captures/:id', (req, res) => ok(res, manuals.capture(req.actor, id(req.params.id), parse(z.object({ drift: z.enum(['SAME', 'CHANGED', 'NEW']).optional() }).strict(), req.query))));
+    r.post('/manuals/captures/:id/screens', (req, res) => ok(res, manuals.addScreens(req.actor, id(req.params.id), parse(z.object({ screens: z.array(screen).min(1).max(40) }).strict(), req.body).screens)));
+    r.post('/manuals/captures/:id/compare', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, manuals.compareCapture(req.actor, id(req.params.id))); });
+    r.post('/manuals/captures/:id/accept', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, manuals.acceptCapture(req.actor, id(req.params.id))); });
 
     api.use('/tst', r);
   },

@@ -12,7 +12,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 //   keyboard  (desktop) the skip link, a visible focus ring, the command palette opened and closed with focus returned
 //   tree      the accessibility tree a screen reader reads: banner, navigation, main landmarks, one level-1 heading, every button named
 //   axe       no serious or critical axe finding on the field home and the approvals inbox at the device's size
-// Each journey's steps are posted as a DEVICE run of its device (POST /tst/a11y/runs) and written to reports/devices.json.
+// Each journey's steps are posted as a DEVICE run of its device (POST /tst/a11y/runs) and written to docs/erp/a11y/devices.json.
 const AXE = readFileSync(new URL('../node_modules/axe-core/axe.min.js', import.meta.url), 'utf8');
 const H = (roles, company, user) => ({ 'x-erp-user': user, 'x-erp-roles': roles, 'x-erp-company': String(company), 'content-type': 'application/json', 'idempotency-key': randomUUID() });
 const NET = { FAST: null, FAST_3G: { latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 }, SLOW_3G: { latency: 400, downloadThroughput: (500 * 1024) / 8, uploadThroughput: (500 * 1024) / 8 } };
@@ -127,8 +127,8 @@ test('T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, k
     const res = await request.post('/api/v1/tst/a11y/runs', { headers: H('ITADM', c, 'dm-qa'), data: { kind: 'DEVICE', deviceCode: d.code, language: 'en', network: d.network, final: true, results: journeys.map((j) => ({ journey: j.journey, result: j.result, steps: j.steps, loadMs: Math.min(600_000, j.loadMs) })) } });
     expect(res.status(), await res.text()).toBe(201);
   }
-  mkdirSync('reports', { recursive: true });
-  writeFileSync('reports/devices.json', JSON.stringify({ at: new Date().toISOString(), report }, null, 1));
+
+  mkdirSync('docs/erp/a11y', { recursive: true }); writeFileSync('docs/erp/a11y/devices.json', JSON.stringify({ at: new Date().toISOString(), report }, null, 1));
   const failed = report.flatMap((r) => r.journeys.filter((j) => j.result === 'FAIL').map((j) => `${r.device}: ${j.journey}: ${j.steps.filter((s) => s.result === 'FAIL').map((s) => `${s.step} — ${s.note ?? ''}`).join('; ')}`));
   for (const f of failed) info.annotations.push({ type: 'failed journey', description: f });
   expect(failed).toEqual([]);
