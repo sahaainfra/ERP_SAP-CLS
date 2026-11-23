@@ -210,8 +210,10 @@ export function createManualsService(context, { root = process.cwd(), storagePat
   /** BR-01 the pages of the build: registered in the client, with their Hindi label and the tracker's description. */
   const pages = () => {
     if (!inventory) {
+      // the Hindi label the menu shows (the navigation entry, 03.05), else the one the client registers, else the English label
+      const nav = new Map(db.prepare("SELECT route, label_hi FROM ui_navigation_entries WHERE route IS NOT NULL AND label_hi IS NOT NULL AND label_hi <> '' AND deleted_at IS NULL").all().map((r) => [r.route, r.label_hi]));
       const hi = hindiLabels(root);
-      inventory = registeredPages(root).filter((p) => !p.onboardingOnly && !p.route.includes(':')).map((p) => ({ ...p, labelHi: hi.get(p.route) ?? p.label, code: pageCode(p.route) }));
+      inventory = registeredPages(root).filter((p) => !p.onboardingOnly && !p.route.includes(':')).map((p) => ({ ...p, labelHi: nav.get(p.route) ?? hi.get(p.route) ?? p.label, code: pageCode(p.route) }));
     }
     return inventory;
   };

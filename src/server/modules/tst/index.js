@@ -14,6 +14,7 @@ import { SLO_KINDS, createPerfService } from './perf.js';
 import { createA11yService } from './a11y.js';
 import { ENV_CODES, createOpsService } from './ops.js';
 import { KINDS, createManualsService } from './manuals.js';
+import { SEVERITIES as UAT_SEVERITIES, createGoLiveService } from './golive.js';
 
 // Module M30 (tst): system integration, quality assurance and go-live. The module code `qa` belongs to site quality (M18), so the go-live
 // testing parts use `tst` (the table prefix of the pack, tst_page_audit). Part 30.01 mounts the integration matrix and the latency probe,
@@ -46,7 +47,8 @@ export const tst = {
     const a11y = createA11yService(context);
     const ops = createOpsService(context, { jobs: runtime?.jobs, scheduler: runtime?.scheduler, bus: runtime?.bus });
     const manuals = createManualsService(context, { storagePath, buildInfo, jobs: runtime?.jobs });
-    services.set(db, { integration, recon, audit, catalogue, sandbox, security, perf, a11y, ops, manuals });
+    const golive = createGoLiveService(context, { jobs: runtime?.jobs, scheduler: runtime?.scheduler });
+    services.set(db, { integration, recon, audit, catalogue, sandbox, security, perf, a11y, ops, manuals, golive });
     const r = Router();
     const ok = (res, data, status = 200) => res.status(status).json({ data });
     const idem = idempotency(db, { required: true, actorKey });
@@ -180,6 +182,30 @@ export const tst = {
     r.post('/manuals/captures/:id/screens', (req, res) => ok(res, manuals.addScreens(req.actor, id(req.params.id), parse(z.object({ screens: z.array(screen).min(1).max(40) }).strict(), req.body).screens)));
     r.post('/manuals/captures/:id/compare', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, manuals.compareCapture(req.actor, id(req.params.id))); });
     r.post('/manuals/captures/:id/accept', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, manuals.acceptCapture(req.actor, id(req.params.id))); });
+
+    // ---- part 30.10: UAT, the readiness checklist, the cut-over runbook, the go/no-go decision and hypercare
+    const glQ = { module: z.string().regex(/^[a-z]{2,10}$/).optional(), status: z.enum(['NOT_RUN', 'PASS', 'FAIL', 'BLOCKED']).optional(), mine: z.enum(['1']).optional() };
+    const decideBody = z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional(), version: z.number().int().positive().optional() }).strict();
+    const aw = (fn) => async (req, res, next) => { try { await fn(req, res); } catch (err) { next(err); } };
+    const day = (v) => parse(z.string().regex(/^\d{4}-\d{2}-\d{2}$/), v);
+    r.get('/golive', (req, res) => ok(res, golive.overview(req.actor, parse(z.object({ ...glQ, ...page }).strict(), req.query))));
+    r.get('/golive/export', (req, res) => { const q = parse(z.object({ kind: z.enum(['checklist', 'uat', 'hypercare']), format }).strict(), req.query); return send(res, golive.exportReport(req.actor, { kind: q.kind }, q.format)); });
+    r.post('/golive/evaluate', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, golive.evaluate(req.actor)); });
+    r.post('/golive/checklist/:id', idem, (req, res) => ok(res, golive.setItem(req.actor, id(req.params.id), parse(z.object({ status: z.enum(['MET', 'NOT_MET', 'WAIVED', 'OPEN']), evidence: z.array(z.string().trim().min(3).max(300)).max(10).default([]), note: z.string().trim().max(1000).optional(), ownerId: z.string().trim().min(2).max(80).optional(), version: z.number().int().positive().optional() }).strict(), req.body))));
+    r.post('/golive/uat/scripts/generate', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, golive.generateScripts(req.actor), 201); });
+    r.post('/golive/uat/scripts/:id/run', idem, (req, res) => ok(res, golive.runScript(req.actor, id(req.params.id), parse(z.object({ result: z.enum(['PASS', 'FAIL', 'BLOCKED']), notes: z.string().trim().max(1000).optional(), defect: z.object({ title: z.string().trim().min(5).max(300), description: z.string().trim().max(2000).optional(), severity: z.enum(UAT_SEVERITIES) }).strict().optional(), version: z.number().int().positive().optional() }).strict(), req.body))));
+    r.post('/golive/uat/defects', idem, (req, res) => ok(res, golive.raiseDefect(req.actor, parse(z.object({ module: z.string().regex(/^[a-z]{2,10}$/), title: z.string().trim().min(5).max(300), description: z.string().trim().max(2000).optional(), severity: z.enum(UAT_SEVERITIES) }).strict(), req.body)), 201));
+    r.post('/golive/uat/defects/:id/triage', idem, (req, res) => ok(res, golive.triage(req.actor, id(req.params.id), parse(z.object({ action: z.enum(['triage', 'fix', 'close', 'defer', 'reopen']), severity: z.enum(UAT_SEVERITIES).optional(), ownerId: z.string().trim().min(2).max(80).optional(), fixedIn: z.string().regex(/^[0-9a-f]{7,40}$/).optional(), reason: z.string().trim().max(500).optional(), version: z.number().int().positive().optional() }).strict(), req.body))));
+    r.post('/golive/uat/signoffs', idem, (req, res) => { const b = parse(z.object({ module: z.string().regex(/^[a-z]{2,10}$/), reason }).strict(), req.body); return ok(res, golive.requestSignoff(req.actor, b.module, { reason: b.reason }), 201); });
+    r.post('/golive/requests/:id/act', idem, (req, res) => ok(res, golive.decide(req.actor, id(req.params.id), parse(decideBody, req.body))));
+    r.post('/golive/cutover/runs', idem, (req, res) => ok(res, golive.planRun(req.actor, parse(z.object({ kind: z.enum(['DRY_RUN', 'PRODUCTION']), windowMinutes: z.number().int().min(30).max(4320).optional(), plannedStart: z.string().datetime().optional() }).strict(), req.body)), 201));
+    r.post('/golive/cutover/runs/:id/start', idem, aw(async (req, res) => { parse(z.object({}).strict(), req.body ?? {}); ok(res, await golive.startRun(req.actor, id(req.params.id))); }));
+    r.post('/golive/cutover/runs/:id/rollback', idem, (req, res) => ok(res, golive.rollBack(req.actor, id(req.params.id), parse(z.object({ reason }).strict(), req.body))));
+    r.post('/golive/cutover/steps/:id/complete', idem, aw(async (req, res) => ok(res, await golive.completeStep(req.actor, id(req.params.id), parse(z.object({ result: z.enum(['DONE', 'FAILED']), detail: z.string().trim().min(5).max(500) }).strict(), req.body)))));
+    r.post('/golive/decisions', idem, (req, res) => ok(res, golive.submitDecision(req.actor, parse(z.object({ meetingAt: z.string().datetime(), attendees: z.array(z.string().trim().min(2).max(120)).min(2).max(40), recommendation: z.enum(['GO', 'NO_GO']), goLiveAt: z.string().datetime().optional(), minutes: z.string().trim().min(20).max(4000) }).strict(), req.body)), 201));
+    r.post('/golive/hypercare', idem, (req, res) => ok(res, golive.startHypercare(req.actor, parse(z.object({ startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), warRoom: z.array(z.string().regex(/^[A-Z][A-Z0-9-]{1,15}$/)).max(20).optional() }).strict(), req.body ?? {})), 201));
+    r.post('/golive/hypercare/days/:date/publish', idem, (req, res) => ok(res, golive.publishDay(req.actor, day(req.params.date), parse(z.object({ triageNotes: z.string().trim().min(10).max(4000) }).strict(), req.body))));
+    r.post('/golive/hypercare/handover', idem, (req, res) => ok(res, golive.requestHandover(req.actor, parse(z.object({ notes: z.string().trim().min(20).max(4000) }).strict(), req.body)), 201));
 
     api.use('/tst', r);
   },

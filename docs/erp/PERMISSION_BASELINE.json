@@ -230,6 +230,9 @@
   "ACCMGR",
   "FINEX"
  ],
+ "golive.manage": [
+  "PCMGR"
+ ],
  "hd.article.manage": [
   "ITADM",
   "SYSADM"
