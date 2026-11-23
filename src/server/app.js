@@ -108,6 +108,8 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
         { name: 'erp_slo_breached', help: '1 when a journey is outside its objective.', values: slos.map((s) => ({ labels: { journey: s.journey }, value: s.status === 'breached' ? 1 : 0 })) },
       ];
       if (sys.disk) extra.push(gauge('erp_disk_free_pct', 'Free space of the data disk in percent.', sys.disk.freePct));
+      // part 30.08: the age of the last verified backup, for the ErpBackupStale alert (infra/monitoring/alerts.yml)
+      try { const b = db.prepare("SELECT MAX(finished_at) AS at FROM ops_backups WHERE status = 'VERIFIED' AND deleted_at IS NULL").get(); if (b?.at) extra.push(gauge('erp_backup_last_success_timestamp_seconds', 'When the last verified backup finished (Unix seconds).', Math.floor(Date.parse(b.at) / 1000))); } catch { /* no backup table before 29.06 */ }
       res.type('text/plain; version=0.0.4').send(metrics.prometheus(extra));
     };
     const token = req.get('x-health-token');

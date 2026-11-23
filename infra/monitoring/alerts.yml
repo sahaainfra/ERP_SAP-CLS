@@ -1,0 +1,49 @@
+# Part 30.08 FR-03: alert rules over the application's /metrics (01.07) for Prometheus; routed to the on-call rota by alertmanager.yml.
+groups:
+  - name: erp
+    rules:
+      - alert: ErpDown
+        expr: up{job="erp"} == 0
+        for: 2m
+        labels: { severity: page }
+        annotations: { summary: "The ERP {{ $labels.instance }} does not answer", runbook: "docs/erp/runbooks/incident-response.md" }
+      - alert: ErpServerErrors
+        expr: sum(rate(erp_http_requests_total{class="5xx"}[5m])) / sum(rate(erp_http_requests_total[5m])) > 0.02
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "More than 2 % of requests fail with a server error", runbook: "docs/erp/runbooks/incident-response.md" }
+      - alert: ErpSlowLists
+        expr: histogram_quantile(0.95, sum by (le) (rate(erp_http_request_duration_ms_bucket[10m]))) > 800
+        for: 10m
+        labels: { severity: ticket }
+        annotations: { summary: "p95 of requests above 800 ms for 10 minutes", runbook: "docs/erp/runbooks/scale.md" }
+      - alert: ErpMemoryHigh
+        expr: erp_process_rss_mb > 900
+        for: 15m
+        labels: { severity: ticket }
+        annotations: { summary: "An API process holds more than 900 MB (limit 1 GB)", runbook: "docs/erp/runbooks/scale.md" }
+      - alert: ErpBackupStale
+        expr: time() - erp_backup_last_success_timestamp_seconds > 26 * 3600
+        for: 10m
+        labels: { severity: page }
+        annotations: { summary: "No verified backup in the last 26 hours", runbook: "docs/erp/runbooks/restore.md" }
+      - alert: ErpDeadLetters
+        expr: erp_dead_letters > 0
+        for: 15m
+        labels: { severity: ticket }
+        annotations: { summary: "Events in the dead-letter queue: a consumer keeps failing", runbook: "docs/erp/runbooks/incident-response.md" }
+      - alert: ErpJobsBacklog
+        expr: erp_jobs_queued > 200
+        for: 15m
+        labels: { severity: ticket }
+        annotations: { summary: "Background jobs are piling up", runbook: "docs/erp/runbooks/scale.md" }
+      - alert: ErpDiskLow
+        expr: erp_disk_free_pct < 15
+        for: 10m
+        labels: { severity: page }
+        annotations: { summary: "The data disk has less than 15 % free", runbook: "docs/erp/runbooks/scale.md" }
+      - alert: ErpCertificateExpiring
+        # probe_ssl_earliest_cert_expiry comes from the blackbox exporter that probes the public URL (not from the application)
+        expr: probe_ssl_earliest_cert_expiry - time() < 14 * 86400
+        labels: { severity: ticket }
+        annotations: { summary: "The TLS certificate expires within 14 days", runbook: "docs/erp/runbooks/certificate-renewal.md" }

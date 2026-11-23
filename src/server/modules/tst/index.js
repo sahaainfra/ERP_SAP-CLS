@@ -11,6 +11,8 @@ import { PART, TYPES, createCatalogueService } from './catalogue.js';
 import { PACKS, createSandboxService } from './sandbox.js';
 import { CONTROLS, SEVERITIES, SOURCES, STATUSES, createSecurityService } from './security.js';
 import { SLO_KINDS, createPerfService } from './perf.js';
+import { createA11yService } from './a11y.js';
+import { ENV_CODES, createOpsService } from './ops.js';
 
 // Module M30 (tst): system integration, quality assurance and go-live. The module code `qa` belongs to site quality (M18), so the go-live
 // testing parts use `tst` (the table prefix of the pack, tst_page_audit). Part 30.01 mounts the integration matrix and the latency probe,
@@ -27,8 +29,8 @@ export const tstOf = (db) => services.get(db) ?? null;
 
 export const tst = {
   code: 'tst', name: 'System Integration, Quality Assurance & Go-Live', routePrefix: '/api/v1/tst', ownerPart: '30.01',
-  status: 'Integration matrix and real-time latency (30.01), reconciliation suite and trace completeness (30.02), page completion audit (30.03), test catalogue, coverage and simulation sandbox (30.04), security findings and remediation (30.05), performance test results (30.06).',
-  tables: ['tst_integration_runs', 'tst_latency_probes', 'tst_recon_runs', 'tst_recon_results', 'tst_page_audit', 'tst_page_audit_runs', 'tst_test_catalogue', 'tst_test_runs', 'tst_sandbox_runs', 'sct_findings', 'sct_scan_runs', 'sct_reviews', 'tst_perf_runs', 'tst_perf_results'], resources: ['integration', 'reconciliation', 'page-audits', 'tests', 'sandbox', 'security', 'perf'],
+  status: 'Integration matrix and real-time latency (30.01), reconciliation suite and trace completeness (30.02), page completion audit (30.03), test catalogue, coverage and simulation sandbox (30.04), security findings and remediation (30.05), performance test results (30.06), accessibility and device validation (30.07), operations runbooks and environments (30.08).',
+  tables: ['tst_integration_runs', 'tst_latency_probes', 'tst_recon_runs', 'tst_recon_results', 'tst_page_audit', 'tst_page_audit_runs', 'tst_test_catalogue', 'tst_test_runs', 'tst_sandbox_runs', 'sct_findings', 'sct_scan_runs', 'sct_reviews', 'tst_perf_runs', 'tst_perf_results', 'tst_devices', 'tst_a11y_runs', 'tst_a11y_results', 'ops_environments', 'ops_deployments', 'ops_runbooks', 'ops_oncall', 'ops_pages'], resources: ['ops', 'a11y', 'integration', 'reconciliation', 'page-audits', 'tests', 'sandbox', 'security', 'perf'],
   mount(api, { db, config }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tst_integration_runs'").get()) return;
     const context = { db, environment: config.environment ?? 'development', flags: createFlagService({ db, environment: config.environment }) };
@@ -40,7 +42,9 @@ export const tst = {
     const sandbox = createSandboxService(context, { config });
     const security = createSecurityService(context);
     const perf = createPerfService(context);
-    services.set(db, { integration, recon, audit, catalogue, sandbox, security, perf });
+    const a11y = createA11yService(context);
+    const ops = createOpsService(context, { jobs: runtime?.jobs, scheduler: runtime?.scheduler, bus: runtime?.bus });
+    services.set(db, { integration, recon, audit, catalogue, sandbox, security, perf, a11y, ops });
     const r = Router();
     const ok = (res, data, status = 200) => res.status(status).json({ data });
     const idem = idempotency(db, { required: true, actorKey });
@@ -124,6 +128,38 @@ export const tst = {
       memory: z.object({ startMb: z.number().int().min(0).max(1_000_000).optional(), endMb: z.number().int().min(0).max(1_000_000).optional(), maxMb: z.number().int().min(0).max(1_000_000).optional(), samples: z.array(z.object({ t: z.number().min(0).max(1_000_000), rssMb: z.number().min(0).max(1_000_000) }).strict()).max(2000).default([]) }).strict().optional(),
       results: z.array(z.object({ model: z.string().regex(/^[A-Z][A-Z0-9_]{1,30}$/), journey: z.string().trim().min(2).max(120), sloKind: z.enum(SLO_KINDS), requests: z.number().int().min(0), errors: z.number().int().min(0), p50: ms, p95: ms, p99: ms, max: ms, throughputRps: z.number().min(0).max(1_000_000), targetRps: z.number().min(0).max(1_000_000).optional() }).strict()).min(1).max(60),
     }).strict(), req.body)), 201));
+
+    // ---- part 30.07: accessibility, responsive and device validation
+    const a11yQ = { kind: z.enum(['AXE', 'RESPONSIVE', 'DEVICE', 'SCREEN_READER']).optional(), width: z.coerce.number().int().positive().max(4000).optional(), issue: z.enum(['ACTIVE', 'OPEN', 'FIXED', 'RETESTED', 'NONE', 'ALL']).optional(), q: z.string().trim().min(2).max(80).optional() };
+    const violation = z.object({ rule: z.string().regex(/^[a-z0-9-]{2,80}$/), impact: z.enum(['critical', 'serious', 'moderate', 'minor']), help: z.string().max(300).default(''), nodes: z.number().int().min(0).max(100000).default(1), targets: z.array(z.string().max(200)).max(5).default([]) }).strict();
+    const step = z.object({ step: z.string().trim().min(2).max(200), result: z.enum(['PASS', 'FAIL', 'SKIP']), ms: z.number().int().min(0).max(600000).optional(), note: z.string().max(500).optional() }).strict();
+    const a11yResult = z.object({ route: z.string().regex(/^\/[A-Za-z0-9/_:.-]{0,200}$/).optional(), journey: z.string().trim().min(3).max(120).optional(), result: z.enum(['PASS', 'FAIL']).optional(), violations: z.array(violation).max(60).default([]), overflowPx: z.number().int().min(0).max(100000).default(0), smallTargets: z.number().int().min(0).max(10000).default(0), tinyInputs: z.number().int().min(0).max(10000).default(0), loadMs: z.number().int().min(0).max(600000).optional(), steps: z.array(step).max(40).optional(), notes: z.string().max(1000).optional(), error: z.string().max(500).optional() }).strict();
+    const lang = z.enum(['en', 'hi', 'te']).optional(); const net = z.enum(['FAST', 'FAST_3G', 'SLOW_3G', 'OFFLINE']).optional();
+    r.get('/a11y', (req, res) => ok(res, a11y.overview(req.actor, parse(z.object({ ...a11yQ, ...page }).strict(), req.query))));
+    r.get('/a11y/export', (req, res) => { const { format: f, ...q } = parse(z.object({ ...a11yQ, format }).strict(), req.query); return send(res, a11y.exportResults(req.actor, q, f)); });
+    r.get('/a11y/results/:id', (req, res) => ok(res, a11y.result(req.actor, id(req.params.id))));
+    r.post('/a11y/runs', idem, (req, res) => ok(res, a11y.recordRun(req.actor, parse(z.object({ kind: z.enum(['AXE', 'RESPONSIVE', 'DEVICE', 'SCREEN_READER']), deviceCode: z.string().regex(/^[a-z0-9-]{2,40}$/).optional(), width: z.number().int().positive().max(4000).optional(), height: z.number().int().positive().max(4000).optional(), theme: z.enum(['light', 'dark', 'high-contrast']).optional(), language: lang, network: net, assistiveTech: z.string().trim().max(60).optional(), runId: z.number().int().positive().optional(), final: z.boolean().default(true), results: z.array(a11yResult).min(1).max(200) }).strict(), req.body)), 201));
+    r.post('/a11y/manual', idem, (req, res) => ok(res, a11y.recordManual(req.actor, parse(z.object({ kind: z.enum(['DEVICE', 'SCREEN_READER']), deviceCode: z.string().regex(/^[a-z0-9-]{2,40}$/).optional(), assistiveTech: z.enum(['NVDA', 'JAWS', 'VoiceOver', 'TalkBack', 'Narrator']).optional(), language: lang, network: net, journey: z.string().trim().min(3).max(120), route: z.string().regex(/^\/[A-Za-z0-9/_:.-]{0,200}$/).optional(), result: z.enum(['PASS', 'FAIL']), steps: z.array(step).max(40).optional(), notes: z.string().trim().max(1000).optional() }).strict(), req.body)), 201));
+    r.post('/a11y/results/:id/fix', idem, (req, res) => ok(res, a11y.fixIssue(req.actor, id(req.params.id), parse(z.object({ fixedIn: z.string().regex(/^[0-9a-f]{7,40}$/) }).strict(), req.body))));
+    r.post('/a11y/signoff', idem, (req, res) => ok(res, a11y.requestSignoff(req.actor, parse(z.object({ reason }).strict(), req.body)), 201));
+    r.post('/a11y/signoff/:id/act', idem, (req, res) => ok(res, a11y.decideSignoff(req.actor, id(req.params.id), parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional(), version: z.number().int().positive().optional() }).strict(), req.body))));
+
+    // ---- part 30.08: operations — environments, deployments, runbooks, on-call
+    const opsQ = { environment: z.enum(ENV_CODES).optional(), kind: z.enum(['DEPLOY', 'ROLLBACK', 'REHEARSAL']).optional(), status: z.enum(['SUCCEEDED', 'FAILED', 'ROLLED_BACK']).optional() };
+    const stepIn = z.object({ step: z.string().trim().min(2).max(200), result: z.enum(['PASS', 'FAIL', 'SKIP']), ms: z.number().int().min(0).max(36_000_000).optional(), note: z.string().max(500).optional() }).strict();
+    const sha256 = z.string().regex(/^[0-9a-f]{64}$/);
+    const rbCode = (v) => parse(z.string().regex(/^[a-z0-9][a-z0-9-]{1,60}$/), v);
+    r.get('/ops', (req, res) => ok(res, ops.overview(req.actor, parse(z.object({ ...opsQ, ...page }).strict(), req.query))));
+    r.get('/ops/export', (req, res) => { const { format: f, ...q } = parse(z.object({ ...opsQ, format }).strict(), req.query); return send(res, ops.exportDeployments(req.actor, q, f)); });
+    r.post('/ops/deployments', idem, (req, res) => ok(res, ops.recordDeployment(req.actor, parse(z.object({ environment: z.enum(ENV_CODES), kind: z.enum(['DEPLOY', 'ROLLBACK', 'REHEARSAL']), method: z.enum(['BLUE_GREEN', 'IN_PLACE']).optional(), buildId: z.string().regex(/^[\w.-]{1,80}$/).optional(), version: z.string().max(60).optional(), commitRef: z.string().regex(/^[0-9a-f]{7,40}$/).optional(), artifactSha256: sha256.optional(), pipelineRun: z.string().regex(/^[\w.:/#-]{3,200}$/).optional(), slot: z.enum(['blue', 'green']).optional(), status: z.enum(['SUCCEEDED', 'FAILED', 'ROLLED_BACK']), startedAt: z.string().datetime(), finishedAt: z.string().datetime(), requests: z.number().int().min(0).optional(), failedRequests: z.number().int().min(0).optional(), steps: z.array(stepIn).max(40).optional(), reason: z.string().max(500).optional() }).strict(), req.body)), 201));
+    r.post('/ops/rehearsals', idem, (req, res) => ok(res, ops.recordRehearsal(req.actor, parse(z.object({ environment: z.enum(ENV_CODES), kind: z.literal('ZERO_DOWNTIME'), ok: z.boolean(), requests: z.number().int().min(0), failed: z.number().int().min(0), steps: z.array(z.object({ name: z.string().min(2).max(200), ok: z.boolean(), ms: z.number().int().min(0), detail: z.string().max(300) }).strict()).min(1).max(40) }).strict(), req.body)), 201));
+    r.post('/ops/runbooks/sync', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, ops.syncRunbooks(req.actor), 201); });
+    r.get('/ops/runbooks/:code', (req, res) => ok(res, ops.runbook(req.actor, rbCode(req.params.code))));
+    r.post('/ops/runbooks/:code/submit', idem, (req, res) => ok(res, ops.submitRunbook(req.actor, rbCode(req.params.code), parse(z.object({ reason }).strict(), req.body)), 201));
+    r.post('/ops/runbook-requests/:id/act', idem, (req, res) => ok(res, ops.decideRunbook(req.actor, id(req.params.id), parse(z.object({ action: z.enum(['approve', 'reject', 'return']), comment: z.string().trim().max(500).optional(), version: z.number().int().positive().optional() }).strict(), req.body))));
+    r.post('/ops/oncall', idem, (req, res) => ok(res, ops.addShift(req.actor, parse(z.object({ username: z.string().trim().min(2).max(80), level: z.enum(['L1', 'L2', 'L3']), fromAt: z.string().datetime(), toAt: z.string().datetime() }).strict(), req.body)), 201));
+    r.post('/ops/oncall/:id/cancel', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, ops.cancelShift(req.actor, id(req.params.id))); });
+    r.post('/ops/pages/:id/acknowledge', idem, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, ops.acknowledge(req.actor, id(req.params.id))); });
 
     api.use('/tst', r);
   },
