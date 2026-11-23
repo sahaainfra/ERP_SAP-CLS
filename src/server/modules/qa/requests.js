@@ -27,7 +27,9 @@ export function holdGate(db, { activityId, locationId = null }) {
 }
 export function createRequestService({ db, base, flags }) {
   const { audit, notify, param, fail } = base; void flags; void param; const { evt, gate, scopeOf, pcode, projectOk } = qaHelpers({ db, base }); const today = () => todayIST();
-  const days = (iso) => Math.floor((Date.parse(`${today()}T00:00:00Z`) - Date.parse(`${String(iso).slice(0, 10)}T00:00:00Z`)) / 86_400_000);
+  // the age in India days: a timestamp is taken at its India date (after 18:30 UTC it is already the next day), as today() is
+  const istDay = (v) => { const t = String(v); return /T/.test(t) ? todayIST(new Date(t)) : t.slice(0, 10); };
+  const days = (iso) => Math.floor((Date.parse(`${today()}T00:00:00Z`) - Date.parse(`${istDay(iso)}T00:00:00Z`)) / 86_400_000);
   const flow = createFlow({ db, base, docType: 'QA_IR', table: 'qa_inspection_requests', perm: 'qa.inspection_request', label: 'inspection request', route: '/qa/inspection-requests?id=', ctx: (r) => ({ consultant: r.consultant_required ? 'yes' : 'no' }), title: (r) => r.description, notifyCode: 'qa.ir.decided', numberKey: 'QA_IR', prefix: 'IR',
     beforeSubmit: (_actor, r) => { if (r.requested_for < today()) fail([{ field: 'requestedFor', message: 'The date inspection is wanted cannot be in the past' }]); },
     onApproved: (actor, r, comment) => {

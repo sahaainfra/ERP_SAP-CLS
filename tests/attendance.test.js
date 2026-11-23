@@ -175,7 +175,9 @@ test('T-01 BR-01 FR-05 policy, shift and weekly off resolve from the employee ov
   assert.equal((await t.api.call('GET', `${A}/resolve?employeeId=${eOther}&date=${day(1)}`, { roles: '', user: 'emp1', company: '1' })).status, 404);
   assert.equal((await t.call(other, 'GET', `/resolve?employeeId=${e}&date=${day(1)}`)).status, 404, 'another company');
   // the evaluation for a person and a day: night shift for the override
-  const ev = await t.call(hr1, 'POST', '/evaluate', { employeeId: e, date: day(5), punchIn: `${day(5)}T21:50`, punchOut: `${day(6)}T06:00` });
+  // a working day of the night shift: day 5, or day 6 when day 5 is a Sunday (the company's weekly off: the run's weekday must not matter)
+  const n = new Date(`${day(5)}T00:00:00Z`).getUTCDay() === 0 ? 6 : 5;
+  const ev = await t.call(hr1, 'POST', '/evaluate', { employeeId: e, date: day(n), punchIn: `${day(n)}T21:50`, punchOut: `${day(n + 1)}T06:00` });
   assert.equal(ev.status, 200, JSON.stringify(ev.json));
   assert.deepEqual([ev.json.data.status, ev.json.data.workedMinutes], ['PRESENT', 460]);
 });
