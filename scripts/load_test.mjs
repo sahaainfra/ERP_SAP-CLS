@@ -11,6 +11,7 @@
 // Usage: node scripts/load_test.mjs [--profile smoke|load|stress|soak] [--duration 1800] [--post http://host:port] [--token …] [--out file]
 // With --post the run is recorded in that installation (POST /api/v1/tst/perf/runs); the report is written to reports/load-<profile>.json.
 import { execFileSync, spawn } from 'node:child_process';
+import http from 'node:http';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { cpus, platform, release, tmpdir, totalmem } from 'node:os';
@@ -25,8 +26,10 @@ const opt = (n, d = null) => { const i = args.indexOf(`--${n}`); return i >= 0 ?
 const profile = opt('profile', 'smoke').toUpperCase();
 const P = {
   SMOKE: { users: 20, think: 1000, punches: 100, punchWindow: 10, dprs: 10, dprWindow: 10, monthEnd: 10, monthEndConc: 4, phase: 15 },
-  LOAD: { users: 1000, think: 10_000, punches: 2000, punchWindow: 60, dprs: 200, dprWindow: 60, monthEnd: 60, monthEndConc: 10, phase: 60 },
-  STRESS: { users: 2000, think: 5000, punches: 4000, punchWindow: 60, dprs: 400, dprWindow: 60, monthEnd: 60, monthEndConc: 20, phase: 60 },
+  LOAD: { users: 1000, think: 10_000, punches: 2000, punchWindow: 60, dprs: 200, dprWindow: 60, monthEnd: 60, monthEndConc: 50, monthEndThink: 1000, phase: 60 },
+  STRESS: { users: 2000, think: 5000, punches: 4000, punchWindow: 60, dprs: 400, dprWindow: 60, monthEnd: 60, monthEndConc: 100, monthEndThink: 500, phase: 60 },
+  USERS: { users: Number(process.env.LOAD_USERS ?? 1000), think: Number(process.env.LOAD_THINK ?? 10_000), punches: 0, dprs: 0, monthEnd: 0, phase: Number(opt('duration', 90)) },
+  BURST: { users: 0, think: 1000, punches: 2000, punchWindow: 60, dprs: 0, monthEnd: 0, phase: 60 },
   SOAK: { users: 200, think: 5000, punches: 0, dprs: 0, monthEnd: 0, phase: Number(opt('duration', 1800)) },
 }[profile];
 if (!P) { console.error('--profile smoke|load|stress|soak'); process.exit(2); }
@@ -64,15 +67,26 @@ const file = join(dir, 'load.sqlite'); mkdirSync(join(dir, 'storage'));
 }
 
 // ---------------------------------------------------------------- the server in its own process
-const port = await new Promise((r) => { const s = createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => r(p)); }); });
-const server = spawn(process.execPath, ['src/server/index.js'], { cwd: root, env: { ...process.env, NODE_ENV: 'development', PORT: String(port), DATABASE_PATH: file, STORAGE_PATH: join(dir, 'storage'), AUTH_MODE: 'dev-headers', }, stdio: ['ignore', 'ignore', 'pipe'] });
+const port = await new Promise((r) => { const s = createServer(); s.listen(0, '127.0.0.1', () => { const p = /** @type {import('node:net').AddressInfo} */ (s.address()).port; s.close(() => r(p)); }); });
+const server = spawn(process.execPath, [...(process.env.LOAD_CPU_PROF ? ['--cpu-prof', `--cpu-prof-dir=${process.env.LOAD_CPU_PROF}`, '--import', `${process.env.LOAD_CPU_PROF}/exit.mjs`] : []), 'src/server/index.js'], { cwd: root, env: { ...process.env, NODE_ENV: 'development', PORT: String(port), DATABASE_PATH: file, STORAGE_PATH: join(dir, 'storage'), AUTH_MODE: 'dev-headers', }, stdio: ['ignore', 'ignore', 'pipe'] });
 let serverErr = ''; server.stderr.on('data', (d) => { serverErr = (serverErr + d).slice(-4000); });
 const base = `http://127.0.0.1:${port}`;
 for (let i = 0; i < 100; i += 1) { try { if ((await fetch(`${base}/api/v1/health`)).status < 500) break; } catch { /* starting */ } await new Promise((r) => setTimeout(r, 200)); }
 const rssMb = () => { try { return Math.round(Number(execFileSync('ps', ['-o', 'rss=', '-p', String(server.pid)], { encoding: 'utf8' }).trim()) / 1024); } catch { return null; } };
 const as = (user, roles) => ({ 'content-type': 'application/json', 'x-erp-user': user, 'x-erp-roles': roles, 'x-erp-company': '1' });
 let seq = 0;
-const call = async (method, path, headers, body) => { const t = process.hrtime.bigint(); let ok = false; let status = 0; let json = null; try { const r = await fetch(base + path, { method, headers: method === 'GET' ? headers : { ...headers, 'idempotency-key': `load-${process.pid}-${(seq += 1)}` }, body: body === undefined ? undefined : JSON.stringify(body) }); status = r.status; const text = await r.text(); try { json = JSON.parse(text); } catch { /* not JSON */ } ok = status < 400; } catch { ok = false; } return { ms: Number(process.hrtime.bigint() - t) / 1e6, ok, status, json }; };
+// every person calls from an address of their own (phones on mobile data, as on site): 127.x.y.z on the loopback, one agent each (a new connection per request, as after a think time),
+// so the per-address limits of the server (02.07) act as they would in production rather than on one generator's address
+const agents = new Map(); const addressOf = new Map();
+const agentFor = (user) => { let ip = addressOf.get(user); if (!ip) { const n = addressOf.size + 1; ip = `127.${10 + Math.floor(n / 62500)}.${Math.floor(n / 250) % 250}.${(n % 250) + 1}`; addressOf.set(user, ip); } let a = agents.get(ip); if (!a) { a = new http.Agent({ keepAlive: false, localAddress: ip, maxSockets: 4 }); /* a phone opens a connection after its think time: the server closes idle ones after 5 s */ agents.set(ip, a); } return a; };
+const call = (method, path, headers, body) => new Promise((resolveCall) => {
+  const t = process.hrtime.bigint(); const text = body === undefined ? undefined : JSON.stringify(body);
+  const h = { ...headers, ...(method === 'GET' ? {} : { 'idempotency-key': `load-${process.pid}-${(seq += 1)}` }), ...(text ? { 'content-length': Buffer.byteLength(text) } : {}) };
+  const done = (status, raw) => { let json = null; try { json = JSON.parse(raw); } catch { /* not JSON */ } resolveCall({ ms: Number(process.hrtime.bigint() - t) / 1e6, ok: status > 0 && status < 400, status, json }); };
+  const req = http.request(`${base}${path}`, { method, headers: h, agent: agentFor(headers['x-erp-user'] ?? 'anon'), timeout: 120_000 }, (res) => { const chunks = []; res.on('data', (c) => chunks.push(c)); res.on('end', () => done(res.statusCode, Buffer.concat(chunks).toString('utf8'))); res.on('error', () => done(0, '')); });
+  req.on('error', () => done(0, '')); req.on('timeout', () => req.destroy());
+  if (text) req.write(text); req.end();
+});
 const sys = as('load-admin', 'SYSADM,ITADM,HRMGR,PM,CFO');
 await call('PUT', '/api/v1/core/company-settings', sys, { legalName: 'Load Test Constructions Pvt Ltd', reason: 'load test set-up' });
 const fyStart = `${Number(TODAY.slice(0, 4)) - (Number(TODAY.slice(5, 7)) < 4 ? 1 : 0)}-04-01`;
@@ -81,8 +95,9 @@ await call('POST', '/api/v1/core/financial-years', sys, { startDate: fyStart });
 // ---------------------------------------------------------------- the journeys and the recorder
 const rec = new Map();
 const note = (model, journey, sloKind, r) => { const k = `${model}|${journey}`; if (!rec.has(k)) rec.set(k, { model, journey, sloKind, lat: [], errors: 0, first: Date.now(), last: Date.now(), statuses: {} }); const x = rec.get(k); x.lat.push(r.ms); if (!r.ok) { x.errors += 1; x.statuses[r.status] = (x.statuses[r.status] ?? 0) + 1; x.sample ??= String(r.json?.error?.message ?? '').slice(0, 160); } x.last = Date.now(); };
-const { pid, s1, sites } = globalThis.ids;
+const { s1, sites } = globalThis.ids;
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+/** @type {[string, string, () => string][]} */
 const browse = [
   ['Sample documents list (20,000 rows)', 'LIST', () => `/api/v1/core/sample-documents?page=${1 + Math.floor(Math.random() * 20)}&pageSize=25`],
   ['Employees list', 'LIST', () => '/api/v1/hr/employees?page=1&pageSize=25'],
@@ -97,7 +112,7 @@ let stopUsers = false;
 async function users(n, think) {
   await Promise.all(Array.from({ length: n }, async (_, i) => {
     const h = as(`lu${i}`, 'PM,CM,HRMGR');
-    await new Promise((r) => setTimeout(r, Math.random() * think));
+    if (!n) return; await new Promise((r) => setTimeout(r, Math.random() * think));
     while (!stopUsers) {
       const [label, kind, path] = pick(browse);
       note('USERS', label, kind, await call('GET', path(), h));
@@ -118,6 +133,7 @@ async function dprBurst() {
 async function monthEnd() {
   if (!P.monthEnd) return;
   const end = Date.now() + P.monthEnd * 1000; const period = `${TODAY.slice(0, 7)}-01`;
+  /** @type {[string, () => string][]} */
   const reports = [
     ['Attendance register of the month', () => `/api/v1/att/register?period=${period}&siteId=${s1}`],
     ['Event log (last 100)', () => '/api/v1/core/events?page=1&pageSize=100'],
@@ -128,10 +144,9 @@ async function monthEnd() {
     const h = as(`lme${i}`, 'SYSADM,CFO,HRMGR,PM'); let k = 0;
     while (Date.now() < end) {
       if (k % 4 === 3) note('MONTH_END', 'Post a bill (calculation engine, trace, audit, event)', 'SAVE', await call('POST', '/api/v1/core/sample-bills', h, { title: `Month-end bill ${i}-${k}`, quantity: '10', unitRate: '1250.00', gstPercent: '18', supply: 'intra' }));
-      // an export is limited to 20 a minute from one address (02.07): one in thirty requests here, from one generator
-      else if (k % 30 === 1 && i < 2) note('MONTH_END', 'Employee master export (XLSX)', 'REPORT', await call('GET', '/api/v1/hr/employees/export?format=xlsx', h));
       else { const [label, path] = reports[k % reports.length]; note('MONTH_END', label, 'REPORT', await call('GET', path(), h)); }
       k += 1;
+      await new Promise((r) => setTimeout(r, P.monthEndThink ?? 0));
     }
   }));
 }
@@ -166,7 +181,7 @@ const startedAt = new Date().toISOString();
 log(`${profile}: server ${base} (pid ${server.pid}), ${EMPLOYEES} employees, ${sites.length} DPR sites, RSS ${startMb} MB`);
 const background = users(P.users, P.think); const prober = probes();
 let punchSeconds = null;
-if (profile === 'SOAK') await new Promise((r) => setTimeout(r, P.phase * 1000));
+if (profile === 'SOAK' || profile === 'USERS') await new Promise((r) => setTimeout(r, P.phase * 1000));
 else {
   log('phase 1: the morning punch burst'); punchSeconds = await punchBurst();
   log('phase 2: the evening DPRs'); await dprBurst();

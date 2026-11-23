@@ -38,6 +38,7 @@ export const PACKS = Object.freeze({
 
 integrityRegistry.register({ statuses: { tst_sandbox_runs: ['QUEUED', 'RUNNING', 'DONE', 'FAILED'] } });
 
+/** @param {any} context @param {{ config?: any }} [options] */
 export function createSandboxService(context, { config = {} } = {}) {
   const { db } = context;
   const guard = (actor, key) => {
@@ -90,7 +91,7 @@ export function createSandboxService(context, { config = {} } = {}) {
       if (method !== 'GET') headers['idempotency-key'] = `sbx-${co}-${Date.now().toString(36)}-${(seq += 1)}-${randomUUID().slice(0, 8)}`;
       const res = await fetch(base + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
       const json = await res.json().catch(() => null);
-      if (res.status >= 400) { const e = new Error(`${method} ${path} as ${who}: ${res.status} ${json?.error?.message ?? ''}`.trim()); e.status = res.status; e.body = json; throw e; }
+      if (res.status >= 400) { const e = /** @type {any} */ (new Error(`${method} ${path} as ${who}: ${res.status} ${json?.error?.message ?? ''}`.trim())); e.status = res.status; e.body = json; throw e; }
       return json?.data;
     };
   }

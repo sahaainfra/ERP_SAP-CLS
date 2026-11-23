@@ -31373,6 +31373,123 @@ Indexes:
 - ix_scn_scenarios_company_status: company_id, status
 - sqlite_autoindex_scn_scenarios_1 (unique): company_id, doc_no
 
+## sct_findings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| finding_no | TEXT | yes |  |  |
+| source | TEXT | yes |  |  |
+| severity | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| endpoint | TEXT |  |  |  |
+| cwe | TEXT |  |  |  |
+| fingerprint | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| scan_run_id | INTEGER |  |  |  |
+| reported_by | TEXT | yes |  |  |
+| fixed_in | TEXT |  |  |  |
+| fixed_by | TEXT |  |  |  |
+| fixed_at | TEXT |  |  |  |
+| retested_by | TEXT |  |  |  |
+| retested_at | TEXT |  |  |  |
+| retest_note | TEXT |  |  |  |
+| request_id | INTEGER |  |  |  |
+| last_seen_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), scan_run_id -> sct_scan_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_sct_findings_request: request_id
+- ix_sct_findings_run: scan_run_id
+- ix_sct_findings_source: company_id, source
+- ix_sct_findings_status: company_id, status, severity
+- ux_sct_findings_fp (unique): company_id, fingerprint
+- ux_sct_findings_no (unique): company_id, finding_no
+
+## sct_reviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| control_code | TEXT | yes |  |  |
+| area | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| evidence | TEXT | yes |  |  |
+| reviewed_by | TEXT | yes |  |  |
+| reviewed_at | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_sct_reviews_status: company_id, status
+- ix_sct_reviews_control: company_id, control_code, id
+
+## sct_scan_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| scan_kind | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DONE' |
+| checked_count | INTEGER | yes |  | 0 |
+| findings_count | INTEGER | yes |  | 0 |
+| summary_json | TEXT |  |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_sct_scan_runs_status: company_id, status
+- ix_sct_scan_runs_kind: company_id, scan_kind, id
+- ux_sct_scan_runs_no (unique): company_id, run_no
+
 ## scy_checkpoints
 
 | Column | Type | Not null | Key | Default |
@@ -34706,6 +34823,91 @@ Indexes:
 - ix_tst_page_audit_runs_kind: company_id, run_kind, id
 - ux_tst_page_audit_runs_no (unique): company_id, run_no
 
+## tst_perf_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| model | TEXT | yes |  |  |
+| journey | TEXT | yes |  |  |
+| slo_kind | TEXT | yes |  |  |
+| slo_ms | INTEGER | yes |  |  |
+| requests_count | INTEGER | yes |  |  |
+| errors_count | INTEGER | yes |  | 0 |
+| p50_ms | NUMERIC | yes |  |  |
+| p95_ms | NUMERIC | yes |  |  |
+| p99_ms | NUMERIC | yes |  |  |
+| max_ms | NUMERIC | yes |  |  |
+| throughput_rps | NUMERIC | yes |  |  |
+| target_rps | NUMERIC |  |  |  |
+| status | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: run_id -> tst_perf_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_perf_results_status: company_id, status
+- ix_tst_perf_results_run: run_id, status
+
+## tst_perf_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| profile | TEXT | yes |  |  |
+| tool | TEXT | yes |  |  |
+| environment | TEXT | yes |  |  |
+| machine | TEXT |  |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT | yes |  |  |
+| duration_s | INTEGER | yes |  |  |
+| users_count | INTEGER | yes |  | 0 |
+| requests_count | INTEGER | yes |  | 0 |
+| errors_count | INTEGER | yes |  | 0 |
+| rss_start_mb | INTEGER |  |  |  |
+| rss_end_mb | INTEGER |  |  |  |
+| rss_max_mb | INTEGER |  |  |  |
+| memory_json | TEXT |  |  |  |
+| result_status | TEXT | yes |  |  |
+| commit_ref | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_perf_runs_status: company_id, result_status
+- ix_tst_perf_runs_profile: company_id, profile, id
+- ux_tst_perf_runs_no (unique): company_id, run_no
+
 ## tst_recon_results
 
 | Column | Type | Not null | Key | Default |
@@ -34784,6 +34986,123 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_tst_recon_runs_status: company_id, status, id
 - ux_tst_recon_runs_no (unique): company_id, run_no
+
+## tst_sandbox_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| pack | TEXT |  |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| result_status | TEXT |  |  |  |
+| params_json | TEXT | yes |  | '{}' |
+| expected_json | TEXT |  |  |  |
+| actual_json | TEXT |  |  |  |
+| counts_json | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_sandbox_runs_status: company_id, status, id
+- ux_tst_sandbox_runs_no (unique): company_id, run_no
+
+## tst_test_catalogue
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| test_id | TEXT | yes |  |  |
+| part_id | TEXT |  |  |  |
+| requirement_ref | TEXT |  |  |  |
+| test_type | TEXT | yes |  |  |
+| automated | INTEGER | yes |  | 1 |
+| file | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| last_result | TEXT |  |  |  |
+| last_run_id | INTEGER |  |  |  |
+| last_run_at | TEXT |  |  |  |
+| last_duration_ms | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: last_run_id -> tst_test_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_test_catalogue_run: last_run_id
+- ix_tst_test_catalogue_status: company_id, status, last_result
+- ix_tst_test_catalogue_part: company_id, part_id
+- ux_tst_test_catalogue_id (unique): company_id, test_id
+
+## tst_test_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| run_source | TEXT | yes |  |  |
+| suite | TEXT | yes |  |  |
+| commit_ref | TEXT |  |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| total_count | INTEGER | yes |  | 0 |
+| passed_count | INTEGER | yes |  | 0 |
+| failed_count | INTEGER | yes |  | 0 |
+| skipped_count | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DONE' |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_test_runs_status: company_id, status, id
+- ux_tst_test_runs_no (unique): company_id, run_no
 
 ## ui_bottom_bar
 

@@ -1,3 +1,4 @@
+DROP INDEX IF EXISTS ix_core_sample_documents_list;
 DELETE FROM ui_page_migration WHERE page_code = 'admin.performance-tests' AND source_type = 'reference_seed';
 DELETE FROM ui_navigation_entries WHERE code = 'tst-performance' AND source_type = 'reference_seed';
 DROP TABLE IF EXISTS tst_perf_results;

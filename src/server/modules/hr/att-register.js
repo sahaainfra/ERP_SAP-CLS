@@ -224,20 +224,27 @@ export function createRegisterService({ db, dep }) {
   }
   // A burst of punches (the morning rush, a device file) asks for the same person and day many times: the asks are gathered and worked off together a moment later, one set of facts for all.
   const pending = new Map(); let timer = null;
-  function flushChanges() {
+  function flushChanges(limit = Infinity) {
     timer = null;
-    const batch = [...pending.values()]; pending.clear();
+    const batch = []; for (const [k, v] of pending) { if (batch.length >= limit) break; batch.push(v); pending.delete(k); }
     const factsOf = new Map();
     for (const b of batch) {
       try { if (!factsOf.has(b.companyId)) factsOf.set(b.companyId, att().facts(b.companyId)); onChange(b.companyId, b.employeeId, b.date, factsOf.get(b.companyId)); } catch { /* the nightly run picks the day up */ }
     }
     return batch.length;
   }
+  // Part 30.06 FR-03: the morning burst queued 2,000 people at once and the flush recomputed them all in one go, holding every request
+  // for seconds (p95 of a punch 1.3 s, of a list 25 s under the full load). The timer now works the queue off 20 people at a time and
+  // lets the waiting requests run between the slices; flushChanges() called directly still works off everything (tests, the nightly run).
+  function flushSoon() {
+    flushChanges(20);
+    if (pending.size && !timer) { timer = setTimeout(flushSoon, 0); timer.unref?.(); }
+  }
   function queueChange(companyId, employeeId, date) {
     if (!employeeId || !date || date > today()) return;
     const k = `${companyId}|${employeeId}`; const was = pending.get(k);
     pending.set(k, { companyId, employeeId, date: was && was.date < date ? was.date : date });
-    if (!timer) { timer = setTimeout(flushChanges, 1500); timer.unref?.(); }
+    if (!timer) { timer = setTimeout(flushSoon, 1500); timer.unref?.(); }
   }
 
   // ------------------------------------------------------------------ the register, the daily list, the muster roll

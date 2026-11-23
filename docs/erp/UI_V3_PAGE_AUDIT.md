@@ -10,9 +10,9 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 ## Totals
 | | Pages |
 |---|---|
-| Registered | 732 |
-| With PageHeader | 732 (lint rule `erp/page-header-required`: no `<h1>` outside PageHeader) |
-| Migrated | 440 |
+| Registered | 735 |
+| With PageHeader | 735 (lint rule `erp/page-header-required`: no `<h1>` outside PageHeader) |
+| Migrated | 443 |
 | Migrated (partly) | 219 |
 | Exception | 73 |
 
@@ -20,9 +20,9 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 |---|---|
 | List report | 233 |
 | Object page | 2 |
-| Form | 327 |
+| Form | 328 |
 | Overview page | 49 |
-| Report | 121 |
+| Report | 123 |
 
 ## Pages
 | Route | Page | Module | Pattern | Components | Status | Reason / closing part | Phone check | Screenshots |
@@ -759,3 +759,6 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/admin/integration-matrix` | Integration Matrix | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/reconciliation-health` | Reconciliation Health | tst | Overview page | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/page-audit` | Page Completion Audit | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/test-coverage` | Test Coverage & Results | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/security-findings` | Security Findings & Remediation | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/performance-tests` | Performance Test Results | tst | Form | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |

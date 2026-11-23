@@ -37,7 +37,6 @@ for (const [key, def, min, max, description] of /** @type {[string, number, numb
 integrityRegistry.register({ statuses: { tst_perf_runs: ['PASS', 'FAIL'], tst_perf_results: ['PASS', 'FAIL'] } });
 if (!eventTypes.get('tst.perf.recorded')) eventTypes.define({ type: 'tst.perf.recorded', version: 1, schema: { type: 'object' }, owner: 'tst', description: 'A performance run was recorded (part 30.06): data { runId, runNo, profile, result, failed }.' });
 
-const iso = (d = new Date()) => d.toISOString();
 const r2 = (n) => Math.round(Number(n) * 100) / 100;
 
 /** The growth of the memory over a soak: the samples after the first tenth (warm-up), first against the last three (smoothed). */
@@ -53,6 +52,7 @@ export function memoryGrowth(samples = []) {
 }
 
 /** The default SLOs (the parameters' defaults), for the runner's own verdict where no installation is asked. */
+/** @type {{ LIST: number, RECORD: number, SAVE: number, REPORT: number, REALTIME: number, BURST_PER_MIN: number, SOAK_GROWTH_PCT: number }} */
 export const DEFAULT_SLOS = Object.freeze({ LIST: 500, RECORD: 300, SAVE: 800, REPORT: 3000, REALTIME: 2000, BURST_PER_MIN: 2000, SOAK_GROWTH_PCT: 10 });
 
 /** T-01: each journey against its SLO (p95, no error, and for the burst its rate); a soak also against the growth of its memory. */

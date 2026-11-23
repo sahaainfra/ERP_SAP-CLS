@@ -83,3 +83,7 @@ VALUES ('tst-performance','g-administration','page','sidebar','Performance Test 
 INSERT OR IGNORE INTO ui_page_migration
   (page_code,module,label,old_route,new_route,page_type,status,owner_role,migrated_in_part,migrated_by,migrated_at,defects_json,notes,created_by,source_type)
 VALUES ('admin.performance-tests','ui','Performance Test Results','/admin/performance-tests','/admin/performance-tests','REPORT','MIGRATED','ITADM','30.06','system','2026-11-24T00:00:00.000Z','[]','Load, stress, smoke and soak runs against the SLOs, with memory over time (technical console).','migration','reference_seed');
+
+-- 30.06 FR-03 (BR-01: additive only): the list of sample documents counted and paged 20,000 rows through the table on every call (the
+-- slowest list of the load test); this index covers both the count and the newest-first page.
+CREATE INDEX IF NOT EXISTS ix_core_sample_documents_list ON core_sample_documents(company_id, is_active, id);

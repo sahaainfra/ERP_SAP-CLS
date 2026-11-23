@@ -28,6 +28,7 @@ const token = opt('token', process.env.ERP_TOKEN ?? null);
 const admin = token ? { authorization: `Bearer ${token}` } : { 'x-erp-user': 'dast-scanner', 'x-erp-roles': 'SYSADM', 'x-erp-company': process.env.ERP_COMPANY ?? '1' };
 const findings = []; let checked = 0;
 const add = (severity, rule, title, endpoint, cwe, description = '') => findings.push({ severity, rule, title, endpoint, cwe, description: description.slice(0, 1500) });
+/** @param {string} method @param {string} path @param {{ headers?: Record<string, string>, body?: string }} [o] */
 const req = async (method, path, { headers = {}, body } = {}) => { checked += 1; const r = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...headers }, body, redirect: 'manual' }); const text = await r.text(); return { status: r.status, headers: r.headers, text }; };
 const LEAK = /\bat [\w.<>]+ \(?(?:file:\/\/|\/)[^)]*:\d+:\d+|\/src\/server\/|node_modules\/|SQLITE_ERROR|syntax error|no such (?:table|column)/i;
 

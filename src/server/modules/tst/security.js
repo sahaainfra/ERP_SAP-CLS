@@ -102,6 +102,7 @@ export function authzFindings(policy = ROUTE_POLICY, roles = ROLE_TEMPLATES) {
 }
 
 // ---------------------------------------------------------------- SAST: patterns in the application source
+/** @type {[string, string, string, string, RegExp][]} */
 const SAST = [
   ['EVAL', 'HIGH', 'CWE-95', 'Code built from a string at run time (eval / new Function)', /\beval\(|\bnew Function\(/],
   ['EXEC', 'HIGH', 'CWE-78', 'A shell command built from a template string', /\b(?:exec|execSync|spawn|spawnSync)\(\s*`[^`]*\$\{/],

@@ -3,6 +3,7 @@
 // TOKEN (a bearer token) or, on a development or sandbox installation, the development headers.
 //   k6 run -e BASE_URL=https://staging.example.com -e SITE_ID=1 -e DPR_SITES=2,3,4 -e PROFILE=load perf/k6/models.js
 // The summary (k6 --summary-export=k6.json) becomes a load report with: node perf/k6/summary.mjs k6.json > reports/load-k6.json
+/* global __ENV, __VU, __ITER */
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Trend, Counter } from 'k6/metrics';
