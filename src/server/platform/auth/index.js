@@ -22,6 +22,8 @@ export const ROLE_CODES = Object.freeze(Object.keys(ROLE_PERMISSIONS));
  */
 export function authenticate(config, resolver = null, authz = null) {
   return (req, _res, next) => {
+    // Part 29.03: the public API gateway has already authenticated an API client (OAuth2 client credentials) and built its service actor
+    if (req.apiClient && req.actor) return next();
     if (config.authMode === 'iam') {
       // Part 02.01: a signed access token whose session is still live. The roles come from the user record, never from the token.
       const token = /^Bearer (.+)$/i.exec(req.get('authorization') ?? '')?.[1];

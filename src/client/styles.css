@@ -735,6 +735,7 @@ kbd { font: var(--erp-type-caption); border: 1px solid var(--erp-color-border-co
 }
 .field-tiles a:hover { border-color: var(--erp-color-brand-primary); background: var(--erp-color-bg-hover); }
 @media (min-width: 768px) { .field-tiles { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
+.field-tiles a strong, .field-tiles .is-disabled strong { overflow-wrap: anywhere; min-width: 0; } /* a long word of a tile's label wraps at a larger text size (UI v3 T-04) */
 .loc-notice { display: flex; align-items: flex-start; gap: var(--erp-space-2); margin: var(--erp-space-3) 0 0; }
 .loc-hints { margin: var(--erp-space-2) 0 0; padding-left: var(--erp-space-5); color: var(--erp-color-status-warning-fg); }
 .code-scanner { display: flex; flex-direction: column; gap: var(--erp-space-4); }
@@ -1013,6 +1014,8 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .msg-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--erp-color-text-muted); min-width: 0; flex: 1; }
 .msg-search input { width: 100%; }
 .msg-conv { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.msg-conv > :not(.msg-thread) { flex-shrink: 0; } /* on a short phone screen the notices, the key-change warning and the composer keep their height (they overlapped); the pane scrolls */
+.msg-conv > .msg-thread { min-height: 6rem; }
 .msg-conv-head { display: flex; align-items: center; gap: var(--erp-space-2); border-block-end: 1px solid var(--erp-color-border-subtle); padding-block-end: var(--erp-space-2); }
 .msg-conv-title { flex: 1; min-width: 0; }
 .msg-conv-title h2 { margin: 0; font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

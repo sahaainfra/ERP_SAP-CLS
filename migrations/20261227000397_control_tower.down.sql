@@ -1,0 +1,10 @@
+DELETE FROM proj_360_widgets WHERE widget_code = 'bi.revenue_to_date' AND company_id IS NULL AND source_type = 'reference_seed';
+DELETE FROM ui_widgets WHERE code IN ('bi.exec_alerts', 'bi.revenue_to_date') AND source_type = 'reference_seed';
+DELETE FROM ntf_templates WHERE code IN ('bi.exec_alert.raised', 'bi.exec_alert.settings_decided') AND company_id IS NULL AND source_type = 'reference_seed';
+DELETE FROM ui_page_migration WHERE page_code IN ('bi.control-tower', 'bi.exec-alerts') AND source_type = 'reference_seed';
+DELETE FROM ui_navigation_entries WHERE code IN ('bi-control-tower', 'bi-exec-alerts') AND source_type = 'reference_seed';
+DELETE FROM core_jobs WHERE type = 'bi.exec_alerts.evaluate';
+DELETE FROM core_schedules WHERE code = 'bi.exec_alerts.evaluate';
+DROP TABLE IF EXISTS exec_alert_settings;
+DROP TABLE IF EXISTS exec_alerts;
+DELETE FROM core_feature_flags WHERE key = 'ff.bi.p2704' AND company_id IS NULL AND source_type = 'reference_seed';

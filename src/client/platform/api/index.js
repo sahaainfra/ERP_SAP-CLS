@@ -3,7 +3,7 @@ import { authHeaders } from './identity.js';
 import { authMode, refreshSession } from './auth.js';
 import { failureEvent, installReporter, isReportableFailure } from '../observability/reporter.js';
 
-export { ApiError } from './client.js';
+export { ApiError, lastApiFailure } from './client.js';
 export { authHeaders, loadIdentity, saveIdentity } from './identity.js';
 export { authMode, clearSession, deviceInfo, initAuth, onAuthChange, publicApi, refreshSession, rememberDevice, rememberedDevice, setSession, signOut, signedInUser } from './auth.js';
 

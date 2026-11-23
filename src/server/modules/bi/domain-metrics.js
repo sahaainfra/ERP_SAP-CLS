@@ -36,6 +36,12 @@ const definitions = [
     permission: 'fin.pl_snapshot.view', sensitivePermission: 'fin.pl.view', exportPermission: 'fin.pl_snapshot.export',
     flag: 'ff.fin.p2312', source: projectPlOf,
     dataset: 'frozen-project-pl', register: 'fin.pl_snapshots', sourceType: 'pl_snapshots', route: '/finance/project-pl', recordParam: 'snapshot' },
+  // Part 27.04: revenue to date for the control tower, from the same frozen P&L snapshot (cumulative revenue). Listed only with ff.bi.p2704.
+  { code: 'revenue-to-date', field: 'revenueToDate', name: 'Revenue to date', formula: 'Cumulative revenue of the latest frozen monthly project P&L',
+    definition: 'Revenue recognised to date from the latest frozen monthly project P&L.', owner: 'Finance', unit: 'INR', scale: 100,
+    permission: 'fin.pl_snapshot.view', sensitivePermission: 'fin.pl.view', exportPermission: 'fin.pl_snapshot.export',
+    flag: 'ff.fin.p2312', partFlag: 'ff.bi.p2704', source: projectPlOf,
+    dataset: 'frozen-project-pl', register: 'fin.pl_snapshots', sourceType: 'pl_snapshots', route: '/finance/project-pl', recordParam: 'snapshot' },
   { code: 'dso', field: 'dso', name: 'Days sales outstanding', formula: 'Open receivables ÷ recent approved sales × sales window in days',
     definition: 'Days sales outstanding for the project using the receivables sales window and current posted balances.',
     owner: 'Finance', unit: 'days', scale: 1, permission: 'fin.invoice.view', exportPermission: 'fin.invoice.export',
@@ -85,7 +91,8 @@ export function requireMetricCatalogueSource(context, actor) {
   if (!context.flags.isOn(actor, 'ff.bi.p2702')) throw notFound('The metric dataset is unavailable.');
 }
 const enabled = (context, actor, definition) =>
-  Boolean(definition && context.flags.isOn(actor, definition.flag) && definition.source(context.db));
+  Boolean(definition && context.flags.isOn(actor, definition.flag) && (!definition.partFlag || context.flags.isOn(actor, definition.partFlag))
+    && definition.source(context.db));
 
 export function domainMetricDefinition(context, actor, code) {
   requireMetricCatalogueSource(context, actor);
@@ -331,3 +338,83 @@ export function captureDomainMetrics(context, companyId) {
   }
   return captured;
 }
+
+/**
+ * Part 27.04: the certified metrics of every project the actor may read, in one pass per source (no query per project). BR-01 of 27.04:
+ * a metric that is not certified returns no values. For each project: the live value with its source record, the latest earlier observation
+ * with a different source period (for rules over two periods and growth) and the value captured in the previous month (for trends).
+ * `projectIds` limits the answer to projects already in the caller's own scope.
+ */
+export function readPortfolioMetrics(context, actor, { codes = null, projectIds = null } = {}) {
+  requireMetricCatalogueSource(context, actor);
+  const { db } = context;
+  const authz = authzOf(db);
+  const date = todayIST();
+  const month = date.slice(0, 7);
+  const wanted = definitions.filter((definition) => (!codes || codes.includes(definition.code)) && enabled(context, actor, definition));
+  const allowed = projectIds ? new Set(projectIds) : null;
+  const factsBySource = new Map();
+  const factsOf = (owner) => {
+    if (!factsBySource.has(owner)) {
+      const facts = new Map();
+      for (const fact of owner(db).approvedMetricFacts(actor.companyId, date)) facts.set(Number(fact.projectId), fact);
+      factsBySource.set(owner, facts);
+    }
+    return factsBySource.get(owner);
+  };
+  const metrics = wanted.map((definition) => {
+    const certification = metricCertification(db, actor.companyId, definition.code, definition.datasetVersion);
+    // the early-warning job reads as the system (actor.system is set only by server code, never from a request)
+    const system = actor.system === true;
+    const info = { ...metadata(definition), certified: certification?.status === 'CERTIFIED', canRead: system || canRead(actor, definition),
+      certificationVersion: certification?.version ?? null, projects: new Map(), lastCapturedAt: null, evaluatedAt: new Date().toISOString() };
+    if (!info.certified || !info.canRead) return info;
+    const scope = system ? '1 = 1' : projectScope(authz, actor, definition);
+    const visible = db.prepare(`SELECT p.id FROM org_projects p WHERE p.company_id = :company AND p.deleted_at IS NULL AND (${scope})`)
+      .all({ company: actor.companyId }).map((row) => row.id).filter((id) => !allowed || allowed.has(id));
+    if (!visible.length) return info;
+    const facts = factsOf(definition.source);
+    const history = new Map();
+    const observations = db.prepare(`SELECT o.project_id AS projectId, o.value_scaled AS valueScaled, o.source_period AS sourcePeriod,
+        o.source_id AS sourceId, r.period, r.captured_at AS capturedAt
+      FROM bi_domain_observations o JOIN bi_domain_refreshes r ON r.id = o.refresh_id AND r.company_id = o.company_id
+      WHERE o.company_id = ? AND r.metric_code = ? AND r.dataset_version = ? AND r.period >= ?
+        AND o.deleted_at IS NULL AND r.deleted_at IS NULL
+      ORDER BY r.period DESC, o.id DESC`).iterate(actor.companyId, definition.code, definition.datasetVersion,
+      `${Number(month.slice(0, 4)) - 2}${month.slice(4)}`);
+    for (const row of observations) {
+      if (!history.has(row.projectId)) history.set(row.projectId, []);
+      history.get(row.projectId).push(row);
+      if (!info.lastCapturedAt || row.capturedAt > info.lastCapturedAt) info.lastCapturedAt = row.capturedAt;
+    }
+    for (const id of visible) {
+      const fact = facts.get(id);
+      const live = fact && fact[definition.field] != null ? fact : null;
+      const past = history.get(id) ?? [];
+      const previous = past.find((row) => row.valueScaled != null && (!live || String(row.sourcePeriod) !== String(live.sourcePeriod)));
+      const lastMonth = past.find((row) => row.period < month && row.valueScaled != null);
+      // distinct earlier source periods, newest first: the evidence for rules over several periods
+      const earlier = [];
+      for (const row of past) {
+        if (row.valueScaled == null || (live && String(row.sourcePeriod) === String(live.sourcePeriod))) continue;
+        if (earlier.some((entry) => entry.sourcePeriod === row.sourcePeriod)) continue;
+        earlier.push({ value: display(definition, row.valueScaled), sourcePeriod: row.sourcePeriod, period: row.period });
+        if (earlier.length >= 6) break;
+      }
+      if (!live && !previous) continue;
+      info.projects.set(id, {
+        value: live ? display(definition, live[definition.field]) : null,
+        sourceId: live ? Number(live.sourceId) : null, sourcePeriod: live?.sourcePeriod ?? null,
+        sourceRoute: live ? sourceRoute(definition, live.sourceId, live.sourcePeriod) : null,
+        previous: previous ? { value: display(definition, previous.valueScaled), sourcePeriod: previous.sourcePeriod, period: previous.period } : null,
+        lastMonth: lastMonth ? display(definition, lastMonth.valueScaled) : null,
+        earlier,
+      });
+    }
+    return info;
+  });
+  return { evaluatedAt: new Date().toISOString(), metrics };
+}
+
+/** The codes of the certified-metric definitions (for the tower's tile catalogue). */
+export const domainMetricCodes = () => definitions.map((definition) => definition.code);

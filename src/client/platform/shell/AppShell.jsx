@@ -2,6 +2,7 @@ import NotificationBell from '../notifications/NotificationBell.jsx';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { NoPermission, EmptyState, Skeleton, ErrorState } from '../feedback/states.jsx';
+import PageHeader from '../design/PageHeader.jsx';
 import { shellKeys, useBell, useFavourites, useFlagOn, useNavigation, useRecent } from './api.js';
 import { labelIn, useT } from '../i18n/index.js';
 import I18nSync from '../i18n/I18nSync.jsx';
@@ -18,9 +19,26 @@ import DeviceMenu from '../device/DeviceMenu.jsx';
 import ContextSwitcher, { OPEN_CONTEXT_EVENT, readContext } from './ContextSwitcher.jsx';
 import CommandPalette, { ShortcutHelp } from './CommandPalette.jsx';
 import { BottomNav, Bell, Breadcrumbs, QuickCreate, Sidebar, UserMenu, useStoredFlag } from './ShellParts.jsx';
+import HelpWidget from './HelpWidget.jsx';
 import { accountGroup, consoleGroup, entryFor, forOnboarding, guard, shortcutMap, sidebarGroups, titleFor } from './nav.js';
 
 const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
+
+/** A page whose flag is OFF: its PageHeader (the page's one level-1 heading, as UI v3 and the Page Completion Checklist ask) and its title. */
+function FlagOff({ verdict, go }) {
+  const t = useT('shell');
+  const title = t('guard.flagTitle', { page: verdict.label ?? t('guard.page') });
+  useEffect(() => { document.title = `${title} - ERP`; }, [title]);
+  return (
+    <div data-testid="flag-off">
+      <PageHeader id="flag-off" title={title} />
+      <div className="state" role="status">
+        <p>{t('guard.flagBody', { flag: verdict.featureFlag })}</p>
+        <a className="btn" href="/home" onClick={go('/home')}>{t('guard.home')}</a>
+      </div>
+    </div>
+  );
+}
 
 /** What a page that cannot be drawn says (FR-08): the missing right, a flag that is OFF, a project to choose, or no such page. */
 function GuardState({ verdict, path, go }) {
@@ -28,15 +46,7 @@ function GuardState({ verdict, path, go }) {
   if (verdict.reason === 'permission') {
     return <NoPermission what={verdict.label ?? t('guard.page')} permission={verdict.permissionKey} />;
   }
-  if (verdict.reason === 'flag') {
-    return (
-      <div className="state" role="status" data-testid="flag-off">
-        <h2>{t('guard.flagTitle', { page: verdict.label ?? t('guard.page') })}</h2>
-        <p>{t('guard.flagBody', { flag: verdict.featureFlag })}</p>
-        <a className="btn" href="/home" onClick={go('/home')}>{t('guard.home')}</a>
-      </div>
-    );
-  }
+  if (verdict.reason === 'flag') return <FlagOff verdict={verdict} go={go} />;
   if (verdict.reason === 'context') {
     const need = t(verdict.need === 'site' ? 'need.site' : 'need.project');
     return (
@@ -181,6 +191,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
       {device && phone && <BottomNav items={bottom} path={path.split('?')[0]} go={goTo} moreOpen={menuOpen} onMore={openMenu} />}
       <CommandPalette open={palette} onClose={() => setPalette(false)} nav={nav} favourites={favs.data ?? []} recent={recent.data ?? []} go={open} searchOn={searchOn} path={path} language={language} actions={{ setTheme, setLanguage, openHelp: () => setHelp(true) }} />
       <ShortcutHelp open={help} onClose={() => setHelp(false)} nav={nav} />
+      {!onboarding && session && <HelpWidget path={path} />}
     </div>
   );
 }

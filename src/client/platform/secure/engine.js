@@ -150,8 +150,19 @@ export async function sendFile(session, convId, file, opts) {
   const up = await uploadFile(blob, { transport: browserTransport(authHeaders), entity: 'msg_conversation', entityId: convId });
   return send(session, convId, { v: 1, t: 'file', name: file.name, mime: file.type || 'application/octet-stream', fileId: up.id, key: enc.key, iv: enc.iv, sha256: enc.sha256, size: enc.size }, opts);
 }
+/** The download link of an attachment; a file still in its virus scan (409, uploaded seconds ago) is asked for again until the scan ends, up to 30 s. */
+async function linkWhenScanned(fileId) {
+  const until = Date.now() + 30_000;
+  for (;;) {
+    try { return await fetchFileUrl(fileId, {}); } catch (e) {
+      if (!(e?.status === 409 && e?.code === 'FILE_NOT_AVAILABLE' && /being scanned/.test(e?.message ?? '')) || Date.now() > until) throw e;
+      await new Promise((r) => { setTimeout(r, 1500); });
+    }
+  }
+}
+
 export async function openFile(payload) {
-  const link = await fetchFileUrl(payload.fileId, {});
+  const link = await linkWhenScanned(payload.fileId);
   const res = await fetch(link.url);
   const all = new Uint8Array(await res.arrayBuffer());
   const plain = await decryptAttachment(all.slice(MARKER.length), payload);

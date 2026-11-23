@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: ERP AI Gateway API
+  version: '1.0'
+  description: >
+    Part 28.01. Requires ff.ai.p2801. Every AI call goes through POST /ai/run/{code}: kill switch, approved enablement (role and project),
+    quotas and budget, context built through permission-checked services as the caller, the provider through the integration hub, the
+    redacted log, and an answer labelled "AI-generated — verify". AI never approves, posts, pays or deletes.
+servers: [{ url: /api/v1 }]
+paths:
+  /ai/run/{code}:
+    post:
+      summary: One governed AI call of a registered feature (e.g. ai.variance_narrative)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [input], properties: { input: { type: object } } } } } }
+      responses:
+        '200': { description: '{ text, label "AI-generated — verify", aiGenerated, verify, sources [type, id, label, route], feature, model, tokens, cost, logId, requestRef }' }
+        '403': { description: 'AI_FEATURE_NOT_ENABLED, AI_ROLE_NOT_ENABLED, AI_PROJECT_NOT_ENABLED, or AI_CONTEXT_REFUSED (the owner refused the data to the caller)' }
+        '404': { description: Unknown feature, flag off, or AI_CONTEXT_REFUSED for a record outside the caller's scope }
+        '423': { description: AI_KILL_SWITCH — AI is switched off for the company; nothing was sent }
+        '429': { description: AI_QUOTA_USER or AI_BUDGET }
+        '503': { description: AI_PROVIDER_INACTIVE }
+  /ai/features:
+    get:
+      summary: The registered features with their live version, versions, tools and evaluation cases, and the kill switch state (ai.feature.view)
+      responses: { '200': { description: '{ killSwitch, label, features, can }' } }
+    post:
+      summary: Prepare a version of a feature (ai.feature.create; one open version at a time; Idempotency-Key)
+      responses: { '201': { description: The version (DRAFT) }, '409': { description: A version is already being prepared } }
+  /ai/features/{id}:
+    get: { summary: A version with its scope, quotas, evaluation and approval, responses: { '200': { description: The version } } }
+    patch: { summary: 'Change a draft or returned version (provider, roles, projects, quotas, tools); clears its evaluation; rowVersion', responses: { '200': { description: The version }, '409': { description: Stale version }, '422': { description: Not a draft } } }
+    delete: { summary: Delete a draft, responses: { '200': { description: Deleted } } }
+  /ai/features/{id}/evaluate:
+    post: { summary: 'FR-06: run the evaluation cases with the rights of the first enabled role, through the gateway; stored on the version', responses: { '200': { description: The version with its evaluation } } }
+  /ai/features/{id}/submit:
+    post: { summary: 'Send for approval SYSADM → DIR (workflow AI_FEATURE); refused (422) until every evaluation case passed', responses: { '200': { description: The version }, '422': { description: Evaluation not passed, no role, or provider inactive } } }
+  /ai/features/{id}/withdraw: { post: { summary: Withdraw a version waiting for approval (the sender), responses: { '200': { description: The version } } } }
+  /ai/features/{id}/cancel: { post: { summary: Cancel a version, responses: { '200': { description: The version } } } }
+  /ai/features/{id}/disable: { post: { summary: Switch a live version off at once (no approval needed to stop), responses: { '200': { description: The version } } } }
+  /ai/features/{id}/amend: { post: { summary: Prepare a new version from an approved one (to change it or to switch it on again), responses: { '201': { description: The new draft } } } }
+  /ai/features/{id}/history: { get: { summary: The approval history, responses: { '200': { description: The history } } } }
+  /ai/providers:
+    get: { summary: The AI providers (each names an AI connector of the integration hub), responses: { '200': { description: The providers } } }
+    post: { summary: 'Add a provider: code, provider (anthropic, openai_compatible, sandbox), model, connector, prices per million tokens (ai.provider.manage)', responses: { '201': { description: The provider }, '400': { description: Not an AI connector of the company, or another provider } } }
+  /ai/providers/{id}: { patch: { summary: Change the model, prices or status (rowVersion), responses: { '200': { description: The provider } } } }
+  /ai/controls:
+    get: { summary: The kill switch and the log retention, responses: { '200': { description: '{ killSwitch, reason, by, at, retentionDays, can }' } } }
+    patch: { summary: Set the log retention in days (7–3650), responses: { '200': { description: The controls } } }
+  /ai/controls/kill-switch: { post: { summary: 'Stop (on true) or resume all AI for the company, with a reason (ai.kill_switch.manage; audited, event and notification)', responses: { '200': { description: The controls } } } }
+  /ai/usage: { get: { summary: 'Calls, outcomes, tokens and cost by feature and by day, and the monthly budgets (ai.usage.view)', responses: { '200': { description: The usage } } } }
+  /ai/logs: { get: { summary: The AI log (ai.log.view); filters feature, outcome, user, from, to; paginated, responses: { '200': { description: '{ rows, total, page, pageSize }' } } } }
+  /ai/logs/export: { get: { summary: Export the log without prompts or answers (ai.log.export; audited), responses: { '200': { description: The file } } } }
+  /ai/logs/{id}: { get: { summary: One entry with its context references and the redacted prompt and answer (the read is audited), responses: { '200': { description: The entry } } } }
+  # part 28.02 — the assistant, the role copilots, drafts and feedback (each call goes through the gateway: enablement, quotas, kill switch, log)
+  /ai/assistant/me: { get: { summary: 'What the person may use: the assistant, the copilots of their roles and the draft kinds (ff.ai.p2802)', responses: { '200': { description: '{ assistant, copilots, drafts }' } } } }
+  /ai/assistant/ask:
+    post:
+      summary: 'Ask a question in plain words (ai.assistant). The question is matched to a governed query (metric, why, stock, project status) run as the person; the answer cites the query and the records. Nothing found gives an "unsure" answer with no model call; a project outside the scope is refused (404).'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [question], properties: { question: { type: string, minLength: 3, maxLength: 500 }, projectId: { type: integer }, route: { type: string, maxLength: 200 } } } } } }
+      responses: { '200': { description: '{ text, label, unsure, meta: { intent, query }, sources[], logId, model, tokens, cost }' }, '403': { description: Not enabled for the role }, '423': { description: Kill switch on } }
+  /ai/copilots/{kind}:
+    post:
+      summary: 'Role copilot: pm (schedule and look-ahead), qs (leakage and margin), procurement (a vendor''s orders), finance (cost and margin). Read-only; each reads through its owner as the person.'
+      parameters: [ { name: kind, in: path, required: true, schema: { type: string, enum: [pm, qs, procurement, finance] } } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, properties: { projectId: { type: integer }, vendor: { type: string, minLength: 2, maxLength: 120 } } } } } }
+      responses: { '200': { description: The labelled answer with its sources } }
+  /ai/drafts:
+    get: { summary: The person's own drafts, responses: { '200': { description: The drafts } } }
+    post:
+      summary: 'Draft a document (ai.draft_document): RFI, LETTER, RFQ, MOM, DPR_NARRATIVE or MIS_COMMENTARY. Kept as PROPOSED text; nothing is created in a module.'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [kind, brief], properties: { kind: { type: string, enum: [RFI, LETTER, RFQ, MOM, DPR_NARRATIVE, MIS_COMMENTARY] }, projectId: { type: integer }, brief: { type: string, minLength: 10, maxLength: 1500 } } } } } }
+      responses: { '201': { description: The draft with its label and log id } }
+  /ai/drafts/{id}/save: { post: { summary: 'Save a reviewed draft as a DRAFT record of its module, through that module''s own service and permissions (RFI → engineering RFIs, LETTER → outgoing letters); other kinds give 422 (idempotency key required)', responses: { '201': { description: '{ draft, record: { type, id, route } }' }, '403': { description: The module refuses the person }, '422': { description: No module for this kind } } } }
+  /ai/drafts/{id}/discard: { post: { summary: Discard one of the person's drafts, responses: { '200': { description: The draft } } } }
+  /ai/feedback:
+    post:
+      summary: Thumbs up or down (with an optional comment) on one of the person's own answers; once per answer, a second vote replaces the first
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [logId, rating], properties: { logId: { type: integer }, rating: { type: integer, enum: [1, -1] }, comment: { type: string, maxLength: 500 } } } } } }
+      responses: { '200': { description: The feedback } }
+    get: { summary: 'Feedback by feature: up, down and the latest comments (ai.usage.view)', responses: { '200': { description: The summary } } }
+  # part 28.03 — forecasting, the model registry with back-testing and approval (model owner → CFO/PCMGR), and anomaly detection (ff.ai.p2803)
+  /ai/forecasts:
+    get:
+      summary: 'Forecast of a use case (RATE: itemId, region; COLLECTIONS: projectId optional; PRODUCTIVITY: projectId, activityId; COMPLETION: projectId) with its 80 % range, drivers and the kind of every point (ACTUAL, CALCULATED, FORECAST). Uses the approved model (official, kept in aif_forecasts) or a labelled preview; modelId previews a version (ai.model.view). The history is read from its owner as the person (403 without that right).'
+      responses: { '200': { description: '{ official, label, model, history, points, next, drivers, backtest, completion, sources }' }, '403': { description: No right to the source data }, '422': { description: Subject missing } }
+  /ai/forecasts/options: { get: { summary: The items, regions, projects and activities the person may forecast, and the official model of each use case, responses: { '200': { description: The options } } } }
+  /ai/forecasts/latest: { get: { summary: 'The latest official forecasts the person may see (for dashboards, Project 360 and scenarios); projectId optional', responses: { '200': { description: The forecasts } } } }
+  /ai/models:
+    get: { summary: The model registry (ai.model.view), responses: { '200': { description: '{ rows, useCases, methods, canCreate }' } } }
+    post: { summary: 'New model version: code, name, useCase, method (MOVING_AVERAGE, HOLT, REGRESSION), params within bounds, horizon', responses: { '201': { description: The draft version } } }
+  /ai/models/{id}:
+    get: { summary: One version with its back-test and approval, responses: { '200': { description: The version } } }
+    patch: { summary: Change a draft or returned version (rowVersion); clears its back-test, responses: { '200': { description: The version }, '409': { description: Changed by someone else } } }
+    delete: { summary: Delete a draft, responses: { '200': { description: Deleted } } }
+  /ai/models/{id}/backtest: { post: { summary: 'Rolling-origin back-test on a subject the preparer may see: MAE, MAPE, RMSE, bias, coverage of the 80 % range, naive comparison and the rows (FR-04; audited)', responses: { '200': { description: The version with its back-test }, '403': { description: No right to the source data } } } }
+  /ai/models/{id}/backtest/export: { get: { summary: The back-testing report (xlsx, csv, pdf; ai.forecast.export; audited), responses: { '200': { description: The file } } } }
+  /ai/models/{id}/submit: { post: { summary: 'Send for approval (needs a back-test); the CFO or the project controls manager approves in the inbox, never the preparer', responses: { '200': { description: The version }, '422': { description: Not back-tested } } } }
+  /ai/models/{id}/withdraw: { post: { summary: Withdraw a version waiting for approval (the sender), responses: { '200': { description: The version } } } }
+  /ai/models/{id}/cancel: { post: { summary: Cancel a version, responses: { '200': { description: The version } } } }
+  /ai/models/{id}/retire: { post: { summary: Retire an official version at once (the use case falls back to previews), responses: { '200': { description: The version } } } }
+  /ai/models/{id}/amend: { post: { summary: Prepare a new version from an approved or retired one, responses: { '201': { description: The new draft } } } }
+  /ai/models/{id}/history: { get: { summary: The approval history and audit, responses: { '200': { description: The history } } } }
+  /ai/anomalies: { get: { summary: 'Flagged outliers the person may see (each kind only where the person may see its source): status, kind, projectId, paginated', responses: { '200': { description: '{ rows, total, open, kinds, canReview, canRun, threshold }' } } } }
+  /ai/anomalies/run: { post: { summary: 'Run the detection now (ai.anomaly.run): robust z-score outliers on purchase rates, material issues, site attendance and payments, and paid staff without attendance; also nightly', responses: { '200': { description: '{ candidates, flagged, byKind }' } } } }
+  /ai/anomalies/{id}/review: { post: { summary: 'Confirm or dismiss a flag with a note (ai.anomaly.review and the right to its source; audited, event ai.anomaly.reviewed)', responses: { '200': { description: The flag }, '422': { description: Reviewed already } } } }
+  # part 28.04 — document and contract intelligence (ff.ai.p2804): files are read on upload (core.file.available); suggestions are applied only on acceptance
+  /ai/documents:
+    get:
+      summary: 'The review worklist the person may see (ai.docintel.view), oldest first with its SLA: status OPEN (to review), ACCEPTED, REJECTED, ALL; docType; q searches the text; paginated'
+      responses: { '200': { description: '{ rows, total, open, types, canReview, canRun, threshold }' } }
+  /ai/documents/export: { get: { summary: 'The worklist as xlsx, csv or pdf, with its filters and without the document text (audited)', responses: { '200': { description: The file } } } }
+  /ai/documents/accuracy: { get: { summary: 'T-01 in use: of the fields suggested on accepted documents, the share accepted unchanged, by type and field', responses: { '200': { description: '{ rows, overallPct, suggested }' } } } }
+  /ai/documents/extract:
+    post:
+      summary: 'Read a file now (ai.docintel.run), for a file uploaded before the flag was on; the person must be able to open it'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [fileId], properties: { fileId: { type: integer } } } } } }
+      responses: { '201': { description: The extraction }, '422': { description: Type not read } }
+  /ai/documents/{id}: { get: { summary: 'One extraction: the text, the suggested fields with confidence, source position and whether they must be confirmed; clauses; duplicate; a link to open the file; what accepting can create', responses: { '200': { description: The extraction }, '404': { description: Not visible, or the person may not open the file } } } }
+  /ai/documents/{id}/accept:
+    post:
+      summary: 'Accept the reviewed values and create the draft through the owner module with the person''s rights: INVOICE → vendor invoice DRAFT, source OCR (target.poId; 22.06); LETTER → inward letter (target.projectId; 11.05); CONTRACT → chosen clauses in the clause library (target.contractId, clauses; 21.01); CERTIFICATE → validity date of its controlled document (04.10). A field below the confidence threshold used as suggested must be listed in confirmed (BR-01). Idempotency key required.'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { values: { type: object }, confirmed: { type: array, items: { type: string } }, target: { type: object, properties: { projectId: { type: integer }, poId: { type: integer }, contractId: { type: integer } } }, clauses: { type: array, items: { type: object } }, note: { type: string }, rowVersion: { type: integer } } } } } }
+      responses: { '200': { description: The extraction with what was applied }, '409': { description: Changed by someone else }, '422': { description: Fields to confirm, or no target } }
+  /ai/documents/{id}/reject: { post: { summary: Reject the suggestions with a reason (rowVersion), responses: { '200': { description: The extraction } } } }
+  # part 28.05 — computer vision decision support (ff.ai.p2805): photographs of DPRs and inspections are analysed on upload; suggestions only
+  /ai/vision: { get: { summary: 'The review worklist (ai.vision.view): status PENDING (default), REVIEWED, NO_FINDINGS, FAILED, ALL; oldest first with its SLA; paginated', responses: { '200': { description: '{ rows, total, counts, canReview, canRun, detector }' } } } }
+  /ai/vision/performance: { get: { summary: 'FR-04: per model and finding, suggestions confirmed, wrong and waiting, precision and average confidence', responses: { '200': { description: The rows } } } }
+  /ai/vision/run:
+    post:
+      summary: 'Analyse a photograph now (ai.vision.run) with the company''s detector (ai.cv.detector: builtin.colour or an AI connector of provider vision_http)'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [fileId], properties: { fileId: { type: integer } } } } } }
+      responses: { '201': { description: The result }, '422': { description: Not a photograph } }
+  /ai/vision/{id}: { get: { summary: 'One result: the photograph (the blurred copy when faces or people were found) and the suggestions with label, confidence and box (0..1)', responses: { '200': { description: The result } } } }
+  /ai/vision/{id}/labels/{index}/confirm:
+    post:
+      summary: 'Confirm a suggestion: a PPE gap becomes a safety observation (19.04, naming nobody), a defect an NCR (18.04), a progress or material cue a note — each with the reviewer''s rights and the (blurred) photograph attached'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { projectId: { type: integer }, siteId: { type: integer }, severity: { type: string }, description: { type: string }, actionRequired: { type: string }, note: { type: string }, rowVersion: { type: integer } } } } } }
+      responses: { '200': { description: The result }, '409': { description: Changed by someone else }, '422': { description: Decided already } }
+  /ai/vision/{id}/labels/{index}/false-positive: { post: { summary: 'Mark a suggestion wrong with a reason (FR-04)', responses: { '200': { description: The result } } } }
+  /ai/vision/{id}/blur: { post: { summary: 'FR-03: blur more regions (boxes 0..1); a new copy replaces the shown one', responses: { '200': { description: The result } } } }

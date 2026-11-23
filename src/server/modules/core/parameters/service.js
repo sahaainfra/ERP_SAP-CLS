@@ -61,6 +61,11 @@ export function createParameterService({ db, store, registry }) {
       const def = defOrThrow(key);
       assertPermission(actor, scopeType === 'system' ? 'core.param.configure_system' : 'core.param.configure');
       const companyId = companyOf(actor);
+      // part 29.01, BR-01: with the control center on, a company value changes only by an approved change request (which applies it here)
+      if (scopeType !== 'system' && !actor.viaChangeRequest && db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'adm_controls'").get()
+        && db.prepare("SELECT enabled FROM core_feature_flags WHERE key = 'ff.admin.p2901' AND company_id = ? AND project_id IS NULL AND deleted_at IS NULL ORDER BY id DESC LIMIT 1").get(companyId)?.enabled === 1) {
+        throw unprocessable('Parameters of this company are changed through the Enterprise Control Center: raise a change request there for a checker to approve.');
+      }
       if (!def.scopes.includes(scopeType)) throw unprocessable(`${key} can be set at ${def.scopes.join(' or ')} level, not ${scopeType}.`);
       if (scopeType === 'company' && scopeId !== companyId) throw forbidden('You can only set parameters for your own company.');
       if (scopeType === 'system' && scopeId != null) throw unprocessable('A system-level value has no scope id.');

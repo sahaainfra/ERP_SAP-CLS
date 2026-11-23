@@ -5,7 +5,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { createParameterStore } from '../../platform/parameters/index.js';
-import { widgetRegistry, roleLayouts } from '../../platform/widgets/index.js';
+import { widgetRegistry, roleLayouts, widgetAliases } from '../../platform/widgets/index.js';
 import { parse } from '../../platform/validation/index.js';
 import { financialYear, todayIST } from '../../../shared/dates.js';
 
@@ -151,7 +151,8 @@ export function createWidgetService({ db, approvals, shell }) {
     const coded = !personal && !role ? roleLayouts.for(dash, actor.roles ?? []) : null;
     if (coded) role = { owner_ref: coded[0], name: sys.name, layout_json: JSON.stringify(coded[1]), filters_json: sys.filters_json };
     const chosen = personal ?? role ?? sys;
-    const all = withMeta(jsonOf(chosen.layout_json, []));
+    // a retired widget (27.10) shows the widget that replaced it
+    const all = withMeta(jsonOf(chosen.layout_json, []).map((i) => ({ ...i, widget: widgetAliases.of(i.widget) })));
     const allowed = new Set(catalogue(actor).map((w) => w.code));
     const layout = all.filter((i) => allowed.has(i.widget));
     return {

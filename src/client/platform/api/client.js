@@ -28,6 +28,10 @@ const defaultId = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.rando
  * Writes are never retried: a retry could apply them twice. Pass `{ headers: { 'idempotency-key': id } }` on an
  * action so the server can recognise a repeat (see docs/erp/ARCHITECTURE.md).
  */
+/** Part 29.08: the last failed call of this browser tab (its correlation ID, status and path), so a support ticket can carry it. */
+let lastFailure = null;
+export const lastApiFailure = () => lastFailure;
+
 export function createApiClient({
   getAuthHeaders = () => ({}),
   baseUrl = '/api/v1',
@@ -40,6 +44,7 @@ export function createApiClient({
   onUnauthorized = null,
 } = {}) {
   const fail = (err, path) => {
+    lastFailure = { correlationId: err.correlationId ?? null, status: err.status ?? null, code: err.code ?? null, path, at: new Date().toISOString() };
     try {
       onFailure(err, path);
     } catch {

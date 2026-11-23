@@ -38,7 +38,8 @@ test.afterEach(async ({ browser }) => { for (const c of browser.contexts()) awai
 const OUT = 'docs/erp/screenshots/plan-lookahead';
 const shot = async (page, name, info) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png`, fullPage: true });
 const iso = (d) => d.toISOString().slice(0, 10);
-const monday = (() => { const d = new Date(); d.setUTCHours(0, 0, 0, 0); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return iso(d); })();
+const monday = (() => { const d = new Date(Date.now() + 19_800_000); d.setUTCHours(0, 0, 0, 0); // the week of the India date (the server's), also between 18:30 and 24:00 UTC
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return iso(d); })();
 const nextMonday = (() => { const d = new Date(`${monday}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 7); return iso(d); })();
 function seed(c, t) {
   const db = new DatabaseSync('data/e2e.sqlite'); db.exec('PRAGMA busy_timeout = 8000;');

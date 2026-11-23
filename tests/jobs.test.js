@@ -224,3 +224,15 @@ test('an approved change is applied to a schedule with an audit row and an event
   assert.throws(() => scheduler.applyChange(id, { cron: 'bad' }, { actor: 'x' }), /five fields/);
   assert.throws(() => scheduler.applyChange(999, {}, { actor: 'x' }), /does not exist/);
 });
+
+// D-103: what a job writes to the audit trail belongs to the job's company (the company's audit explorer shows it), not to no company
+test('D-103 an audit entry written by a job carries the job company', async () => {
+  const db = memoryDb();
+  const { writeAudit } = await import('../src/server/platform/audit/index.js');
+  const { jobs } = clocked(db);
+  jobs.register('test.audited', (ctx) => { writeAudit(db, { entity: 'test_thing', entityId: ctx.params.id, action: 'recalc', actor: 'system' }); return { ok: true }; });
+  jobs.enqueue('test.audited', { id: 7 }, { createdBy: 'asha', companyId: 1 });
+  assert.equal((await jobs.runNext()).status, 'SUCCEEDED');
+  const chain = db.prepare("SELECT c.company_id FROM core_audit_chain c JOIN core_audit_log a ON a.id = c.audit_id WHERE a.entity = 'test_thing'").get();
+  assert.ok(chain, 'the entry is in the chain'); assert.equal(chain.company_id, 1);
+});

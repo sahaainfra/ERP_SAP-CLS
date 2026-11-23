@@ -252,14 +252,20 @@ export function createExcelService({ db, engine, storage, jobs }) {
     if (dataRows.length === 0) structure.push('The file has no rows to import.');
     if (structure.length) return { structure, rows: [], warnings };
     const formulaAt = new Map(wb.formulas.filter((f) => f.sheet === sheet.name).map((f) => [`${f.row}:${f.col}`, true]));
+    const rows = checkRows(ctx, def, eff, dataRows.map(({ r, line }) => ({ line, raw: Object.fromEntries(eff.columns.map((c) => [c.key, at[c.key] >= 0 ? r[at[c.key]] ?? null : null])), formulas: new Set(eff.columns.filter((c) => at[c.key] >= 0 && formulaAt.has(`${line}:${at[c.key]}`)).map((c) => c.key)) })), { onExisting });
+    return { structure: [], rows, warnings };
+  }
+
+  /** The row-level check shared by a file and the bulk entry grid (part 29.04): types, required, lookups, duplicates in the batch and in the data, the module's rules. */
+  function checkRows(ctx, def, eff, input, { onExisting }) {
     const seen = new Map();
     const rows = [];
-    for (const { r, line } of dataRows) {
+    for (const { line, raw: cellsIn, formulas = new Set() } of input) {
       const row = { line, cells: {}, values: {}, ids: {}, errors: [], action: 'ERROR' };
       for (const c of eff.columns) {
-        const raw = at[c.key] >= 0 ? r[at[c.key]] ?? null : null;
+        const raw = cellsIn[c.key] ?? null;
         row.cells[c.key] = raw instanceof Date ? raw.toISOString().slice(0, 10) : raw === null ? '' : String(raw);
-        if (at[c.key] >= 0 && formulaAt.has(`${line}:${at[c.key]}`)) { row.errors.push({ key: c.key, label: c.label, value: row.cells[c.key], message: `${c.label} holds a formula. Paste the value instead (a formula could run code in a spreadsheet).`, code: 'FORMULA' }); continue; }
+        if (formulas.has(c.key)) { row.errors.push({ key: c.key, label: c.label, value: row.cells[c.key], message: `${c.label} holds a formula. Paste the value instead (a formula could run code in a spreadsheet).`, code: 'FORMULA' }); continue; }
         const p = parseCell(ctx, c, raw);
         if (p.error) row.errors.push({ key: c.key, label: c.label, value: row.cells[c.key], message: p.error, code: p.code });
         else { row.values[c.key] = p.value; if (p.id !== undefined) row.ids[c.key] = p.id; }
@@ -285,7 +291,7 @@ export function createExcelService({ db, engine, storage, jobs }) {
       if (row.errors.length) row.action = 'ERROR';
       rows.push(row);
     }
-    return { structure: [], rows, warnings };
+    return rows;
   }
 
   // ---- jobs ----
@@ -573,13 +579,56 @@ export function createExcelService({ db, engine, storage, jobs }) {
     },
   };
 
-  return { templates, job, exports, importTypes, effective };
+  // ---- part 29.04: the bulk entry grid checks and commits rows typed or pasted in the browser with the same rules as a file ----
+  const grid = {
+    /** The columns of a type for the grid: label, type, required, help and the drop-down values (enum, Yes/No, lookups up to 1,000). */
+    columns(actor, code) {
+      const def = defOf(code); mustImport(actor, def); const eff = effective(actor.companyId, def); const ctx = ctxOf(actor);
+      return { code: def.code, label: def.label, module: def.module, version: eff.version, keys: def.keys, onExisting: def.onExisting, maxRows: Math.min(eff.maxRows, 2000), description: def.description ?? '',
+        columns: eff.columns.map((c) => ({ key: c.key, label: c.label, type: c.type, required: Boolean(c.required), help: c.help ?? '', values: listOf(ctx, c), min: c.min ?? null, max: c.max ?? null, maxLength: c.maxLength ?? null, sensitive: Boolean(c.sensitive) })) };
+    },
+    /** Check rows ({ key: raw }); each result gives its errors by column and what it would do. */
+    check(actor, code, rows, { onExisting = 'ERROR' } = {}) {
+      const def = defOf(code); mustImport(actor, def); const eff = effective(actor.companyId, def);
+      if (!def.onExisting.includes(onExisting)) throw badRequest(`${def.label} cannot ${onExisting.toLowerCase()} existing records.`);
+      if (rows.length > Math.min(eff.maxRows, 2000)) throw unprocessable(`At most ${Math.min(eff.maxRows, 2000)} rows in one batch.`);
+      return checkRows(ctxOf(actor), def, eff, rows.map((raw, i) => ({ line: i + 1, raw })), { onExisting }).map((r) => ({ line: r.line, action: r.action, errors: r.errors.map((e) => ({ column: e.key, message: e.message, code: e.code })) }));
+    },
+    /** All or nothing: checked again, then every row created or updated through the module inside one savepoint; any failure saves nothing. */
+    commit(actor, code, rows, { onExisting = 'ERROR' } = {}) {
+      const def = defOf(code); mustImport(actor, def); const eff = effective(actor.companyId, def); const ctx = ctxOf(actor);
+      const checked = checkRows(ctx, def, eff, rows.map((raw, i) => ({ line: i + 1, raw })), { onExisting });
+      const bad = checked.filter((r) => r.action === 'ERROR');
+      if (bad.length) return { ok: false, errors: bad.map((r) => ({ line: r.line, errors: r.errors.map((e) => ({ column: e.key, message: e.message, code: e.code })) })) };
+      const out = { ok: true, created: 0, updated: 0, skipped: 0, refs: [] };
+      const sp = `bulk_${randomUUID().replace(/-/g, '')}`;
+      db.exec(`SAVEPOINT ${sp}`);
+      try {
+        for (const r of checked) {
+          if (r.action === 'SKIP') { out.skipped += 1; continue; }
+          let res; try { res = def.commitRow(ctx, { row: r.values, ids: r.ids, existing: r.existing, action: r.action.toLowerCase(), line: r.line }); } catch (e) { e.line = r.line; throw e; }
+          if (r.action === 'CREATE') out.created += 1; else out.updated += 1;
+          if (res?.ref && out.refs.length < 500) out.refs.push({ line: r.line, ref: res.ref, id: res.id ?? null });
+        }
+        db.exec(`RELEASE ${sp}`);
+      } catch (e) {
+        db.exec(`ROLLBACK TO ${sp}`); db.exec(`RELEASE ${sp}`);
+        return { ok: false, errors: [{ line: e.line ?? 0, errors: [{ column: null, message: `Nothing was saved: ${e.message}`, code: 'COMMIT_FAILED' }] }] };
+      }
+      writeAudit(db, { entity: 'xl_templates', entityId: def.code, action: 'bulk_commit', newValues: { created: out.created, updated: out.updated, skipped: out.skipped }, actor: actor.user, companyId: actor.companyId });
+      return out;
+    },
+  };
+
+  return { templates, job, exports, importTypes, effective, grid };
 }
 
 // ---- the approval of a change of a template ----
 const services = new WeakMap();
 export const bind = (db, s) => services.set(db, s);
 const bound = (db) => services.get(db);
+/** The Excel engine of a database, for the bulk entry workspace (part 29.04). */
+export const excelOf = (db) => services.get(db) ?? null;
 workflowTypes.register({
   docType: TEMPLATE_DOC,
   label: 'Import template change',

@@ -32,11 +32,11 @@ export function createReconService({ db, base }) {
     return m;
   }
   /** The quantities of the approved daily reports shared among the BOQ items of the activity (by the planned quantities of the activity-BOQ mapping). */
-  function executedOf(companyId, pj, items) {
+  function executedOf(companyId, pj, items, { date = null, upTo = null } = {}) {
     const lineCode = new Map(); for (const it of items.values()) for (const id of it.ids) lineCode.set(id, it.code.toLowerCase());
     const maps = new Map(); for (const x of db.prepare('SELECT activity_id, boq_line_id, qty FROM plan_activity_boq WHERE company_id = ? AND deleted_at IS NULL').all(companyId)) { const code = lineCode.get(x.boq_line_id); if (!code) continue; const a = maps.get(x.activity_id) ?? new Map(); a.set(code, (a.get(code) ?? 0) + x.qty); maps.set(x.activity_id, a); }
-    const works = db.prepare("SELECT w.id, w.activity_id, w.location_id, w.qty, d.doc_no AS dprNo, d.dpr_date AS date FROM site_dpr_work w JOIN site_dprs d ON d.id = w.dpr_id WHERE w.company_id = ? AND d.org_project_id = ? AND d.status = 'APPROVED' AND w.deleted_at IS NULL AND d.deleted_at IS NULL ORDER BY w.id").all(companyId, pj); const out = [];
-    for (const w of works) { const a = maps.get(w.activity_id); if (!a) continue; const entries = [...a.entries()]; const total = entries.reduce((n, [, q]) => n + q, 0); let left = w.qty; entries.forEach(([code, q], i) => { const share = i === entries.length - 1 ? left : Math.floor((w.qty * (total > 0 ? q : 1)) / (total > 0 ? total : entries.length)); left -= share; out.push({ ...w, code, qty: share }); }); }
+    const works = db.prepare(`SELECT w.id, w.activity_id, w.location_id, w.qty, w.planned_qty, d.id AS dprId, d.doc_no AS dprNo, d.dpr_date AS date, d.dpr_site_id AS siteId FROM site_dpr_work w JOIN site_dprs d ON d.id = w.dpr_id WHERE w.company_id = ? AND d.org_project_id = ? AND d.status = 'APPROVED' AND w.deleted_at IS NULL AND d.deleted_at IS NULL${date ? ' AND d.dpr_date = ?' : ''}${upTo ? ' AND d.dpr_date <= ?' : ''} ORDER BY w.id`).all(companyId, pj, ...(date ? [date] : []), ...(upTo ? [upTo] : [])); const out = [];
+    for (const w of works) { const a = maps.get(w.activity_id); if (!a) continue; const entries = [...a.entries()]; const total = entries.reduce((n, [, q]) => n + q, 0); let left = w.qty; let leftPlan = w.planned_qty ?? 0; entries.forEach(([code, q], i) => { const last = i === entries.length - 1; const part = (v) => Math.floor((v * (total > 0 ? q : 1)) / (total > 0 ? total : entries.length)); const share = last ? left : part(w.qty); const plan = last ? leftPlan : part(w.planned_qty ?? 0); left -= share; leftPlan -= plan; out.push({ ...w, code, qty: share, planned_qty: plan }); }); }
     return out;
   }
   /**
@@ -69,6 +69,16 @@ export function createReconService({ db, base }) {
   const recon = {
     /** For the QS dashboard (22.08): the chain of every BOQ item of a project with the rate, read from here and never re-computed elsewhere. */
     chainRows: (companyId, projectId) => rows(companyId, rid(projectId), { by: 'item', withRate: true }),
+    /**
+     * For the daily execution intelligence (27.06): the executed quantity of approved DPRs per work line, apportioned to BOQ items the same way
+     * as the executed column of the chain (thousandths), with the item's contract rate (×10⁴) and line ids. `date` limits to one DPR date,
+     * `upTo` to DPR dates on or before it.
+     */
+    executedLines(companyId, projectId, { date = null, upTo = null } = {}) {
+      const pj = rid(projectId); const items = itemsOf(companyId, pj);
+      return executedOf(companyId, pj, items, { date, upTo }).map((w) => { const it = items.get(w.code); return { dprId: w.dprId, dprNo: w.dprNo, date: w.date, siteId: w.siteId, activityId: w.activity_id,
+        code: it?.code ?? w.code, description: it?.description ?? null, uom: it?.uom ?? null, lineIds: it?.ids ?? [], qtyTh: w.qty, plannedTh: w.planned_qty ?? 0, rate: it?.rate ?? 0 }; });
+    },
     options(actor) { gate(actor, 'bill.qty_recon.view', 'see the quantity reconciliation'); return { projects: db.prepare("SELECT id, code, name FROM org_projects WHERE company_id = ? AND deleted_at IS NULL AND status = 'ACTIVE' ORDER BY code").all(actor.companyId).filter((p) => base.may(actor, 'bill.qty_recon.view', p.id)), locations: db.prepare('SELECT id, project_id AS projectId, code, name FROM proj_locations WHERE company_id = ? AND deleted_at IS NULL ORDER BY code LIMIT 2000').all(actor.companyId), levels: Object.entries(LEVEL).map(([id, label]) => ({ id, label })) }; },
     /** FR-01 */
     report(actor, q) {

@@ -27,7 +27,7 @@ const stickingOut = (page) => page.evaluate(() => {
 
 test('T-03 AC-02 every page of the application renders at 360 px without a horizontal page scroll and without console errors', async ({ page, request }, info) => {
   test.skip(info.project.name !== 'mobile', 'the phone width');
-  test.setTimeout(1_200_000); // every page at 360 px: 10 min alone in 12.03, more under the load of the whole run
+  test.setTimeout(2_700_000); // every page at 360 px: 10 min alone in 12.03; the registry has grown since (the mobile UI v3 sweep of the same pages takes about 25 min), so 20 min no longer held
   const routes = await routesOf(request);
   expect(routes.length).toBeGreaterThanOrEqual(55);
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), identity);

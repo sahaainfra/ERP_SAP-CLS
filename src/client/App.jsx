@@ -27,6 +27,7 @@ const VerifyPage = lazyPage(() => import('./modules/eng/VerifyPage.jsx'));
 const VendorQuotePage = lazyPage(() => import('./modules/proc/VendorQuotePage.jsx'));
 const VendorPoPage = lazyPage(() => import('./modules/proc/VendorPoPage.jsx'));
 const ChatDock = lazyPage(() => import('./modules/msg/ChatDock.jsx'));
+const AiDock = lazyPage(() => import('./modules/ai/Assistant.jsx'));
 const OfferResponsePage = lazyPage(() => import('./modules/hr/OfferResponsePage.jsx'));
 const AcceptInvitePage = lazyPage(() => import('./modules/iam/pages/AcceptInvitePage.jsx'));
 
@@ -120,6 +121,7 @@ function Shell({ iam, user }) {
   // the offline field engine (part 04.15) starts for the signed-in person when its flag is on
   const offlineFlag = useFlag('ff.eng.p0415', Boolean(s));
   const msgFlag = useFlag('ff.msg.p0501', Boolean(s));
+  const aiFlag = useFlag('ff.ai.p2802', Boolean(s));
   const perfFlag = useFlag('ff.perf.p16604', Boolean(s));
   const offlineUser = s ? (iam && user ? user.username ?? user.id ?? null : identity.user) : null;
   useEffect(() => { if (offlineFlag.on && offlineUser) startOffline(String(offlineUser)).catch(() => {}); }, [offlineFlag.on, offlineUser]);
@@ -170,7 +172,7 @@ function Shell({ iam, user }) {
           path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
           theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
           onSignOut={iam && user ? () => { if (unsentCount() > 0 && !window.confirm(`${unsentCount()} change(s) on this device have not been sent yet and will be deleted if you sign out. Sign out anyway?`)) return Promise.resolve(); pwa.clearApiCache(); return signOut().then(() => wipeOnSignOut()).then(() => qc.clear()); } : null} identityBar={identityBar}
-          extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <WhenIdle on={perfFlag.on}><Suspense fallback={null}><ChatDock session={s} /></Suspense></WhenIdle>}</>}
+          extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <WhenIdle on={perfFlag.on}><Suspense fallback={null}><ChatDock session={s} /></Suspense></WhenIdle>}{aiFlag.on && !onboarding && <Suspense fallback={null}><AiDock /></Suspense>}</>}
         />
       </FeedbackProvider>
     );

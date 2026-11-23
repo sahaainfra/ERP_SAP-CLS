@@ -141,7 +141,8 @@ export function YearEndPage() {
   const q = useQuery({ queryKey: ['gl', 'ye', fyId], queryFn: () => pc.yearEnd(fyId ? { fyId } : {}), retry: false }); const x = q.data;
   return (<section aria-labelledby="ye-h" data-testid="ye-page"><PageHeader id="ye-h" title={t('ye.title')} subtitle={t('ye.intro')} meta={<Link to="/finance/close">{t('pc.title')}</Link>} />
     <GlError error={error} />{note && <p className="mdm-banner" role="status">{note}</p>}
-    {guardOf(q, t('ye.title'), 'fin.period.view') ?? <>
+    {/* no financial year of the company covers today (a company not yet set up for accounts): say so, not "no access" (the server answers 404) */}
+    {!fyId && q.error?.status === 404 && q.error?.code !== 'FORBIDDEN' ? <EmptyState title={t('ye.noYear')} message={t('ye.noYearBody')} /> : guardOf(q, t('ye.title'), 'fin.period.view') ?? <>
       <Field label={t('ye.year')} name="fy" error={null}><select value={fyId || x.fy.id} onChange={(e) => setFyId(e.target.value)} style={big} data-testid="ye-fy">{x.years.map((y) => <option key={y.id} value={y.id}>{y.code} · {y.status}</option>)}</select></Field>
       <ol className="lp-list" data-testid="ye-steps">{x.steps.map((s, i) => <li key={s.code} className="mdm-panel" style={{ padding: 12, margin: '6px 0' }}><div style={row}><strong>{i + 1}. {t(`ye.step.${s.code}`)}</strong><span>{s.done ? '✓' : '…'}</span></div><span className="muted small">{s.detail}</span></li>)}</ol>
       <KpiRow label={x.fy.code}><KpiTile label={t('st.pbt')} value={money(x.profit.pbt)} amount={x.profit.pbt} kind="money" /><KpiTile label={t('pc.pat')} value={money(x.profit.pat)} amount={x.profit.pat} kind="money" /><KpiTile label={t('ye.monthsClosed')} value={`${x.periods.filter((p) => p.closed).length} / ${x.periods.length}`} /></KpiRow>

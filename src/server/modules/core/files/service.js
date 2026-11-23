@@ -287,6 +287,28 @@ export function createFileService({ db, storage, scanners, jobs, signer, approva
      * A copy of a stored file linked to another record (message to task, 05.04): the bytes are copied under a new key, so removing or superseding one file never touches the other. Only a clean file is copied.
      * The caller has already checked that the person may use the target record; the source must be a live file of the same company.
      */
+    /** The bytes of a clean file, for server-side processing such as text extraction (part 28.04). Not routed: callers check the person's rights first. */
+    async bytesOf(fileId) {
+      const r = db.prepare('SELECT * FROM core_files WHERE id = ? AND is_active = 1 AND deleted_at IS NULL').get(Number(fileId));
+      if (!r) throw notFound('That file does not exist.');
+      if (r.scan_status !== 'CLEAN') throw unprocessable(`The file ${r.original_name} has not been cleared by the virus scan.`);
+      return { file: present(r), companyId: r.company_id, projectId: r.project_id, siteId: r.site_id, buffer: await readAll(storage.createReadStream(r.storage_key)) };
+    },
+    /** Store a processed copy of a clean file (for example faces blurred, part 28.05) on the same record. Not routed: callers check the person's rights first. */
+    async storeDerivative(fileId, buffer, { suffix, by, kind }) {
+      const r = db.prepare('SELECT * FROM core_files WHERE id = ? AND is_active = 1 AND deleted_at IS NULL').get(Number(fileId));
+      if (!r) throw notFound('That file does not exist.');
+      if (r.scan_status !== 'CLEAN') throw unprocessable(`The file ${r.original_name} has not been cleared by the virus scan.`);
+      const day = new Date();
+      const key = `c${r.company_id}/${day.getUTCFullYear()}/${String(day.getUTCMonth() + 1).padStart(2, '0')}/${randomUUID()}`;
+      await storage.putBuffer(key, buffer);
+      const name = r.original_name.replace(/(\.[A-Za-z0-9]+)?$/, (ext) => `-${suffix}${ext}`);
+      const sha = createHash('sha256').update(buffer).digest('hex');
+      const res = db.prepare(`INSERT INTO core_files (company_id, storage_key, original_name, extension, mime, category, size_bytes, sha256, scan_status, scanned_at, linked_entity, linked_id, retention_class, exif_stripped, project_id, site_id, created_by, source_type, source_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'CLEAN', ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`).run(r.company_id, key, name, r.extension, r.mime, r.category, buffer.length, sha, iso(now()), r.linked_entity, r.linked_id, r.retention_class, r.project_id, r.site_id, by, kind, String(r.id));
+      writeAudit(db, { entity: 'core_files', entityId: Number(res.lastInsertRowid), action: 'derive', companyId: r.company_id, actor: by, newValues: { from: r.id, kind } });
+      return { id: Number(res.lastInsertRowid), name };
+    },
     async copyTo(actor, { fileId, entity, entityId, projectId = null, siteId = null }) {
       const r = db.prepare('SELECT * FROM core_files WHERE id = ? AND company_id = ? AND is_active = 1 AND deleted_at IS NULL').get(Number(fileId), actor.companyId);
       if (!r) throw notFound('That file does not exist.');

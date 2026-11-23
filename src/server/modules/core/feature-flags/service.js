@@ -4,7 +4,7 @@ import { writeAudit } from '../../../platform/audit/index.js';
 import { publishEvent } from '../../../platform/events/index.js';
 import { pageResponse } from '../../../platform/pagination/index.js';
 import { assertPermission } from '../../../platform/auth/index.js';
-import { badRequest, forbidden, notFound } from '../../../platform/http/errors.js';
+import { badRequest, forbidden, notFound, unprocessable } from '../../../platform/http/errors.js';
 import { createFlagRepository } from './repository.js';
 
 const toBool = (v) => v === 1 || v === true;
@@ -85,6 +85,10 @@ export function createFlagService({ db, environment }) {
     /** Set a flag at a scope. Audit entry and outbox event are written in the same transaction. */
     set(actor, key, { scope, enabled, reason, version }, correlationId) {
       assertPermission(actor, 'core.flag.configure');
+      // part 29.01, BR-01: once the control center is on for the company, its flags change only through an approved change request
+      if (['company', 'project'].includes(scope.level) && resolveWith(repo, 'ff.admin.p2901', { environment, companyId: actor.companyId }).enabled) {
+        throw unprocessable('Feature flags of this company are changed through the Enterprise Control Center: raise a change request there for a checker to approve.');
+      }
       if ((scope.level === 'company' || scope.level === 'project') && scope.companyId !== actor.companyId) {
         throw forbidden('You can only change overrides for your own company.');
       }

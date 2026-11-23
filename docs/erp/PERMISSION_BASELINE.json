@@ -396,5 +396,63 @@
  ],
  "pay.stat.bocw.manage": [
   "PAY"
+ ],
+ "ai.kill_switch.manage": [
+  "DIR",
+  "ITADM",
+  "SYSADM"
+ ],
+ "ai.provider.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "adm.snapshot.manage": [
+  "SYSADM"
+ ],
+ "adm.connector.configure": [
+  "ITADM"
+ ],
+ "adm.api.manage": [
+  "ITADM"
+ ],
+ "adm.pack.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "adm.migration.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "adm.backup.restore": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "adm.archive.manage": [
+  "SYSADM"
+ ],
+ "adm.archive.dispose": [
+  "AUD"
+ ],
+ "hd.article.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "bi.det_rule.configure": [
+  "CFO",
+  "PCMGR"
+ ],
+ "bi.exec_alert.configure": [
+  "CFO",
+  "DIR"
+ ],
+ "bi.exec_alert.manage": [
+  "CFO",
+  "DIR",
+  "PCMGR",
+  "PD"
+ ],
+ "bi.morning_report.configure": [
+  "CFO",
+  "DIR"
  ]
 }

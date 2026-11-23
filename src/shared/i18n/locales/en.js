@@ -32,6 +32,27 @@ import fa from './en/fa.js';
 import pa from './en/pa.js';
 import fc from './en/fc.js';
 import pl from './en/pl.js';
+import ct from './en/ct.js';
+import mr from './en/mr.js';
+import ex from './en/ex.js';
+import mc from './en/mc.js';
+import why from './en/why.js';
+import lk from './en/lk.js';
+import rd from './en/rd.js';
+import scn from './en/scn.js';
+import ai from './en/ai.js';
+import aa from './en/aa.js';
+import af from './en/af.js';
+import di from './en/di.js';
+import cv from './en/cv.js';
+import adm from './en/adm.js';
+import con from './en/con.js';
+import dev from './en/dev.js';
+import bk from './en/bk.js';
+import mig from './en/mig.js';
+import bkp from './en/bkp.js';
+import arc from './en/arc.js';
+import hd from './en/hd.js';
 import cf from './en/cf.js';
 import pc from './en/pc.js';
 import ic from './en/ic.js';
@@ -82,6 +103,27 @@ export default {
   pc: pc,
   cf: cf,
   pl: pl,
+  ct: ct,
+  mr: mr,
+  ex: ex,
+  mc: mc,
+  why: why,
+  lk: lk,
+  rd: rd,
+  scn: scn,
+  ai: ai,
+  aa: aa,
+  af: af,
+  di: di,
+  cv: cv,
+  adm: adm,
+  con: con,
+  dev: dev,
+  bk: bk,
+  mig: mig,
+  bkp: bkp,
+  arc: arc,
+  hd: hd,
   fc: fc,
   pa: pa,
 };

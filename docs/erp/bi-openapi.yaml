@@ -383,6 +383,462 @@ paths:
         '200': { description: Aggregate counts for the chosen period }
         '403': { description: Company-wide audit view permission required }
 
+  /bi/control-tower:
+    get:
+      summary: Executive dashboard and health matrix (part 27.04)
+      description: >
+        Requires ff.bi.p2704 with the 27.03 prerequisites and bi.control_tower.view; projects are limited to the actor's assignment scope.
+        Every tile aggregates certified 27.03 metrics only (BR-01) and carries the evaluation time and the last monthly capture; an uncertified metric
+        returns state UNCERTIFIED and no value, a metric the role may not read returns MASKED. The cash outlook needs a company-wide fin.cash_forecast.view.
+      parameters:
+        - { name: regionId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: sector, in: query, schema: { type: string, maxLength: 40 } }
+        - { name: pm, in: query, schema: { type: string, maxLength: 80 } }
+        - { name: rag, in: query, schema: { $ref: '#/components/schemas/Rag' } }
+        - { name: dimension, in: query, schema: { type: string, enum: [time, cost, quality, safety, cash] } }
+        - { name: dimensionRag, in: query, schema: { $ref: '#/components/schemas/Rag' } }
+        - { name: sort, in: query, schema: { type: string, enum: [overall, spi, cpi, eac, revenue, margin, dso, ltifr, stock] } }
+        - { name: search, in: query, schema: { type: string, maxLength: 80 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: 'tiles, distribution, dimensions, matrix { rows, total, page, pageSize }, alerts, cash, pending, options, uncertified, can' }
+        '400': { description: Unknown filter value }
+        '403': { description: bi.control_tower.view required }
+        '404': { description: The control tower is not enabled for the company }
+  /bi/control-tower/projects/{id}:
+    get:
+      summary: Drill to one project — certified metrics with source records, earlier observations, WBS rows of the approved progress period, active alerts
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: Project health, metrics, wbs, alerts and the Project 360 link }
+        '404': { description: The project is outside the actor's control tower }
+  /bi/control-tower/export:
+    get:
+      summary: Export the health matrix with the same filters, scope and masks (audited; spreadsheet formulas neutralised)
+      parameters:
+        - { name: format, in: query, schema: { type: string, enum: [csv, xlsx, pdf], default: csv } }
+      responses:
+        '200': { description: The file; x-export-rows gives the number of projects }
+        '403': { description: bi.control_tower.export required }
+  /bi/exec-alerts:
+    get:
+      summary: 'Executive alerts worklist (scope: project alerts by assignment, company-level alerts with a company-wide grant)'
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED, ACTIVE] } }
+        - { name: severity, in: query, schema: { type: string, enum: [INFO, WARNING, CRITICAL] } }
+        - { name: ruleCode, in: query, schema: { $ref: '#/components/schemas/ExecRule' } }
+        - { name: projectId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: mine, in: query, schema: { type: string, enum: ['1', 'true'] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: '{ rows, total, page, pageSize }' }
+        '403': { description: bi.exec_alert.view required }
+  /bi/exec-alerts/{id}:
+    get:
+      summary: One executive alert
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: The alert }
+        '404': { description: Not found or outside the actor's scope }
+  /bi/exec-alerts/{id}/act:
+    post:
+      summary: Acknowledge or resolve an alert (Idempotency-Key required; optimistic locking on version)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action, version]
+              properties:
+                action: { type: string, enum: [acknowledge, resolve] }
+                note: { type: string, maxLength: 500, description: Required (5 characters or more) to resolve }
+                version: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: The alert after the action; a resolved alert completes its task }
+        '400': { description: A resolution needs a note }
+        '409': { description: The alert changed since it was read }
+        '422': { description: The alert is already resolved, or only an open alert can be acknowledged }
+  /bi/exec-alerts/evaluations:
+    post:
+      summary: Queue the early-warning checks for the company now (bi.exec_alert.run; Idempotency-Key required)
+      responses:
+        '202': { description: The background job }
+  /bi/exec-alert-settings:
+    get:
+      summary: The early-warning rules and thresholds in force, with the change requests for checkers
+      responses:
+        '200': { description: '{ rules, requests, can }' }
+  /bi/exec-alert-settings/requests:
+    post:
+      summary: Propose a threshold change (bi.exec_alert.configure; maker-checker, DIR or CFO approves; Idempotency-Key required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [ruleCode, enabled, threshold, severity, reason]
+              properties:
+                ruleCode: { $ref: '#/components/schemas/ExecRule' }
+                enabled: { type: boolean }
+                threshold: { type: number }
+                periods: { type: integer, minimum: 1, maximum: 6, default: 1 }
+                severity: { type: string, enum: [INFO, WARNING, CRITICAL] }
+                reason: { type: string, minLength: 5, maxLength: 500 }
+      responses:
+        '201': { description: The change request }
+        '400': { description: Threshold out of range, or periods on a rule that looks at one period }
+        '409': { description: Already in force, or a change to the rule is already waiting }
+  /bi/exec-alert-settings/requests/{id}/act:
+    post:
+      summary: Approve, reject or return a threshold change (never by its requester)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action, version]
+              properties:
+                action: { type: string, enum: [approve, reject, return] }
+                comment: { type: string, maxLength: 500 }
+                version: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: The request; on approval the new version is in force and audited }
+        '403': { description: Self-approval or a role outside DIR and CFO }
+
+  /bi/morning-reports/current:
+    get:
+      summary: Open (and on first opening, build and freeze) the caller's morning report of a date (part 27.05)
+      description: >
+        Requires ff.bi.p2705 with the 27.03 prerequisites and bi.morning_report.view. The report is built as the caller, from the data as at
+        the configured cut-off of the date, and stored as a snapshot with its SHA-256; every later read returns the same figures (BR-01).
+      parameters: [{ name: date, in: query, schema: { type: string, format: date } }]
+      responses:
+        '200': { description: '{ id, reportNo, reportDate, cutoffAt, generatedAt, deliveredAt, channels, exceptions, hash, snapshot { sections, exceptions, summary } }' }
+        '400': { description: The cut-off of that date has not come yet }
+        '403': { description: bi.morning_report.view required }
+  /bi/morning-reports:
+    get:
+      summary: The caller's archive of morning reports
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: '{ rows, total, page, pageSize }' }
+  /bi/morning-reports/{id}:
+    get:
+      summary: One of the caller's reports (another person's report is 404)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: The report with its snapshot }
+        '404': { description: Not found or not the caller's }
+  /bi/morning-reports/{id}/verify:
+    get:
+      summary: Recompute the hash of the stored snapshot (reproducibility check)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: '{ hash, stored, identical }' }
+  /bi/morning-reports/{id}/export:
+    get:
+      summary: The report as PDF, XLSX or CSV, drawn from the snapshot (audited)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: format, in: query, schema: { type: string, enum: [pdf, xlsx, csv], default: pdf } }
+      responses:
+        '200': { description: The file }
+  /bi/morning-reports/deliveries:
+    post:
+      summary: Queue delivery of the reports now due (bi.morning_report.configure; Idempotency-Key required)
+      responses:
+        '202': { description: The background job }
+  /bi/morning-report-settings:
+    get:
+      summary: The configurations in force, the caller's own, and the change requests for checkers
+      responses:
+        '200': { description: '{ configs, mine, sections, channels, requests, can }' }
+  /bi/morning-report-settings/requests:
+    post:
+      summary: Propose a configuration for a role or a user (maker-checker; DIR or CFO approves; Idempotency-Key required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [scopeType, scopeRef, sections, cutoff, time, channels, active, reason]
+              properties:
+                scopeType: { type: string, enum: [ROLE, USER] }
+                scopeRef: { type: string, minLength: 2, maxLength: 80 }
+                sections: { type: array, items: { type: string, enum: [tower, progress, attendance, stock, receivables, payables, approvals, tasks, risks, incidents] } }
+                cutoff: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+                time: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$', description: Not before the cut-off }
+                channels: { type: array, items: { type: string, enum: [IN_APP, EMAIL, WHATSAPP] }, description: Must include IN_APP }
+                pdf: { type: boolean, default: true }
+                active: { type: boolean }
+                reason: { type: string, minLength: 5, maxLength: 500 }
+      responses:
+        '201': { description: The change request }
+        '409': { description: Already in force, or a change is already waiting }
+  /bi/morning-report-settings/requests/{id}/act:
+    post:
+      summary: Approve, reject or return a configuration change (never by its requester)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }]
+      responses:
+        '200': { description: The request; on approval the configuration is in force and audited }
+        '403': { description: Self-approval or a role outside DIR and CFO }
+
+  /bi/execution:
+    get:
+      summary: Daily execution intelligence (part 27.06)
+      description: >
+        Requires ff.bi.p2706 with the 27.03 prerequisites and bi.execution.view. Figures come from the daily snapshots of approved DPRs:
+        work done = Σ approved DPR quantity (apportioned to BOQ items by 22.02) × contract rate. Site rows are scoped by site, project rows by project.
+        Budget cost and margin are null without bi.execution.cost.
+      parameters:
+        - { name: projectId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: siteId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: date, in: query, schema: { type: string, format: date } }
+        - { name: days, in: query, schema: { type: integer, minimum: 7, maximum: 90, default: 30 } }
+      responses:
+        '200': { description: '{ date, lastCapturedAt, costVisible, tiles, trend, sites, projects, exceptions, options, can }' }
+        '403': { description: bi.execution.view required }
+  /bi/execution/valuation:
+    get:
+      summary: Work-done valuation of a project (or one site) for a day, item by item with the DPRs behind it
+      parameters:
+        - { name: projectId, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: siteId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: date, in: query, schema: { type: string, format: date } }
+      responses:
+        '200': { description: '{ items [code, description, uom, qty, rate, value, cost, margin, dprs], totals, captured }' }
+        '400': { description: A project is required }
+        '404': { description: The project or site is outside the caller's scope }
+  /bi/execution/valuation/export:
+    get:
+      summary: The valuation as CSV, XLSX or PDF (cost columns only with bi.execution.cost; audited)
+      parameters:
+        - { name: projectId, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: siteId, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: date, in: query, schema: { type: string, format: date } }
+        - { name: format, in: query, schema: { type: string, enum: [csv, xlsx, pdf], default: csv } }
+      responses:
+        '200': { description: The file }
+  /bi/execution/captures:
+    post:
+      summary: Recompute the snapshots of a day (bi.execution.run; Idempotency-Key required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false, required: [date], properties: { date: { type: string, format: date }, projectId: { type: integer, minimum: 1 } } }
+      responses:
+        '202': { description: The background job }
+        '400': { description: A future day }
+
+  /bi/monthly-closes/board:
+    get:
+      summary: Monthly close status board (part 27.07) — every project in scope with its close of the month, by stage
+      parameters: [{ name: period, in: query, schema: { type: string, pattern: '^\\d{4}-(0[1-9]|1[0-2])$' } }]
+      responses:
+        '200': { description: '{ period, steps, columns, cards [projectId, column, closeId, passed, steps, blocking, can] }' }
+        '403': { description: bi.monthly_close.view required }
+  /bi/monthly-closes:
+    get:
+      summary: List monthly closes (filters period, projectId, status; paginated)
+      responses: { '200': { description: '{ rows, total, page, pageSize }' } }
+    post:
+      summary: Start the close of a project and month (bi.monthly_close.create; Idempotency-Key required)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [projectId, period], properties: { projectId: { type: integer }, period: { type: string }, remarks: { type: string, maxLength: 500 } } } } } }
+      responses: { '201': { description: The draft close with its live checklist }, '400': { description: A future month }, '409': { description: The project already has a close for the month } }
+  /bi/monthly-closes/export:
+    get:
+      summary: Export the list (CSV, XLSX, PDF; audited)
+      responses: { '200': { description: The file } }
+  /bi/monthly-closes/{id}:
+    get:
+      summary: A close with its checklist (live while a draft, frozen once sent), Project MIS, Budget Master, rights and approval task
+      responses: { '200': { description: The close }, '404': { description: Not found or outside the caller's projects } }
+    patch:
+      summary: Change the remarks of a draft or returned close (optimistic locking on rowVersion)
+      responses: { '200': { description: The close }, '409': { description: Stale version }, '422': { description: Not a draft or returned close } }
+    delete:
+      summary: Delete a draft that was never sent
+      responses: { '200': { description: Deleted } }
+  /bi/monthly-closes/{id}/submit:
+    post:
+      summary: Send for approval (QS → PM → PD); refused while a mandatory step is open (BR-01); freezes the MIS and the Budget Master
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { rowVersion: { type: integer } } } } } }
+      responses: { '200': { description: The submitted close }, '409': { description: Stale version }, '422': { description: 'Open mandatory steps, listed in details (field = step code)' } }
+  /bi/monthly-closes/{id}/withdraw:
+    post: { summary: The sender takes a close back, responses: { '200': { description: The close } } }
+  /bi/monthly-closes/{id}/cancel:
+    post: { summary: Cancel a close that is not approved (an approved one is amended), responses: { '200': { description: The close }, '422': { description: Already approved } } }
+  /bi/monthly-closes/{id}/amend:
+    post: { summary: Start an amendment of an approved, locked close (a new version approved again; the month stays locked), responses: { '201': { description: The amendment draft } } }
+  /bi/monthly-closes/{id}/history:
+    get: { summary: Approval history and audit of the close, responses: { '200': { description: '{ approvals, audit }' } } }
+  /bi/monthly-closes/{id}/print:
+    get:
+      summary: Project MIS (part=mis) or Budget Master (part=budget) as PDF from the frozen snapshot
+      parameters: [{ name: part, in: query, schema: { type: string, enum: [mis, budget], default: mis } }]
+      responses: { '200': { description: The PDF } }
+  /bi/monthly-closes/{id}/export:
+    get:
+      summary: Budget Master or Project MIS as XLSX or CSV
+      parameters: [{ name: part, in: query, schema: { type: string, enum: [mis, budget], default: budget } }, { name: format, in: query, schema: { type: string, enum: [csv, xlsx], default: xlsx } }]
+      responses: { '200': { description: The file } }
+
+  /bi/explain/why:
+    get:
+      summary: Why? — decomposition of a project's cost, schedule or margin variance (part 27.08; deterministic, components + residual = total)
+      parameters:
+        - { name: projectId, in: query, required: true, schema: { type: integer } }
+        - { name: kpi, in: query, schema: { type: string, enum: [cost, schedule, margin], default: cost } }
+        - { name: period, in: query, schema: { type: string, pattern: '^\\d{4}-(0[1-9]|1[0-2])$' } }
+      responses:
+        '200': { description: '{ kpi, label, total, components [key, group, label, amount, method, drill], residual, explained, check { balanced }, method DETERMINISTIC, narrative null, figures, source, breadcrumb }' }
+        '403': { description: bi.explain.view required, or the owning module (14.07 control facts, 22.09 CVR) refuses the figures to the role }
+        '404': { description: Flag ff.bi.p2708 off, or the project is outside the caller's scope }
+  /bi/explain/why/export:
+    get:
+      summary: Export the decomposition with its residual and total (CSV, XLSX, PDF; bi.explain.export; audited)
+      responses: { '200': { description: The file } }
+  /bi/explain/drill:
+    get:
+      summary: One level of the drill-down with its breadcrumb (Company → Project → Site / WBS / Resource → Activity → BOQ → Transaction → Document → Audit)
+      parameters:
+        - { name: level, in: query, schema: { type: string, enum: [company, project, site, resource, wbs, activity, boq, txn, document, audit], default: company } }
+        - { name: id, in: query, schema: { type: string } }
+        - { name: projectId, in: query, schema: { type: integer }, description: With level resource }
+        - { name: entity, in: query, schema: { type: string }, description: The object type (03.04 registry) with level document or audit }
+        - { name: txnId, in: query, schema: { type: integer }, description: Keeps the transaction in the breadcrumb of a document }
+      responses:
+        '200': { description: '{ level, id, title, breadcrumb [level, id, label], children [level, id, label, kind, figures, route, restricted] }' }
+        '400': { description: Unknown level, or a document without its entity }
+        '404': { description: Not found or outside the caller's scope (never named) }
+  /bi/leakage:
+    get:
+      summary: Leakage & controls tower (part 27.09) — findings by type, project and value, controls by mode, findings and exceptions trend, my pending actions
+      parameters: [{ name: projectId, in: query, schema: { type: integer } }]
+      responses: { '200': { description: '{ tiles, byRule, byProject, top, trend, controls, outcomes, pending, projects, can }' }, '403': { description: bi.leakage.view required }, '404': { description: Flag ff.bi.p2709 off } }
+  /bi/findings:
+    get:
+      summary: Findings in scope (bi.finding.view on the project, company-wide for company findings) and always the caller's own; filters status (or ACTIVE), ruleCode, projectId, outcome, severity, mine, overdue; sort value/newest/due; paginated
+      responses: { '200': { description: '{ rows, total, valueAtRisk, page, pageSize }' } }
+  /bi/findings/export:
+    get:
+      summary: Export the filtered findings (CSV, XLSX, PDF; bi.finding.export; audited)
+      responses: { '200': { description: The file } }
+  /bi/findings/{id}:
+    get:
+      summary: A finding with its evidence, owner and basis, method, rights and the auditor's approval task
+      responses: { '200': { description: The finding }, '404': { description: Not found or outside the caller's scope } }
+  /bi/findings/{id}/history:
+    get:
+      summary: The audit trail of the finding
+      responses: { '200': { description: '[{ action, actor, at, oldValues, newValues }]' } }
+  /bi/findings/{id}/review:
+    post:
+      summary: The owner (or bi.finding.act) takes an open finding into review (Idempotency-Key)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [rowVersion], properties: { rowVersion: { type: integer }, note: { type: string } } } } } }
+      responses: { '200': { description: The finding }, '403': { description: Not the owner }, '409': { description: Stale version } }
+  /bi/findings/{id}/close:
+    post:
+      summary: Close with an outcome (BR-01). CONFIRMED_LOSS needs lossAmount; FALSE_POSITIVE is sent to the internal auditor through the workflow engine (owner → AUD) and closes on approval
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [outcome, resolution, rowVersion], properties: { outcome: { type: string, enum: [CONFIRMED_LOSS, PREVENTED, FALSE_POSITIVE] }, resolution: { type: string }, lossAmount: { type: number }, rowVersion: { type: integer } } } } } }
+      responses: { '200': { description: The finding (CLOSED, or PENDING_FP) }, '400': { description: Missing loss amount or reason }, '409': { description: Stale version }, '422': { description: Not open } }
+  /bi/detection-rules:
+    get:
+      summary: The rule library with the thresholds in force, false-positive rate per rule and the pending changes
+      responses: { '200': { description: '{ rules, requests, can }' } }
+  /bi/detection-rules/{code}/changes:
+    post:
+      summary: Propose a threshold, severity or active change (bi.det_rule.configure); AUD or CFO approves, never the requester
+      responses: { '201': { description: The change request }, '400': { description: A threshold outside its bounds }, '409': { description: Already in force or already pending } }
+  /bi/detection-rules/changes/{id}/act:
+    post:
+      summary: Approve, reject or return a rule change
+      responses: { '200': { description: The change request } }
+  /bi/detection/runs:
+    post:
+      summary: Queue a run of the rules (all, or one ruleCode) as a background job (bi.det_rule.run); the job also runs daily at 05:30 IST
+      responses: { '202': { description: The job } }
+  /bi/role-dashboard:
+    get:
+      summary: The roles of the caller that have a role dashboard (part 27.10); the layout itself is GET /ui/dashboards/role-dashboard (03.07)
+      responses: { '200': { description: '{ roles [role, name, widgets], dashboard }' }, '404': { description: Flag ff.bi.p2710 off } }
+  /bi/dashboard-inventory:
+    get:
+      summary: Every widget with its provider, source (certified metric, overview card, module service, framework), permission, drill, dashboards and role dashboards that use it, and status (OK, REVIEW, RETIRED, NO_PROVIDER); the dashboards; the role coverage; the last scan for hard-coded figures
+      parameters:
+        - { name: module, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [OK, REVIEW, RETIRED, NO_PROVIDER] } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: source, in: query, schema: { type: string, enum: [CERTIFIED_METRIC, OVERVIEW_SERVICE, OWNER_SERVICE, FRAMEWORK] } }
+      responses: { '200': { description: '{ totals, byModule, widgets, roles, dashboards, scan }' }, '403': { description: bi.dashboard_inventory.view required } }
+  /bi/dashboard-inventory/export:
+    get:
+      summary: Export the inventory (CSV, XLSX, PDF; audited)
+      responses: { '200': { description: The file } }
+  /bi/dashboard-inventory/scans:
+    post:
+      summary: Run the scan for hard-coded figures and sample data in the dashboard code again (audited)
+      responses: { '201': { description: '{ available, files, findings [rule, file, line, text, why], scannedAt }' } }
+  /bi/scenarios/drivers:
+    get:
+      summary: The scenario drivers with their fields and ranges, the projects in scope and the caller's rights (part 27.11)
+      responses: { '200': { description: '{ drivers [type, label, fields], projects, can }' }, '404': { description: Flag ff.bi.p2711 off } }
+  /bi/scenarios/preview:
+    post:
+      summary: Compute a scenario without saving it — on copies of the approved cost forecast (23.11), the schedule (13.01, CPM recalculated) and the approved 13-week cash forecast (23.13); nothing live changes (BR-01)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [projectId, drivers], properties: { projectId: { type: integer }, overheadPerDay: { type: number }, drivers: { type: array, items: { type: object, required: [type], properties: { type: { type: string, enum: [MATERIAL_PRICE, WAGE_RATE, PRODUCTIVITY_LOSS, EQUIPMENT_BREAKDOWN, PROCUREMENT_DELAY, SCHEDULE_DELAY, CLIENT_PAYMENT_DELAY, QUANTITY_VARIATION, SCOPE_CHANGE, CASH_CONSTRAINT] } } } } } } } } }
+      responses: { '200': { description: '{ cost { baseEac, eac, eacDelta, margin, marginDelta, lines }, schedule { baseFinish, finish, shiftDays }, cash { baseLowest, lowest, weeksBelowFloor, series }, effects, method }' }, '400': { description: A driver out of range } }
+  /bi/scenarios:
+    get:
+      summary: The scenarios the caller may see (their own, shared with them, and saved ones for those who share scenarios), in project scope
+      responses: { '200': { description: '{ rows, total }' } }
+    post:
+      summary: Create a scenario (draft, or saved with save true) and compute it (Idempotency-Key)
+      responses: { '201': { description: The scenario with its results } }
+  /bi/scenarios/compare:
+    get:
+      summary: Two to six scenarios side by side with the base figures
+      parameters: [{ name: ids, in: query, required: true, schema: { type: string, example: '12,15' } }]
+      responses: { '200': { description: '{ scenarios, base, sameProject }' } }
+  /bi/scenarios/compare/export:
+    get:
+      summary: Export the comparison (CSV, XLSX, PDF; audited)
+      responses: { '200': { description: The file } }
+  /bi/scenarios/{id}:
+    get:
+      summary: A scenario with its drivers, results, sharing and actions
+      responses: { '200': { description: The scenario }, '404': { description: Not visible to the caller } }
+    patch:
+      summary: Change the drivers or the status (author only; recomputed; rowVersion, 409 when stale)
+      responses: { '200': { description: The scenario }, '403': { description: Not the author }, '409': { description: Stale version } }
+    delete:
+      summary: Delete (author only)
+      responses: { '200': { description: Deleted } }
+  /bi/scenarios/{id}/share:
+    put:
+      summary: Share with people of the company (author only; they are notified)
+      responses: { '200': { description: The scenario }, '400': { description: Unknown user } }
+  /bi/scenarios/{id}/actions:
+    post:
+      summary: Turn a saved scenario into a task (04.08) or a forecast assumption (a task and the event bi.scenario.assumption_proposed for the forecast owner; the forecast itself is unchanged)
+      responses: { '201': { description: The scenario with its actions }, '422': { description: Not saved yet } }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -423,3 +879,5 @@ components:
         format: { type: string, enum: [csv, xlsx, pdf] }
         channel: { type: string, enum: [IN_APP, EMAIL, WHATSAPP] }
         version: { type: integer, minimum: 1 }
+    Rag: { type: string, enum: [RED, AMBER, GREEN, NONE] }
+    ExecRule: { type: string, enum: [SPI_LOW, CPI_LOW, EAC_GROWTH, COLLECTIONS_OVERDUE, CASH_NEGATIVE, LTI, MATERIAL_SHORTAGE] }

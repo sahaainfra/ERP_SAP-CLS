@@ -73,7 +73,7 @@ test('FR-01 FR-02 the chart of accounts: tree and filters, a new account propose
   await page.getByTestId('coa-control').selectOption('');
   await noOverflow(page);
   await page.getByTestId('coa-new-account').click();
-  await page.getByTestId('coa-f-code').fill('560030');
+  await page.getByTestId('coa-f-code').fill('560090');
   await page.getByTestId('coa-f-name').fill('Site security services');
   await page.getByTestId('coa-f-group').selectOption({ label: '5600 Other expenses (construction and overheads) (Expenses)' });
   await page.getByTestId('coa-f-type').selectOption('EXPENSE');
@@ -82,12 +82,12 @@ test('FR-01 FR-02 the chart of accounts: tree and filters, a new account propose
   await expect(page.getByTestId('coa-note')).toContainText('sent to the CFO for approval');
   await expect(page.getByTestId('coa-pending')).toContainText('1 change');
   await page.getByTestId('coa-tab-changes').click();
-  await expect(page.getByTestId('coa-change').first()).toContainText('New account 560030 Site security services');
+  await expect(page.getByTestId('coa-change').first()).toContainText('New account 560090 Site security services');
   const change = (await api(request, g.c, 'ACCMGR', g.u.acc, 'get', '/fin/changes?status=PENDING')).rows[0];
   await act(request, g.c, 'CFO', g.u.cfo, change.instanceId);
   await page.getByTestId('coa-tab-tree').click();
   await page.reload();
-  await expect(page.getByTestId('coa-account').filter({ hasText: '560030 Site security services' })).toBeVisible();
+  await expect(page.getByTestId('coa-account').filter({ hasText: '560090 Site security services' })).toBeVisible();
   await page.getByTestId('coa-tab-schedule').click();
   await expect(page.getByTestId('coa-s3-status')).toContainText('Every group and account lands on a line of Schedule III');
   await noOverflow(page);

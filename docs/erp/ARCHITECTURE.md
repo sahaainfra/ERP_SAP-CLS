@@ -1612,3 +1612,9 @@ Module `bill`, flag `ff.bill.p2209`, table `bill_cvr_reports`; service `cvr.js`.
 The payroll module lives in `modules/pay`. It provides payroll configuration, payroll runs, statutory deductions, payslips, bank transfers, and full-and-final settlement.
 
 The external account lifecycle lives in `modules/portal`. External sessions use the portal API namespace and the portal account store.
+
+The AI gateway lives in `modules/ai` (part 28.01). Every AI feature calls `aiOf(db).run(actor, featureCode, input)`: the kill switch, the approved enablement (role, project), the quotas, the context built through permission-checked services as the person, the provider through the integration hub (connectors of type `ai`), the redacted log, and the answer labelled "AI-generated — verify". Features register with `aiFeatures.register` (versioned prompt, read-only or draft-only tools, evaluation cases).
+
+The administration and data-operations module lives in `modules/admin` (parts 29.x). Part 29.01 mounts the Enterprise Control Center: configuration changes go through its own approval-engine instance over the shared `core_change_requests` (each area applied by its owner: feature flags, parameters), emergency controls act at once and raise a 24-hour ratification, and `readOnlyGuard(db)` in the request pipeline refuses every write of a company in read-only mode (423).
+
+`platform/locks` holds the shared period lock (part 27.07): a module registers a lock source (`projectPeriodLocks.register`, the project monthly close is one) and every module that writes dated project records calls `assertProjectPeriodOpen(db, { companyId, projectId, date })`, which refuses a change in a locked month with 422 `PERIOD_LOCKED`.

@@ -138,7 +138,7 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
       appLog.info({ msg: 'job started', jobId: row.job_id, jobType: row.type, attempt: row.attempts, ...(raw._cid ? { correlationId: raw._cid } : {}) });
       try {
         if (!def) throw new Error(`No handler is registered for job type ${row.type}`);
-        const result = await runWithContext({ correlationId: raw._cid ?? undefined }, () => tracer.withSpan(`job ${row.type}`, { kind: 'consumer', parent: parseTraceparent(raw._tp), attributes: { 'job.id': row.job_id, 'job.attempt': row.attempts } }, () => def.handler(ctx)));
+        const result = await runWithContext({ correlationId: raw._cid ?? undefined, companyId: row.company_id ?? undefined }, () => tracer.withSpan(`job ${row.type}`, { kind: 'consumer', parent: parseTraceparent(raw._tp), attributes: { 'job.id': row.job_id, 'job.attempt': row.attempts } }, () => def.handler(ctx)));
         outcome = isCancelled() ? { status: 'CANCELLED' } : { status: 'SUCCEEDED', result };
       } catch (err) {
         if (err instanceof JobCancelled) outcome = { status: 'CANCELLED' };
