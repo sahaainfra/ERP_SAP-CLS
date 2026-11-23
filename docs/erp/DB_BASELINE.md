@@ -13367,6 +13367,233 @@ Indexes:
 - ix_gis_progress_project: org_project_id, activity, as_of
 - ix_gis_progress_company_id: company_id
 
+## golive_checklist
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| criterion | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| mandatory | INTEGER | yes |  | 1 |
+| evaluation | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| owner_id | TEXT |  |  |  |
+| evidence_links | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'OPEN' |
+| detail | TEXT |  |  |  |
+| measured_value | NUMERIC(18,4) |  |  |  |
+| target_value | NUMERIC(18,4) |  |  |  |
+| checked_by | TEXT |  |  |  |
+| checked_at | TEXT |  |  |  |
+| waiver_reason | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_checklist_status: company_id, status
+- ux_golive_checklist_criterion (unique): company_id, criterion
+
+## golive_cutover_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| window_minutes | INTEGER | yes |  |  |
+| planned_start | TEXT |  |  |  |
+| status | TEXT | yes |  | 'PLANNED' |
+| rollback_point | TEXT |  |  |  |
+| decision_id | INTEGER |  |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| elapsed_minutes | NUMERIC(18,2) |  |  |  |
+| within_window | INTEGER |  |  |  |
+| started_by | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_cutover_runs_decision: decision_id
+- ix_golive_cutover_runs_status: company_id, kind, status
+- ux_golive_cutover_runs_no (unique): company_id, run_no
+
+## golive_cutover_steps
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| seq | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| mode | TEXT | yes |  |  |
+| planned_minutes | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| done_by | TEXT |  |  |  |
+| detail | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: run_id -> golive_cutover_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_cutover_steps_company: company_id, status
+- ux_golive_cutover_steps_seq (unique): run_id, seq
+
+## golive_decisions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| decision_no | TEXT | yes |  |  |
+| meeting_at | TEXT | yes |  |  |
+| attendees_json | TEXT | yes |  | '[]' |
+| recommendation | TEXT | yes |  |  |
+| go_live_at | TEXT |  |  |  |
+| criteria_json | TEXT | yes |  | '[]' |
+| minutes | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SUBMITTED' |
+| request_id | INTEGER |  |  |  |
+| decided_at | TEXT |  |  |  |
+| communicated_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_decisions_request: request_id
+- ix_golive_decisions_status: company_id, status
+- ux_golive_decisions_no (unique): company_id, decision_no
+
+## golive_hypercare
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| decision_id | INTEGER |  |  |  |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| war_room_json | TEXT | yes |  | '[]' |
+| handover_notes | TEXT |  |  |  |
+| handover_request_id | INTEGER |  |  |  |
+| handed_over_by | TEXT |  |  |  |
+| handed_over_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: decision_id -> golive_decisions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_hypercare_decision: decision_id
+- ix_golive_hypercare_status: company_id, status
+
+## golive_hypercare_days
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| hypercare_id | INTEGER | yes |  |  |
+| report_date | TEXT | yes |  |  |
+| opened_count | INTEGER | yes |  | 0 |
+| closed_count | INTEGER | yes |  | 0 |
+| open_by_severity_json | TEXT | yes |  | '{}' |
+| kpis_json | TEXT | yes |  | '{}' |
+| triage_notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| published_by | TEXT |  |  |  |
+| published_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: hypercare_id -> golive_hypercare(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_hypercare_days_company: company_id, report_date
+- ux_golive_hypercare_days_date (unique): hypercare_id, report_date
+
 ## gst_2b_imports
 
 | Column | Type | Not null | Key | Default |
@@ -35596,6 +35823,126 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_tst_test_runs_status: company_id, status, id
 - ux_tst_test_runs_no (unique): company_id, run_no
+
+## uat_defects
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| defect_no | TEXT | yes |  |  |
+| phase | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| script_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| severity | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| owner_id | TEXT |  |  |  |
+| reported_by | TEXT | yes |  |  |
+| reported_at | TEXT | yes |  |  |
+| triaged_by | TEXT |  |  |  |
+| triaged_at | TEXT |  |  |  |
+| fixed_in | TEXT |  |  |  |
+| fixed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| deferred_reason | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: script_id -> uat_scripts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_uat_defects_script: script_id
+- ix_uat_defects_module: company_id, module
+- ix_uat_defects_open: company_id, status, severity
+- ux_uat_defects_no (unique): company_id, defect_no
+
+## uat_scripts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| role_code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| scenario_source | TEXT | yes |  |  |
+| steps_json | TEXT | yes |  | '[]' |
+| expected | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'NOT_RUN' |
+| executed_by | TEXT |  |  |  |
+| executed_at | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_uat_scripts_module: company_id, module, status
+- ux_uat_scripts_code (unique): company_id, code
+
+## uat_signoffs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| module | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SUBMITTED' |
+| scripts_total | INTEGER | yes |  | 0 |
+| scripts_passed | INTEGER | yes |  | 0 |
+| open_defects | INTEGER | yes |  | 0 |
+| requested_by | TEXT | yes |  |  |
+| requested_at | TEXT | yes |  |  |
+| signed_by | TEXT |  |  |  |
+| signed_at | TEXT |  |  |  |
+| request_id | INTEGER |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_uat_signoffs_request: request_id
+- ix_uat_signoffs_module: company_id, module, status
 
 ## ui_bottom_bar
 

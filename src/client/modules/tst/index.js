@@ -12,6 +12,7 @@ const PerfResults = lazyPage(() => import('./PerfResults.jsx'), 'PerfResults');
 const A11yValidation = lazyPage(() => import('./A11yValidation.jsx'), 'A11yValidation');
 const Operations = lazyPage(() => import('./Operations.jsx'), 'Operations');
 const DocumentationLibrary = lazyPage(() => import('./DocumentationLibrary.jsx'), 'DocumentationLibrary');
+const GoLive = lazyPage(() => import('./GoLive.jsx'), 'GoLive');
 
 registerModule({
   code: 'tst', label: 'Go-live testing',
@@ -25,5 +26,6 @@ registerModule({
     { path: '/admin/accessibility-validation', label: 'Accessibility & Device Validation', labelHi: 'सुगम्यता और डिवाइस सत्यापन', icon: 'erp.insights.rb', permission: 'tst.a11y.view', flag: 'ff.qa.p3007', Page: A11yValidation },
     { path: '/admin/operations-runbooks', label: 'Operations Runbooks & Environments', labelHi: 'संचालन रनबुक और परिवेश', icon: 'erp.insights.rb', permission: 'ops.runbook.view', flag: 'ff.qa.p3008', Page: Operations },
     { path: '/help/documentation', label: 'Documentation Library', labelHi: 'दस्तावेज़ पुस्तकालय', icon: 'erp.insights.rb', permission: 'hd.ticket.raise', flag: 'ff.qa.p3009', Page: DocumentationLibrary },
+    { path: '/admin/go-live', label: 'Go-Live Readiness', labelHi: 'गो-लाइव तैयारी', icon: 'erp.state.approved', permission: 'golive.view', flag: 'ff.qa.p3010', Page: GoLive },
   ],
 });
