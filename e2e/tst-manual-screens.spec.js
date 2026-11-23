@@ -79,7 +79,9 @@ test('FR-01 FR-03 the screens of the build: signature and image of every page, c
         const up = await request.post('/api/v1/core/files', { headers: H(company, 'tech-writer'), multipart: { entity: 'man_captures', entityId: String(capture.id), file: { name: `${p.route.replace(/\//g, '_').slice(1) || 'home'}-${viewport.toLowerCase()}.jpg`, mimeType: 'image/jpeg', buffer: jpeg } } });
         // a screen identical to one already uploaded (an empty page shown twice) keeps its signature without a second image
         const fileId = up.status() === 201 ? (await up.json()).data.id : undefined;
-        batch.push({ route: p.route, viewport, signature: { ...signature, title: signature.title.slice(0, 300) }, ...(fileId ? { fileId } : {}) });
+        // the API takes at most 60 items of 200 characters a list (a label that wraps a whole list of options is cut)
+        const cut = (a, n = 60) => a.slice(0, n).map((x) => x.slice(0, 200));
+        batch.push({ route: p.route, viewport, signature: { title: signature.title.slice(0, 300), tabs: cut(signature.tabs), actions: cut(signature.actions, 120), fields: cut(signature.fields, 120), headings: cut(signature.headings), columns: cut(signature.columns) }, ...(fileId ? { fileId } : {}) });
         shots.push({ route: p.route, viewport, title: signature.title, actions: signature.actions.length, image: Boolean(fileId) });
       } catch (err) {
         shots.push({ route: p.route, viewport, error: String(err.message ?? err).slice(0, 200) });
