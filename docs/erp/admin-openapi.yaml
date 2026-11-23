@@ -8,12 +8,12 @@ paths:
   # part 29.01 — the Enterprise Control Center (ff.admin.p2901)
   /admin/dashboard: { get: { summary: 'FR-02 governance metrics with their drill routes: approvals waiting (and mine), SoD violations, privileged access, dormant accounts, failed jobs and integrations, integrity failures, last backup, expiries, AI usage, unratified emergencies (adm.control.view)', responses: { '200': { description: '{ metrics, readOnly, myApprovals, environment }' } } } }
   /admin/catalogue: { get: { summary: 'FR-01 the settings pages the person may open (q searches label, keywords and route) and the recent configuration change requests', responses: { '200': { description: '{ pages, recent }' } } } }
-  /admin/areas: { get: { summary: The current values of the changeable areas (feature flags, company parameters), responses: { '200': { description: '{ FEATURE_FLAG, PARAMETER }' } } } }
+  /admin/areas: { get: { summary: The current values of the changeable areas (feature flags, company parameters, Project 360 slots), responses: { '200': { description: '{ FEATURE_FLAG, PARAMETER, P360_LAYOUT }' } } } }
   /admin/changes:
     get: { summary: 'Admin change and ratification requests (status), with canDecide for the person', responses: { '200': { description: '{ rows, total, page, pageSize }' } } }
     post:
       summary: 'FR-03 BR-01 request a change (adm.change.create); applied only on approval: SYSADM → ITADM, financial keys → ITADM then CFO|DIR, security keys → ITADM then DIR'
-      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [area, key, value, reason], properties: { area: { type: string, enum: [FEATURE_FLAG, PARAMETER] }, key: { type: string }, value: {}, reason: { type: string, minLength: 5 } } } } } }
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [area, key, value, reason], properties: { area: { type: string, enum: [FEATURE_FLAG, PARAMETER, P360_LAYOUT] }, key: { type: string }, value: {}, reason: { type: string, minLength: 5 } } } } } }
       responses: { '201': { description: The request }, '409': { description: Already a request for this key }, '422': { description: Same value or out of range } }
   /admin/changes/{id}/act: { post: { summary: 'Approve, return or reject at the current step (a comment for return or reject); the maker cannot decide; on the last approval the change is applied, or refused with 409 if the value changed since', responses: { '200': { description: The request }, '409': { description: Changed since raised } } } }
   /admin/changes/{id}/withdraw: { post: { summary: Withdraw one's own waiting request, responses: { '200': { description: The request } } } }

@@ -131,9 +131,10 @@ export function createP360Service({ db }) {
       health: h.level, healthItems: h.items, thresholds: t };
   }
   const slotsOf = (companyId) => {
-    const rows = db.prepare('SELECT * FROM proj_360_widgets WHERE deleted_at IS NULL AND is_active = 1 AND (company_id IS NULL OR company_id = ?) ORDER BY tab, sort_order, id').all(companyId);
-    const by = new Map(); for (const r of rows) by.set(r.widget_code, r.company_id == null && by.has(r.widget_code) ? by.get(r.widget_code) : r); // a company's own row beats the platform's
-    return [...by.values()].sort((a, b) => P360_TABS.indexOf(a.tab) - P360_TABS.indexOf(b.tab) || a.sort_order - b.sort_order);
+    // a company's own row beats the platform's, a hidden one too (D-432: the layout a company approved in the Control Center hides the slot)
+    const rows = db.prepare('SELECT * FROM proj_360_widgets WHERE deleted_at IS NULL AND (company_id = ? OR (company_id IS NULL AND is_active = 1)) ORDER BY tab, sort_order, id').all(companyId);
+    const by = new Map(); for (const r of rows) by.set(r.widget_code, r.company_id == null && by.has(r.widget_code) ? by.get(r.widget_code) : r);
+    return [...by.values()].filter((r) => r.is_active === 1).sort((a, b) => P360_TABS.indexOf(a.tab) - P360_TABS.indexOf(b.tab) || a.sort_order - b.sort_order);
   };
   function widgets(actor, x, period, forExport) {
     const ctx = { db, actor, project: x, period, forExport, thresholds: thresholdsOf(x.company_id) }; const out = [];

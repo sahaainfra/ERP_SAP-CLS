@@ -75,21 +75,31 @@ function Approvals() {
   </>;
 }
 
+const P360_TABS = ['overview', 'time', 'cost', 'resources', 'quality_hse', 'commercial', 'documents', 'activity']; // the tabs of Project 360 (proj/constants.js)
+
 function Change() {
   const t = useT('adm');
   const cache = useQueryClient();
   const q = useQuery({ queryKey: ['adm', 'areas'], queryFn: () => read('/admin/areas'), retry: false });
   const [f, setF] = useState({ area: 'FEATURE_FLAG', key: '', value: '', reason: '' });
+  const [lay, setLay] = useState({ visible: true, tab: 'overview', slot: 'main', sort: '100' }); // a Project 360 slot (D-432)
+  const layoutText = (v) => (!v ? '—' : v.visible ? t('p360.shown', { tab: v.tab, slot: t(`p360.${v.slot}`), sort: v.sort }) : t('p360.hidden'));
   const submit = useMutation({ mutationFn: (b) => write('/admin/changes', b), onSuccess: () => { setF({ ...f, key: '', value: '', reason: '' }); cache.invalidateQueries({ queryKey: ['adm'] }); } });
   if (q.isPending) return <Skeleton label={t('tab.change')} rows={4} />;
   if (q.error) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const list = q.data[f.area]; const cur = list.find((x) => x.key === f.key);
   return <Card title={t('tab.change')} subtitle={t('changeSub')} testid="adm-change">
-    <form className="form-grid" onSubmit={(e) => { e.preventDefault(); submit.mutate({ area: f.area, key: f.key, value: f.area === 'FEATURE_FLAG' ? f.value === 'true' : f.value, reason: f.reason }); }}>
+    <form className="form-grid" onSubmit={(e) => { e.preventDefault(); submit.mutate({ area: f.area, key: f.key, value: f.area === 'FEATURE_FLAG' ? f.value === 'true' : f.area === 'P360_LAYOUT' ? { ...lay, sort: Number(lay.sort) } : f.value, reason: f.reason }); }}>
       <Field name="adm-area" label={`${t('area')} *`}><select value={f.area} onChange={(e) => setF({ ...f, area: e.target.value, key: '', value: '' })}>{Object.keys(q.data).map((a) => <option key={a} value={a}>{t(`a.${a}`)}</option>)}</select></Field>
-      <Field name="adm-key" label={`${t('key')} *`}><input list="adm-keys" required value={f.key} onChange={(e) => setF({ ...f, key: e.target.value })} /><datalist id="adm-keys">{list.map((x) => <option key={x.key} value={x.key} />)}</datalist></Field>
-      {cur && <p className="muted small" data-testid="adm-current">{t('current', { v: String(cur.value) })}{cur.description ? ` · ${cur.description}` : ''}</p>}
-      {f.area === 'FEATURE_FLAG' ? <Field name="adm-value" label={`${t('newValue')} *`}><select required value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })}><option value="">{t('choose')}</option><option value="true">{t('on')}</option><option value="false">{t('off')}</option></select></Field>
+      <Field name="adm-key" label={`${t('key')} *`}><input list="adm-keys" required value={f.key} onChange={(e) => { const k = e.target.value; setF({ ...f, key: k }); const c = list.find((x) => x.key === k); if (f.area === 'P360_LAYOUT' && c?.value) setLay({ ...c.value, sort: String(c.value.sort) }); }} /><datalist id="adm-keys">{list.map((x) => <option key={x.key} value={x.key} />)}</datalist></Field>
+      {cur && <p className="muted small" data-testid="adm-current">{t('current', { v: f.area === 'P360_LAYOUT' ? layoutText(cur.value) : String(cur.value) })}{cur.description ? ` · ${cur.description}` : ''}</p>}
+      {f.area === 'P360_LAYOUT' ? <>
+        <Field name="adm-p360-visible" label={t('p360.visible')}><input type="checkbox" checked={lay.visible} onChange={(e) => setLay({ ...lay, visible: e.target.checked })} data-testid="adm-p360-visible" /></Field>
+        <Field name="adm-p360-tab" label={`${t('p360.tab')} *`}><select required value={lay.tab} onChange={(e) => setLay({ ...lay, tab: e.target.value })}>{P360_TABS.map((x) => <option key={x} value={x}>{x.replace('_', ' & ')}</option>)}</select></Field>
+        <Field name="adm-p360-slot" label={`${t('p360.slot')} *`}><select required value={lay.slot} onChange={(e) => setLay({ ...lay, slot: e.target.value })}><option value="main">{t('p360.main')}</option><option value="side">{t('p360.side')}</option></select></Field>
+        <Field name="adm-p360-sort" label={`${t('p360.sort')} *`}><input required type="number" min={0} max={999} step={1} inputMode="numeric" value={lay.sort} onChange={(e) => setLay({ ...lay, sort: e.target.value })} /></Field>
+      </>
+      : f.area === 'FEATURE_FLAG' ? <Field name="adm-value" label={`${t('newValue')} *`}><select required value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })}><option value="">{t('choose')}</option><option value="true">{t('on')}</option><option value="false">{t('off')}</option></select></Field>
         : <Field name="adm-value" label={`${t('newValue')} *`}><input required value={f.value} inputMode={['integer', 'decimal'].includes(cur?.type) ? 'decimal' : 'text'} onChange={(e) => setF({ ...f, value: e.target.value })} /></Field>}
       <Field name="adm-reason" label={`${t('reason')} *`}><input required minLength={5} value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} /></Field>
       <div className="actions-row adm-actions"><button type="submit" className="btn btn-primary" disabled={submit.isPending} data-testid="adm-submit-change">{t('send')}</button></div>

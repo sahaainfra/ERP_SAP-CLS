@@ -108,3 +108,30 @@ test('BR-01 the health follows the company thresholds; the period selector; the 
   // the flag
   t.api.db.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.proj.p1008'").run(); assert.equal((await t.call(pm1, 'GET', `/project-360?projectId=${t.a}`)).status, 404, 'flag off'); assert.equal((await t.call(pm1, 'GET', '/projects')).status, 200);
 });
+
+// D-432: a company changes its Project 360 layout (hide, move, reorder a slot) through a maker-checker change of the Control Center (29.01);
+// nothing changes before the checker approves, and the platform default stays for every other company
+test('D-432 a slot hidden and moved by an approved Control Center change; not before approval; other companies keep the default', async () => {
+  const t = await setup();
+  for (const [n, r] of [['p3sys', 'SYSADM'], ['p3it', 'ITADM']]) t.api.db.prepare('INSERT INTO iam_users (company_id, username, display_name, roles_json, email) VALUES (1, ?, ?, ?, ?)').run(n, n, JSON.stringify([r]), `${n}@example.com`);
+  t.api.db.prepare("INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.admin.p2901', 1, 'Control center fixture', 0, 1)").run();
+  const adm = (who, method, path, body) => t.api.call(method, `/api/v1/admin${path}`, { ...who, headers: key(), body });
+  const sys = as('SYSADM', 'p3sys'); const it = as('ITADM', 'p3it');
+  const before = (await t.call(pm1, 'GET', `/project-360?projectId=${t.a}`)).json.data;
+  const target = before.tabs.flatMap((x) => x.widgets)[0]; assert.ok(target, 'a slot to change');
+  const areas = (await adm(sys, 'GET', '/areas')).json.data.P360_LAYOUT; const cur = areas.find((x) => x.key === target.code).value;
+  assert.equal(cur.visible, true);
+  assert.equal((await adm(sys, 'POST', '/changes', { area: 'P360_LAYOUT', key: target.code, value: { ...cur, visible: true, tab: 'nowhere' }, reason: 'A tab that does not exist' })).status, 422);
+  const hide = await adm(sys, 'POST', '/changes', { area: 'P360_LAYOUT', key: target.code, value: { ...cur, visible: false }, reason: 'Not used by our project teams' });
+  assert.equal(hide.status, 201, JSON.stringify(hide.json)); assert.deepEqual(hide.json.data.chain, ['ITADM']);
+  assert.ok(slot((await t.call(pm1, 'GET', `/project-360?projectId=${t.a}`)).json.data, target.code), 'not hidden before approval');
+  assert.equal((await adm(it, 'POST', `/changes/${hide.json.data.id}/act`, { action: 'approve', comment: 'Agreed with the PMO' })).status, 200);
+  assert.equal(slot((await t.call(pm1, 'GET', `/project-360?projectId=${t.a}`)).json.data, target.code), undefined, 'hidden once approved');
+  // shown again on another tab, in the side column, first
+  const move = await adm(sys, 'POST', '/changes', { area: 'P360_LAYOUT', key: target.code, value: { visible: true, tab: 'activity', slot: 'side', sort: 0 }, reason: 'Back, with the activity of the project' });
+  assert.equal((await adm(it, 'POST', `/changes/${move.json.data.id}/act`, { action: 'approve', comment: 'Fine' })).status, 200);
+  const moved = slot((await t.call(pm1, 'GET', `/project-360?projectId=${t.a}`)).json.data, target.code); assert.deepEqual([moved.tab, moved.slot], ['activity', 'side']);
+  // the platform row is unchanged: another company still sees the default
+  const platform = t.api.db.prepare('SELECT tab, slot, is_active FROM proj_360_widgets WHERE widget_code = ? AND company_id IS NULL').get(target.code);
+  assert.deepEqual([platform.tab, platform.is_active], [cur.tab, 1]);
+});

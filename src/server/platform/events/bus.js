@@ -146,7 +146,8 @@ export function createEventBus({ db, now = () => new Date(), maxAttempts = 5, ba
       const source = outboxRow(row.outbox_id);
       const event = source ? envelopeOf(source) : null;
       // The consumer works inside the correlation ID and trace of the request that raised the event.
-      return runWithContext({ correlationId: event?.correlationId ?? undefined, user: undefined }, () =>
+      // and the event's company, so what the consumer writes to the audit trail belongs to that company (D-103)
+      return runWithContext({ correlationId: event?.correlationId ?? undefined, user: undefined, companyId: event?.companyId ?? row.company_id ?? undefined }, () =>
         tracer.withSpan(`consume ${consumer.name}`, { kind: 'consumer', parent: parseTraceparent(event?.traceparent), attributes: { 'messaging.event_type': row.event_type, 'messaging.consumer': consumer.name, 'messaging.attempt': row.attempts + 1 } }, () => attempt(consumer, row, event)),
       );
     },

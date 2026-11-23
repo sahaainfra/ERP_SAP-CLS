@@ -11,6 +11,7 @@ import { createFlagRepository } from '../core/feature-flags/repository.js';
 import { resolveFlag, setFlag } from '../core/feature-flags/service.js';
 import { createParameterService } from '../core/parameters/service.js';
 import { iamAuthOf } from '../iam/index.js';
+import { P360_TABS } from '../proj/constants.js';
 import { integrityRegistry } from '../../platform/integrity/registry.js';
 
 // integrity: the workflow states of this part's tables (the Data Health check)
@@ -33,7 +34,7 @@ integrityRegistry.register({ statuses: { 'adm_emergency_actions': ['PENDING', 'R
 export const ADMIN_FLAG = 'ff.admin.p2901';
 export const CHANGE_TYPE = 'admin_config_change';
 export const RATIFY_TYPE = 'admin_emergency_ratify';
-export const AREAS = Object.freeze({ FEATURE_FLAG: 'Feature flag', PARAMETER: 'Parameter' });
+export const AREAS = Object.freeze({ FEATURE_FLAG: 'Feature flag', PARAMETER: 'Parameter', P360_LAYOUT: 'Project 360 slot' });
 const RATIFY_HOURS = 24;
 const FIN = /^(fin|bill|pay|proc|ctr|bud|close|tax)\./;
 const SEC = /^(iam|sec|core\.security|auth|ai\.(kill|provider))/;
@@ -88,6 +89,27 @@ export function createControlCenter(context) {
         store.invalidate?.();
       },
       list: (companyId) => { store.invalidate(); const date = todayIST(); return parameterRegistry.list().filter((d) => d.scopes.includes('company')).map((d) => ({ key: d.key, value: store.get(d.key, { companyId, date }) })); },
+    },
+    // D-432: a slot of the Project 360 page (proj_360_widgets): shown or hidden, its tab, column and order, for this company. The platform's
+    // row stays the default; the approved change writes the company's own row, which Project 360 prefers (a hidden one hides the slot)
+    P360_LAYOUT: {
+      slotRow: (companyId, key) => (has(db, 'proj_360_widgets') ? db.prepare('SELECT * FROM proj_360_widgets WHERE widget_code = ? AND deleted_at IS NULL AND (company_id = ? OR company_id IS NULL) ORDER BY company_id IS NULL LIMIT 1').get(key, companyId) : null),
+      exists: (key) => has(db, 'proj_360_widgets') && Boolean(db.prepare('SELECT 1 FROM proj_360_widgets WHERE widget_code = ? AND company_id IS NULL AND deleted_at IS NULL').get(key)),
+      current: (companyId, key) => { const r = area.P360_LAYOUT.slotRow(companyId, key); return r ? { visible: r.is_active === 1, tab: r.tab, slot: r.slot, sort: r.sort_order } : null; },
+      parse: (v) => {
+        const o = typeof v === 'string' ? (() => { try { return JSON.parse(v); } catch { return null; } })() : v;
+        if (!o || typeof o !== 'object') throw unprocessable('A Project 360 slot is { visible, tab, slot, sort }.');
+        const sort = Number(o.sort);
+        if (typeof o.visible !== 'boolean' || !P360_TABS.includes(o.tab) || !['main', 'side'].includes(o.slot) || !Number.isInteger(sort) || sort < 0 || sort > 999) throw unprocessable(`A Project 360 slot is shown or hidden, on a tab (${P360_TABS.join(', ')}), in the main or side column, at an order from 0 to 999.`);
+        return { visible: o.visible, tab: o.tab, slot: o.slot, sort };
+      },
+      apply(companyId, key, value, by) {
+        const mine = db.prepare('SELECT id FROM proj_360_widgets WHERE widget_code = ? AND company_id = ? AND deleted_at IS NULL').get(key, companyId);
+        if (mine) db.prepare('UPDATE proj_360_widgets SET is_active = ?, tab = ?, slot = ?, sort_order = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(value.visible ? 1 : 0, value.tab, value.slot, value.sort, by, iso(), mine.id);
+        else db.prepare("INSERT INTO proj_360_widgets (company_id, widget_code, module, tab, slot, sort_order, permission_key, owner_part, title, title_hi, empty_text, drill_route, is_active, created_by, source_type, source_id) SELECT ?, widget_code, module, ?, ?, ?, permission_key, owner_part, title, title_hi, empty_text, drill_route, ?, ?, 'admin_config_change', 'p360_layout' FROM proj_360_widgets WHERE widget_code = ? AND company_id IS NULL AND deleted_at IS NULL")
+          .run(companyId, value.tab, value.slot, value.sort, value.visible ? 1 : 0, by, key);
+      },
+      list: (companyId) => (has(db, 'proj_360_widgets') ? db.prepare('SELECT DISTINCT widget_code FROM proj_360_widgets WHERE company_id IS NULL AND deleted_at IS NULL ORDER BY widget_code').all().map((r) => ({ key: r.widget_code, value: area.P360_LAYOUT.current(companyId, r.widget_code) })) : []),
     },
   };
   const norm = (v) => (v === null || v === undefined ? null : typeof v === 'object' && (Array.isArray(v) || Object.getPrototypeOf(v) === Object.prototype) ? JSON.stringify(v) : String(v));
@@ -198,7 +220,7 @@ export function createControlCenter(context) {
   };
 
   // ---------------------------------------------------------------- configuration snapshots and the diff between environments (FR-03)
-  const contentOf = (companyId) => ({ FEATURE_FLAG: Object.fromEntries(area.FEATURE_FLAG.list(companyId).map((x) => [x.key, x.value])), PARAMETER: Object.fromEntries(area.PARAMETER.list(companyId).map((x) => [x.key, norm(x.value)])) });
+  const contentOf = (companyId) => ({ FEATURE_FLAG: Object.fromEntries(area.FEATURE_FLAG.list(companyId).map((x) => [x.key, x.value])), PARAMETER: Object.fromEntries(area.PARAMETER.list(companyId).map((x) => [x.key, norm(x.value)])), P360_LAYOUT: Object.fromEntries(area.P360_LAYOUT.list(companyId).map((x) => [x.key, norm(x.value)])) });
   const checksum = (c) => createHash('sha256').update(JSON.stringify(c)).digest('hex');
   /** T-01: every key whose value differs, is only in one side, with the current and incoming values. */
   function diffOf(current, incoming) {
@@ -289,7 +311,7 @@ export function createControlCenter(context) {
   }
   function areas(actor) {
     guard(actor, 'adm.control.view');
-    return { FEATURE_FLAG: area.FEATURE_FLAG.list(actor.companyId), PARAMETER: area.PARAMETER.list(actor.companyId).map((p) => ({ ...p, value: norm(p.value), type: parameterRegistry.get(p.key)?.dataType, description: parameterRegistry.get(p.key)?.description })) };
+    return { FEATURE_FLAG: area.FEATURE_FLAG.list(actor.companyId), PARAMETER: area.PARAMETER.list(actor.companyId).map((p) => ({ ...p, value: norm(p.value), type: parameterRegistry.get(p.key)?.dataType, description: parameterRegistry.get(p.key)?.description })), P360_LAYOUT: area.P360_LAYOUT.list(actor.companyId) };
   }
 
   const svc = { changes, emergencies, snapshots, catalogue, dashboard, onboarding, areas, engine, diffOf };
