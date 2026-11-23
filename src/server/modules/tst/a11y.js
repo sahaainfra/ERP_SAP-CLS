@@ -32,7 +32,8 @@ const IMPACTS = ['critical', 'serious', 'moderate', 'minor'];
 const CONSOLE = /^\/(admin|dev|ui\/(styleguide|gallery|components)|core\/(flags|about|architecture|routes|events|jobs|integrity))/;
 export const isBusinessPage = (route) => !CONSOLE.test(route ?? '');
 
-integrityRegistry.register({ statuses: { tst_devices: ['ACTIVE', 'RETIRED'], tst_a11y_runs: ['RUNNING', 'DONE'], tst_a11y_results: ['PASS', 'FAIL', 'ERROR'] } });
+// the device matrix is the installation's (seeded once, company_id empty); the runs and results belong to a company
+integrityRegistry.register({ companyOptional: ['tst_devices'], statuses: { tst_devices: ['ACTIVE', 'RETIRED'], tst_a11y_runs: ['RUNNING', 'DONE'], tst_a11y_results: ['PASS', 'FAIL', 'ERROR'] } });
 for (const [type, description] of [
   ['tst.a11y.recorded', 'An accessibility, responsive, device or screen-reader run was recorded (part 30.07): data { runId, kind, width, items, failed, serious }.'],
   ['tst.a11y.signed_off', 'The accessibility and device validation report was signed off (part 30.07): data { requestId, pages, devices }.'],
