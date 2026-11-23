@@ -6,6 +6,7 @@ import { parameterRegistry } from '../../platform/parameters/index.js';
 import { controlRegistry, protocolOf } from '../../platform/protocol/index.js';
 import { toCsv } from '../../platform/security/csv.js';
 import { todayIST } from '../../../shared/dates.js';
+import { assertProjectPeriodOpen } from '../../platform/locks/index.js';
 import { nowIso, rid } from '../proc/base.js';
 import { qaHelpers } from '../qa/common.js';
 import { STATUS, createFlow } from '../qa/flow.js';
@@ -121,16 +122,19 @@ export function createMbService({ db, base, flags }) {
       return { qty: d3(c.qty_th), uom: c.uom ?? boq.uom, issues: eligibility(probe, boq), cumulative: { limit: d3(cum.limit), others: d3(cum.other), total: d3(cum.total) } };
     },
     create(actor, b) {
-      const pj = projectOk(actor, b.projectId, 'bill.mb_entry.create'); const c = cols(b); const boq = links(actor, pj.id, c); if (b.value != null && q3(b.value) !== c.qty_th) fail([{ field: 'value', message: `The quantity is worked out by the server: ${d3(c.qty_th)}` }]);
+      const pj = projectOk(actor, b.projectId, 'bill.mb_entry.create');
+      // part 30.01 (D-777): the monthly lock of the project (27.07) reaches the measurement book too
+      assertProjectPeriodOpen(db, { companyId: actor.companyId, projectId: pj.id, date: b.measuredOn ?? todayIST(), what: 'measurement' });
+      const c = cols(b); const boq = links(actor, pj.id, c); if (b.value != null && q3(b.value) !== c.qty_th) fail([{ field: 'value', message: `The quantity is worked out by the server: ${d3(c.qty_th)}` }]);
       const cc = b.clientCheckRequired ?? (param(actor.companyId, 'bill.mb.client_check_required') === true);
       return transaction(db, () => { const no = flow.next(actor); const k = Object.keys(c); const id = Number(db.prepare(`INSERT INTO bill_mb_entries (company_id, doc_no, org_project_id, org_site_id, ${k.join(', ')}, measured_by, client_check_required, created_by, source_type) VALUES (?, ?, ?, ?, ${k.map(() => '?').join(', ')}, ?, ?, ?, ?)`).run(actor.companyId, no, pj.id, b.siteId ?? null, ...Object.values(c).map((v) => (v === undefined ? null : v)), actor.user, cc ? 1 : 0, actor.user, b.dprWorkId ? 'dpr' : 'manual').lastInsertRowid);
         if (!c.uom && boq.uom) db.prepare('UPDATE bill_mb_entries SET uom = ? WHERE id = ?').run(boq.uom, id); audit(actor, 'bill_mb_entries', id, 'create', actor.companyId); return mbs.get(actor, id); });
     },
     update(actor, id, b) {
       const r = flow.row(actor, id, 'bill.mb_entry.edit'); if (!flow.EDITABLE.includes(r.status)) throw conflict('A certified measurement is locked: change it by an amendment.'); if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this; reload it.'); if (r.measured_by !== actor.user && !may(actor, 'bill.mb_entry.approve', r.org_project_id, r.org_site_id)) throw conflict('Only the person who measured changes the entry.');
-      const c = cols(b, r); links(actor, r.org_project_id, c); const k = Object.keys(c); db.prepare(`UPDATE bill_mb_entries SET ${k.map((x) => `${x} = ?`).join(', ')}, client_check_required = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...Object.values(c).map((v) => (v === undefined ? null : v)), b.clientCheckRequired == null ? r.client_check_required : b.clientCheckRequired ? 1 : 0, actor.user, nowIso(), r.id); audit(actor, 'bill_mb_entries', r.id, 'update', r.company_id); return mbs.get(actor, r.id);
+      const c = cols(b, r); links(actor, r.org_project_id, c); assertProjectPeriodOpen(db, { companyId: r.company_id, projectId: r.org_project_id, date: c.measured_on ?? r.measured_on ?? todayIST(), what: 'measurement' }); const k = Object.keys(c); db.prepare(`UPDATE bill_mb_entries SET ${k.map((x) => `${x} = ?`).join(', ')}, client_check_required = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...Object.values(c).map((v) => (v === undefined ? null : v)), b.clientCheckRequired == null ? r.client_check_required : b.clientCheckRequired ? 1 : 0, actor.user, nowIso(), r.id); audit(actor, 'bill_mb_entries', r.id, 'update', r.company_id); return mbs.get(actor, r.id);
     },
-    remove: (actor, id) => flow.remove(actor, id), submit(actor, id) { flow.submit(actor, id); return mbs.get(actor, id); }, withdraw: (actor, id, b) => { flow.withdraw(actor, id, b); return mbs.get(actor, id); }, cancel: (actor, id, b) => { flow.cancel(actor, id, b); return mbs.get(actor, id); }, history: (actor, id) => flow.history(actor, id),
+    remove: (actor, id) => flow.remove(actor, id), submit(actor, id) { const r0 = db.prepare('SELECT company_id, org_project_id, measured_on FROM bill_mb_entries WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (r0) assertProjectPeriodOpen(db, { companyId: r0.company_id, projectId: r0.org_project_id, date: r0.measured_on ?? todayIST(), what: 'measurement' }); flow.submit(actor, id); return mbs.get(actor, id); }, withdraw: (actor, id, b) => { flow.withdraw(actor, id, b); return mbs.get(actor, id); }, cancel: (actor, id, b) => { flow.cancel(actor, id, b); return mbs.get(actor, id); }, history: (actor, id) => flow.history(actor, id),
     amend(actor, id) { flow.row(actor, id, 'bill.mb_entry.amend'); throw unprocessable('A certified measurement is locked. Measure the difference as a new entry (a negative correction is a deduction in a new entry), or ask for the entry to be cancelled before certification.'); },
     /** FR-04: the check measurement by the QS lead, the consultant or the client: the quantity they found, the percentage of the measurement they checked, the signature; differences are recorded and the certified quantity follows the checked one. */
     check(actor, id, b) {

@@ -58,7 +58,7 @@ async function chain(request, code) {
   }
 }
 
-test('T-02 the document flow of a purchase order: MR, PR, PO, GRN and vendor invoice in order with their statuses; the payment not yet available', async ({ page, request }, info) => {
+test('T-02 the document flow of a purchase order: MR, PR, PO, GRN and vendor invoice in order with their statuses; no step listed as not yet available (30.01)', async ({ page, request }, info) => {
   const { company, po } = await chain(request, info.project.name === 'desktop' ? 'DFD7' : 'DFM7');
   await open(page, { user: `e2e-flow-${info.project.name}`, roles: 'PROCMGR,ACCMGR', company, path: `/proc/purchase-orders?id=${po}` });
   const flow = page.getByTestId('doc-flow');
@@ -69,7 +69,8 @@ test('T-02 the document flow of a purchase order: MR, PR, PO, GRN and vendor inv
   await expect(nodes.nth(2)).toHaveAttribute('aria-current', 'step');
   await expect(nodes.nth(0)).toContainText('Approved');
   await expect(nodes.nth(4)).toContainText('Submitted');
-  await expect(flow.getByTestId('doc-flow-later')).toContainText('Not yet available');
+  // part 30.01: payments and receipts now exist (23.04, 23.05), so no step of the chain is shown as not yet available
+  await expect(flow.getByTestId('doc-flow-later')).toHaveCount(0);
   await flow.scrollIntoViewIfNeeded();
   await shot(page, info, 'po-document-flow');
   // each document of the flow opens its page

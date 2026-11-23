@@ -34560,6 +34560,231 @@ Indexes:
 - ix_tsk_tasks_list: company_id, status, due_date
 - ux_tsk_tasks_no (unique): company_id, task_no
 
+## tst_integration_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| result_status | TEXT |  |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| totals_json | TEXT |  |  |  |
+| result_json | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_integration_runs_status: company_id, status, id
+- ux_tst_integration_runs_no (unique): company_id, run_no
+
+## tst_latency_probes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| probe_no | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SENT' |
+| sent_at | TEXT | yes |  |  |
+| consumed_at | TEXT |  |  |  |
+| realtime_at | TEXT |  |  |  |
+| notified_at | TEXT |  |  |  |
+| latency_ms | INTEGER |  |  |  |
+| target_ms | INTEGER | yes |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_latency_probes_status: company_id, status, id
+- ux_tst_latency_probes_no (unique): company_id, probe_no
+
+## tst_page_audit
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| page_code | TEXT | yes |  |  |
+| route | TEXT | yes |  |  |
+| audit_kind | TEXT | yes |  |  |
+| viewport | TEXT |  |  |  |
+| role_tested | TEXT | yes |  |  |
+| checklist_json | TEXT | yes |  | '[]' |
+| defects_json | TEXT | yes |  | '[]' |
+| evidence_file_ids | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  |  |
+| notes | TEXT |  |  |  |
+| run_id | INTEGER |  |  |  |
+| tested_by | TEXT | yes |  |  |
+| tested_at | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: run_id -> tst_page_audit_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_page_audit_run: run_id
+- ix_tst_page_audit_status: company_id, status
+- ix_tst_page_audit_page: company_id, page_code, audit_kind, id
+
+## tst_page_audit_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| run_kind | TEXT | yes |  |  |
+| viewport | TEXT |  |  |  |
+| status | TEXT | yes |  | 'RUNNING' |
+| pages_count | INTEGER | yes |  | 0 |
+| failed_count | INTEGER | yes |  | 0 |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_page_audit_runs_status: company_id, status
+- ix_tst_page_audit_runs_kind: company_id, run_kind, id
+- ux_tst_page_audit_runs_no (unique): company_id, run_no
+
+## tst_recon_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| check_code | TEXT | yes |  |  |
+| scope_key | TEXT |  |  |  |
+| label | TEXT | yes |  |  |
+| expected_value | NUMERIC |  |  |  |
+| actual_value | NUMERIC |  |  |  |
+| difference_value | NUMERIC | yes |  | 0 |
+| unit | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| severity | TEXT | yes |  | 'INFO' |
+| drill_route | TEXT |  |  |  |
+| detail | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: run_id -> tst_recon_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_recon_results_status: company_id, status
+- ix_tst_recon_results_company: company_id, check_code
+- ix_tst_recon_results_run: run_id, status, check_code
+
+## tst_recon_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| as_of | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| result_status | TEXT |  |  |  |
+| checks_count | INTEGER | yes |  | 0 |
+| failed_count | INTEGER | yes |  | 0 |
+| critical_count | INTEGER | yes |  | 0 |
+| trace_bp | INTEGER |  |  |  |
+| trace_json | TEXT |  |  |  |
+| tolerance_json | TEXT |  |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_recon_runs_status: company_id, status, id
+- ux_tst_recon_runs_no (unique): company_id, run_no
+
 ## ui_bottom_bar
 
 | Column | Type | Not null | Key | Default |

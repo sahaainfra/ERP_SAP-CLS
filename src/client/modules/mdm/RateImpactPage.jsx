@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
-import { EmptyState, ErrorState, NoPermission } from '../../platform/feedback/states.jsx';
+import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import ItemSelector from '../../platform/items/ItemSelector.jsx';
 import { Field, Link, downloadCsv, usePageTitle } from '../core/pages/ui.jsx';
 import { ANALYSIS_STATUS, rates } from './api.js';
@@ -28,6 +28,7 @@ export default function RateImpactPage() {
   return (
     <section aria-labelledby="ri-title" data-testid="rate-impact" className="fin-page">
       <PageHeader id="ri-title" title={"Rate Change Impact"} />
+      {q.isLoading && <Skeleton label={'Loading the impact'} rows={4} />}
       <form className="fin-form" aria-label="What changes" onSubmit={(e) => { e.preventDefault(); if (item) setRun({ itemId: item.id, ...(newRate ? { newRate } : {}), ...(region ? { region } : {}) }); }}>
         <div className="mdm-fields">
           <Field label="Resource (required)" name="itemId"><button type="button" className="btn btn-small" onClick={() => setPick(true)} data-testid="ri-pick">{item ? `${item.code} ${item.name}` : 'Choose a resource'}</button></Field>

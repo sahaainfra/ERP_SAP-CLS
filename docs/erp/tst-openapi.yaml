@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: ERP go-live testing (module tst, parts 30.01-30.03)
+  version: 1.0.0
+  description: Every route needs the flag of its part (ff.qa.p3001, ff.qa.p3002, ff.qa.p3003; otherwise 404), the permission named in its summary (otherwise 403) and an Idempotency-Key on writes (a replay returns the first answer). Errors use the common envelope { error { code, message, details, correlationId } }.
+servers: [{ url: /api/v1 }]
+paths:
+  # part 30.01 — cross-module integration and real-time propagation (ff.qa.p3001)
+  /tst/integration:
+    get:
+      summary: 'FR-01..FR-04 the latest integration run (or a live computation when none exists): totals, the fifteen threads with their hand-offs (broken links, fields typed again, posting failures), the re-keying findings, the matrix of producer, event, consumer, test IDs, deliveries, latency p95 and status, subscriptions to undeclared events, latency probes and the run history (tst.integration.view)'
+      parameters:
+        - { name: run, in: query, schema: { type: integer } }
+        - { name: status, in: query, schema: { type: string, enum: [PASS, FAIL, PENDING, NOT_EXERCISED] } }
+        - { name: module, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string, minLength: 2 } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+      responses: { '200': { description: '{ run, totals, threads, rekeying, dangling, latency, matrix { rows, total, page, pageSize }, byModule, history, probes, modules, can }' }, '400': { description: Bad parameter } }
+  /tst/integration/export: { get: { summary: 'The matrix as XLSX, CSV or PDF honouring status and module (tst.integration.export; audited; formula injection neutralised)', parameters: [{ name: format, in: query, schema: { type: string, enum: [xlsx, csv, pdf] } }], responses: { '200': { description: The file } } } }
+  /tst/integration/runs: { post: { summary: 'Queue an integration check (tst.integration.run); a background job computes and stores the snapshot and notifies the person; 409 while a run of the company is queued or running', requestBody: { content: { application/json: { schema: { type: object, additionalProperties: false } } } }, responses: { '202': { description: The queued run }, '409': { description: A run is already going } } } }
+  /tst/integration/runs/{id}: { get: { summary: 'One run with its snapshot (tst.integration.view); another company''s run is 404', responses: { '200': { description: The run }, '404': { description: Not found } } } }
+  /tst/integration/probes: { post: { summary: 'FR-02 send a latency probe through the outbox (tst.integration.run); the consumer tst.probe announces it on the person''s real-time room and in their notifications and records the times against the target (2 000 ms, parameter tst.integration.latency_target_ms)', responses: { '202': { description: '{ id, probeNo, status SENT, targetMs }' } } } }
+  /tst/integration/probes/{id}: { get: { summary: 'A probe with busMs, realtimeMs, notificationMs and PASS or FAIL', responses: { '200': { description: The probe } } } }
+  # part 30.02 — data traceability and the reconciliation suite (ff.qa.p3002)
+  /tst/reconciliation:
+    get:
+      summary: 'FR-01..FR-03 the reconciliation health of the latest (or a given) run: the six checks with their status and differences, trace completeness with its groups, the exceptions (failing by default; check, status, q, paging), the run history, the tolerances (tst.recon.view); amounts only with tst.recon.amounts'
+      parameters:
+        - { name: run, in: query, schema: { type: integer } }
+        - { name: check, in: query, schema: { type: string, enum: [QTY_CHAIN, COST_CHAIN, SUBLEDGER_GL, STOCK_BALANCES, PAYROLL_GL, BANK_BOOK] } }
+        - { name: status, in: query, schema: { type: string, enum: [PASS, FAIL, INFO, SKIPPED, ERROR] } }
+        - { name: q, in: query, schema: { type: string, minLength: 2 } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 25, maximum: 200 } }
+      responses: { '200': { description: '{ run, summary, trace, exceptions { rows, total, page, pageSize }, history, running, checks, amountsVisible, can, tolerance }' } }
+  /tst/reconciliation/export: { get: { summary: 'The results of a run as XLSX, CSV or PDF with the person''s masks (tst.recon.export; audited)', responses: { '200': { description: The file }, '404': { description: No run yet } } } }
+  /tst/reconciliation/runs: { post: { summary: 'Queue a reconciliation run (tst.recon.run); it runs as the read-only reconciliation account; a run with a difference above tolerance is RED, publishes tst.recon.difference_found and alerts the holders of tst.recon.view; 409 while one is going', responses: { '202': { description: The queued run }, '409': { description: A run is already going } } } }
+  /tst/reconciliation/runs/{id}: { get: { summary: The run (status, result, critical, trace %), responses: { '200': { description: The run } } } }
+  # part 30.03 — page-by-page completion audit (ff.qa.p3003)
+  /tst/page-audits:
+    get:
+      summary: 'FR-01 BR-01 every page of the inventory (client registry ∪ navigation, with pattern and owner) and its status from the crawl, the static scan and the manual audits; the go-live verdict; totals, pages by module, runs (tst.page_audit.view)'
+      parameters:
+        - { name: module, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [PASS, FAIL, NOT_TESTED] } }
+        - { name: nav, in: query, schema: { type: string, enum: ['1'] } }
+        - { name: q, in: query, schema: { type: string, minLength: 2 } }
+      responses: { '200': { description: '{ totals, goLive { blocked, blocking }, rows, total, page, pageSize, byModule, modules, runs, checklist, roles, can }' } }
+    post:
+      summary: 'FR-03 record a manual audit of a page by a role (tst.page_audit.record): every checklist point PASS, FAIL (with a note) or NA; a failed point needs a defect'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [pageCode, roleTested, checklist], properties: { pageCode: { type: string }, roleTested: { type: string }, checklist: { type: array, items: { type: object, properties: { code: { type: string }, result: { type: string, enum: [PASS, FAIL, NA] }, note: { type: string } } } }, defects: { type: array, items: { type: object, properties: { title: { type: string, minLength: 5 }, severity: { type: string, enum: [CRITICAL, MAJOR, MINOR] }, checklist: { type: string } } } }, notes: { type: string } } } } } }
+      responses: { '201': { description: The audit }, '400': { description: Incomplete checklist, a failed point without note or defect, or not a page of the inventory } }
+  /tst/page-audits/export: { get: { summary: 'The page audit as XLSX, CSV or PDF (tst.page_audit.export; audited)', responses: { '200': { description: The file } } } }
+  /tst/page-audits/pages/{code}: { get: { summary: 'One page: its status, audits, reschedule requests (with canDecide) and the static scan of its source now', responses: { '200': { description: '{ page, audits, requests, checklist, scan }' }, '404': { description: Not a page of the inventory } } } }
+  /tst/page-audits/{id}/evidence: { post: { summary: 'Add an evidence screenshot uploaded to this audit through the file service (only the tester)', responses: { '200': { description: The audit }, '400': { description: Not a file of this audit }, '403': { description: Not the tester } } } }
+  /tst/page-audits/{id}/defects/{no}/fix: { post: { summary: 'FR-04 mark an open defect fixed with the commit and test that fixed it', responses: { '200': { description: The audit }, '409': { description: Not open } } } }
+  /tst/page-audits/{id}/defects/{no}/reschedule: { post: { summary: 'FR-04 ask to reschedule an open defect to a later part (targetPart nn.nn, reason); approved by the page owner through the approval engine, never by the requester', responses: { '201': { description: '{ request { id, status, chain }, audit }' } } } }
+  /tst/page-audits/reschedules/{id}/act: { post: { summary: 'Approve, return or reject a reschedule request (the owner role of the page)', responses: { '200': { description: '{ id, status }' } } } }
+  /tst/page-audits/static-scan: { post: { summary: 'FR-02 scan the source of every page: buttons without handlers, dead links, placeholder text, hard-coded figures, data pages without loading or error states, console output (tst.page_audit.run)', responses: { '201': { description: The run } } } }
+  /tst/page-audits/crawl:
+    post:
+      summary: 'T-01 the route crawler posts what it saw on each route in batches into one run (runId, final); a route that is not a registered page is refused; the final batch reports the coverage of the registered routes (tst.page_audit.run)'
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [viewport, results], properties: { viewport: { type: string, enum: [desktop, mobile] }, role: { type: string }, runId: { type: integer }, final: { type: boolean, default: true }, results: { type: array, maxItems: 200, items: { type: object, properties: { route: { type: string }, state: { type: string, enum: [content, empty, error, denied, blank] }, consoleErrors: { type: array, items: { type: string } }, failedRequests: { type: array, items: { type: string } }, overflowPx: { type: integer }, loadMs: { type: integer } } } } } } } } }
+      responses: { '201': { description: '{ id, runNo, status, pages, failed, coverage { registered, crawled, pct, missing, missingCount } }' }, '409': { description: The crawl is finished } }

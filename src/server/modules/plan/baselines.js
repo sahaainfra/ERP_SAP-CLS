@@ -113,6 +113,11 @@ export function createBaselineService({ db, plan }) {
   const mustEdit = (r) => { if (!editable(r)) throw conflict(r.status === 'APPROVED' ? `${r.doc_no} is approved: an approved baseline is never changed (a revision is a new baseline).` : `${r.doc_no} is ${BASELINE_STATUS[r.status].toLowerCase()}: it is not changed now.`); };
   const openOf = (projectId, exceptId = 0) => db.prepare("SELECT id, doc_no FROM plan_baselines WHERE org_project_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED') AND id <> ? AND deleted_at IS NULL").get(projectId, exceptId);
   const currentOf = (projectId) => db.prepare(`SELECT ${COLS} FROM plan_baselines x WHERE x.org_project_id = ? AND x.is_current = 1 AND x.deleted_at IS NULL`).get(projectId) ?? null;
+  const hasEot = () => Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ctr_eot_awards'").get());
+  const EOT_SQL = "SELECT a.id, a.days, a.completion_after AS completionAfter, c.claim_no AS claimNo, c.doc_no AS claimDocNo, c.org_project_id AS projectId FROM ctr_eot_awards a JOIN ctr_claims c ON c.id = a.claim_id WHERE a.deleted_at IS NULL";
+  const eotAwardOf = (id) => (hasEot() ? db.prepare(`${EOT_SQL} AND a.id = ?`).get(id) ?? null : null);
+  /** The awards of the project not yet taken into a baseline revision. */
+  const eotAwardsOf = (projectId) => (hasEot() ? db.prepare(`${EOT_SQL} AND c.org_project_id = ? AND NOT EXISTS (SELECT 1 FROM plan_baselines b WHERE b.source_type = 'ctr_eot_awards' AND b.source_id = CAST(a.id AS TEXT) AND b.status NOT IN ('CANCELLED', 'REJECTED') AND b.deleted_at IS NULL) ORDER BY a.id`).all(projectId) : []);
   function view(actor, r, { detail = false } = {}) {
     const o = orgOf(r.org_project_id); const s = db.prepare('SELECT doc_no, name, status, version_no FROM plan_schedules WHERE id = ?').get(r.schedule_id); const can = (k) => may(actor, k, r.org_project_id);
     const prev = r.previous_baseline_id ? db.prepare('SELECT doc_no, baseline_no, finish_date FROM plan_baselines WHERE id = ?').get(r.previous_baseline_id) : null;
@@ -126,7 +131,9 @@ export function createBaselineService({ db, plan }) {
         delete: can('plan.baseline.delete') && r.status === 'DRAFT' && !r.workflow_instance_id, amend: can('plan.baseline.amend') && r.status === 'APPROVED' && Boolean(r.is_current) && !openOf(r.org_project_id), print: can('plan.baseline.print'), export: can('plan.baseline.export'),
       },
     };
-    if (detail) { v.change = json(r.change_json, {}); v.scheduleName = s?.name ?? null; v.scheduleStatus = s?.status ?? null; v.remarks = r.remarks; }
+    if (detail) { v.change = json(r.change_json, {}); v.scheduleName = s?.name ?? null; v.scheduleStatus = s?.status ?? null; v.remarks = r.remarks;
+      // part 30.01 (BR-01): an extension-of-time revision comes from the award of a claim (21.06), not a typed reference
+      const src = db.prepare('SELECT source_type, source_id FROM plan_baselines WHERE id = ?').get(r.id); v.eotAward = src?.source_type === 'ctr_eot_awards' ? eotAwardOf(Number(src.source_id)) : null; v.eotAwards = v.can.amend ? eotAwardsOf(r.org_project_id) : []; }
     return v;
   }
   const scope = (actor) => { const f = authz.scopeFilter(actor, 'plan.baseline.view', { project: 'x.org_project_id' }); return { sql: `x.company_id = :c AND ${f.sql}`, params: { c: actor.companyId, ...(f.params ?? {}) } }; };
@@ -209,8 +216,18 @@ export function createBaselineService({ db, plan }) {
       const r = row(actor, id, 'plan.baseline.amend'); if (r.status !== 'APPROVED' || !r.is_current) throw unprocessable('Only the current approved baseline is revised.');
       const sid = b.scheduleId ?? db.prepare("SELECT id FROM plan_schedules WHERE org_project_id = ? AND deleted_at IS NULL AND status IN ('DRAFT', 'RETURNED', 'SUBMITTED', 'APPROVED') ORDER BY (status = 'APPROVED'), id DESC").get(r.org_project_id)?.id;
       if (!sid) throw unprocessable('The project has no schedule in use to revise the baseline from.');
-      const made = baselines.create(actor, { scheduleId: sid, name: b.name ?? `${r.name} (revision)`.slice(0, 200), revisionType: b.revisionType, reason: b.reason, changeSummary: b.changeSummary ?? null, referenceNo: b.referenceNo ?? null });
-      audit(actor, 'plan_baselines', made.id, 'amend', r.company_id, { reason: b.reason, newValues: { from: r.doc_no } }); return made;
+      let award = null;
+      if (b.eotAwardId) {
+        if (b.revisionType !== 'EOT') fail([{ field: 'eotAwardId', message: 'An awarded extension of time goes with a revision of kind extension of time' }]);
+        award = eotAwardsOf(r.org_project_id).find((a) => a.id === b.eotAwardId);
+        if (!award) fail([{ field: 'eotAwardId', message: 'Choose an extension of time awarded on this project and not yet in a baseline' }]);
+      }
+      return transaction(db, () => {
+        const made = baselines.create(actor, { scheduleId: sid, name: b.name ?? `${r.name} (revision)`.slice(0, 200), revisionType: b.revisionType, reason: b.reason, changeSummary: b.changeSummary ?? null, referenceNo: award ? award.claimNo : b.referenceNo ?? null });
+        if (award) db.prepare("UPDATE plan_baselines SET source_type = 'ctr_eot_awards', source_id = ? WHERE id = ?").run(String(award.id), made.id);
+        audit(actor, 'plan_baselines', made.id, 'amend', r.company_id, { reason: b.reason, newValues: { from: r.doc_no, ...(award ? { eotAward: award.id, claim: award.claimNo, days: award.days } : {}) } });
+        return award ? { ...made, referenceNo: award.claimNo, eotAward: award } : made;
+      });
     },
     history(actor, id) { const r = row(actor, id); return { approvals: r.workflow_instance_id ? db.prepare('SELECT event, actor, comment, at, step_code FROM wf_history WHERE instance_id = ? ORDER BY id').all(r.workflow_instance_id) : [], audit: db.prepare("SELECT action, actor, reason, created_at AS at FROM core_audit_log WHERE entity = 'plan_baselines' AND entity_id = ? ORDER BY id").all(String(r.id)) }; },
     print(actor, id) {

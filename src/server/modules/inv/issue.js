@@ -8,6 +8,7 @@ import { parameterRegistry } from '../../platform/parameters/index.js';
 import { controlRegistry, protocolOf } from '../../platform/protocol/index.js';
 import { workflowOf } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
+import { assertProjectPeriodOpen } from '../../platform/locks/index.js';
 import { json, nowIso, rid, same } from '../proc/base.js';
 
 // Material issue (part 16.04): an issue slip against a work authorisation (or a material request) to a crew, a subcontractor (free or chargeable) or equipment; the receiver acknowledges with a code or a signature and only then does the stock go out, at the average rate, charged
@@ -122,6 +123,8 @@ export function createIssueService({ db, base, invSvc }) {
     summary(actor) { const sc = scope(actor, 'inv.issue.view'); const n = (sql) => db.prepare(sql).get(sc.params).n; return { awaitingApproval: n(`SELECT COUNT(*) AS n FROM inv_issues x WHERE ${sc.sql} AND x.status = 'SUBMITTED' AND x.deleted_at IS NULL`), readyToHandOver: n(`SELECT COUNT(*) AS n FROM inv_issues x WHERE ${sc.sql} AND x.status = 'APPROVED' AND x.deleted_at IS NULL`), issuedToday: n(`SELECT COUNT(*) AS n FROM inv_issues x WHERE ${sc.sql} AND x.status = 'POSTED' AND x.issue_date = '${todayIST()}' AND x.deleted_at IS NULL`), withoutAuthorisation: n(`SELECT COUNT(*) AS n FROM inv_issues x WHERE ${sc.sql} AND x.exception_needed = 1 AND x.status IN ('APPROVED', 'POSTED') AND x.deleted_at IS NULL`) }; },
     create(actor, b) {
       const h = header(actor, b); const lines = buildLines(actor, h, b);
+      // part 30.01 (D-777): a material issue is dated today; it cannot land in a month the project has closed and locked (27.07)
+      assertProjectPeriodOpen(db, { companyId: actor.companyId, projectId: h.pid, date: todayIST(), what: 'material issue' });
       return transaction(db, () => {
         const no = number(actor.companyId, actor.user, 'INV_ISSUE', 'inv_issues', 'ISS');
         const id = Number(db.prepare("INSERT INTO inv_issues (company_id, doc_no, issue_date, org_project_id, org_site_id, store_id, issue_type, wa_id, mr_id, activity_id, wbs_id, cost_code_id, issued_to_type, issued_to_id, issued_to_name, receiver_user, exception_needed, reason, status, requested_by, project_id, site_id, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?)")
@@ -142,6 +145,7 @@ export function createIssueService({ db, base, invSvc }) {
     /** BR-02: no authorisation, or more than it allows, goes through the control exception. A chargeable issue to a subcontractor is approved by the subcontractor and then by the quantity surveyor for the rate. */
     submit(actor, id) {
       const r = issueRow(actor, id, 'inv.issue.submit'); if (!EDITABLE.includes(r.status)) throw unprocessable('Only a draft or a returned slip is sent.');
+      assertProjectPeriodOpen(db, { companyId: r.company_id, projectId: r.org_project_id, date: r.issue_date ?? todayIST(), what: 'material issue' });
       return transaction(db, () => {
         const h = header(actor, { type: r.issue_type, waId: r.wa_id, mrId: r.mr_id, storeId: r.store_id, projectId: r.org_project_id, issuedTo: { type: r.issued_to_type, id: r.issued_to_id, name: r.issued_to_name }, wbsId: r.wbs_id, costCodeId: r.cost_code_id, activityId: r.activity_id });
         const lines = buildLines(actor, h, { type: r.issue_type, lines: lineRows(r.id).map((l) => ({ itemId: l.item_id, qty: d3(l.qty), uom: l.uom, batchNo: l.batch_no, chargeRate: l.charge_rate == null ? undefined : l.charge_rate / 100 })) }, r.id); saveLines(actor, r, lines);

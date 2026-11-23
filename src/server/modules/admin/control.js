@@ -36,7 +36,7 @@ export const CHANGE_TYPE = 'admin_config_change';
 export const RATIFY_TYPE = 'admin_emergency_ratify';
 export const AREAS = Object.freeze({ FEATURE_FLAG: 'Feature flag', PARAMETER: 'Parameter', P360_LAYOUT: 'Project 360 slot' });
 const RATIFY_HOURS = 24;
-const FIN = /^(fin|bill|pay|proc|ctr|bud|close|tax)\./;
+const FIN = /^(fin|bill|pay|proc|ctr|bud|close|tax|tst\.recon)\./; // part 30.02: the reconciliation tolerances are financial controls
 const SEC = /^(iam|sec|core\.security|auth|ai\.(kill|provider))/;
 /** BR-01 / section 9: SYSADM prepares; ITADM checks; a financial or security key also needs the CFO or a director. */
 export const chainFor = (area, key) => (area === 'PARAMETER' && FIN.test(key) ? ['ITADM', 'CFO|DIR'] : SEC.test(key) ? ['ITADM', 'DIR'] : ['ITADM']);

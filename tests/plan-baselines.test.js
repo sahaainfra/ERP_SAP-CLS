@@ -1,5 +1,6 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { fill } from './qa-helpers.js';
 import '../src/server/modules/registry.js';
 import { setupCompany, startApi } from './helpers.js';
 import { detectFormat, parseFile, parseMsp, parseP6Xml, parseXer, parseXml, xerCalendarData } from '../src/server/modules/plan/exchange.js';
@@ -320,3 +321,25 @@ test('FR-03 the variance on its own: matching by code, actual dates, milestones 
 
 /** A call without an Idempotency-Key. */
 function api0(t, method, path, who, body) { return t.api.call(method, `${P}${path}`, { ...who, headers: { 'content-type': 'application/json' }, body }); }
+
+test('30.01 BR-01 an extension-of-time revision takes the awarded EOT, not a typed reference: the claim number and the link come from the award', async () => {
+  const t = await boot(); const sid = await t.schedule(t.pid, 'Working schedule', both); await t.rows(sid, [{ code: 'A10', name: 'Only activity', duration: 5 }], both); await t.calc(sid, both);
+  const b = (await t.call(both, 'POST', '/baselines', { scheduleId: sid, name: 'Programme of the job', reason: 'The first programme of the job' })).json.data;
+  const inst = (await t.call(both, 'POST', `/baselines/${b.id}/submit`)).json.data.workflowInstanceId; await t.act(pm, inst); await t.act(pd, inst);
+  t.d.exec('PRAGMA foreign_keys = OFF');
+  const claim = (pid, no) => fill(t.d, 'ctr_claims', { company_id: 1, doc_no: `CLM/${no}`, claim_no: no, org_project_id: pid, contract_id: 1, title: 'Late drawings', event_date: '2026-05-01', time_bar_date: '2026-05-29', status: 'APPROVED' });
+  const award = (c) => fill(t.d, 'ctr_eot_awards', { company_id: 1, claim_id: c, contract_id: 1, days: 12, completion_before: '2026-06-01', completion_after: '2026-06-13' });
+  const mine = award(claim(t.pid, 'CLM-07')); const other = award(claim(t.pid2, 'CLM-99'));
+  t.d.exec('PRAGMA foreign_keys = ON');
+  const view = (await t.call(both, 'GET', `/baselines/${b.id}`)).json.data;
+  assert.deepEqual(view.eotAwards.map((a) => [a.id, a.claimNo, a.days]), [[mine, 'CLM-07', 12]], 'only the awards of the project');
+  assert.equal((await t.call(both, 'POST', `/baselines/${b.id}/amend`, { revisionType: 'RESEQUENCE', reason: 'Not an extension of time', eotAwardId: mine })).status, 400);
+  assert.equal((await t.call(both, 'POST', `/baselines/${b.id}/amend`, { revisionType: 'EOT', reason: 'Award of another project', eotAwardId: other })).status, 400);
+  const am = await t.call(both, 'POST', `/baselines/${b.id}/amend`, { revisionType: 'EOT', reason: 'Extension of time 7 awarded for the late drawings', eotAwardId: mine, referenceNo: 'typed by hand' });
+  assert.equal(am.status, 201, JSON.stringify(am.json));
+  assert.equal(am.json.data.referenceNo, 'CLM-07', 'the reference is the claim number, whatever was typed');
+  const row = t.d.prepare('SELECT source_type, source_id, reference_no FROM plan_baselines WHERE id = ?').get(am.json.data.id);
+  assert.deepEqual([row.source_type, row.source_id, row.reference_no], ['ctr_eot_awards', String(mine), 'CLM-07']);
+  const rev = (await t.call(both, 'GET', `/baselines/${am.json.data.id}`)).json.data;
+  assert.equal(rev.eotAward.claimNo, 'CLM-07');
+});
