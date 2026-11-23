@@ -1014,6 +1014,8 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .msg-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--erp-color-text-muted); min-width: 0; flex: 1; }
 .msg-search input { width: 100%; }
 .msg-conv { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.msg-conv > :not(.msg-thread) { flex-shrink: 0; } /* on a short phone screen the notices, the key-change warning and the composer keep their height (they overlapped); the pane scrolls */
+.msg-conv > .msg-thread { min-height: 6rem; }
 .msg-conv-head { display: flex; align-items: center; gap: var(--erp-space-2); border-block-end: 1px solid var(--erp-color-border-subtle); padding-block-end: var(--erp-space-2); }
 .msg-conv-title { flex: 1; min-width: 0; }
 .msg-conv-title h2 { margin: 0; font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
