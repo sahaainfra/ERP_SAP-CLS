@@ -23,10 +23,10 @@ async function checkAppearance(page) {
 test('Go-live readiness board, UAT, dry run and the go/no-go decision', async ({ page, request }, info) => {
   test.setTimeout(300_000);
   const phone = info.project.name === 'mobile';
-  const suffix = phone ? 'm' : 'd';
+  const suffix = `${phone ? 'm' : 'd'}-${Date.now().toString(36).slice(-5)}`;
   const pm = `prog-mgr-${suffix}`; const it = `it-${suffix}`; const se = `se-${suffix}`; const pm2 = `prog-mgr2-${suffix}`; const cfo = `cfo-${suffix}`; const dir = `dir-${suffix}`;
   const headers = (roles, company, who) => ({ 'x-erp-roles': roles, 'x-erp-company': String(company), 'x-erp-user': who, 'idempotency-key': randomUUID() });
-  const created = await request.post('/api/v1/iam/org/companies', { headers: headers('SYSADM', 1, 'setup'), data: { code: `GO-${suffix.toUpperCase()}${Date.now().toString(36).slice(-4).toUpperCase()}`, legalName: 'Go-Live Readiness Builders', shortName: 'Readiness' } });
+  const created = await request.post('/api/v1/iam/org/companies', { headers: headers('SYSADM', 1, 'setup'), data: { code: `GO-${suffix.toUpperCase()}`, legalName: 'Go-Live Readiness Builders', shortName: 'Readiness' } });
   expect(created.status(), await created.text()).toBe(201);
   const { id: company } = (await created.json()).data;
   const db = new DatabaseSync('data/e2e.sqlite');

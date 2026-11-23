@@ -1,0 +1,5 @@
+/hr/crews
+/hr/crews/crew
+/proj/baseline-pack
+/proj/wbs
+/proj/work-packages

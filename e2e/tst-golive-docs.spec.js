@@ -30,16 +30,16 @@ const json = (f) => (existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null)
 test('Accessibility validation, operations runbooks and the documentation library', async ({ page, request }, info) => {
   test.setTimeout(600_000);
   const phone = info.project.name === 'mobile';
-  const suffix = phone ? 'm' : 'd';
-  const qa = `qa-lead-${suffix}`; const ux = `ux-lead-${suffix}`; const pd = `pd-${suffix}`; const se = `se-${suffix}`;
+  const suffix = `${phone ? 'm' : 'd'}-${Date.now().toString(36).slice(-5)}`;
+  const qa = `qa-lead-${suffix}`; const ux = `ux-lead-${suffix}`; const pd = `pd-${suffix}`; const se = `se-${suffix}`; const l1 = `l1-desk-${suffix}`; const l3 = `l3-vendor-${suffix}`;
   const headers = (roles, company, who) => ({ 'x-erp-roles': roles, 'x-erp-company': String(company), 'x-erp-user': who, 'idempotency-key': randomUUID() });
-  const created = await request.post('/api/v1/iam/org/companies', { headers: headers('SYSADM', 1, 'setup'), data: { code: `GL-${suffix.toUpperCase()}${Date.now().toString(36).slice(-4).toUpperCase()}`, legalName: 'Go-Live Builders', shortName: 'Go-Live' } });
+  const created = await request.post('/api/v1/iam/org/companies', { headers: headers('SYSADM', 1, 'setup'), data: { code: `GL-${suffix.toUpperCase()}`, legalName: 'Go-Live Builders', shortName: 'Go-Live' } });
   expect(created.status(), await created.text()).toBe(201);
   const { id: company } = (await created.json()).data;
   const db = new DatabaseSync('data/e2e.sqlite');
   db.exec('PRAGMA busy_timeout = 8000;');
   try {
-    for (const [u, r] of [[qa, 'ITADM'], [ux, 'SYSADM'], [pd, 'PD'], [se, 'SE']]) db.prepare('INSERT INTO iam_users (company_id, username, display_name, roles_json) VALUES (?, ?, ?, ?)').run(company, u, u, JSON.stringify([r]));
+    for (const [u, r] of [[qa, 'ITADM'], [ux, 'SYSADM'], [pd, 'PD'], [se, 'SE'], [l1, 'ITADM'], [l3, 'ITADM']]) db.prepare('INSERT INTO iam_users (company_id, username, display_name, roles_json) VALUES (?, ?, ?, ?)').run(company, u, u, JSON.stringify([r]));
     for (const f of ['ff.qa.p3007', 'ff.qa.p3008', 'ff.qa.p3009', 'ff.admin.p2908']) db.prepare("INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES (?, ?, 'Go-live consoles browser fixture', 0, 1)").run(f, company);
   } finally {
     db.close();
@@ -98,7 +98,7 @@ test('Accessibility validation, operations runbooks and the documentation librar
   await api('POST', '/tst/ops/runbooks/sync', {});
   for (const code of ['deploy', 'rollback', 'restore']) await api('POST', `/tst/ops/runbooks/${code}/submit`, { reason: 'Rehearsed in staging; ready for approval' });
   const from = new Date(Date.now() - 3_600_000).toISOString(); const to = new Date(Date.now() + 8 * 3_600_000).toISOString();
-  for (const [u, l] of [['l1-desk', 'L1'], [qa, 'L2'], ['l3-vendor', 'L3']]) await api('POST', '/tst/ops/oncall', { username: u, level: l, fromAt: from, toAt: to });
+  for (const [u, l] of [[l1, 'L1'], [qa, 'L2'], [l3, 'L3']]) await api('POST', '/tst/ops/oncall', { username: u, level: l, fromAt: from, toAt: to });
   await page.goto('/admin/operations-runbooks');
   await expect(page.getByTestId('tst-ops')).toBeVisible();
   await expect(page.getByTestId('op-chart')).toBeVisible();

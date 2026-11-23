@@ -77,5 +77,5 @@ test(`T-01 FR-02 FR-03 every page at ${WIDTH} px: axe, overflow, touch targets`,
   const out = await postSweep(request, H(company, 'a11y-all', 'ITADM'), { kind: AXE_ON ? 'AXE' : 'RESPONSIVE', width: WIDTH, height: HEIGHT, theme: THEME, language: 'en', network: 'FAST' }, results);
   const serious = results.filter((r) => r.violations.some((v) => v.impact === 'serious' || v.impact === 'critical'));
   info.annotations.push({ type: 'sweep', description: `${results.length} pages at ${WIDTH} px; ${serious.length} with serious or critical findings; ${results.filter((r) => r.overflowPx > 0).length} overflowing` });
-  if (out) expect(out.coverage.pct).toBe(100);
+  if (out && !only) expect(out.coverage.pct).toBe(100); // a re-test of some routes covers only those
 });

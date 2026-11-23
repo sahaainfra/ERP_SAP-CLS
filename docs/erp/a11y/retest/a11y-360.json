@@ -1,0 +1,64 @@
+{
+ "width": 360,
+ "theme": "light",
+ "axe": true,
+ "at": "2026-11-23T22:25:05.347Z",
+ "results": [
+  {
+   "route": "/hr/crews",
+   "loadMs": 2066,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/crews/crew",
+   "loadMs": 1990,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/baseline-pack",
+   "loadMs": 1989,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/wbs",
+   "loadMs": 1963,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/work-packages",
+   "loadMs": 1976,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  }
+ ]
+}
