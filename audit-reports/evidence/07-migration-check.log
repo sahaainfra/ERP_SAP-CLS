@@ -1,0 +1,6 @@
+
+> erp-sap-cls@0.1.0 erp:migration-check
+> node scripts/migration_check.mjs
+
+Migration check OK: every migration applies, reverses cleanly and re-applies.
+exit=0 seconds=86

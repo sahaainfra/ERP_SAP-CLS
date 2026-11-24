@@ -1,0 +1,7 @@
+
+> erp-sap-cls@0.1.0 erp:bundle-budget
+> node scripts/bundle_budget.mjs
+
+Bundle budget FAILED: first download 193.0 KB gzip, 835 scripts, largest assets/hi-HvRXAhjc.js 259.5 KB gzip.
+- assets/hi-HvRXAhjc.js 259.5 KB gzip is above 250.0 KB
+exit=1 seconds=0

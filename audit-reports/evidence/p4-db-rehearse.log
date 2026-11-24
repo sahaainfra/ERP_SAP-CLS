@@ -1,0 +1,9 @@
+
+> erp-sap-cls@0.1.0 db:rehearse
+> node scripts/rehearse_backup.mjs
+
+Database: 349779 rows, 41.7 MB (generated in 1914 ms)
+Backup:   2861 ms (copy 239 ms, checksums 2622 ms)
+Restore:  4892 ms (verify 2427 ms, copy 16 ms, re-check 2448 ms)
+Checksums identical after restore.
+exit=0 seconds=10

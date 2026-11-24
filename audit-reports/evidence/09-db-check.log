@@ -1,0 +1,17 @@
+
+> erp-sap-cls@0.1.0 erp:db-check
+> node scripts/db_check.mjs
+
+Integrity checks on a freshly migrated in-memory database (no database file found)
+PASS  Critical orphan_foreign_keys        checked 2666, failures 0
+PASS  Critical duplicate_business_keys    checked 443, failures 0
+PASS  Critical header_line_totals         checked   1, failures 0
+N/A   Critical unbalanced_journals        checked   0, failures 0
+PASS  Critical sequence_gaps              checked   1, failures 0
+PASS  High     negative_quantities        checked 865, failures 0
+PASS  High     missing_company_id         checked 831, failures 0
+PASS  High     invalid_status_values      checked 370, failures 0
+
+7 passed, 0 failed, 1 not applicable (nothing to check yet).
+Integrity gate OK (blocks on Critical or higher).
+exit=0 seconds=4

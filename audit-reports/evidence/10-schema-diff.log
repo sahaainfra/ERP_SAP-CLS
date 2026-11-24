@@ -1,0 +1,6 @@
+
+> erp-sap-cls@0.1.0 erp:schema-diff
+> node scripts/schema_diff.mjs
+
+Schema-diff OK: 809 locked objects unchanged, 3997 new.
+exit=0 seconds=2
