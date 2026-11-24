@@ -551,3 +551,102 @@ Running 866 tests using 1 worker
 [344/866] [desktop] › e2e/qa-inspect.spec.js:43:1 › Quality: template designer with preview, ITP applied to an activity, an inspection performed with a failing reading and approved
 [345/866] [desktop] › e2e/qa-ir.spec.js:42:1 › Quality: an inspection request releases a hold point; a rejection keeps its reason and asks for a re-inspection
 [346/866] [desktop] › e2e/qa-ncr.spec.js:39:1 › Quality: raise an NCR, action, rectification, re-inspection and closure by severity
+[347/866] [desktop] › e2e/qa-pour.spec.js:45:1 › Quality: pour card with approved inspections, pour and cubes, a failing result raised as an NCR, acceptance and traceability
+[348/866] [desktop] › e2e/qa-snags.spec.js:38:1 › Quality: snag walk with plan pins, rectification with an after-photograph, closure by another person, status and the unit report
+[349/866] [desktop] › e2e/qa-tests.spec.js:43:1 › Quality: receiving inspection, a failed and a passed test, calibration, compliance and the catalogue
+[350/866] [desktop] › e2e/rate-analysis-screenshots.spec.js:73:1 › screenshots of the rate analysis pages
+[351/866] [desktop] › e2e/rate-analysis.spec.js:69:1 › FR-01 FR-02 the rate library and a schedule of rates: filters, a new rate, items pasted and the edition put in use
+[352/866] [desktop] › e2e/rate-analysis.spec.js:97:1 › FR-03 FR-04 BR-01 T-03 an M25 analysis from the template, priced from the library, released by the director, locked and amended
+[353/866] [desktop] › e2e/rate-analysis.spec.js:136:1 › FR-05 T-02 the impact of a cement price rise on the analyses, read by the quantity surveyor
+[354/866] [desktop] › e2e/recruitment.spec.js:59:1 › AC-01 requisition, candidate, interview, offer, acceptance by link, joining, employee and checklist, in the browser
+[355/866] [desktop] › e2e/register.spec.js:68:1 › AC-01 the register, a regularisation from the employee to the supervisor, the overtime request and the lock of the period, in the browser
+[356/866] [desktop] › e2e/responsive.spec.js:28:1 › T-03 AC-02 every page of the application renders at 360 px without a horizontal page scroll and without console errors
+[357/866] [desktop] › e2e/responsive.spec.js:51:1 › FR-02 the key pages fit at 768, 1280 and 1920 px as well
+[358/866] [desktop] › e2e/review.spec.js:57:1 › AC-01 an estimate reviewed and approved with its bid summary; the priced BOQ exported in the client format, in the browser
+[359/866] [desktop] › e2e/rfi.spec.js:57:1 › AC-01 RFI raised with a photo markup, routed, answered, verified and closed with impacts recorded, in the browser
+[360/866] [desktop] › e2e/rfi.spec.js:144:1 › AC-03 a person without the right sees the no-permission state
+[361/866] [desktop] › e2e/risk.spec.js:60:1 › AC-01 risk dashboard, register, risk page, trigger, contingency, closure, issue log and monthly review, in the browser
+[362/866] [desktop] › e2e/rmc-costing.spec.js:10:1 › Plant costing: collect, enter, transfer rate by approval, close, cost per m3, charges and profit
+[363/866] [desktop] › e2e/rmc-plants.spec.js:8:1 › Batching plant and mix design: plant with silo and scale, approval, mix proportions checked live, two-level quality approval
+[364/866] [desktop] › e2e/rmc-production.spec.js:9:1 › Production and dispatch: requisition, schedule board, batch, ticket, receipt at site, approval, consumption
+[365/866] [desktop] › e2e/roles.spec.js:34:1 › Roles: system templates are locked, a clone is edited in the matrix, approved, activated and compared
+[366/866] [desktop] › e2e/roles.spec.js:124:1 › Assignments, effective permissions and the legacy comparison
+[367/866] [desktop] › e2e/roles.spec.js:191:1 › Roles: a role that may only read is shown the pages without the buttons
+[368/866] [desktop] › e2e/search.spec.js:57:1 › FR-02 FR-03 AC-01 the palette opens with Ctrl+K anywhere, groups records, pages and actions, and works from the keyboard
+[369/866] [desktop] › e2e/search.spec.js:116:1 › FR-05 Advanced Search: filters by kind, project and status, paging, saved filters, export, empty and no-result states
+[370/866] [desktop] › e2e/search.spec.js:173:1 › BR-02 FR-06 Search Administration: index status, a rebuild with a reason, and the searches that found nothing
+[371/866] [desktop] › e2e/secure-messaging.spec.js:62:1 › AC-01 AC-05 FR-01 FR-07 the licence register and the policy: the gate is closed until the review is approved by the IT administrator and the director, then the policy is switched on by an approved change
+[372/866] [desktop] › e2e/secure-messaging.spec.js:120:1 › AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation across two devices: encrypted text and file, safety numbers that match, a warning when a device is added, only ciphertext in the database
+[373/866] [desktop] › e2e/secure-screenshots.spec.js:57:1 › screenshots of the secure messaging pages
+[374/866] [desktop] › e2e/security.spec.js:28:1 › T-03 the content security policy blocks an injected inline script, and the application still works under it
+[375/866] [desktop] › e2e/security.spec.js:58:1 › Route Registry: every route with its protection, filters, and a self-test that records the result
+[376/866] [desktop] › e2e/security.spec.js:98:1 › Security Settings: a change is a request, approved by someone else; the history, the secrets and the limits of each role
+[377/866] [desktop] › e2e/shell.spec.js:64:1 › T-01 FR-01 FR-02 three roles see exactly the entries they may open; the technical console is apart from the business groups
+[378/866] [desktop] › e2e/shell.spec.js:100:1 › T-02 FR-08 a page the role may not open shows the no-permission state, and the API behind it answers 403
+[379/866] [desktop] › e2e/shell.spec.js:116:1 › T-03 FR-03 the working context filters the list, fills the form, is remembered per person, and asks before it costs unsaved work
+[380/866] [desktop] › e2e/shell.spec.js:170:1 › FR-06 the launchpad: what is waiting, tiles for the role, favourites in the person's order, recent records, and the bell for the approver
+[381/866] [desktop] › e2e/shell.spec.js:215:1 › FR-04 FR-07 header and keyboard: search or go to, quick create, g-shortcuts, the shortcut list, language and the collapsible menu
+[382/866] [desktop] › e2e/shell.spec.js:280:1 › AC-05 FR-01 FR-08 FR-09 the registry is changed by request and approval: a page may need a project; history, export and import follow
+[383/866] [desktop] › e2e/signatures.spec.js:47:1 › AC-01 AC-02 FR-02 FR-03 BR-01 the QR page opens without signing in: a genuine signed purchase order, its signer, and the file compared with the stored hash; one byte changed is detected
+[384/866] [desktop] › e2e/signatures.spec.js:82:1 › AC-01 AC-02 AC-03 FR-01 FR-04 BR-02 the register, signing and cancelling from the document page, revoking by the administrator; the public check follows; a person without the right
+[385/866] [desktop] › e2e/signin.spec.js:49:1 › Sign-in: the same message for every failure, a question after repeated failures, a lock, and English or Hindi
+[386/866] [desktop] › e2e/signin.spec.js:88:1 › A privileged role must set up an authenticator before it gets in; later sign-ins ask for the second step
+[387/866] [desktop] › e2e/signin.spec.js:133:1 › My Sessions & Devices: remember a device, set a PIN, unlock with it; an administrator's forced sign-out ends the session at once
+[388/866] [desktop] › e2e/signin.spec.js:178:1 › Authentication Policy and Login History: a change is a request the other administrator approves; history, forced sign-out and unlock
+[389/866] [desktop] › e2e/signin.spec.js:244:1 › Forgotten password gives the same answer for any name; a project manager has no security administration; a signed-out visitor sees only the sign-in
+[390/866] [desktop] › e2e/site-conditions.spec.js:51:1 › weather, hindrance, diary and visitors work end to end
+[391/866] [desktop] › e2e/site-control.spec.js:51:1 › project cost control: the dashboard drills to the source documents, the variance is analysed and exported, an unallocated cost is allocated by QS and approved by the PM
+[392/866] [desktop] › e2e/site-dpr.spec.js:72:1 › AC-01 a DPR is made on the phone from the day's work and attendance, sent with a photo, approved, reported on; a report made offline waits and goes when the signal returns
+[393/866] [desktop] › e2e/site-instructions.spec.js:42:1 › instructions are registered, issued, acknowledged, complied with and closed
+[394/866] [desktop] › e2e/site-productivity.spec.js:48:1 › a norm is entered and approved, the records are scored, and the dashboard and the report explain the losses
+[395/866] [desktop] › e2e/site-progress.spec.js:54:1 › a progress period is prepared, closed and shown on the dashboard, the report and the client report
+[396/866] [desktop] › e2e/site-wa.spec.js:63:1 › AC-01 a daily plan raises a WA, approved on the phone; stores and DPR book against it; it is closed and reconciled
+[397/866] [desktop] › e2e/sod.spec.js:29:1 › SoD rules: the ten standard rules, filtering, a rule opened, a new rule proposed and approved by the auditor
+[398/866] [desktop] › e2e/sod.spec.js:78:1 › SoD violations: the report, a scan, the dormant tab and the person without the right
+[399/866] [desktop] › e2e/sod.spec.js:103:1 › Elevated access and access reviews: the pages, their empty states and the refusals they show
+[400/866] [desktop] › e2e/statutory-p16608.spec.js:49:1 › T-01 T-02 FR-03 FR-04 the Statutory Changes page: cement 28 % then 18 %, section 393(1) with Form 131, the calendar and a draft invoice to review
+[401/866] [desktop] › e2e/statutory-p16608.spec.js:74:1 › T-03 S-04 the Salary tab: basic 40 % and allowances 60 % make wages 50 %; S-05 the wage rates page names the Code on Wages
+[402/866] [desktop] › e2e/structure.spec.js:56:1 › AC-01 WBS from a template, edited and baselined; work packages, locations and the matrix; a change after the baseline, in the browser
+[403/866] [desktop] › e2e/submittal.spec.js:57:1 › AC-01 a material approval reviewed through two cycles, approved make visible to procurement, in the browser
+[404/866] [desktop] › e2e/submittal.spec.js:139:1 › AC-03 a person without the right sees the no-permission state
+[405/866] [desktop] › e2e/tasks.spec.js:42:1 › AC-01 FR-04 a task from the form to closing: evidence is asked for, the checklist and discussion work, the views show it as list, board and calendar
+[406/866] [desktop] › e2e/tasks.spec.js:104:1 › FR-06 FR-05 Team Tasks shows the workload and what is late; an instruction with nobody to go to is refused with what to do
+[407/866] [desktop] › e2e/tasks.spec.js:133:1 › AC-04 the Department Responsibility Matrix: a change is sent for approval, the matrix in force stays until the system administrator approves, then the topic routes
+[408/866] [desktop] › e2e/templates.spec.js:41:1 › AC-01 AC-02 FR-01 FR-03 BR-01 the library, a new version of the tax invoice format: refused with an unknown variable, previewed, sent for approval, approved by the CFO and then the active one
+[409/866] [desktop] › e2e/templates.spec.js:93:1 › AC-01 AC-02 AC-03 FR-04 FR-05 FR-06 generate a tax invoice from approved data, open it, send it, make a new version with a reason; a person without the right sees nothing
+[410/866] [desktop] › e2e/tender.spec.js:59:1 › AC-01 a tender is registered, evaluated, worked on (eligibility, addenda, queries, tasks, documents) and made ready, with the calendar, the dashboard and Hindi, in the browser
+[411/866] [desktop] › e2e/training.spec.js:64:1 › AC-01 course set-up, a session with QR sign-in, attendance, completion, calendar move, certificates, skill matrix, compliance and Hindi, in the browser
+[412/866] [desktop] › e2e/tst-a11y-sweep.spec.js:37:1 › T-01 FR-02 FR-03 every page at 360 px: axe, overflow, touch targets
+[413/866] [desktop] › e2e/tst-device-matrix.spec.js:40:1 › T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, keyboard and screen-reader journeys on every emulated device
+[414/866] [desktop] › e2e/tst-golive-docs.spec.js:30:1 › Accessibility validation, operations runbooks and the documentation library
+[415/866] [desktop] › e2e/tst-golive-readiness.spec.js:23:1 › Go-live readiness board, UAT, dry run and the go/no-go decision
+[416/866] [desktop] › e2e/tst-golive.spec.js:24:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit
+  7) [desktop] › e2e/tst-golive.spec.js:24:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('pa-row')
+    Expected: 3
+    Received: 10
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('pa-row') with timeout 5000ms
+      - waiting for getByTestId('pa-row')
+        13 × locator resolved to 10 elements
+           - unexpected value "10"
+
+
+      104 |   await page.getByTestId('pa-scan').click();
+      105 |   await expect(page.getByTestId('pa-scan-result')).toContainText(', 0 with findings');
+    > 106 |   await expect(page.getByTestId('pa-row')).toHaveCount(3);
+          |                                            ^
+      107 |   await cardsOnPhone('pa-table');
+      108 |   await noOverflow();
+      109 |   await page.evaluate(() => window.scrollTo(0, 0));
+        at /home/user/ERP_SAP-CLS/e2e/tst-golive.spec.js:106:44
+
+    Error Context: test-results/tst-golive-Go-live-console-457e0-ealth-page-completion-audit-desktop/error-context.md
+
+
+[417/866] [desktop] › e2e/tst-manual-screens.spec.js:38:1 › FR-01 FR-03 the screens of the build: signature and image of every page, compared with the baseline
