@@ -1158,3 +1158,89 @@ Running 866 tests using 1 worker
 [843/866] [mobile] › e2e/tender.spec.js:59:1 › AC-01 a tender is registered, evaluated, worked on (eligibility, addenda, queries, tasks, documents) and made ready, with the calendar, the dashboard and Hindi, in the browser
 [844/866] [mobile] › e2e/training.spec.js:64:1 › AC-01 course set-up, a session with QR sign-in, attendance, completion, calendar move, certificates, skill matrix, compliance and Hindi, in the browser
 [845/866] [mobile] › e2e/tst-a11y-sweep.spec.js:37:1 › T-01 FR-02 FR-03 every page at 360 px: axe, overflow, touch targets
+[846/866] [mobile] › e2e/tst-device-matrix.spec.js:40:1 › T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, keyboard and screen-reader journeys on every emulated device
+  11) [mobile] › e2e/tst-device-matrix.spec.js:40:1 › T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, keyboard and screen-reader journeys on every emulated device 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 4
+
+    - Array []
+    + Array [
+    +   "desktop-1280: Keyboard only: Tab reaches a control with a visible focus ring — expect(received).not.toBeNull()",
+    +   "desktop-1920: Keyboard only: Tab reaches a control with a visible focus ring — expect(received).not.toBeNull()",
+    + ]
+
+      132 |   const failed = report.flatMap((r) => r.journeys.filter((j) => j.result === 'FAIL').map((j) => `${r.device}: ${j.journey}: ${j.steps.filter((s) => s.result === 'FAIL').map((s) => `${s.step} — ${s.note ?? ''}`).join('; ')}`));
+      133 |   for (const f of failed) info.annotations.push({ type: 'failed journey', description: f });
+    > 134 |   expect(failed).toEqual([]);
+          |                  ^
+      135 | });
+      136 |
+        at /home/user/ERP_SAP-CLS/e2e/tst-device-matrix.spec.js:134:18
+
+    Error Context: test-results/tst-device-matrix-T-01-FR--36f9c-ys-on-every-emulated-device-mobile/error-context.md
+
+
+[847/866] [mobile] › e2e/tst-golive-docs.spec.js:30:1 › Accessibility validation, operations runbooks and the documentation library
+[848/866] [mobile] › e2e/tst-golive-readiness.spec.js:23:1 › Go-live readiness board, UAT, dry run and the go/no-go decision
+  12) [mobile] › e2e/tst-golive-readiness.spec.js:23:1 › Go-live readiness board, UAT, dry run and the go/no-go decision 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  locator('[data-testid="gl-step"][data-code="FREEZE_LEGACY"]')
+    Expected: "RUNNING"
+    Received: "PENDING"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveAttribute" locator('[data-testid="gl-step"][data-code="FREEZE_LEGACY"]') with timeout 5000ms
+      - waiting for locator('[data-testid="gl-step"][data-code="FREEZE_LEGACY"]')
+        14 × locator resolved to <li data-testid="gl-step" data-status="PENDING" data-code="FREEZE_LEGACY">…</li>
+           - unexpected value "PENDING"
+
+
+      88 |   await page.getByTestId('gl-plan-dry').click();
+      89 |   await page.getByTestId('gl-start').click();
+    > 90 |   await expect(page.locator('[data-testid="gl-step"][data-code="FREEZE_LEGACY"]')).toHaveAttribute('data-status', 'RUNNING');
+         |                                                                                    ^
+      91 |   await as(it, 'ITADM'); await page.reload();
+      92 |   await page.getByTestId('gl-step-note-FREEZE_LEGACY').fill('Legacy frozen; final extracts taken.');
+      93 |   await page.getByTestId('gl-done-FREEZE_LEGACY').click();
+        at /home/user/ERP_SAP-CLS/e2e/tst-golive-readiness.spec.js:90:84
+
+    Error Context: test-results/tst-golive-readiness-Go-li-5e254-n-and-the-go-no-go-decision-mobile/error-context.md
+
+
+[849/866] [mobile] › e2e/tst-golive.spec.js:24:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit
+  13) [mobile] › e2e/tst-golive.spec.js:24:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('pa-row')
+    Expected: 3
+    Received: 10
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('pa-row') with timeout 5000ms
+      - waiting for getByTestId('pa-row')
+        14 × locator resolved to 10 elements
+           - unexpected value "10"
+
+
+      104 |   await page.getByTestId('pa-scan').click();
+      105 |   await expect(page.getByTestId('pa-scan-result')).toContainText(', 0 with findings');
+    > 106 |   await expect(page.getByTestId('pa-row')).toHaveCount(3);
+          |                                            ^
+      107 |   await cardsOnPhone('pa-table');
+      108 |   await noOverflow();
+      109 |   await page.evaluate(() => window.scrollTo(0, 0));
+        at /home/user/ERP_SAP-CLS/e2e/tst-golive.spec.js:106:44
+
+    Error Context: test-results/tst-golive-Go-live-console-457e0-ealth-page-completion-audit-mobile/error-context.md
+
+
+[850/866] [mobile] › e2e/tst-manual-screens.spec.js:38:1 › FR-01 FR-03 the screens of the build: signature and image of every page, compared with the baseline
+[851/866] [mobile] › e2e/tst-page-crawl.spec.js:25:1 › T-01 the crawler opens every registered route and the audit reports 100 % coverage
