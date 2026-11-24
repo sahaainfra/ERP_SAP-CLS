@@ -447,3 +447,42 @@ Running 866 tests using 1 worker
 [240/866] [desktop] › e2e/mdm.spec.js:73:1 › FR-02 BR-01 a similar partner is flagged before it is sent, compared and merged; the merged record stays and points to the survivor
 [241/866] [desktop] › e2e/mdm.spec.js:128:1 › FR-03 FR-05 FR-07 FR-08 the dashboard, a change from a later date with its history and as of, the change requests worklist and the rules and stewards
 [242/866] [desktop] › e2e/meetings.spec.js:58:1 › AC-01 team, stakeholders, communication matrix, minutes issued by the chair and actions tracked as tasks, in the browser
+[243/866] [desktop] › e2e/messages.spec.js:46:1 › AC-01 AC-02 FR-02 FR-03 FR-04 FR-07 one Messages app: a direct conversation, a file and a record card, unread counts, a reply in real time, panes by width, the pop-out window and the dock
+[244/866] [desktop] › e2e/messages.spec.js:132:1 › AC-01 a person who is not in a conversation does not see it, and cannot open it by its address
+[245/866] [desktop] › e2e/messaging-features.spec.js:45:1 › AC-01 AC-03 AC-04 FR-02 FR-03 FR-05 receipts, search with a jump to the message, a star, a pin, and no page overflow
+[246/866] [desktop] › e2e/messaging-features.spec.js:82:1 › AC-05 FR-09 Messaging Settings: a change waits for a second person, the history lists it
+[247/866] [desktop] › e2e/messaging-screenshots.spec.js:42:1 › screenshots of the messaging feature pages
+[248/866] [desktop] › e2e/migration.spec.js:30:1 › FR-06 FR-07 BR-02 the tracker: progress by module, filters, a defect blocks verification, the owner verifies, the module is signed off, the export
+[249/866] [desktop] › e2e/migration.spec.js:95:1 › T-03 FR-04 an old address leads to its page with its query and fragment, after another administrator approves it; an unknown address goes Home
+[250/866] [desktop] › e2e/migration.spec.js:123:1 › FR-06 the tracker on a phone: progress, chart, filters and the table fit the screen and open a page's details
+[251/866] [desktop] › e2e/mto.spec.js:61:1 › AC-01 take-off and BBS sheets give quantities with revisions and deltas; the explosion gives the material requirements, in the browser
+[252/866] [desktop] › e2e/notifications.spec.js:40:1 › AC-01 FR-04 FR-07 a decision on a document reaches the originator's open screen at once: the bell counts it, the drawer shows it, the centre opens the document; read, archive and read-all work
+[253/866] [desktop] › e2e/notifications.spec.js:82:1 › FR-05 AC-02 preferences are kept and respected; the templates are read in both languages, previewed, and a change waits for the IT administrator; the delivery log shows what left
+[254/866] [desktop] › e2e/object.spec.js:42:1 › Object Page: the header and the buttons follow the viewer; checklist, discussion, approval, timeline and print work end to end
+[255/866] [desktop] › e2e/object.spec.js:118:1 › Object Page: return with a reason code, amend and send again; the comparison marks what changed; the owner sees why it came back
+[256/866] [desktop] › e2e/object.spec.js:169:1 › T-02 a missing record shows the error state with the correlation ID the page sent; a person without the right sees what is missing
+[257/866] [desktop] › e2e/object.spec.js:187:1 › T-04 the Object Page at phone width: no horizontal page scroll, tabs scroll inside their bar, the buttons are reachable
+[258/866] [desktop] › e2e/object.spec.js:204:1 › Feedback components: toasts, banners, confirmation with a reason code, the progress dialog, the offline banner and the standard states
+[259/866] [desktop] › e2e/offline.spec.js:38:1 › AC-01 FR-01 FR-03 FR-04 FR-05 FR-07 FR-08 a form captured offline with a photo, kept encrypted, sent when the connection returns; T-03 a revoked device wipes its local store
+[260/866] [desktop] › e2e/offline.spec.js:142:1 › AC-03 a person without the right sees the no-permission state on the Devices page
+[261/866] [desktop] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID
+[262/866] [desktop] › e2e/operations-health.spec.js:61:1 › Operations Health: an objective change is a request, approved by the System Administrator
+[263/866] [desktop] › e2e/operations-health.spec.js:80:1 › Operations Health: SYSADM views but cannot act; a project manager has no access; the browser reports its errors
+[264/866] [desktop] › e2e/operations.spec.js:23:1 › Monitor: key figures, consumers, the event log with masked data, and the catalogue
+[265/866] [desktop] › e2e/operations.spec.js:46:1 › Replay: ITADM queues a replay, it runs in the background and the job page shows its log
+[266/866] [desktop] › e2e/operations.spec.js:68:1 › Dead-letter queue: empty state, filters, and view-only for a role that cannot re-drive
+[267/866] [desktop] › e2e/operations.spec.js:80:1 › Schedules: ITADM previews a cron and asks for a change; SYSADM approves it and the schedule changes
+[268/866] [desktop] › e2e/operations.spec.js:108:1 › PM gets the no-access state and no navigation to the console
+[269/866] [desktop] › e2e/organisation.spec.js:36:1 › Departments and designations: create, search, edit, export, and a blocked deactivation lists what blocks it
+[270/866] [desktop] › e2e/organisation.spec.js:109:1 › Companies and branches: only the system administrator manages them
+[271/866] [desktop] › e2e/organisation.spec.js:131:1 › Project and site: create, approve activation, draw and test a geofence, then change it by approval
+[272/866] [desktop] › e2e/organisation.spec.js:242:1 › Site deactivation is blocked while a cost centre is still mapped to it, with the blocker listed
+[273/866] [desktop] › e2e/organisation.spec.js:268:1 › Organisation chart: search, move a department with undo, and the other views
+[274/866] [desktop] › e2e/organisation.spec.js:307:1 › Cost and profit centres: list, map to a project, hierarchy view, and no access without the permission
+[275/866] [desktop] › e2e/overviews-p16605.spec.js:25:1 › FR-02 the QS dashboard is an overview page: cards with a subtitle, the figure and the source; "View all ›" opens the list with the dashboard's project
+[276/866] [desktop] › e2e/overviews-p16605.spec.js:58:1 › FR-04 T-03 a chart card shows its figures as a table on request; on a phone the chart is at least 220 px tall and the legend stays readable at a large text size
+[277/866] [desktop] › e2e/overviews-p16605.spec.js:92:1 › FR-03 Home shows the insight cards of the person's role: approvals waiting, then the figures of their work; a stores keeper sees the stores
+[278/866] [desktop] › e2e/overviews-p16605.spec.js:116:1 › FR-03 a stores keeper's Home: approvals, items below reorder level, what waits for approval
+[279/866] [desktop] › e2e/pa-p2310.spec.js:43:1 › AC-01 a month recognised by the project controls manager, approved by the accounts manager and the CFO; project trial balance and WIP on desktop and phone
+[280/866] [desktop] › e2e/pages.spec.js:30:1 › every registered page is a page of the tracker, and no page is registered twice
+[281/866] [desktop] › e2e/pages.spec.js:36:1 › FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completion Checklist that a machine can make
