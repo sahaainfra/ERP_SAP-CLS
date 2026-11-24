@@ -440,3 +440,10 @@ Running 866 tests using 1 worker
 [233/866] [desktop] › e2e/matrix.spec.js:45:1 › FR-01 FR-09 BR-01 BR-02 AC-02 a new version of a matrix: edit the rules, check for gaps, ask to activate from tomorrow, approve, and the simulator shows the new chain from that date
 [234/866] [desktop] › e2e/matrix.spec.js:101:1 › FR-03 the authority limits grid: change a limit, ask, approve, and the grid shows it
 [235/866] [desktop] › e2e/matrix.spec.js:126:1 › FR-05 AC-02 delegations from the browser: delegate, see it listed, end it; a long one waits for the manager
+[236/866] [desktop] › e2e/matrix.spec.js:162:1 › FR-06 FR-07 the escalation hierarchy and the SLA settings are shown and changed through approval
+[237/866] [desktop] › e2e/matrix.spec.js:184:1 › FR-08 AC-03 on a phone: the simulator runs and no page scrolls sideways
+[238/866] [desktop] › e2e/matrix.spec.js:203:1 › AC-04 who sees what: an employee without the right gets the no-permission state
+[239/866] [desktop] › e2e/mdm-screenshots.spec.js:73:1 › screenshots of the master data governance pages
+[240/866] [desktop] › e2e/mdm.spec.js:73:1 › FR-02 BR-01 a similar partner is flagged before it is sent, compared and merged; the merged record stays and points to the survivor
+[241/866] [desktop] › e2e/mdm.spec.js:128:1 › FR-03 FR-05 FR-07 FR-08 the dashboard, a change from a later date with its history and as of, the change requests worklist and the rules and stewards
+[242/866] [desktop] › e2e/meetings.spec.js:58:1 › AC-01 team, stakeholders, communication matrix, minutes issued by the chair and actions tracked as tasks, in the browser
