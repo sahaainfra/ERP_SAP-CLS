@@ -1,0 +1,139 @@
+
+Running 6 tests using 1 worker
+
+[1/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px
+[desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-users-light-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-roles-light-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-roles-light-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-assignments-light-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-assignments-light-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-light-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-light-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-light-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/account-access-review-light-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-organisation-light-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-projects-light-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-projects-light-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-design-system-light-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-design-system-light-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-light-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-light-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-light-1280-desktop-linux.png is re-generated, writing actual.
+
+[2/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px
+[desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-users-dark-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-roles-dark-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-roles-dark-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-assignments-dark-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-assignments-dark-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-dark-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-dark-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-dark-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/account-access-review-dark-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-organisation-dark-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-organisation-dark-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-projects-dark-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-projects-dark-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-design-system-dark-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-design-system-dark-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-design-system-dark-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-dark-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-dark-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-dark-1280-desktop-linux.png is re-generated, writing actual.
+
+[3/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+[desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-integrations-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-integrations-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-users-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-roles-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-roles-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-assignments-high-contrast-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-assignments-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-assignments-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-high-contrast-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-sod-violations-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-elevation-approvals-high-contrast-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/account-access-review-high-contrast-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-organisation-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-organisation-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-projects-high-contrast-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-projects-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-projects-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-design-system-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/admin-design-system-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/account-drafts-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-high-contrast-360-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-high-contrast-768-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/notifications-high-contrast-1280-desktop-linux.png is re-generated, writing actual.
+
+/home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js-snapshots/field-forms-high-contrast-360-desktop-linux.png is re-generated, writing actual.
+
+[4/6] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px
+[5/6] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px
+[6/6] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+  Slow test file: [desktop] › e2e/a0-visual.spec.js (4.2h)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  3 skipped
+  3 passed (4.2h)
+exit=0 seconds=15078

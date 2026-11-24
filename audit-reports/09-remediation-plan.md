@@ -138,3 +138,17 @@ Code at `48f3002f`, the same 4-vCPU machine and Node 24.22.3 as the audit. Logs 
 - D-828 (focus during first render);
 - D-833 (dead letter or unbudgeted actual, an owner decision).
 
+
+### Visual baselines (D-830), re-recorded 2026-11-25 at the owner's request
+
+`npx playwright test e2e/a0-visual.spec.js --update-snapshots` (4.2 h) re-recorded the baselines.
+
+**What changed:** 61 of the 6,642 images, on 13 pages. The largest change covers 6.5 % of a page. Every change starts below a row of controls that grew to the 44 px touch target, so the content below moves down by about 20 px. There is no change of content.
+
+**Evidence:**
+
+- `evidence/d830-visual-rebaseline-diff.tsv`: one line per image, with the changed pixels and region;
+- `evidence/d830-notifications-light-768-before-after.png`: the largest change, before and after;
+- `evidence/d830-visual-update.log`: the recording run.
+
+**Before merging:** the reviewer of the pull request checks the 61 changed images. A check run without `--update-snapshots` confirms that the suite passes against the new baselines.
