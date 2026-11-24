@@ -110,9 +110,12 @@ test('T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, k
       await run('Keyboard only', 'PM', 'en', async (page, step) => {
         await page.goto('/home'); await expect(page.locator('main')).toBeVisible({ timeout: 60_000 });
         await step('Tab reaches a control with a visible focus ring', async () => {
-          await page.keyboard.press('Tab');
-          const ring = await page.evaluate(() => { const e = document.activeElement; if (!e || e === document.body) return null; const s = getComputedStyle(e); return s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0 ? 'outline' : s.boxShadow !== 'none' ? 'shadow' : null; });
-          expect(ring).not.toBeNull();
+          // the home page draws its cards after its text and data arrive; a Tab pressed before that lands on an element React then replaces, and
+          // focus falls back to the body (audit E2E triage). Wait for the heading, then Tab until focus is on a control, then judge its ring.
+          await expect(page.locator('main').getByRole('heading', { level: 1 })).toBeVisible({ timeout: 30_000 });
+          await expect.poll(async () => { await page.keyboard.press('Tab'); return page.evaluate(() => document.activeElement !== document.body); }, { timeout: 15_000 }).toBe(true);
+          const focused = await page.evaluate(() => { const e = document.activeElement; if (!e || e === document.body) return { on: 'body', ring: null }; const s = getComputedStyle(e); return { on: `${e.tagName.toLowerCase()} ${e.getAttribute('data-testid') ?? e.getAttribute('aria-label') ?? (e.textContent ?? '').trim().slice(0, 40)}`, outline: `${s.outlineStyle} ${s.outlineWidth}`, ring: s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0 ? 'outline' : s.boxShadow !== 'none' ? 'shadow' : null }; });
+          expect(focused.ring, JSON.stringify(focused)).not.toBeNull();
         });
         await step('Ctrl+K opens the command palette and Escape closes it', async () => {
           await page.getByTestId('search-trigger').focus();

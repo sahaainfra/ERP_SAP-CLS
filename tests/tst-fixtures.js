@@ -24,6 +24,12 @@ export function buildThreads(d, co = 1) {
   const SC = partner('SUB-01', 'Kaveri Formwork Contractors', 'COMMGR');
   const I = fill(d, 'mdm_items', { ...c, code: 'CEM-OPC53', name: 'Cement OPC 53 grade', base_uom: 'bag' });
   const W = fill(d, 'proj_wbs', { ...c, org_project_id: A, project_id: A, code: 'W-1.1', name: 'Substructure', level: 1 });
+  // Real parents for the references below: the threads are also built in the shared E2E database, whose integrity check (data health)
+  // must find no dangling reference (audit E2E triage, AUD-DEF-022 on).
+  const CAL = fill(d, 'plan_calendars', { ...c, org_project_id: A, code: 'CAL-TWR-A', name: 'Tower A six-day week' });
+  const GL = fill(d, 'fin_accounts', { ...c, code: 'TST-BANK', name: 'Bank: current account (fixture)' });
+  const BANK = fill(d, 'fin_bank_accounts', { ...c, code: 'BNK-01', name: 'Current account', bank_name: 'State Bank of India', ifsc: 'SBIN0000001', account_no_enc: 'fixture', account_last4: '0001', gl_account_id: GL });
+  const STORE = fill(d, 'inv_stores', { ...c, org_project_id: A, org_site_id: S, code: 'ST-TWR-A', name: 'Tower A main store', store_type: 'SITE_STORE', requested_by: 'fixture' });
 
   // IT-01 tender → estimate → award → project → BOQ → budget → schedule → WA
   const T = fill(d, 'tdr_tenders', { ...c, client_partner_id: P, name_of_work: 'Residential Tower A, G+14', doc_no: 'TDR/26-27/0001' });
@@ -37,7 +43,7 @@ export function buildThreads(d, co = 1) {
   fill(d, 'proj_boq_items', { ...c, project_id: A, estimate_item_id: EI, item_no: '1.1', description: 'Earthwork in excavation', uom: 'cum', qty: 1200 });
   const BUD = fill(d, 'bud_budgets', { ...c, org_project_id: A, project_id: A, boq_version_id: BV, version_no: 1, name: 'Original budget', status: 'APPROVED', doc_no: 'BUD/TWR-A/1' });
   fill(d, 'bud_lines', { ...c, budget_id: BUD, boq_line_id: BL, wbs_id: W, line_kind: 'DIRECT', resource_name: 'Excavation', amount: 36_000_000 });
-  const SCH = fill(d, 'plan_schedules', { ...c, org_project_id: A, project_id: A, status: 'APPROVED', doc_no: 'SCH/TWR-A/1' });
+  const SCH = fill(d, 'plan_schedules', { ...c, org_project_id: A, project_id: A, calendar_id: CAL, status: 'APPROVED', doc_no: 'SCH/TWR-A/1' });
   const ACT = fill(d, 'plan_activities', { ...c, schedule_id: SCH, project_id: A, wbs_id: W, code: 'A-100', name: 'Excavation for raft', duration_days: 12 });
   fill(d, 'plan_activity_boq', { ...c, activity_id: ACT, boq_line_id: BL, qty: 1200 });
   const WA = fill(d, 'site_work_authorisations', { ...c, org_project_id: A, project_id: A, wa_site_id: S, activity_id: ACT, wbs_id: W, wa_no: 'WA/TWR-A/0001', planned_qty: 150_000, uom: 'cum', status: 'APPROVED' });
@@ -54,16 +60,16 @@ export function buildThreads(d, co = 1) {
   const PO = fill(d, 'proc_purchase_orders', { ...c, cs_id: CS, po_source: 'CS', vendor_id: V, org_project_id: A, project_id: A, status: 'APPROVED', total_amount: 19_470_000, doc_no: 'PO/TWR-A/0001' });
   const POL = fill(d, 'proc_po_lines', { ...c, po_id: PO, line_no: 1, pr_line_id: PRL, item_id: I, qty: 500_000, uom: 'bag', rate: 33_000 });
   const GATE = fill(d, 'inv_gate_inward', { ...c, po_id: PO, vendor_id: V, org_project_id: A, project_id: A, status: 'HANDED_OVER', doc_no: 'GI/TWR-A/0001' });
-  const GRN = fill(d, 'inv_grns', { ...c, po_id: PO, gate_inward_id: GATE, vendor_id: V, org_project_id: A, project_id: A, org_site_id: S, emergency: 0, status: 'APPROVED', total_value: 16_500_000, doc_no: 'GRN/TWR-A/0001' });
+  const GRN = fill(d, 'inv_grns', { ...c, store_id: STORE, po_id: PO, gate_inward_id: GATE, vendor_id: V, org_project_id: A, project_id: A, org_site_id: S, emergency: 0, status: 'APPROVED', total_value: 16_500_000, doc_no: 'GRN/TWR-A/0001' });
   const VI = fill(d, 'bill_vendor_invoices', { ...c, po_id: PO, vendor_id: V, invoice_kind: 'PO', org_project_id: A, project_id: A, invoice_no: 'SCT/2026/417', status: 'APPROVED', total_paise: 19_470_000, doc_no: 'VI/TWR-A/0001' });
   fill(d, 'bill_vendor_invoice_lines', { ...c, invoice_id: VI, line_no: 1, po_line_id: POL, item_id: I });
   const APV = fill(d, 'ap_bills', { ...c, bill_source: 'VENDOR_INVOICE', source_ref: String(VI), partner_id: V, org_project_id: A, project_id: A, bill_no: 'SCT/2026/417', status: 'APPROVED', doc_no: 'APB/26-27/0001' });
-  const PROP = fill(d, 'pmt_proposals', { ...c, status: 'APPROVED', doc_no: 'PP/26-27/0001' });
+  const PROP = fill(d, 'pmt_proposals', { ...c, bank_account_id: BANK, status: 'APPROVED', doc_no: 'PP/26-27/0001' });
   const PL1 = fill(d, 'pmt_proposal_lines', { ...c, proposal_id: PROP, line_no: 1, line_kind: 'BILL', ap_bill_id: APV, partner_id: V });
-  fill(d, 'pmt_payments', { ...c, proposal_id: PROP, line_id: PL1, partner_id: V, pay_status: 'PAID', doc_no: 'PAY/26-27/0001' });
+  fill(d, 'pmt_payments', { ...c, bank_account_id: BANK, proposal_id: PROP, line_id: PL1, partner_id: V, pay_status: 'PAID', doc_no: 'PAY/26-27/0001' });
 
   // IT-03 WA → issue → DPR → reconciliation
-  fill(d, 'inv_issues', { ...c, wa_id: WA, mr_id: MR, activity_id: ACT, org_project_id: A, project_id: A, org_site_id: S, status: 'POSTED', doc_no: 'ISS/TWR-A/0001' });
+  fill(d, 'inv_issues', { ...c, store_id: STORE, wa_id: WA, mr_id: MR, activity_id: ACT, org_project_id: A, project_id: A, org_site_id: S, status: 'POSTED', doc_no: 'ISS/TWR-A/0001' });
   const DPR = fill(d, 'site_dprs', { ...c, org_project_id: A, project_id: A, dpr_site_id: S, dpr_date: '2026-10-15', status: 'APPROVED', doc_no: 'DPR/TWR-A/0001' });
   const DW = fill(d, 'site_dpr_work', { ...c, dpr_id: DPR, wa_id: WA, activity_id: ACT, qty: 150_000, uom: 'cum' });
   fill(d, 'site_dpr_materials', { ...c, dpr_id: DPR, wa_id: WA, item_id: I, qty: 400_000, uom: 'bag' });
@@ -71,10 +77,10 @@ export function buildThreads(d, co = 1) {
 
   // IT-04 attendance → payroll → transfer
   const RUN = fill(d, 'pay_runs', { ...c, period: '2026-10', run_type: 'REGULAR', status: 'APPROVED', net_paise: 6_200_000, doc_no: 'PR/2026-10/01' });
-  const EMP = 9001;
+  const EMP = fill(d, 'hr_employees', { ...c, emp_code: 'E-9001', first_name: 'Ramesh', full_name: 'Ramesh Patil', gender: 'MALE', dob: '1990-05-01', mobile: '9000090001', employment_type: 'PERMANENT', doj: '2024-04-01' });
   for (const day of ['2026-10-01', '2026-10-02', '2026-10-03']) fill(d, 'att_daily', { ...c, person_type: 'EMPLOYEE', person_id: EMP, work_date: day, daily_site_id: S, paid_day: 1, locked: 1 });
   const RL = fill(d, 'pay_run_lines', { ...c, run_id: RUN, employee_id: EMP, payable_days: 3, paid_days: 3 });
-  const TR = fill(d, 'pay_transfers', { ...c, run_id: RUN, source_kind: 'PAY_RUN', doc_no: 'SAL/2026-10/01' });
+  const TR = fill(d, 'pay_transfers', { ...c, bank_account_id: BANK, run_id: RUN, source_kind: 'PAY_RUN', doc_no: 'SAL/2026-10/01' });
   fill(d, 'pay_transfer_lines', { ...c, transfer_id: TR, run_line_id: RL, employee_id: EMP });
 
   // IT-05 plant allocation → log → fuel → cost
@@ -95,13 +101,14 @@ export function buildThreads(d, co = 1) {
   const CERT = fill(d, 'bill_certifications', { ...c, bill_id: CB, contract_id: K, org_project_id: A, project_id: A, status: 'APPROVED', doc_no: 'CRT/TWR-A/0001' });
   const TI = fill(d, 'bill_tax_invoices', { ...c, certification_id: CERT, bill_id: CB, contract_id: K, org_project_id: A, project_id: A, invoice_no: 'TI/26-27/0001', gstin_from: '27AAACM1234A1Z5', gstin_to: '27AAAGM0289C1ZK', total_paise: 531_000_000, status: 'APPROVED', doc_no: 'TIN/TWR-A/0001' });
   const AR = fill(d, 'ar_invoices', { ...c, inv_source: 'TAX_INVOICE', source_ref: String(TI), partner_id: P, org_project_id: A, project_id: A, invoice_no: 'TI/26-27/0001', invoice_date: '2026-10-31', amount_paise: 531_000_000, status: 'APPROVED', doc_no: 'ARI/26-27/0001' });
-  const RC = fill(d, 'ar_receipts', { ...c, partner_id: P, org_project_id: A, receipt_date: '2026-11-15', amount_paise: 500_000_000, status: 'APPROVED', doc_no: 'RCP/26-27/0001' });
+  const RC = fill(d, 'ar_receipts', { ...c, bank_account_id: BANK, partner_id: P, org_project_id: A, receipt_date: '2026-11-15', amount_paise: 500_000_000, status: 'APPROVED', doc_no: 'RCP/26-27/0001' });
   fill(d, 'ar_allocations', { ...c, receipt_id: RC, invoice_id: AR, amount_paise: 500_000_000 });
 
   // IT-07 WO → sub-measurement → sub-bill → AP bill → payment;  IT-10 NCR → back-charge
   const WO = fill(d, 'ctr_work_orders', { ...c, subcontractor_id: SC, org_project_id: A, project_id: A, contract_id: K, wo_no: 'WO/TWR-A/0001', doc_no: 'WO/0001' });
   const SB = fill(d, 'bill_sub_bills', { ...c, wo_id: WO, subcontractor_id: SC, org_project_id: A, project_id: A, status: 'APPROVED', bill_no: 'KFC/RA-01', doc_no: 'SB/TWR-A/0001' });
-  fill(d, 'bill_sub_measurements', { ...c, wo_id: WO, subcontractor_id: SC, org_project_id: A, project_id: A, bill_id: SB, doc_no: 'SM/TWR-A/0001' });
+  const WOI = fill(d, 'ctr_wo_items', { ...c, wo_id: WO, line_no: 1, description: 'Formwork to columns' });
+  fill(d, 'bill_sub_measurements', { ...c, wo_item_id: WOI, wo_id: WO, subcontractor_id: SC, org_project_id: A, project_id: A, bill_id: SB, doc_no: 'SM/TWR-A/0001' });
   const APS = fill(d, 'ap_bills', { ...c, bill_source: 'SUB_BILL', source_ref: String(SB), partner_id: SC, org_project_id: A, project_id: A, status: 'APPROVED', doc_no: 'APB/26-27/0002' });
   fill(d, 'pmt_proposal_lines', { ...c, proposal_id: PROP, line_no: 2, line_kind: 'BILL', ap_bill_id: APS, partner_id: SC });
   const NCR = fill(d, 'qa_ncrs', { ...c, org_project_id: A, project_id: A, org_site_id: S, responsible_type: 'SUBCONTRACTOR', responsible_id: SC, backcharge: 2_500_000, backcharge_status: 'POSTED', status: 'CLOSED', doc_no: 'NCR/TWR-A/0001' });

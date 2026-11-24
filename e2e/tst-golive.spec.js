@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
@@ -20,6 +21,8 @@ async function checkAppearance(page) {
   }
   await page.evaluate(() => { document.documentElement.dataset.theme = 'light'; document.documentElement.style.removeProperty('font-size'); });
 }
+
+const TST_PAGES = (readFileSync('src/client/modules/tst/index.js', 'utf8').match(/\{ path: '/g) ?? []).length;
 
 test('Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit', async ({ page, request }, info) => {
   test.setTimeout(180_000);
@@ -103,7 +106,8 @@ test('Go-live consoles: integration matrix green with a latency probe, reconcili
   await expect(page.getByTestId('tst-page-audit')).toBeVisible();
   await page.getByTestId('pa-scan').click();
   await expect(page.getByTestId('pa-scan-result')).toContainText(', 0 with findings');
-  await expect(page.getByTestId('pa-row')).toHaveCount(3);
+  // one row per page of the module: 3 when 30.03 was built, one more with each later go-live part (audit E2E triage); read from the registry
+  await expect(page.getByTestId('pa-row')).toHaveCount(TST_PAGES);
   await cardsOnPhone('pa-table');
   await noOverflow();
   await page.evaluate(() => window.scrollTo(0, 0));

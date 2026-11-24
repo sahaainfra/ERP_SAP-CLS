@@ -87,7 +87,9 @@ test('Go-live readiness board, UAT, dry run and the go/no-go decision', async ({
   await page.goto('/admin/go-live?tab=cutover');
   await page.getByTestId('gl-plan-dry').click();
   await page.getByTestId('gl-start').click();
-  await expect(page.locator('[data-testid="gl-step"][data-code="FREEZE_LEGACY"]')).toHaveAttribute('data-status', 'RUNNING');
+  // the start runs the automatic steps first, among them a full verified backup of the database (the rollback point), which takes longer
+  // than the default 5 s on a large shared E2E database (audit E2E triage)
+  await expect(page.locator('[data-testid="gl-step"][data-code="FREEZE_LEGACY"]')).toHaveAttribute('data-status', 'RUNNING', { timeout: 60_000 });
   await as(it, 'ITADM'); await page.reload();
   await page.getByTestId('gl-step-note-FREEZE_LEGACY').fill('Legacy frozen; final extracts taken.');
   await page.getByTestId('gl-done-FREEZE_LEGACY').click();
