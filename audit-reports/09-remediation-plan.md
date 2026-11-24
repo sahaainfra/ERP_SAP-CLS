@@ -23,7 +23,8 @@ The plan orders the work by what blocks a gate sign-off. It does not fix anythin
 | 0.2 | AUD-DEF-013 | Fix the expense policy history leak. Then re-run the cross-company probe (`evidence/p5-cross-company-probe.mjs.txt`) over every `/:id` route and make it a permanent test. | S |
 | 0.3 | AUD-DEF-007 (High) | The configuration guard must refuse dev-headers when `ERP_ENVIRONMENT` is staging or production. The deploy scripts must take `AUTH_MODE` and `NODE_ENV` from the target environment file. | S |
 | 0.4 | AUD-DEF-001, AUD-DEF-020 (High) | Make CI run again: restore Actions minutes or add a runner, and split `verify` into jobs that fit their timeouts. Until CI passes, no completion report should say "CI runs the gate". | M |
-| 0.5 | AUD-DEF-014, AUD-DEF-015, E2E failures (AUD-DEF-022 on) | Make the local gate green: split the Hindi catalogue, fix the backup check race, then triage each E2E failure: fix it, or record it in `DEFECTS.md` with an owner. | M |
+| 0.5 | AUD-DEF-014, AUD-DEF-015, AUD-DEF-022–035 (14 E2E failures) | Make the local gate green:<br>• split the Hindi catalogue;<br>• fix the backup check race;<br>• re-run each failing E2E test alone, then fix it or record it in `DEFECTS.md` with an owner. Start with test isolation in the shared E2E database. | M |
+| 0.6 | AUD-DEF-018 | Make the performance baseline measure again: suspend the rate limiter in the harness, then store a reviewed new baseline. | S |
 
 ## G1 — Platform Gate (Ready for review; sign-off pending, D-693)
 

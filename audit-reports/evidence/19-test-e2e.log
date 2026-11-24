@@ -1244,3 +1244,70 @@ Running 866 tests using 1 worker
 
 [850/866] [mobile] › e2e/tst-manual-screens.spec.js:38:1 › FR-01 FR-03 the screens of the build: signature and image of every page, compared with the baseline
 [851/866] [mobile] › e2e/tst-page-crawl.spec.js:25:1 › T-01 the crawler opens every registered route and the audit reports 100 % coverage
+[852/866] [mobile] › e2e/tst-qa.spec.js:32:1 › Test programme, security findings and performance consoles
+[853/866] [mobile] › e2e/ui-v3.spec.js:50:1 › T-01 T-02 T-03 T-04 every registered page has the page header, no key figure in a form grid, and fits the screen
+[854/866] [mobile] › e2e/users.spec.js:32:1 › Users: invite, find, filter, save a view, import with row errors, hand over and deactivate
+  14) [mobile] › e2e/users.spec.js:32:1 › Users: invite, find, filter, save a view, import with row errors, hand over and deactivate 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('user-row-anil.m')
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('user-row-anil.m') with timeout 5000ms
+      - waiting for getByTestId('user-row-anil.m')
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      69 |   // search, filter, sort, columns, saved view, export
+      70 |   await page.getByRole('searchbox', { name: 'Search users' }).fill('bela');
+    > 71 |   await expect(page.getByTestId(`user-row-${anil}`)).toHaveCount(0);
+         |                                                      ^
+      72 |   await expect(page.getByTestId(`user-row-u912345678${n}`)).toBeVisible();
+      73 |   await page.getByRole('searchbox', { name: 'Search users' }).fill('');
+      74 |   await page.locator('select[aria-label="Status"]').selectOption('ACTIVE');
+        at /home/user/ERP_SAP-CLS/e2e/users.spec.js:71:54
+
+    Error Context: test-results/users-Users-invite-find-fi-057b0-rs-hand-over-and-deactivate-mobile/error-context.md
+
+
+[855/866] [mobile] › e2e/users.spec.js:172:1 › Users: a role that only reads is not offered management, and a person without a role sees no users
+[856/866] [mobile] › e2e/users.spec.js:214:3 › Invitation to access › invite, accept, wait in onboarding, get a role by approval, and use the profile
+[857/866] [mobile] › e2e/workflow.spec.js:41:1 › AC-01 AC-03 the sample document: submit, two approvers decide in the browser, it is locked, and an amendment starts a linked approval
+[858/866] [mobile] › e2e/workflow.spec.js:90:1 › FR-03 FR-04 return, resubmit and the question: a returned document keeps its history; a question is answered by the originator
+[859/866] [mobile] › e2e/workflow.spec.js:128:1 › FR-01 FR-08 AC-04 a new version of a definition: edit the steps, see the diagram, request activation; only a maker may; the chain runs
+[860/866] [mobile] › e2e/workflow.spec.js:188:1 › BR-02 FR-08 nobody to approve: the task waits in the administrators' queue, shows on the monitor, and an administrator assigns it
+[861/866] [mobile] › e2e/workflow.spec.js:221:1 › FR-05 AC-03 on a phone: an approver sees the tasks waiting, decides one, and nothing scrolls sideways
+[862/866] [mobile] › e2e/workflow.spec.js:247:1 › AC-04 who sees what: an employee without a part in an approval cannot open it, and the pages say so
+[863/866] [mobile] › e2e/zz-appearance.spec.js:20:1 › T-02 appearance chosen in My Profile applies at once and follows the person to another device
+[864/866] [mobile] › e2e/zz-format.spec.js:10:1 › FR-03 AC-01 number grouping and hour format: examples, saved per person, back to the company setting
+[865/866] [mobile] › e2e/zz-scope-isolation.spec.js:29:1 › a person assigned to one project sees that project only, and the pages say what they may do
+[866/866] [mobile] › e2e/zz-sod-elevation.spec.js:28:1 › a project manager asks for the auditor role, the IT administrator approves, and the access appears and is logged
+  Slow test file: [desktop] › e2e/pages.spec.js (1.4h)
+  Slow test file: [desktop] › e2e/tst-manual-screens.spec.js (40.8m)
+  Slow test file: [mobile] › e2e/tst-a11y-sweep.spec.js (29.8m)
+  Slow test file: [mobile] › e2e/ui-v3.spec.js (25.6m)
+  Slow test file: [mobile] › e2e/tst-page-crawl.spec.js (25.1m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  14 failed
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px 
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px 
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px 
+    [desktop] › e2e/accountability.spec.js:59:1 › AC-01 FR-01 FR-02 FR-04 FR-06 the standard processes are applied to a project, the gap check empties, an actor's work appears in My Accountability, and the report shows it 
+    [desktop] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so 
+    [desktop] › e2e/field-p16603.spec.js:112:1 › FR-01 the field home on a desktop: the same band, cards and tiles, laid out wide 
+    [desktop] › e2e/tst-golive.spec.js:24:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit 
+    [mobile] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so 
+    [mobile] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID 
+    [mobile] › e2e/register.spec.js:68:1 › AC-01 the register, a regularisation from the employee to the supervisor, the overtime request and the lock of the period, in the browser 
+    [mobile] › e2e/tst-device-matrix.spec.js:40:1 › T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, keyboard and screen-reader journeys on every emulated device 
+    [mobile] › e2e/tst-golive-readiness.spec.js:23:1 › Go-live readiness board, UAT, dry run and the go/no-go decision 
+    [mobile] › e2e/tst-golive.spec.js:24:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit 
+    [mobile] › e2e/users.spec.js:32:1 › Users: invite, find, filter, save a view, import with row errors, hand over and deactivate 
+  67 skipped
+  785 passed (5.6h)
+exit=1 seconds=20052

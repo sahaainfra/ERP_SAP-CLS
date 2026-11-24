@@ -20,7 +20,12 @@ Commit `ed225efd`. The repository's own integration model is the 15 threads of p
 | 6 | Planning → progress → S-curve → management report | IT-03 (work authorisation → material → DPR → reconciliation); progress and S-curve in `site-progress`, `plan-*`; reports in `bi-*` | `tests/site-progress.test.js`, `tests/plan-*`, `tests/bi-morning-report.test.js`, `tests/bi-*`. All passed. | **Verified** at module level. No thread links the S-curve to the management report. |
 | 7 | WorkChat → notifications → tasks → approval workflow | none (not a thread) | `tests/comcenter*`, `tests/messages*`, `tests/notifications*`, `tests/tasks*`, `tests/workflow-*`. All passed. The 30.01 latency probe (event → bus → room → notification within 2 s) passed (`tst-integration` FR-02). | **Verified** per module. **Not Verified** as one flow: no test follows a chat message into a task and an approval. |
 
-The E2E specs that touch these flows are listed in 02-gate-baseline with their result in this run. A failing spec there downgrades the browser side of its flow.
+**In this audit's E2E run** (02-gate-baseline), the browser journeys of flows 1–5 passed. Two failures touch these flows:
+
+- **Flow 2:** `register.spec.js` (07.06, the regularisation request did not show "was sent for approval" on mobile).
+- **Integration console:** `tst-golive.spec.js` (30.01, its page audit list held 10 rows instead of 3).
+
+The browser side of flow 2 (approval of a regularisation) is therefore **Not Verified** on mobile.
 
 ## Findings
 

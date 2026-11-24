@@ -69,7 +69,7 @@ All gates are the repository's own npm scripts. No tool was installed. `npm ci` 
 
 **Side effects of running the gates, and how they were undone:**
 
-1. **The E2E gate rewrites tracked screenshots.** About 446 files under `docs/erp/screenshots/` are rewritten by `npm run test:e2e` (AUD-DEF-017). After the run they were put back with `git checkout -- docs/erp/screenshots`, which restores those tracked files from the commit. It is not a reset.
+1. **The E2E gate rewrites tracked files.** `npm run test:e2e` rewrote 1,676 tracked files under `docs/erp/` (AUD-DEF-017): 1,673 screenshots, `a11y/a11y-360.json`, `a11y/devices.json` and `manuals/capture.json`. The list is in `evidence/p2-e2e-tracked-files-rewritten.txt`. After the run they were put back with `git checkout -- docs/erp`, which restores those tracked files from the commit; it is not a reset. While the run lasted, they were never staged or committed.
 2. **Generated reports.** Gates write `reports/` and `test-results/`, which are git-ignored, and they regenerate `docs/erp/UI_V3_PAGE_AUDIT.md` with identical content.
 3. **A temporary probe file in `tests/`.** The cross-company probe was run once as `tests/_audit_xco_probe.mjs`, so that it could import the app. It ran against a `VACUUM INTO` scratch copy of the development database (`probe.sqlite` in the session scratchpad), then it was deleted. A copy is kept as `evidence/p5-cross-company-probe.mjs.txt`.
 4. **The development database was only read.** `data/erp.dev.sqlite` was read through `VACUUM INTO`, which reads.

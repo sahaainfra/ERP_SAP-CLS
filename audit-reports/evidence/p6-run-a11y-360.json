@@ -1,0 +1,8879 @@
+{
+ "width": 360,
+ "theme": "light",
+ "axe": true,
+ "at": "2026-11-24T06:19:55.727Z",
+ "results": [
+  {
+   "route": "/admin/feature-flags",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/audit",
+   "loadMs": 2000,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/admin/security-events",
+   "loadMs": 1982,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/admin/security/routes",
+   "loadMs": 1965,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/security/settings",
+   "loadMs": 1993,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 20,
+   "h1": 1
+  },
+  {
+   "route": "/admin/about",
+   "loadMs": 1982,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/data-health",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/architecture",
+   "loadMs": 1958,
+   "violations": [
+    {
+     "rule": "scrollable-region-focusable",
+     "impact": "serious",
+     "help": "Scrollable region must have keyboard access",
+     "nodes": 1,
+     "targets": [
+      "pre"
+     ]
+    }
+   ],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/company-settings",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 15,
+   "h1": 1
+  },
+  {
+   "route": "/admin/financial-years",
+   "loadMs": 2003,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/numbering",
+   "loadMs": 1988,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/parameters",
+   "loadMs": 1999,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/holidays",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/operations",
+   "loadMs": 1997,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/operations/health",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/integrations",
+   "loadMs": 1994,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/admin/integrations/connector",
+   "loadMs": 1998,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/integrations/log",
+   "loadMs": 1977,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/admin/operations/dead-letters",
+   "loadMs": 1978,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/operations/jobs",
+   "loadMs": 1994,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/operations/schedules",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/file-storage",
+   "loadMs": 2038,
+   "violations": [
+    {
+     "rule": "scrollable-region-focusable",
+     "impact": "serious",
+     "help": "Scrollable region must have keyboard access",
+     "nodes": 1,
+     "targets": [
+      ".table-wrap"
+     ]
+    }
+   ],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/sample-documents",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/formulas",
+   "loadMs": 1993,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Shadow comparison"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/admin/formulas/shadow",
+   "loadMs": 1997,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Back to the registry"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/sample-bills",
+   "loadMs": 2000,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/approvals",
+   "loadMs": 1994,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/account/profile",
+   "loadMs": 2004,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/account/security",
+   "loadMs": 1986,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/account/sessions",
+   "loadMs": 1998,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/users",
+   "loadMs": 1987,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 10,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/admin/roles",
+   "loadMs": 1985,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/assignments",
+   "loadMs": 1997,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/admin/effective-access",
+   "loadMs": 2002,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/legacy-access",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/admin/sod/rules",
+   "loadMs": 2001,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/sod/violations",
+   "loadMs": 1990,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/account/elevation",
+   "loadMs": 2003,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/elevation-approvals",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/access-reviews",
+   "loadMs": 1970,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/account/access-review",
+   "loadMs": 1980,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/security/policy",
+   "loadMs": 1985,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 21,
+   "h1": 1
+  },
+  {
+   "route": "/admin/organisation",
+   "loadMs": 1991,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 7,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/admin/projects",
+   "loadMs": 1991,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 17,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/admin/org-chart",
+   "loadMs": 1986,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/cost-centres",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/security/login-history",
+   "loadMs": 1978,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/search",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/admin/search",
+   "loadMs": 2003,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/translations",
+   "loadMs": 2056,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/migration",
+   "loadMs": 1992,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/work",
+   "loadMs": 2080,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 9,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/admin/sample-requests/overview",
+   "loadMs": 1985,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a: ₹ 0.00₹ 0.00",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 16,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/admin/dashboards",
+   "loadMs": 2005,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/field",
+   "loadMs": 2005,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/field/scan",
+   "loadMs": 1989,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/home",
+   "loadMs": 2001,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 7,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/navigation",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/console",
+   "loadMs": 2095,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/design-system",
+   "loadMs": 1976,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/design-system/forms",
+   "loadMs": 2056,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 36,
+   "tinyInputs": 83,
+   "h1": 1
+  },
+  {
+   "route": "/account/drafts",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/design-system/lists",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/design-system/object-page",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "button: ×"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/design-system/patterns",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: View all ›",
+    "a: View all ›",
+    "a: View all ›",
+    "a: View all ›"
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/account/exports",
+   "loadMs": 2010,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/sample-requests",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/workflows",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/workflows/editor",
+   "loadMs": 2086,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/workflows/monitor",
+   "loadMs": 2005,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/workflow/instance",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/approval-matrix",
+   "loadMs": 2011,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/approval-matrix/editor",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/authority-limits",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 112,
+   "h1": 1
+  },
+  {
+   "route": "/admin/approval-simulator",
+   "loadMs": 2063,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/workflow/delegations",
+   "loadMs": 2136,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/escalation",
+   "loadMs": 2005,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 43,
+   "h1": 1
+  },
+  {
+   "route": "/approvals",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/approvals/task",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/approvals/submissions",
+   "loadMs": 1989,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/field/approvals",
+   "loadMs": 2072,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/controls",
+   "loadMs": 1987,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Reason Codes",
+    "a: Exceptions Register"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/reason-codes",
+   "loadMs": 1989,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Control Points"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/controls/exceptions",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Controls Dashboard"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/controls/dashboard",
+   "loadMs": 2010,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/raci",
+   "loadMs": 1986,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/accountability",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/reports/accountability",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: RACI Matrix"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/notifications",
+   "loadMs": 2012,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "button: All"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/notifications/preferences",
+   "loadMs": 2010,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/notification-templates",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/notification-deliveries",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/admin/communication-log",
+   "loadMs": 2012,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/admin/communication-channels",
+   "loadMs": 2066,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 15,
+   "h1": 1
+  },
+  {
+   "route": "/admin/communication-consents",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/tasks",
+   "loadMs": 2004,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/tasks/task",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/tasks/new",
+   "loadMs": 2007,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "a: Cancel"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/tasks/team",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/task-routing",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/alerts",
+   "loadMs": 1999,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/alert-rules",
+   "loadMs": 1995,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/alert-rules/editor",
+   "loadMs": 2012,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "a: Back to the rules"
+   ],
+   "smallTargetCount": 11,
+   "tinyInputs": 13,
+   "h1": 1
+  },
+  {
+   "route": "/documents",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/documents/document",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/documents/new",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Cancel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/admin/document-types",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 68,
+   "h1": 1
+  },
+  {
+   "route": "/admin/templates",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/templates/editor",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/documents/generated",
+   "loadMs": 2012,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 10,
+   "h1": 1
+  },
+  {
+   "route": "/admin/signatures",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 10,
+   "tinyInputs": 10,
+   "h1": 1
+  },
+  {
+   "route": "/import",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/import/job",
+   "loadMs": 2298,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/import-templates",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 20,
+   "h1": 1
+  },
+  {
+   "route": "/field/forms",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/field/sync",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/field/sync/conflicts",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/devices",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/projects/activity",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/engine/sample-docs",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/collab/messages",
+   "loadMs": 2100,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "button: All",
+    "input[data-testid=priv-seen]: ",
+    "input: ",
+    "input[data-testid=priv-receipts]: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/collab/call",
+   "loadMs": 2001,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/messaging",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=ms-enforce]: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 17,
+   "h1": 1
+  },
+  {
+   "route": "/collab/safety-number",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/secure-messaging",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=sp-enabled]: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 8,
+   "tinyInputs": 10,
+   "h1": 1
+  },
+  {
+   "route": "/admin/licences",
+   "loadMs": 2002,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/collab/center",
+   "loadMs": 2004,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/collab/acknowledgements",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/collab/instructions",
+   "loadMs": 2043,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/collab/announcements",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "button[data-testid=an-tab-all]: All"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/collab/announcements/new",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=na-all]: ",
+    "input[data-testid=na-role-PD]: ",
+    "input[data-testid=na-role-PM]: ",
+    "input[data-testid=na-role-SE]: ",
+    "input[data-testid=na-role-SUP]: ",
+    "input[data-testid=na-role-HRMGR]: ",
+    "input[data-testid=na-role-CFO]: ",
+    "input[data-testid=na-role-ACCMGR]: ",
+    "input[data-testid=na-role-PROCMGR]: ",
+    "input[data-testid=na-role-COMMGR]: ",
+    "input[data-testid=na-role-EMP]: ",
+    "input[data-testid=na-confirm]: "
+   ],
+   "smallTargetCount": 12,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/auto-groups",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/collab/messages/new",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/collab/policies",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/collab/policies/edit",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "button[data-testid=rt-bold]: B",
+    "button: I",
+    "button: U",
+    "input[data-testid=pe-all]: ",
+    "input[data-testid=pe-role-PD]: ",
+    "input[data-testid=pe-role-PM]: ",
+    "input[data-testid=pe-role-SE]: ",
+    "input[data-testid=pe-role-SUP]: ",
+    "input[data-testid=pe-role-HRMGR]: ",
+    "input[data-testid=pe-role-CFO]: ",
+    "input[data-testid=pe-role-ACCMGR]: ",
+    "input[data-testid=pe-role-PROCMGR]: ",
+    "input[data-testid=pe-role-COMMGR]: ",
+    "input[data-testid=pe-role-QCMGR]: ",
+    "input[data-testid=pe-role-HSEE]: ",
+    "input[data-testid=pe-role-EMP]: "
+   ],
+   "smallTargetCount": 16,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/collab/my-policies",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/policy-drafts",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/change-requests",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "button[data-testid=mcr-view-all]: All"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/duplicates",
+   "loadMs": 2010,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/quality",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/records",
+   "loadMs": 2043,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/uom",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/gst-rates",
+   "loadMs": 2055,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/hsn-sac",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/tds-sections",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/states",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel",
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/currencies",
+   "loadMs": 2043,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel",
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/banks",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/payment-terms",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/lookups",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import or export Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/statutory",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: GST Rates",
+    "a: HSN/SAC Codes",
+    "a: TDS/TCS Sections",
+    "a: TDS Forms",
+    "a: Statutory Calendar",
+    "a: Labour Code Rules",
+    "a: Pay Components"
+   ],
+   "smallTargetCount": 7,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/tds-forms",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/statutory-calendar",
+   "loadMs": 2062,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/labour-rules",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/common/pay-components",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/master-data/lookup-manager",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 12,
+   "h1": 1
+  },
+  {
+   "route": "/admin/items",
+   "loadMs": 2005,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/admin/items/item",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/items/new",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/items/categories",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/items/migration",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/rate-library",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import from Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/schedule-of-rates",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import items from Excel"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/rate-analyses",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Rate change impact"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/admin/rate-analyses/analysis",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/rate-analyses/impact",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/admin/partners",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=bp-expiring]: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/admin/partners/partner",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/partners/new",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=pr-role-VENDOR]: ",
+    "input[data-testid=pr-role-SUBCONTRACTOR]: ",
+    "input[data-testid=pr-role-LABOUR_CONTRACTOR]: ",
+    "input[data-testid=pr-role-SERVICE_PROVIDER]: ",
+    "input[data-testid=pr-role-CLIENT]: ",
+    "input[data-testid=pr-role-CONSULTANT]: ",
+    "input[data-testid=pr-role-TRANSPORTER]: "
+   ],
+   "smallTargetCount": 7,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/admin/partners/approvals",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/chart-of-accounts",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/accounts/account",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/cost-codes",
+   "loadMs": 2071,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/journals",
+   "loadMs": 2051,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/journal-entry",
+   "loadMs": 2067,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/ledger",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/trial-balance",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/recurring-journals",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/posting-rules",
+   "loadMs": 2058,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/failed-postings",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/posting-replay",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=pe-type-inv.grn.posted]: ",
+    "input[data-testid=pe-type-inv.rtv.posted]: ",
+    "input[data-testid=pe-type-inv.issue.posted]: ",
+    "input[data-testid=pe-type-ap.invoice.matched]: ",
+    "input[data-testid=pe-type-bill.sub.approved]: ",
+    "input[data-testid=pe-type-bill.invoice.issued]: ",
+    "input[data-testid=pe-type-bill.invoice.cancelled]: ",
+    "input[data-testid=pe-type-pay.run.approved]: ",
+    "input[data-testid=pe-type-pay.wage_run.approved]: ",
+    "input[data-testid=pe-type-pay.wage_run.paid]: ",
+    "input[data-testid=pe-type-pay.fnf.approved]: "
+   ],
+   "smallTargetCount": 11,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/reconciliation",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/ap-bills",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/debit-notes",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/payables",
+   "loadMs": 2083,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/payment-proposals",
+   "loadMs": 2053,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/payments",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/bank-accounts",
+   "loadMs": 2033,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/receivables",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/collections",
+   "loadMs": 2053,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/bank-reconciliation",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/imprest",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/cash-position",
+   "loadMs": 2071,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/e-invoices",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/e-way-bills",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/gst-settings",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Company settings"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/gst-reconciliation",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/gst-returns",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/assets",
+   "loadMs": 2043,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/finance/asset-accounting",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/revenue-recognition",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/project-accounts",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/cost-forecasts",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/forecast-reports",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/project-pl",
+   "loadMs": 2055,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/profitability",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/treasury",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/cash-reports",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/close",
+   "loadMs": 2062,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/statements",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/dashboard",
+   "loadMs": 2064,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/year-end",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/inter-company",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/ic-reconciliation",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/consolidation",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/jv",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/finance/category-mapping",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 39,
+   "h1": 1
+  },
+  {
+   "route": "/hr",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/hr/workforce",
+   "loadMs": 2009,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 9,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/admin/gates",
+   "loadMs": 2059,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/gate",
+   "loadMs": 2118,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hr/employees",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/hr/employees/employee",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hr/employees/new",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 12,
+   "h1": 1
+  },
+  {
+   "route": "/hr/requisitions",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/requisitions/requisition",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hr/requisitions/new",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 12,
+   "h1": 1
+  },
+  {
+   "route": "/hr/recruitment",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/hr/recruitment/candidate",
+   "loadMs": 2058,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hr/offers",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/offers/offer",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hr/onboarding",
+   "loadMs": 2051,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/hr/deployment-board",
+   "loadMs": 2048,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/deployments",
+   "loadMs": 7027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/deployments/deployment",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hr/deployments/new",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=nd-primary]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/hr/crews",
+   "loadMs": 2060,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/crews/crew",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hr/transfers",
+   "loadMs": 2054,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/transfers/transfer",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hr/transfers/new",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=nt-travel]: ",
+    "input[data-testid=nt-accommodation]: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/hr/attendance/shifts",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/attendance/shifts/shift",
+   "loadMs": 2124,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 11,
+   "h1": 1
+  },
+  {
+   "route": "/hr/attendance/roster",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/hr/attendance/policies",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hr/attendance/policies/policy",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=pe-late-on]: ",
+    "input: ",
+    "input: ",
+    "input[data-testid=pe-ot-on]: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 8,
+   "tinyInputs": 16,
+   "h1": 1
+  },
+  {
+   "route": "/hr/attendance/assignment",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=pa-ended]: ",
+    "input[data-testid=pa-off-on]: ",
+    "input[data-testid=pa-day-0]: ",
+    "input[data-testid=pa-day-1]: ",
+    "input[data-testid=pa-day-2]: ",
+    "input[data-testid=pa-day-3]: ",
+    "input[data-testid=pa-day-4]: ",
+    "input[data-testid=pa-day-5]: ",
+    "input[data-testid=pa-day-6]: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 14,
+   "tinyInputs": 11,
+   "h1": 1
+  },
+  {
+   "route": "/att/punch",
+   "loadMs": 2092,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/att/crew-punch",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/att/kiosk",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/att/anomalies",
+   "loadMs": 2002,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/att/today",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/att/register",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/att/daily",
+   "loadMs": 2067,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/att/regularisation",
+   "loadMs": 2033,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=rq-arrears]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/att/overtime",
+   "loadMs": 2051,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=rq-arrears]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/att/approvals",
+   "loadMs": 2011,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/att/lock",
+   "loadMs": 2354,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/leave/apply",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/leave/my",
+   "loadMs": 2009,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/leave/approvals",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/leave/calendar",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/leave/balances",
+   "loadMs": 2049,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/leave/types",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/leave/year-end",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/labour/workers",
+   "loadMs": 2056,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/labour/workers/new",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 16,
+   "h1": 1
+  },
+  {
+   "route": "/labour/workers/worker",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/labour/contractors",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/labour/contractors/contractor",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/labour/wages",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/labour/cards",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=pc-reissue]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/my-hr",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/my-hr/attendance",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/my-hr/profile",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/my-hr/letters",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/my-team",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/training",
+   "loadMs": 2007,
+   "violations": [
+    {
+     "rule": "aria-required-children",
+     "impact": "critical",
+     "help": "Certain ARIA roles must contain particular children",
+     "nodes": 7,
+     "targets": [
+      "div[role=\"row\"]:nth-child(1)",
+      "div[role=\"row\"]:nth-child(2)",
+      "div[role=\"row\"]:nth-child(3)"
+     ]
+    }
+   ],
+   "overflowPx": 0,
+   "smallTargets": [
+    "button[data-testid=tcal-prev]: ‹",
+    "button[data-testid=tcal-next]: ›"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/training/session",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/training/certifications",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/training/skills",
+   "loadMs": 2003,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/training/compliance",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/training/mine",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/training/setup",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=su-c-all]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 21,
+   "h1": 1
+  },
+  {
+   "route": "/performance",
+   "loadMs": 2048,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/performance/team",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/performance/goals",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/performance/review",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/performance/reviews",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/performance/feedback",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/performance/kpis",
+   "loadMs": 2009,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=kl-all]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 18,
+   "h1": 1
+  },
+  {
+   "route": "/expenses",
+   "loadMs": 2048,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/expenses/claim",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 14,
+   "h1": 1
+  },
+  {
+   "route": "/expenses/travel",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/expenses/advance",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/expenses/approvals",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/expenses/analysis",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/expenses/policies",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/exit/resign",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/exit/separations",
+   "loadMs": 2109,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/exit/separation",
+   "loadMs": 2049,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/exit/clearances",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/grievances",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/grievances/new",
+   "loadMs": 2055,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=rg-worker]: ",
+    "input[data-testid=rg-anonymous]: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/grievances/grievance",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/disciplinary",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/disciplinary/mine",
+   "loadMs": 2047,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: 0",
+    "a: 0"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/bd/leads",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bd/lead",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/lead/new",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 21,
+   "h1": 1
+  },
+  {
+   "route": "/bd/pipeline",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/bd/opportunities",
+   "loadMs": 2043,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bd/opportunity",
+   "loadMs": 2067,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/opportunity/new",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 11,
+   "h1": 1
+  },
+  {
+   "route": "/bd/clients",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bd/client",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/tender-dashboard",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: 0"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/tenders",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bd/tender",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/tender/new",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 17,
+   "h1": 1
+  },
+  {
+   "route": "/bd/bid-decisions",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bd/bid-decision",
+   "loadMs": 2136,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/tender-calendar",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "button[data-testid=cal-prev]: ‹",
+    "button[data-testid=cal-next]: ›"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/credentials",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bd/emd",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bd/emd/record",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/submission",
+   "loadMs": 2011,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/bid-results",
+   "loadMs": 2005,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/competitors",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bd/award",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bd/awards",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/est/estimates",
+   "loadMs": 1997,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/est/estimate",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/est/estimate/new",
+   "loadMs": 1994,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=est-for-tender]: ",
+    "input[data-testid=est-for-project]: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/est/import",
+   "loadMs": 2055,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=imp-replace]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/est/compare",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=cmp-only]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/est/resources",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/est/takeoffs",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/est/takeoff",
+   "loadMs": 2141,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/est/bbs",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/est/bbs/sheet",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/est/bbs-summary",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/est/mto-delta",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/est/mto-explosion",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/est/review",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/est/bid-price",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/projects",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/project",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/wizard",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/proj/from-award",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Set up a project without a tender"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/baseline-packs",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/baseline-pack",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/baseline-compare",
+   "loadMs": 2012,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Commercial baseline packs"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/wbs",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/locations",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/work-packages",
+   "loadMs": 2010,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/work-package",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/versions",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Import the client BOQ",
+    "a: BOQ reports",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/version",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/boq-import",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/boq-mapping",
+   "loadMs": 2121,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/boq-reports",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: BOQ versions"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/team",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/stakeholders",
+   "loadMs": 2033,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/meetings",
+   "loadMs": 2012,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Action item tracker",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/meeting",
+   "loadMs": 2360,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/action-tracker",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/risk-dashboard",
+   "loadMs": 2101,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Risk and Opportunity Register",
+    "a: Issue Log"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/risks",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Risk Dashboard",
+    "a: Issue Log",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/risk",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/issues",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Risk Dashboard",
+    "a: Risk and Opportunity Register",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proj/issue",
+   "loadMs": 2009,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proj/map",
+   "loadMs": 2011,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Chainage Progress Strip Chart",
+    "a: Layers and Overlays"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/strip-chart",
+   "loadMs": 2084,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Project Map"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/gis-config",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Project Map"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/project-360",
+   "loadMs": 1995,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Portfolio Overview"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proj/portfolio",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/engg/dashboard",
+   "loadMs": 2080,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/engg/drawings",
+   "loadMs": 2064,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/engg/drawing",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/engg/transmittals",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/engg/transmittal",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/engg/site",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/engg/rfi-dashboard",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/engg/rfis",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: RFI Dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/engg/rfi",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/engg/rfi-raise",
+   "loadMs": 2100,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=raise-activityCritical]: ",
+    "input[data-testid=raise-holdActivity]: ",
+    "input[data-testid=raise-costImpactFlag]: ",
+    "input[data-testid=raise-timeImpactFlag]: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 13,
+   "h1": 1
+  },
+  {
+   "route": "/engg/submittals",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Submittal Schedule vs Required Dates",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/engg/submittal",
+   "loadMs": 2033,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/engg/submittal-schedule",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/engg/progress",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/engg/deliverables",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Engineering Progress",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/engg/deliverable",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/engg/vdr",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/engg/vdr-item",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/engg/letters",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Notices and Time Bars",
+    "input[data-testid=lt-overdue]: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/engg/letter",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/engg/letter-draft",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=draft-contractual]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/engg/time-bars",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Correspondence Register"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/bud/budgets",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bud/budget",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bud/generate",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/bud/changes",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bud/change",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/bud/compare",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=cmp-changed]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bud/ledger",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/bud/check-settings",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/bud/dept-budgets",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bud/dept-budget",
+   "loadMs": 2059,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bud/dept-report",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bud/alloc",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 42,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/plan/schedules",
+   "loadMs": 2106,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plan/activities",
+   "loadMs": 2301,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plan/generate",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plan/critical",
+   "loadMs": 2117,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/plan/gantt",
+   "loadMs": 2011,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plan/histogram",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/plan/programme",
+   "loadMs": 2003,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=pr-links]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/plan/import",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plan/baselines",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plan/variance",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/plan/lookahead",
+   "loadMs": 2010,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=la-only-blocked]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/plan/constraints",
+   "loadMs": 2009,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Look-ahead Board",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plan/weekly",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Look-ahead Board",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plan/delays",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Delay Summary",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plan/tia",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plan/delay-summary",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plan/calendars",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=pcal-day-mon]: ",
+    "input[data-testid=pcal-day-tue]: ",
+    "input[data-testid=pcal-day-wed]: ",
+    "input[data-testid=pcal-day-thu]: ",
+    "input[data-testid=pcal-day-fri]: ",
+    "input[data-testid=pcal-day-sat]: ",
+    "input[data-testid=pcal-day-sun]: "
+   ],
+   "smallTargetCount": 7,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/site/board",
+   "loadMs": 2111,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/site/work-authorisations",
+   "loadMs": 2007,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Site Work Board",
+    "a: Daily Work Plan",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/site/daily-plans",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=dp-from-WEEKLY]: ",
+    "input[data-testid=dp-from-YESTERDAY]: ",
+    "input[data-testid=dp-from-EMPTY]: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/site/wa-mobile",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/site/dpr-entry",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=dpr-scope-SITE]: ",
+    "input[data-testid=dpr-scope-SUPERVISOR]: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/site/dprs",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New daily progress report",
+    "a: Reports",
+    "a: Compliance",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/site/dpr-report",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/site/dpr-compliance",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/site/weather",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=wx-shutdown]: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 15,
+   "h1": 1
+  },
+  {
+   "route": "/site/hindrances",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New hindrance",
+    "a: Weather Log",
+    "a: Site Diary",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/site/diary",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 10,
+   "h1": 1
+  },
+  {
+   "route": "/site/visitors",
+   "loadMs": 2079,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 14,
+   "h1": 1
+  },
+  {
+   "route": "/site/instructions",
+   "loadMs": 2058,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: All",
+    "a: Received",
+    "a: Issued",
+    "a: New instruction or memo",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/site/instruction-issue",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=ins-cost]: ",
+    "input[data-testid=ins-time]: ",
+    "input[data-testid=ins-bc]: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 12,
+   "h1": 1
+  },
+  {
+   "route": "/site/progress",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/site/progress-report",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/site/periods",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New progress period",
+    "a: Progress Dashboard",
+    "a: Progress by WBS and Activity",
+    "a: Client Progress Report",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/site/client-progress",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/site/productivity",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: DPR Register",
+    "a: Norms",
+    "a: Open the variance report"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/site/productivity-report",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Productivity Dashboard"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/site/productivity-norms",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New norm",
+    "a: Productivity Dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/site/productivity-records",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Productivity Dashboard",
+    "a: Productivity Variance and Loss Reasons",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/site/control",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/site/control-variance",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/site/control-unallocated",
+   "loadMs": 2049,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Project Cost Control",
+    "a: Quantity & Rate Variance Analysis",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/material-requests/new",
+   "loadMs": 2011,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 6,
+   "h1": 1
+  },
+  {
+   "route": "/proc/material-requests",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New Material Request",
+    "a: Consolidate MRs into PR",
+    "a: Purchase Requisitions",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/requisitions",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New Purchase Requisition",
+    "a: Consolidate MRs into PR",
+    "a: Material Requests",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/consolidate",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proc/mrp",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proc/mrp-proposals",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/proc/mrp-heatmap",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proc/item-params",
+   "loadMs": 2078,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New planning parameters",
+    "a: Run MRP",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/rfqs",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Create RFQ from PRs",
+    "a: Quotation entry",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/rfq-new",
+   "loadMs": 2117,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 8,
+   "h1": 1
+  },
+  {
+   "route": "/proc/quotation-entry",
+   "loadMs": 2065,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New quotation",
+    "a: Requests for Quotation",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/comparative-statements",
+   "loadMs": 2049,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Make a comparative statement",
+    "a: Requests for Quotation",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/purchase-orders",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Create purchase order",
+    "a: Open PO and delivery tracker",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/po-new",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 14,
+   "h1": 1
+  },
+  {
+   "route": "/proc/po-amend",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Purchase Orders"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/proc/po-tracker",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=trk-overdue]: ",
+    "a: Purchase Orders"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proc/rate-contracts",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New rate contract",
+    "a: Purchase orders",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/service-orders",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New service order",
+    "a: Service entry sheets",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/service-entries",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New service entry sheet",
+    "a: Service orders",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/expediting",
+   "loadMs": 2051,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Expediting Plans",
+    "a: Vendor Inspections",
+    "a: Shipments Tracker"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proc/expediting-plans",
+   "loadMs": 2009,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New expediting plan",
+    "a: Expediting dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/inspections",
+   "loadMs": 2057,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Call an inspection",
+    "a: Expediting dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/shipments",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Plan a shipment",
+    "a: Expediting dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/prequalifications",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New prequalification",
+    "a: Approved Vendor List",
+    "a: Vendor Ranking",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/avl",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Vendor Prequalifications",
+    "a: Vendor Scorecards",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/vendor-scorecards",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Vendor Ranking",
+    "a: Approved Vendor List",
+    "a: Vendor Prequalifications",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/vendor-ranking",
+   "loadMs": 2077,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/proc/rate-intelligence",
+   "loadMs": 2048,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Market Survey and Index Upload",
+    "a: Project Rate Exposure",
+    "a: Market Survey and Index Upload",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/proc/rate-exposure",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/proc/rate-survey",
+   "loadMs": 2003,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 13,
+   "h1": 1
+  },
+  {
+   "route": "/proc/dashboard",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/proc/spend-analysis",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Open the list"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/proc/cycle-time",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Open the list"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/proc/procurement-compliance",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/inv/dashboard",
+   "loadMs": 2043,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 7,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/inv/stores",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New store",
+    "a: Stores Dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/balances",
+   "loadMs": 2068,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Stock Ledger",
+    "a: Stores Dashboard",
+    "a: Stock Posting and Opening Stock",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/inv/ledger",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/valuation",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Stock Posting and Opening Stock"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/adjustments",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New adjustment",
+    "a: Stores Dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/posting",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 9,
+   "h1": 1
+  },
+  {
+   "route": "/inv/gate-entry",
+   "loadMs": 2064,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 13,
+   "h1": 1
+  },
+  {
+   "route": "/inv/gate-exit",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/gate-register",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Gate Entry",
+    "a: Gate Exit Verification",
+    "a: New gate pass",
+    "a: Returnable Gate Passes",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/gate-passes",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Show only overdue",
+    "a: Gate Register",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/gate-pass",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 10,
+   "h1": 1
+  },
+  {
+   "route": "/inv/grn-new",
+   "loadMs": 2072,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/grns",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Create GRN",
+    "a: Returns to Vendor",
+    "a: Gate Register",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/rtvs",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Goods Receipts (GRNs)",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/issue-new",
+   "loadMs": 2087,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/inv/issues",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Issue Material",
+    "a: Site Returns",
+    "a: Subcontractor Free-Issue Reconciliation",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/site-returns",
+   "loadMs": 2057,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Material Issues",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/free-issue",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/inv/transfers",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Transfer Request",
+    "a: Receive Transfer",
+    "a: In-Transit Stock Ageing",
+    "a: Show only stock in transit",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/transfer-new",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=tn-state]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/inv/transfer-receive",
+   "loadMs": 2057,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/inv/in-transit",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/count-plans",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Blind count",
+    "a: Count variance",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/blind-count",
+   "loadMs": 2007,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/inv/count-variance",
+   "loadMs": 2172,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=cv-only]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/inv/scrap",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Scrap register",
+    "a: Disposals",
+    "a: Expiry",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 11,
+   "h1": 1
+  },
+  {
+   "route": "/inv/reorder-params",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/reorder-suggestions",
+   "loadMs": 2310,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/ageing",
+   "loadMs": 2150,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Ageing",
+    "a: Redeployment opportunities"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/inv/labels",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/rta",
+   "loadMs": 2065,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Overview",
+    "a: Asset catalogue",
+    "a: Issue or return assets",
+    "a: Asset movements",
+    "a: Hire charges and recoveries"
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/inv/rta-movements",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Issue or return assets",
+    "a: Formwork and scaffolding",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/rta-issue",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 11,
+   "h1": 1
+  },
+  {
+   "route": "/inv/rta-hire",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Hire charges",
+    "a: Damage and loss recoveries",
+    "a: Formwork and scaffolding"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/small-assets",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Register",
+    "a: Loss and damage reports",
+    "a: Issue or return by QR",
+    "a: Custody statement and calibration due",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/inv/asset-scan",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/custody",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Custody statement",
+    "a: Calibration and inspection due",
+    "a: Small asset register"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/reconciliations",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Status by site",
+    "a: All reconciliations",
+    "a: Key materials",
+    "a: Wastage trend"
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/inv/wastage-trend",
+   "loadMs": 1993,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/inv/materials-dashboard",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: My pending actions (0)",
+    "a: Material Lifecycle Funnel",
+    "a: Stores Dashboard",
+    "a: Procurement: 0 open requisitions · 0 ord",
+    "a: Open the list",
+    "a: Open the list",
+    "a: Open the list",
+    "a: Open the list",
+    "a: Open the list",
+    "a: New store"
+   ],
+   "smallTargetCount": 10,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/inv/material-funnel",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Materials Management Dashboard",
+    "a: New material request"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/plant/dashboard",
+   "loadMs": 2004,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/plant/equipment",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New Equipment",
+    "a: Plant Dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/equipment/new",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=en-roadVehicle]: ",
+    "input[data-testid=en-lifting]: ",
+    "input[data-testid=en-operatorRequired]: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 20,
+   "h1": 1
+  },
+  {
+   "route": "/plant/requisitions",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New Equipment Requisition",
+    "a: Equipment Availability Gantt",
+    "a: Equipment Allocations",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/requisitions/new",
+   "loadMs": 2086,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 10,
+   "h1": 1
+  },
+  {
+   "route": "/plant/allocations",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New Allocation",
+    "a: Equipment Requisitions",
+    "a: Equipment Availability Gantt",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/allocations/new",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 7,
+   "h1": 1
+  },
+  {
+   "route": "/plant/gantt",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Equipment Requisitions",
+    "a: Equipment Allocations",
+    "a: New Allocation"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/plant/log-entry",
+   "loadMs": 2009,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Equipment Allocations"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/plant/logs",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Daily Equipment Log",
+    "a: Log Verification",
+    "a: Utilisation and Availability",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/log-verification",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Equipment Log Books"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/plant/utilisation",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Equipment Log Books",
+    "a: Daily Equipment Log"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/fuel-issue",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/plant/fuel-dip",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/fuel-issues",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Fuel Issue",
+    "a: Tank Dip Entry",
+    "a: Fuel Stores",
+    "a: Fuel Reports",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/fuel-tanks",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/plant/fuel-reports",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plant/fuel-anomalies",
+   "loadMs": 2055,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Fuel Reports",
+    "a: Fuel Issues",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/maintenance",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: PM Schedule",
+    "a: Job Cards",
+    "a: New job card"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plant/pm-schedule",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/plant/job-cards",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New job card",
+    "a: PM Schedule",
+    "a: Maintenance Dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/hire-agreements",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New hire agreement",
+    "a: Compute hire bill",
+    "a: Hire Cost vs Owned Cost",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/hire-bill",
+   "loadMs": 2053,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 5,
+   "h1": 1
+  },
+  {
+   "route": "/plant/hire-comparison",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plant/fleet-tower",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Owning and Operating Cost",
+    "a: Replacement Candidates",
+    "a: Maintenance Dashboard",
+    "a: Utilisation and Availability"
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plant/owning-cost",
+   "loadMs": 2055,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/plant/replacement",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/plant/capacity",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Shortage and Surplus",
+    "a: Resource Plans"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plant/shortage-surplus",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New resource plan"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/plant/resource-plans",
+   "loadMs": 2518,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New resource plan",
+    "a: Resource Capacity Heat-map",
+    "a: Shortage and Surplus",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/itps",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New ITP",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/templates",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New checklist template",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/perform",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/qa/inspection-requests",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Raise inspection request",
+    "a: IR Rejection Analysis",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/inspection-requests/new",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=irr-consultant]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/qa/ir-analysis",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/qa/receiving",
+   "loadMs": 2100,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Test Requests",
+    "a: Test Frequency Compliance"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/qa/test-requests",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Receiving Inspections",
+    "a: Test Frequency Compliance",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/test-compliance",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/qa/lab-equipment",
+   "loadMs": 2060,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Add equipment",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/test-catalogue",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New test",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/ncrs",
+   "loadMs": 2015,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Raise NCR",
+    "a: NCR Analysis",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/ncrs/new",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/qa/ncr-analysis",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/qa/pour-cards",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New pour card",
+    "a: Cube Register",
+    "a: Concrete Strength Acceptance",
+    "a: Concrete Traceability",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/cubes",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Pour Cards",
+    "a: Concrete Strength Acceptance",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/concrete-acceptance",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/qa/concrete-traceability",
+   "loadMs": 2063,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/qa/snag-walk",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/qa/snags",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Snag Walk",
+    "a: Snag Status by Area and Party",
+    "a: Unit Snag Report",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/qa/snag-status",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/qa/snag-report",
+   "loadMs": 2033,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/qa/dashboard",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/qa/control-charts",
+   "loadMs": 2192,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/qa/ratings",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/qa/inspections",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Perform Inspection",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/dashboard",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/hse/plans",
+   "loadMs": 2133,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New HSE plan",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/hira",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New risk assessment",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/jsa",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New job safety analysis",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/induction",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/toolbox",
+   "loadMs": 2056,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New toolbox talk",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/library",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 11,
+   "h1": 1
+  },
+  {
+   "route": "/hse/compliance",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/permit-request",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/permit-approvals",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/permit-board",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/permits",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Request Permit",
+    "a: Active Permits Board",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/permit-types",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=hse-pt-gas]: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/incident-report",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/incidents",
+   "loadMs": 2105,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Report Incident",
+    "a: Lessons Learned",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/lessons",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/observation",
+   "loadMs": 2066,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/observations",
+   "loadMs": 2049,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Safety Observation",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/ppe-issue",
+   "loadMs": 2061,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/ppe-register",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/equipment",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/inspection-schedules",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/contractor-scores",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/esg",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/esg-entry",
+   "loadMs": 2016,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/waste",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/carbon",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/consents",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/emission-factors",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/visitor-gate",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=hse-vis-briefed]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/visitors",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Visitor Check-in and Check-out",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/patrol-scan",
+   "loadMs": 2055,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/patrol-compliance",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/rosters",
+   "loadMs": 2025,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New roster",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/security-incidents",
+   "loadMs": 7418,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/camp",
+   "loadMs": 2032,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Camps",
+    "a: Room and bed board",
+    "a: Mess and recovery",
+    "a: Welfare inspections"
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/camp-setup",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New camp",
+    "a: Labour camp occupancy",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/camp-allocation",
+   "loadMs": 2033,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/hse/camp-inspections",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/camp-mess",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/hse/security-posts",
+   "loadMs": 2045,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/plants",
+   "loadMs": 2051,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New plant",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/mix-designs",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New mix design",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/requisitions",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New requisition",
+    "a: Production schedule",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/production",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/batches",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Record a batch",
+    "a: Theoretical vs actual consumption",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/delivery-tickets",
+   "loadMs": 2020,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Dispatch a truck",
+    "a: Ticket receipt at site",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/receipt",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/consumption",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/costing",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Open the list",
+    "a: Open the list",
+    "a: Open the list",
+    "a: Open the list",
+    "a: Open the list",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 7,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/cost-report",
+   "loadMs": 2048,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/rmc/transfer-rates",
+   "loadMs": 2057,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Propose a rate",
+    "a: Cost per m3 by grade",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/contracts",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New contract",
+    "a: Obligations calendar",
+    "a: Contract amendments",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/obligations",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=ctr-ob-mine]: ",
+    "a: Contract register"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/amendments",
+   "loadMs": 5079,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 0,
+   "error": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" locator('main') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n"
+  },
+  {
+   "route": "/ctr/bank-guarantees",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New bank guarantee",
+    "a: Securities exposure",
+    "a: Insurance policies",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/insurances",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New policy",
+    "a: Securities exposure",
+    "a: Bank guarantee register",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/securities",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Bank guarantee register"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/work-orders",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New work order",
+    "a: Back-to-back margin",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/wo-margin",
+   "loadMs": 2012,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=ctr-wm-negative]: ",
+    "a: Work orders"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/subcontractors",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=ctr-ws-onlyhold]: ",
+    "a: Work orders"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/sub-compliance",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/sub-strength",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/variations",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New change request",
+    "a: Variation summary",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/variation-summary",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New change request"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/claims",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New claim",
+    "a: Time-bar watchlist",
+    "a: Disputes",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/claim-watchlist",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/disputes",
+   "loadMs": 2024,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New dispute",
+    "a: Claims register",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/pvc",
+   "loadMs": 2046,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/escalations",
+   "loadMs": 2073,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New computation",
+    "a: PVC formulas and price indices",
+    "a: Liquidated damages exposure",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ctr/ld-exposure",
+   "loadMs": 2030,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Contract register"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/mb-record",
+   "loadMs": 2155,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/mb-entries",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Record Measurement",
+    "a: MB Abstract",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/mb-abstract",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/qty-recon",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=bill-recon-deviating]: ",
+    "a: Items Approaching Limit"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/qty-limits",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/deviations",
+   "loadMs": 2054,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New deviation statement",
+    "a: Quantity Reconciliation",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/client-bills",
+   "loadMs": 2036,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Prepare RA Bill",
+    "a: Measurement Book",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/client-bill-new",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/client-bill-abstract",
+   "loadMs": 2053,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Client Bills"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/certification-new",
+   "loadMs": 2055,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/certifications",
+   "loadMs": 2061,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Record Certification",
+    "a: Submitted vs Certified",
+    "a: Tax Invoices",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/tax-invoices",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Make a tax invoice",
+    "a: Certifications",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/cert-analysis",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input[data-testid=bill-ca-only]: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/sub-measure",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Record a joint measurement",
+    "a: Subcontractor Bills",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/sub-bills",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Prepare Subcontractor Bill",
+    "a: Subcontractor Measurement",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/sub-bill-new",
+   "loadMs": 2056,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/vendor-invoices",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Register Vendor Invoice",
+    "a: Invoice Management Hub",
+    "a: Register Vendor Invoice"
+   ],
+   "smallTargetCount": 3,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/vendor-invoice-new",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/invoice-hub",
+   "loadMs": 2051,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/cvr",
+   "loadMs": 2043,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Prepare a CVR",
+    "a: Contract Control Tower",
+    "a: QS Management Dashboard",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/control-tower",
+   "loadMs": 2039,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 6,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/bill/qs-dashboard",
+   "loadMs": 2085,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 8,
+   "tinyInputs": 3,
+   "h1": 1
+  },
+  {
+   "route": "/bill/retention",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Advances",
+    "a: Release Requests"
+   ],
+   "smallTargetCount": 2,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bill/advances",
+   "loadMs": 2049,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New advance",
+    "a: Retention Summary",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/bill/releases",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: New release request",
+    "a: Retention Summary",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 4,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/components",
+   "loadMs": 2028,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/assignments",
+   "loadMs": 2035,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/statutory",
+   "loadMs": 2396,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/calendar",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/runs",
+   "loadMs": 2079,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/register",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/wage-runs",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/wage-register",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/contractor-wages",
+   "loadMs": 2005,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/compliance",
+   "loadMs": 2006,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/registers",
+   "loadMs": 2274,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/posting",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Open the payroll runs"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/fnf",
+   "loadMs": 2029,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/my-payslips",
+   "loadMs": 2080,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/payroll/declarations",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/control-tower",
+   "loadMs": 2009,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/exec-alerts",
+   "loadMs": 2031,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/scenarios",
+   "loadMs": 1998,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/role-dashboard",
+   "loadMs": 2042,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›",
+    "a[data-testid=widget-view-all]: View all ›"
+   ],
+   "smallTargetCount": 5,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/dashboard-inventory",
+   "loadMs": 2074,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/leakage",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/explain",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/monthly-close",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/bi/execution",
+   "loadMs": 2037,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/morning-report",
+   "loadMs": 2013,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/morning-reports",
+   "loadMs": 2034,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/bi/metrics",
+   "loadMs": 2041,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/reports",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/builder",
+   "loadMs": 2073,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/subscriptions",
+   "loadMs": 2052,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/bi/usage",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/ai/features",
+   "loadMs": 2098,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/ai/forecasts",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 2,
+   "h1": 1
+  },
+  {
+   "route": "/ai/documents",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Open the document register"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 4,
+   "h1": 1
+  },
+  {
+   "route": "/ai/vision",
+   "loadMs": 2022,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Open the daily progress report"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/ai/assistant",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/control",
+   "loadMs": 2242,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/connectors",
+   "loadMs": 2027,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "a: Open the integration hub"
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/api",
+   "loadMs": 2019,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: ",
+    "input: "
+   ],
+   "smallTargetCount": 7,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/bulk",
+   "loadMs": 2014,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/data-migration",
+   "loadMs": 2038,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/backups",
+   "loadMs": 2040,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/archive",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/help",
+   "loadMs": 2059,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/support",
+   "loadMs": 2008,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [
+    "input: "
+   ],
+   "smallTargetCount": 1,
+   "tinyInputs": 1,
+   "h1": 1
+  },
+  {
+   "route": "/admin/integration-matrix",
+   "loadMs": 3063,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/reconciliation-health",
+   "loadMs": 2017,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/page-audit",
+   "loadMs": 2058,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/test-coverage",
+   "loadMs": 2256,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/security-findings",
+   "loadMs": 2044,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/performance-tests",
+   "loadMs": 2026,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/accessibility-validation",
+   "loadMs": 2023,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/operations-runbooks",
+   "loadMs": 2050,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/help/documentation",
+   "loadMs": 2056,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/go-live",
+   "loadMs": 2025,
+   "violations": [
+    {
+     "rule": "aria-required-children",
+     "impact": "critical",
+     "help": "Certain ARIA roles must contain particular children",
+     "nodes": 1,
+     "targets": [
+      "div[data-testid=\"gl-column\"]"
+     ]
+    }
+   ],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/portal-users",
+   "loadMs": 2021,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  },
+  {
+   "route": "/admin/portal-invite",
+   "loadMs": 2018,
+   "violations": [],
+   "overflowPx": 0,
+   "smallTargets": [],
+   "smallTargetCount": 0,
+   "tinyInputs": 0,
+   "h1": 1
+  }
+ ]
+}

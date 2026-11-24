@@ -23,7 +23,8 @@ The local gate is not green either:
 
 - the bundle budget fails;
 - one unit test is flaky under load;
-- E2E has failures (see 02).
+- E2E has 14 failures out of 866 tests (see 02);
+- the performance baseline measures rate-limit refusals instead of latency.
 
 The programme's own records agree: 44 parts are In progress, G1–G8 are unsigned, and UAT is not done (D-818).
 
@@ -38,7 +39,7 @@ The programme's own records agree: 44 parts are In progress, G1–G8 are unsigne
 | Dependencies | `npm audit`: 3 moderate (`minimatch`, a dev dependency through eslint), 0 high | `20-npm-audit.log` |
 | Container | `Dockerfile` sets `NODE_ENV=production`; the image scan was not run here (the Docker CLI is installed but no daemon runs here) | code reading |
 | Runbooks | 30.08 runbooks exist (deploy, rollback, restore, rotate secrets, incident) | `docs/erp/runbooks/` |
-| Performance | See `p8-perf-baseline.log` (lab machine, not a production host) | 02-gate-baseline |
+| Performance | **Not measured.** The baseline harness is throttled by the account rate limit, and 8 of 9 journeys answer 429 (AUD-DEF-018). The session-check journey met its standard: p95 29 ms against 300 ms. | `p8-perf-baseline.log` |
 
 ## What would be needed before go-live
 
