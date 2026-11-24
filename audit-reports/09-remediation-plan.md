@@ -70,3 +70,47 @@ The plan orders the work by what blocks a gate sign-off. It does not fix anythin
 - D-814 and D-811: load test on the real host with k6. (M)
 - D-818: UAT by business users with owners' sign-off, cut-over, and hypercare. (customer event)
 - Sign G1–G8 in the application by the named reviewers (D-693, D-817). (M)
+
+## Step 0 outcome (approved by the owner after the audit, 2026-11-24)
+
+Each fix has a test that fails on the code before it, and each is recorded in `docs/erp/DEFECTS.md`. Commits are on `ccr-a3b3ce3d-65llwf`.
+
+| # | Finding | Fix | Commit | Record |
+|---|---|---|---|---|
+| 0.1 | AUD-DEF-012 cross-company leak of a team member. The audit missed the KPI history, which leaked the same way. | The person or KPI is read in the caller's company first (404 otherwise). | `9a02d0f5` | D-819 |
+| 0.2 | AUD-DEF-013 expense policy history | Same fix. A permanent probe, `npm run erp:scope-probe`, asks every `/:id` and list route as a new company on a copy of the E2E database. It is a regression stage and a CI step. It found all three leaks on the old code and none after the fix. | `9a02d0f5` | D-820 |
+| 0.3 | AUD-DEF-007 dev-headers in production | The configuration refuses dev-headers when `NODE_ENV` or `ERP_ENVIRONMENT` is staging or production. Staging and production deploys start live (`AUTH_MODE=iam`, secrets from the shell, smoke test with `ERP_SMOKE_TOKEN`) unless `--rehearsal`. | `9a02d0f5` | D-821 |
+| 0.4 | AUD-DEF-020 CI timeout | `unit`, `client` and 8 `e2e` shards run as separate jobs; `verify` gates on all of them. **Not yet run on GitHub**: Actions jobs of the repository fail before starting (AUD-DEF-001, an account matter). | `9a02d0f5` | D-822 |
+| 0.5 | AUD-DEF-014 bundle budget | The Hindi text is one file per area, fetched in parallel. The bundle budget passes. | `9a02d0f5` | D-823 |
+| 0.5 | AUD-DEF-015 backup race | Counts are taken before and after the copy. Passed 3 of 3 runs under full CPU load with coverage. | `9a02d0f5` | D-824 |
+| 0.6 | AUD-DEF-018 perf harness | The limiter is suspended in the harness. New baseline: 0 errors, every journey within its standard. | `9a02d0f5` | D-825 |
+| 0.5 | AUD-DEF-022–035, the 14 E2E failures | See below | `7131c966`, `f8c7edbb`, `3634472a`, `b8d22a90` | D-826–D-832 |
+
+### E2E triage
+
+**Root causes found and fixed:**
+
+- **Fixture leaving dangling references.** The integration-thread fixture, `bill-vinv` and `ctr-variations` wrote rows pointing at records they never created. The data-health check of later specs then failed. A unit test now keeps the thread fixture clean.
+- **Real defect: self-service request form.** The form sent no employee when typed into before the person's profile arrived, and the refusal was silent (D-827).
+- **Out-of-date specs.**
+  - The page-audit row count had not followed the 30.04–30.10 pages.
+  - The dry-run start runs a full backup, which can take longer than 5 seconds.
+- **Timing.**
+  - The device matrix pressed Tab while the home page was still drawing. The focus loss itself stays open as D-828 (Low).
+  - The field spec wrote to the database without waiting for the server's lock.
+
+**Found during the re-runs:**
+
+- Two React key warnings: the dashboard inventory listed the role dashboard twice (D-831), and the claim evidence fragment had no key (D-832). Both fixed.
+
+**Not reproduced:**
+
+- Accountability, operations health and users passed in every run since the triage.
+
+**Still open:**
+
+- The three visual-baseline failures (D-830). The baselines were last recorded on 2026-11-17, and 16 later commits changed the styles. Re-recording them accepts every visual change since that date at once, so a person must review the diffs. The audit session built several of those parts and did not approve its own changes.
+
+### Gate after step 0
+
+STEP0_GATE
