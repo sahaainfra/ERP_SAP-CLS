@@ -127,6 +127,8 @@ export function createExpenseService({ db, dep }) {
     },
     history(actor, id) {
       need(actor, 'hr.expense.configure', 'see the history of a policy');
+      // The policy is read in the caller's company first: another company's history is not found (audit AUD-DEF-013).
+      if (!db.prepare('SELECT 1 FROM exp_policies WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(id, actor.companyId)) throw notFound('That policy does not exist.');
       return db.prepare("SELECT action, actor, old_values, new_values, created_at FROM core_audit_log WHERE entity = 'exp_policies' AND entity_id = ? ORDER BY id").all(String(id)).map((a) => ({ action: a.action, by: a.actor, at: a.created_at, old: json(a.old_values, null), new: json(a.new_values, null) }));
     },
     /** The policy that applies: the most specific active one (category, then grade, then city tier) in force on the day. */

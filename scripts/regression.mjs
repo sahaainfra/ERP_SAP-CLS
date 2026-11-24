@@ -43,6 +43,7 @@ if (!skipE2e) {
   all.push({ id: 'pwa-check', title: 'Installable app: manifest, icons and the files of the service worker (part 03.06)', cmd: [node, 'scripts/pwa_check.mjs'] });
   all.push({ id: 'bundle-budget', title: 'Bundle budget: first download at most 350 KB gzip, each chunk at most 250 KB gzip; report in reports/ (part 166.4)', cmd: [node, 'scripts/bundle_budget.mjs'] });
   all.push({ id: 'e2e', title: 'Playwright E2E (desktop and mobile)', cmd: [node, bin('@playwright/test', 'cli.js'), 'test'] });
+  all.push({ id: 'scope-probe', title: 'Cross-company probe of every /:id and list route on a copy of the E2E database (audit step 0.2)', cmd: [node, 'scripts/scope_probe.mjs'] });
 }
 const steps = only ? all.filter((s) => only.has(s.id)) : all;
 

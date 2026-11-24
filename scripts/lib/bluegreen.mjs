@@ -19,6 +19,7 @@ import { listMigrations } from '../../src/server/platform/db/index.js';
 import { backupDatabase, restoreDatabase } from './backup.mjs';
 import { smokeTest } from './deploy.mjs';
 import { verifyArtifact } from './package.mjs';
+import { releaseEnv } from './release_env.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export const SLOTS = { blue: 0, green: 1 };
@@ -38,7 +39,7 @@ function writeBlueGreen(p, s) {
 }
 
 function serverEnv({ nodeEnv, environment, port, dbPath }) {
-  return { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot, NODE_ENV: nodeEnv, ERP_ENVIRONMENT: environment, PORT: String(port), DATABASE_PATH: dbPath, AUTH_MODE: 'dev-headers', ERP_DEMO_SEED: 'false', ERP_DEPLOYED_AT: new Date().toISOString() };
+  return releaseEnv({ nodeEnv, environment, port, dbPath, extra: { ERP_DEPLOYED_AT: new Date().toISOString() } });
 }
 // run asynchronously: the process that drives the deploy (the rehearsal's proxy, a deploy agent) keeps answering while the schema changes
 const migrate = (dir, args, env) => new Promise((resolve) => { const c = spawn(process.execPath, ['scripts/migrate.mjs', ...args], { cwd: dir, env }); let output = ''; c.stdout.on('data', (d) => { output += d; }); c.stderr.on('data', (d) => { output += d; }); c.on('close', (code) => resolve({ ok: code === 0, output })); });
@@ -53,18 +54,35 @@ function start(dir, p, env) {
   return child.pid;
 }
 
-/** The restore point, verified: the copy opens, passes the integrity check and has the same tables with the same row counts. */
+/**
+ * The restore point, verified: the copy opens, passes the integrity check, has the same tables, and the same rows. The live server keeps
+ * writing while the copy is taken (zero downtime), so each table is counted before and after the copy (audit AUD-DEF-015): a table nobody
+ * wrote meanwhile must hold exactly the same number of rows in the copy; a table written meanwhile (the outbox, the jobs) must hold a number
+ * between its two counts. Comparing with one count taken after the copy failed whenever a request landed in between.
+ */
+/** Tables whose count in the copy is not explained by the counts taken just before and just after it. */
+export const backupDifferences = (before, after, inCopy) => Object.keys(before).filter((t) => inCopy[t] < Math.min(before[t], after[t]) || inCopy[t] > Math.max(before[t], after[t]));
+
 export function verifiedBackup(dbPath, target) {
-  backupDatabase(dbPath, target);
-  const a = new DatabaseSync(dbPath, { readOnly: true }); const b = new DatabaseSync(target, { readOnly: true });
+  const counts = (db, tables) => Object.fromEntries(tables.map((t) => [t, Number(db.prepare(`SELECT COUNT(*) AS n FROM "${t}"`).get().n)]));
+  const a = new DatabaseSync(dbPath, { readOnly: true });
+  let b = null;
   try {
+    const tables = a.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all().map((t) => String(t.name));
+    const before = counts(a, tables);
+    backupDatabase(dbPath, target);
+    const after = counts(a, tables);
+    b = new DatabaseSync(target, { readOnly: true });
     const ok = b.prepare('PRAGMA integrity_check').get();
     if (Object.values(ok)[0] !== 'ok') throw new Error(`the backup failed its integrity check: ${Object.values(ok)[0]}`);
-    const tables = a.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all().map((t) => t.name);
-    const diff = tables.filter((t) => a.prepare(`SELECT COUNT(*) AS n FROM "${t}"`).get().n !== b.prepare(`SELECT COUNT(*) AS n FROM "${t}"`).get().n);
+    const copied = new Set(b.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all().map((t) => String(t.name)));
+    const missing = tables.filter((t) => !copied.has(t));
+    if (missing.length) throw new Error(`the backup lacks the tables ${missing.slice(0, 5).join(', ')}`);
+    const inCopy = counts(b, tables);
+    const diff = backupDifferences(before, after, inCopy);
     if (diff.length) throw new Error(`the backup differs from the database in ${diff.slice(0, 5).join(', ')}`);
-    return { tables: tables.length };
-  } finally { a.close(); b.close(); }
+    return { tables: tables.length, writtenDuringCopy: tables.filter((t) => before[t] !== after[t]) };
+  } finally { a.close(); b?.close(); }
 }
 
 /** Undo the migrations a release added that `keepDir` does not know (down-migrations of `fromDir`), else restore the restore point. */
@@ -114,7 +132,7 @@ export async function deployBlueGreen({ artifactDir, envName, deployRoot, basePo
   const m = await migrate(dir, ['up'], env);
   if (!m.ok) return fail(`migration failed: ${m.output.split('\n').find((l) => /error/i.test(l)) ?? m.output.slice(-200)}`);
   const pid = start(dir, p, env);
-  const smoke = await smokeTest({ port, expectBuildId: info.buildId, timeoutMs: smokeTimeoutMs });
+  const smoke = await smokeTest({ port, expectBuildId: info.buildId, timeoutMs: smokeTimeoutMs, env });
   if (!smoke.ok) return fail(`smoke test failed: ${smoke.problems.join('; ')}`, pid);
   // the switch: one write of the state (and the nginx include); the proxy sends the next request to the new slot
   const switchedAt = new Date().toISOString();
@@ -137,7 +155,7 @@ export async function rollbackBlueGreen({ envName, deployRoot, nodeEnv = 'test',
   const env = serverEnv({ nodeEnv, environment, port: target.port, dbPath: p.db });
   let pid = target.pid;
   if (!alive(pid)) { pid = start(toDir, p, env); log(`started ${to} again`); }
-  const smoke = await smokeTest({ port: target.port, expectBuildId: target.buildId, timeoutMs: smokeTimeoutMs });
+  const smoke = await smokeTest({ port: target.port, expectBuildId: target.buildId, timeoutMs: smokeTimeoutMs, env });
   if (!smoke.ok) throw new Error(`the previous build does not answer: ${smoke.problems.join('; ')}`);
   const at = new Date().toISOString();
   writeBlueGreen(p, { ...state, active: to, previous: from, slots: { ...state.slots, [to]: { ...target, pid } }, history: [...state.history, { buildId: target.buildId, slot: to, at, kind: 'rollback' }] });

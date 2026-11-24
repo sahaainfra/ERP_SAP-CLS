@@ -3,7 +3,18 @@
 Everything below runs from the repository root. Commands marked (GitHub) need the repository on GitHub and have not been run there yet (defect D-010).
 
 ## 1. Quality gates (every pull request and every merge to main)
-`npm run erp:regression` runs, in order: lint, type check, unit/API/permission tests with coverage, coverage gate for changed files (60 %, to be raised to 80 %), migration up/down check, schema-diff, golden outputs, secret scan, client build, Playwright E2E on desktop (1280x800) and mobile (360x740). Add `-- --with-audit` for the dependency audit. The same command is the `verify` job of `.github/workflows/ci.yml`; `security` (dependency audit, secret scan) and `codeql` (static analysis) run beside it.
+`npm run erp:regression` runs, in order: lint, type check, unit/API/permission tests with coverage, coverage gate for changed files (60 %, to be raised to 80 %), migration up/down check, schema-diff, golden outputs, secret scan, client build, installable-app check, bundle budget, Playwright E2E on desktop (1280x800) and mobile (360x740), then the cross-company probe on the E2E database (`npm run erp:scope-probe`). Add `-- --with-audit` for the dependency audit.
+
+**In CI** (`.github/workflows/ci.yml`, audit AUD-DEF-020) the same stages run as parallel jobs that fit their time limits:
+
+| Job | Runs | Time limit |
+|---|---|---|
+| `unit` | `erp:regression -- --skip-e2e` | 75 min |
+| `client` | build, installable-app check, bundle budget | — |
+| `e2e` | Playwright in 8 shards, each followed by the scope probe | 120 min per shard |
+| `verify` | Passes only when all three pass | — |
+
+`verify` stays the required check. `security` (dependency audit, secret scan) and `codeql` (static analysis) run beside it.
 
 A failing stage exits 1 and the report (`reports/regression/report.html`) names it. A migration without a working down-migration fails the migration check; a leaked credential fails the secret scan.
 
@@ -36,11 +47,17 @@ npm run deploy -- --env staging --artifact artifacts/<buildId> --port 3300 --ins
 ```
 The same artefact goes to every environment; only configuration differs. `deploy` verifies the checksums, takes a database restore point (`<root>/<env>/backups/`), stops the old build, runs the migrations in transactions, starts the new build and runs the smoke test (liveness, and the running build ID must equal the deployed one). A failed migration or smoke test rolls back automatically (BR-02). The state of an environment is in `<root>/<env>/state.json`; releases are kept under `<root>/<env>/releases/`. `--root` defaults to `.deploy`.
 
-A real staging or production host is not chosen yet (defect D-009); today the environment is a directory on one machine. The server also refuses to start with `NODE_ENV=staging` or `production` until the IAM module exists (defect D-001), so rehearsals use `NODE_ENV=test` with `ERP_ENVIRONMENT=staging`.
+A real staging or production host is not chosen yet (defect D-009); today the environment is a directory on one machine.
+
+**Live start or rehearsal (audit AUD-DEF-007).**
+
+- **Live start.** For `--env staging` or `--env production` the release starts live: `NODE_ENV` of the environment, and `AUTH_MODE=iam`. The secrets come from the shell that runs the deploy: `AUTH_SECRET`, `FILE_URL_SECRET`, `VAULT_KEY` and the others in `scripts/lib/release_env.mjs`. The smoke test signs in with `ERP_SMOKE_TOKEN`, a sign-in token of an IT administrator. Without that token the smoke test fails and the deploy rolls back.
+- **Rehearsal.** Add `--rehearsal` (or `--node-env test`) to rehearse on one machine. The release starts with `NODE_ENV=test`, the development headers and `ERP_ENVIRONMENT=test`.
+- **The guard.** The configuration refuses the development headers whenever `NODE_ENV` *or* `ERP_ENVIRONMENT` is staging or production.
 
 ## 5. Roll back (one command)
 ```bash
-npm run rollback -- --env staging
+npm run rollback -- --env staging            # add --rehearsal for a rehearsal environment
 ```
 It stops the current build, reverses the database through the down-migrations of the build being removed (data written since is kept), and starts the previous build. If a down-migration fails it restores the restore point taken before that deploy (data written since is lost) and says so. Target time: 60 seconds in staging; measured about 1 second.
 

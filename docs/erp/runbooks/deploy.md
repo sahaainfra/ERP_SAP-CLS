@@ -12,7 +12,7 @@
 1. Verify the artefact (`verifyArtifact`: every file against `SHA256SUMS`).
 2. Back up the database to a restore point and verify the copy (integrity check, same row count in every table).
 3. Apply the new migrations while the active slot serves (migrations are additive: the old build works on the new schema).
-4. Start the new build on the idle slot; smoke-test it there (health, build ID, migrations).
+4. Start the new build on the idle slot, live (`NODE_ENV=production`, `AUTH_MODE=iam`, secrets from the pipeline's shell). Smoke-test it there (health, build ID, migrations), signed in with `ERP_SMOKE_TOKEN`. A missing token fails the smoke test and the deploy stops (RELEASE.md §4).
 5. Switch nginx: rewrite `active-upstream.conf`, `nginx -s reload` (in-flight requests finish on the old workers).
 6. Keep the old slot running until the next deploy, so a rollback is a switch.
 7. Record the deployment: `POST /api/v1/tst/ops/deployments` with the pipeline run and the artefact's SHA-256.

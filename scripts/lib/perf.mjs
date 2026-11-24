@@ -7,6 +7,7 @@ import { createApp } from '../../src/server/app.js';
 import { loadConfig } from '../../src/server/platform/config/index.js';
 import { migrateUp, openDatabase } from '../../src/server/platform/db/index.js';
 import { silentLogger } from '../../src/server/platform/http/logger.js';
+import { securityOf } from '../../src/server/platform/security/index.js';
 
 /** The targets of standards section 11, in milliseconds at p95. */
 export const STANDARDS = Object.freeze({ list: 500, record: 300, save: 800 });
@@ -56,6 +57,9 @@ export async function runBaseline({ durationMs = 4000, concurrency = 8, size = {
   migrateUp(db);
   const config = loadConfig({ NODE_ENV: 'test', DATABASE_PATH: file, AUTH_MODE: 'dev-headers' });
   const app = createApp({ config, db, logger: silentLogger, storagePath: join(dir, 'storage') });
+  // Audit AUD-DEF-018: the journeys run as one user, far above the per-account rate limit (1,800 reads a minute); without this every
+  // journey after the first measured the 429 refusal, not the work. The limiter is tested on its own (tests/security-*.test.js).
+  securityOf(db).limiter.suspend(true);
   const server = await new Promise((resolve) => {
     const s = app.listen(0, () => resolve(s));
   });

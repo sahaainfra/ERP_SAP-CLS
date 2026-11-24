@@ -71,28 +71,31 @@ export function loadConfig(env = process.env) {
     // Web Push (part 03.06): the application's VAPID key pair; without it a production system offers no push, development makes its own
     push: c.PUSH_VAPID_PUBLIC_KEY && c.PUSH_VAPID_PRIVATE_KEY ? { publicKey: c.PUSH_VAPID_PUBLIC_KEY, privateKey: c.PUSH_VAPID_PRIVATE_KEY, subject: c.PUSH_SUBJECT ?? c.APP_URL ?? 'mailto:admin@example.com' } : null,
   };
-  const prodLike = nodeEnv === 'production' || nodeEnv === 'staging';
+  // Audit AUD-DEF-007: an installation is production-like when NODE_ENV or the environment it calls itself (ERP_ENVIRONMENT) is staging
+  // or production, so NODE_ENV=test with ERP_ENVIRONMENT=production does not slip past the checks below.
+  const prodLike = [nodeEnv, config.environment].some((e) => e === 'production' || e === 'staging');
+  const where = ['production', 'staging'].includes(nodeEnv) ? `when NODE_ENV=${nodeEnv}` : `when ERP_ENVIRONMENT=${config.environment}`;
   if (config.demoSeed && prodLike) {
     problems.push(
-      `ERP_DEMO_SEED=true is not allowed when NODE_ENV=${nodeEnv}: demo data must never be loaded into staging or production. Set ERP_DEMO_SEED=false.`,
+      `ERP_DEMO_SEED=true is not allowed ${where}: demo data must never be loaded into staging or production. Set ERP_DEMO_SEED=false.`,
     );
   }
   // part 30.04 BR-01: a sandbox never runs on production data: not in production, and only on a database of its own named as one
-  if (config.sandbox && nodeEnv === 'production') problems.push('ERP_SANDBOX=true is not allowed when NODE_ENV=production: the sandbox runs on its own installation with synthetic data.');
+  if (config.sandbox && (nodeEnv === 'production' || config.environment === 'production')) problems.push(`ERP_SANDBOX=true is not allowed ${nodeEnv === 'production' ? 'when NODE_ENV=production' : 'when ERP_ENVIRONMENT=production'}: the sandbox runs on its own installation with synthetic data.`);
   if (config.sandbox && config.databasePath !== ':memory:' && !/sandbox/i.test(config.databasePath)) problems.push(`ERP_SANDBOX=true needs a database of its own whose file name says so (for example data/sandbox.sqlite); DATABASE_PATH is ${config.databasePath}.`);
   if (config.authMode === 'dev-headers' && prodLike) {
     problems.push(
-      `AUTH_MODE=dev-headers is not allowed when NODE_ENV=${nodeEnv}: it trusts client-supplied identity headers. The IAM module (part 02.x) must provide AUTH_MODE=iam first.`,
+      `AUTH_MODE=dev-headers is not allowed ${where} (NODE_ENV=${nodeEnv}, ERP_ENVIRONMENT=${config.environment}): it trusts client-supplied identity headers. Set AUTH_MODE=iam.`,
     );
   }
   if (config.authMode === 'iam' && !config.authSecret && prodLike) {
-    problems.push(`AUTH_SECRET is required when AUTH_MODE=iam and NODE_ENV=${nodeEnv}: it signs the sign-in tokens and must be the same on every instance (at least 32 characters).`);
+    problems.push(`AUTH_SECRET is required when AUTH_MODE=iam ${where}: it signs the sign-in tokens and must be the same on every instance (at least 32 characters).`);
   }
   if (prodLike && !config.fileUrlSecret) {
-    problems.push(`FILE_URL_SECRET is required when NODE_ENV=${nodeEnv}: it signs the short-lived download links and must be the same on every instance (at least 32 characters).`);
+    problems.push(`FILE_URL_SECRET is required ${where}: it signs the short-lived download links and must be the same on every instance (at least 32 characters).`);
   }
   if (prodLike && !config.vaultKey) {
-    problems.push(`VAULT_KEY is required when NODE_ENV=${nodeEnv}: it encrypts the credentials of external connectors and must be the same on every instance (at least 32 characters). Losing it makes the stored credentials unreadable.`);
+    problems.push(`VAULT_KEY is required ${where}: it encrypts the credentials of external connectors and must be the same on every instance (at least 32 characters). Losing it makes the stored credentials unreadable.`);
   }
   if (Boolean(c.PUSH_VAPID_PUBLIC_KEY) !== Boolean(c.PUSH_VAPID_PRIVATE_KEY)) {
     problems.push('PUSH_VAPID_PUBLIC_KEY and PUSH_VAPID_PRIVATE_KEY must be set together.');

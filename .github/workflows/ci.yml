@@ -16,10 +16,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: verify
+  # Audit AUD-DEF-020: the whole regression (about 35 minutes of unit tests with coverage, then hours of E2E) cannot finish inside one
+  # 20-minute job, so it runs as four jobs with timeouts that fit them; "verify" is the gate that needs all of them (the required check).
+  unit:
+    name: unit, API and static checks
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 75
     env:
       COVERAGE_MIN: '60'
       COVERAGE_BASE: origin/${{ github.base_ref || 'main' }}
@@ -32,19 +34,70 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # lint, type check, unit/API/permission tests with coverage, coverage gate for changed files,
-      # migration up/down check, schema-diff, golden outputs, secret scan, build, Playwright E2E
-      # (desktop and mobile viewports; Chrome is preinstalled on the runner).
-      - run: npm run erp:regression
+      # lint, type check, unit/API/permission tests with coverage, coverage gate for changed files, migration up/down check, schema
+      # lint and diff, tokens, icons, navigation, routes, permissions, defects, integrity suite, golden outputs, secret scan
+      - run: npm run erp:regression -- --skip-e2e
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: regression-report
+          name: regression-report-unit
+          path: reports/regression
+          if-no-files-found: ignore
+
+  client:
+    name: client build, installable app and bundle budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run erp:regression -- --only build,pwa-check,bundle-budget
+
+  e2e:
+    name: E2E shard ${{ matrix.shard }} of 8
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # desktop and mobile viewports; Chrome is preinstalled on the runner. Each shard starts its own throw-away databases.
+      - run: npx playwright test --shard=${{ matrix.shard }}/8 --trace off
+      # audit step 0.2: the cross-company probe on what the shard's tests left in the database
+      - run: npm run erp:scope-probe
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shard-${{ matrix.shard }}
           path: |
-            reports/regression
+            reports/scope-probe.json
             playwright-report
             test-results
           if-no-files-found: ignore
+
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [unit, client, e2e]
+    timeout-minutes: 5
+    steps:
+      - name: every part of the regression passed
+        run: |
+          echo "unit: ${{ needs.unit.result }}, client: ${{ needs.client.result }}, e2e: ${{ needs.e2e.result }}"
+          test "${{ needs.unit.result }}" = success && test "${{ needs.client.result }}" = success && test "${{ needs.e2e.result }}" = success
 
   clock:
     name: unit suite on a Sunday and on the last day of the year (part 166.1 F-09)

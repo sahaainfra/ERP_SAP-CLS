@@ -4,6 +4,7 @@
 
 1. Open **Operations → Deployments**: the active build and the previous one (its slot is still running unless a newer deploy replaced it).
 2. Run the rollback job (`node scripts/rollback.mjs --env production --blue-green`, the pipeline's *Roll back* button):
+   - the job's shell holds the production secrets and `ERP_SMOKE_TOKEN` (a sign-in token of an IT administrator). The previous build restarts live (`AUTH_MODE=iam`) and is smoke-tested with that token. Without the token the smoke test fails (see RELEASE.md §4).
    - it starts the previous build again if it was stopped and smoke-tests it;
    - switches nginx back to its slot;
    - after the in-flight requests finish, stops the newer build and undoes its migrations (down-migrations; the restore point if they cannot run).

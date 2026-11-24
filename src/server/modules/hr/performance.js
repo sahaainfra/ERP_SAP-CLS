@@ -121,7 +121,9 @@ export function createPerformanceService({ db, dep }) {
   const meOf = (actor) => { const id = myEmployee(actor); if (!id) throw new HttpError(422, 'NO_EMPLOYEE', 'Your user account is not linked to an employee record, so there is no performance to show. Ask HR to link it.'); return emp(id); };
   const seesAll = (actor) => may(actor, 'hr.review.view_all');
   /** An employee is seen by themselves, by the people above them in the reporting line, and by those who see all reviews. */
-  const canSee = (actor, employeeId) => { if (seesAll(actor)) return true; const me = myEmployee(actor); return Boolean(me && (me === employeeId || reportees(me).has(employeeId))); };
+  const inCompany = (actor, employeeId) => db.prepare('SELECT 1 FROM hr_employees WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(employeeId, actor.companyId) != null;
+  // "Sees all" is all of the caller's company, never another company's people (audit AUD-DEF-012).
+  const canSee = (actor, employeeId) => { if (!inCompany(actor, employeeId)) return false; if (seesAll(actor)) return true; const me = myEmployee(actor); return Boolean(me && (me === employeeId || reportees(me).has(employeeId))); };
   const isLine = (actor, employeeId) => { const me = myEmployee(actor); return Boolean(me && me !== employeeId && reportees(me).has(employeeId)); };
   const tell = (companyId, to, templateCode, data, link, key) => to && notif.notify({ companyId, templateCode, recipients: [`user:${to}`], data, link, sourceType: 'perf', sourceId: key, eventKey: `${templateCode}:${key}` });
   const cycleRow = (companyId, id) => { const c = db.prepare('SELECT * FROM perf_cycles WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(id, companyId); if (!c) throw notFound('That review cycle does not exist.'); return c; };
@@ -174,6 +176,7 @@ export function createPerformanceService({ db, dep }) {
       },
       history(actor, id) {
         need(actor, 'hr.perf.configure', 'see the history of a KPI');
+        if (!db.prepare('SELECT 1 FROM perf_kpis WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(id, actor.companyId)) throw notFound('That KPI does not exist.');
         return db.prepare("SELECT action, actor, old_values, new_values, created_at FROM core_audit_log WHERE entity = 'perf_kpis' AND entity_id = ? ORDER BY id").all(String(id)).map((a) => ({ action: a.action, by: a.actor, at: a.created_at, old: json(a.old_values, null), new: json(a.new_values, null) }));
       },
     },

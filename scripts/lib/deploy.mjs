@@ -5,8 +5,8 @@ import { join } from 'node:path';
 import { listMigrations } from '../../src/server/platform/db/index.js';
 import { verifyArtifact } from './package.mjs';
 import { backupDatabase, restoreDatabase } from './backup.mjs';
+import { releaseEnv, smokeHeaders } from './release_env.mjs';
 
-const SMOKE_HEADERS = { 'x-erp-user': 'smoke-test', 'x-erp-roles': 'ITADM', 'x-erp-company': '1' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const paths = (deployRoot, envName) => {
@@ -53,17 +53,7 @@ function runMigrate(releaseDir, args, env) {
 }
 
 function serverEnv({ nodeEnv, environment, port, dbPath, deployedAt }) {
-  return {
-    PATH: process.env.PATH,
-    SystemRoot: process.env.SystemRoot,
-    NODE_ENV: nodeEnv,
-    ERP_ENVIRONMENT: environment,
-    PORT: String(port),
-    DATABASE_PATH: dbPath,
-    AUTH_MODE: 'dev-headers',
-    ERP_DEMO_SEED: 'false',
-    ...(deployedAt ? { ERP_DEPLOYED_AT: deployedAt } : {}),
-  };
+  return releaseEnv({ nodeEnv, environment, port, dbPath, extra: deployedAt ? { ERP_DEPLOYED_AT: deployedAt } : {} });
 }
 
 function startRelease({ releaseDir, p, env }) {
@@ -104,12 +94,17 @@ async function waitForHealth(port, timeoutMs) {
   return false;
 }
 
-/** Post-deploy smoke test: liveness, and the running build must be the one just deployed. */
-export async function smokeTest({ port, expectBuildId, timeoutMs = 15000 }) {
+/**
+ * Post-deploy smoke test: liveness, and the running build must be the one just deployed. A live release (AUTH_MODE=iam) is asked with
+ * the sign-in token in ERP_SMOKE_TOKEN; without one the build cannot be confirmed and the smoke test fails.
+ */
+export async function smokeTest({ port, expectBuildId, timeoutMs = 15000, env = null }) {
   const problems = [];
   if (!(await waitForHealth(port, timeoutMs))) return { ok: false, problems: ['the server did not become healthy in time'] };
+  const headers = smokeHeaders(env);
+  if (!headers) return { ok: false, problems: ['a live release signs people in: set ERP_SMOKE_TOKEN (a sign-in token of an IT administrator) so the smoke test can confirm the build'] };
   try {
-    const res = await fetch(`http://127.0.0.1:${port}/api/v1/core/about`, { headers: SMOKE_HEADERS });
+    const res = await fetch(`http://127.0.0.1:${port}/api/v1/core/about`, { headers });
     const body = await res.json();
     if (res.status !== 200) problems.push(`about returned HTTP ${res.status}`);
     else if (body.data.buildId !== expectBuildId) problems.push(`running build is ${body.data.buildId}, expected ${expectBuildId}`);
@@ -144,7 +139,7 @@ async function revert({ p, fromDir, toDir, backup, env, port, log }) {
   }
   if (!toDir) return { method, pid: null };
   const pid = startRelease({ releaseDir: toDir, p, env });
-  const smoke = await smokeTest({ port, expectBuildId: readInfo(toDir).buildId });
+  const smoke = await smokeTest({ port, expectBuildId: readInfo(toDir).buildId, env });
   if (!smoke.ok) throw new Error(`Rolled-back version failed its smoke test: ${smoke.problems.join('; ')}`);
   return { method, pid };
 }
@@ -203,7 +198,7 @@ export async function deploy({ artifactDir, envName, deployRoot, port, nodeEnv =
   const migrated = runMigrate(releaseDir, ['up'], env);
   if (!migrated.ok) return failAndRevert(`migration failed: ${errorLine(migrated.output)}`);
   const pid = startRelease({ releaseDir, p, env });
-  const smoke = await smokeTest({ port, expectBuildId: info.buildId, timeoutMs: smokeTimeoutMs });
+  const smoke = await smokeTest({ port, expectBuildId: info.buildId, timeoutMs: smokeTimeoutMs, env });
   if (!smoke.ok) {
     await stopProcess(pid);
     return failAndRevert(`smoke test failed: ${smoke.problems.join('; ')}`);
