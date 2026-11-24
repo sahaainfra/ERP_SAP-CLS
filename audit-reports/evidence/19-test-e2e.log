@@ -548,3 +548,6 @@ Running 866 tests using 1 worker
 [341/866] [desktop] › e2e/pwa.spec.js:141:1 › FR-03 on an iPhone the install notice gives the steps of Safari, since it has no prompt
 [342/866] [desktop] › e2e/pwa.spec.js:151:1 › FR-06 low-bandwidth mode is a setting of this device in the account menu, on by itself for a data saver
 [343/866] [desktop] › e2e/qa-dash.spec.js:50:1 › Quality: dashboard KPIs and exceptions, control charts with limits and a flagged sample, ratings
+[344/866] [desktop] › e2e/qa-inspect.spec.js:43:1 › Quality: template designer with preview, ITP applied to an activity, an inspection performed with a failing reading and approved
+[345/866] [desktop] › e2e/qa-ir.spec.js:42:1 › Quality: an inspection request releases a hold point; a rejection keeps its reason and asks for a re-inspection
+[346/866] [desktop] › e2e/qa-ncr.spec.js:39:1 › Quality: raise an NCR, action, rectification, re-inspection and closure by severity
