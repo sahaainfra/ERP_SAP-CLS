@@ -486,3 +486,37 @@ Running 866 tests using 1 worker
 [279/866] [desktop] › e2e/pa-p2310.spec.js:43:1 › AC-01 a month recognised by the project controls manager, approved by the accounts manager and the CFO; project trial balance and WIP on desktop and phone
 [280/866] [desktop] › e2e/pages.spec.js:30:1 › every registered page is a page of the tracker, and no page is registered twice
 [281/866] [desktop] › e2e/pages.spec.js:36:1 › FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completion Checklist that a machine can make
+[282/866] [desktop] › e2e/partners-screenshots.spec.js:73:1 › screenshots of the business partner pages
+[283/866] [desktop] › e2e/partners.spec.js:72:1 › FR-01 FR-07 AC-01 the registration wizard: duplicate shown while typing, sent for approval, approved by the steward and the accounts manager
+[284/866] [desktop] › e2e/partners.spec.js:115:1 › FR-02 BR-01 BR-03 FR-06 a bank change on Partner 360 holds payments and is confirmed by a call-back; masked for a site engineer; a blacklisting approved by the director; the worklist
+[285/866] [desktop] › e2e/pay-p2401.spec.js:39:1 › AC-01 components, a structure previewed and an employee pay assignment approved, on desktop and phone
+[286/866] [desktop] › e2e/pay-p2402.spec.js:45:1 › AC-01 the payroll of a month computed from locked attendance, a salary held, approved and locked; the register; a declaration, on desktop and phone
+[287/866] [desktop] › e2e/pay-p2403.spec.js:59:1 › AC-01 labour wages from the punches approved SACC → PM → HRMGR, paid and acknowledged on the phone; the register; a contractor's wage sheet held for variances, on desktop and phone
+[288/866] [desktop] › e2e/pay-p2404.spec.js:45:1 › AC-01 the statutory payment of a month: the ECR prepared from the locked payroll, sent, approved by the accounts manager and the CFO, the challan recorded; the registers and the Form 16 batch
+[289/866] [desktop] › e2e/pay-p2405.spec.js:57:1 › AC-01 the payroll posted, paid by bank file and its payslips distributed; the full-and-final of a cleared leaver approved
+[290/866] [desktop] › e2e/perf-p16604.spec.js:42:1 › the network of a page › FR-01 T-03 the first screen fetches the shell and its own page only; another page's code comes when it is opened
+[291/866] [desktop] › e2e/perf-p16604.spec.js:59:1 › the network of a page › FR-01 a page whose code cannot be fetched says so; a reload opens it
+[292/866] [desktop] › e2e/perf-p16604.spec.js:77:1 › the network of a page › FR-01 on a phone the field home fetches the code of the bottom bar's pages once it is idle, before they are tapped
+[293/866] [desktop] › e2e/perf-p16604.spec.js:89:1 › the network of a page › the first script of the application fails once (aborted, dropped): the page reloads by itself instead of staying blank
+[294/866] [desktop] › e2e/perf-p16604.spec.js:98:1 › the network of a page › the first script never arrives: after two reloads the page says so instead of staying blank
+[295/866] [desktop] › e2e/perf-p16604.spec.js:105:1 › the network of a page › FR-03 in low-bandwidth mode a chart is drawn as its table, and the chart only on request
+[296/866] [desktop] › e2e/perf-p16604.spec.js:128:1 › FR-04 "A new version is ready — Reload": the half-filled form is saved as a draft first and offered back after the reload
+[297/866] [desktop] › e2e/performance.spec.js:71:1 › AC-01 KPI library, cycle, KPIs with evidence and a dispute, goals, the review through approval, the letter, team, feedback and Hindi, in the browser
+[298/866] [desktop] › e2e/pl-p2312.spec.js:41:1 › AC-01 the project P&L equal to the ledger, drilled to its journal lines, its snapshot frozen; the profitability overview on desktop and phone
+[299/866] [desktop] › e2e/plan-baselines.spec.js:56:1 › AC-01 baselines are approved and frozen; variance, quality, the baseline bars, a revision and the import of an MS Project file work
+[300/866] [desktop] › e2e/plan-delays.spec.js:51:1 › AC-01 a delay is recorded with evidence and its time impact, approved and locked; the summary shows it for the claims
+[301/866] [desktop] › e2e/plan-gantt.spec.js:57:1 › AC-01 planners edit the schedule on the Gantt, histograms show the resource loading, the programme exports as PDF
+[302/866] [desktop] › e2e/plan-lookahead.spec.js:64:1 › AC-01 the look-ahead board shows the constraints found in engineering; a ready card is planned, approved, recorded and closed; PPC is reported
+[303/866] [desktop] › e2e/plan.spec.js:53:1 › AC-01 schedule created from a template, linked, calculated with critical path and progress-updated, in the browser
+[304/866] [desktop] › e2e/plant-alloc.spec.js:48:1 › Plant allocation: requisition, approvals, allocation, arrival with checklist, operator certificate check, Gantt, demobilisation
+[305/866] [desktop] › e2e/plant-capacity.spec.js:52:1 › Plant capacity: the heat-map, the shortage and surplus report, a move plan evaluated and approved by four levels, and its requests
+[306/866] [desktop] › e2e/plant-equip.spec.js:40:1 › Plant: register a vehicle with certificates, approve it, deploy it; an expired insurance blocks deployment until renewed; the dashboard and the register show it
+[307/866] [desktop] › e2e/plant-fleet.spec.js:53:1 › Plant fleet: the control tower, the owning and operating cost, telematics, and the disposal recommendation approved by three levels
+[308/866] [desktop] › e2e/plant-fuel.spec.js:53:1 › Plant fuel: the issue entered on the phone, flagged above the norm, verified; a dip against the book; the anomaly explained and accepted; the reports
+[309/866] [desktop] › e2e/plant-hire.spec.js:52:1 › Plant hire: the agreement approved, the bill computed from verified logs and certified, the comparison with owned cost
+[310/866] [desktop] › e2e/plant-log.spec.js:50:1 › Plant log books: the day of a machine entered on the phone, verified from the worklist, utilisation, and a breakdown
+[311/866] [desktop] › e2e/plant-maint.spec.js:51:1 › Plant maintenance: a plan falls due, the job card is raised, approved, spares reserved and issued, the work closed; the dashboard
+[312/866] [desktop] › e2e/pmt-p2304.spec.js:52:1 › AC-01 a payment proposal in three steps, approved, released with the bank file by a third person, confirmed with the UTR; the payments list
+[313/866] [desktop] › e2e/policies-screenshots.spec.js:51:1 › screenshots of the policy pages
+[314/866] [desktop] › e2e/policies.spec.js:56:1 › AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-07 a policy is written, approved, acknowledged with a quiz, revised and compared
+[315/866] [desktop] › e2e/policies.spec.js:146:1 › AC-01 AC-02 FR-05 BR-02 a requirement becomes a draft control point that stays inactive; the administrator sees it on the worklist

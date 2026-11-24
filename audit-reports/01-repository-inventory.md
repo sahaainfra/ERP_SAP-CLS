@@ -61,32 +61,35 @@ The growth since the prompt's counts matches the 21 commits of parts 30.01–30.
 
 **Client registry.** All 29 client module folders are imported by `src/client/main.jsx`. The server modules `sec` and `close` have no client folder of their own.
 
-**PROGRESS.csv.** 239 rows; the prompt states 240.
+**PROGRESS.csv.** 239 rows; the prompt states 240 (the file has 240 lines including the header). The 239 rows hold **236 distinct parts**. Parts 23.01, 23.02 and 23.03 each appear twice:
 
-| Status | Count at audit | Count in the audit prompt |
+- seq 167–169 near the end of the file: "Ready for review", completed 2026-11-17;
+- an earlier copy of the same three rows: "Not started".
+
+| Status (all 239 rows) | Count at audit | Count in the audit prompt |
 |---|---|---|
 | Ready for review | 192 | 192 |
 | In progress | 44 | 34 |
-| Not started | 3 | 13 |
+| Not started | 3 (the three duplicate rows) | 13 |
 
-The 10 rows that moved from Not started to In progress are 30.01–30.10.
+The 10 rows that moved from Not started to In progress are 30.01–30.10. Counted once per part (keeping the later row), the 236 parts are 192 Ready for review, 44 In progress, 0 Not started.
 
-Per module:
+Per module (distinct parts):
 
-| Module | Rows | Status |
+| Module | Parts | Status |
 |---|---|---|
-| M00–M22, M24 | — | All Ready for review, except one In progress row each in M01 and M06 |
-| M23 | 18 | 15 Ready for review, 3 **Not started** (23.01, 23.02, 23.03) |
+| M00–M24 | — | All Ready for review, except one In progress row each in M01 and M06 |
+| M23 | 15 | All Ready for review; three of them also have a stale duplicate "Not started" row |
 | M25–M30 | — | All In progress |
 
-**Contradiction (AUD-DEF-002).** PROGRESS.csv says 23.01 General Ledger Core, 23.02 Posting Engine and 23.03 Accounts Payable are "Not started". The repository has, for each:
+**Duplicate rows (AUD-DEF-002).** For 23.01 General Ledger Core, 23.02 Posting Engine and 23.03 Accounts Payable, the repository has:
 
 - a completion report (`docs/erp/COMPLETION/23.01.md`, `23.02.md`, `23.03.md`);
 - code (`src/server/modules/fin/posting.js`, `postingroutes.js`, `aproutes.js`);
 - a migration (`migrations/20261215000334_fin_gl.*`);
 - tests (`tests/gl-p2301.test.js`, `tests/posting-p2302.test.js`, `tests/ap-p2303.test.js`).
 
-The status rows are stale. The code exists and its tests ran green in this session's full regression (Phase 2).
+The "Not started" copies are stale. Any tool that reads the first match per part (or counts rows) reports these three parts wrongly. The code's tests ran green in this session's full regression (Phase 2).
 
 ## 5. Layering (ARCHITECTURE.md §1)
 
