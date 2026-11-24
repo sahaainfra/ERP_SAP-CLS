@@ -113,4 +113,28 @@ Each fix has a test that fails on the code before it, and each is recorded in `d
 
 ### Gate after step 0
 
-STEP0_GATE
+Code at `48f3002f`, the same 4-vCPU machine and Node 24.22.3 as the audit. Logs are in `evidence/s0-*`.
+
+| Stage | Audit (`ed225efd`) | After step 0 | Evidence |
+|---|---|---|---|
+| Lint, type check, coverage gate, migrations, schema lint, tokens, icons, navigation, routes, permissions, defect register, integrity suite, schema-diff, golden, secret scan | Pass | Pass | `s0-regression-no-e2e.log` |
+| Unit, API and permission tests with coverage | 1,735 / 1,736 (zero-downtime race) | 1 failure: the style-guide test, which still simulated production with header identities that the new guard refuses. It was fixed and passes. The zero-downtime test passed. Coverage: lines 97.72 %, branches 77.06 %. | `s0-regression-no-e2e.log` |
+| Client build, installable app | Pass | Pass | full regression run |
+| Bundle budget | **Fail** (Hindi 259.5 KB) | **Pass** (largest chunk 171.7 KB) | full regression run |
+| E2E, 866 tests | 785 passed, **14 failed**, 67 skipped | 791 passed, **8 failed**, 67 skipped | `s0-e2e-full.log` |
+| E2E, the 5 of those 8 whose fixes came during that run, re-run | — | data-health, operations health, plant hire, bill-vinv and ctr-variations: **32 / 32 passed** on desktop and mobile. ui-v3: UIV3_RESULT | `s0-e2e-confirm.log`, `s0-e2e-uiv3.log` |
+| Scope probe (new stage) on the data of the full run | — (the audit's one-off probe found 2 leaks) | **0 leaks**: 837 detail routes × ids 1–3, 1,445 list routes | `s0-scope-probe.log` |
+| Performance baseline | Not a valid measurement (429s) | 0 errors; every journey within its standard | `docs/erp/perf/baseline.json` |
+
+**What remains red:**
+
+- The **three visual-baseline tests** (D-830). They need a person to review a re-baseline.
+- **CI on GitHub**, which does not start jobs (AUD-DEF-001). This is an account matter.
+
+**Still open:**
+
+- the High findings outside step 0: AUD-DEF-001;
+- the steps of G1–G8 above;
+- D-828 (focus during first render);
+- D-833 (dead letter or unbudgeted actual, an owner decision).
+

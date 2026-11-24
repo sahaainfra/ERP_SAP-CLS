@@ -103,3 +103,16 @@ Then provision staging and production (D-009). Sign gates G1–G8, and run UAT w
 - Of the 1,331 interpolated SQL statements, a sample of the riskiest was traced.
 
 See README, "Not Executed".
+
+## After the audit: remediation step 0 (approved by the owner, 2026-11-24)
+
+| Item | Result |
+|---|---|
+| Cross-company leaks | Fixed: the two audited leaks and a third in the KPI history. A permanent probe of every `/:id` and list route runs in the regression and in CI; on the data of a full E2E run it finds 0 leaks. |
+| Dev-headers guard | Fixed: refused whenever the environment is staging or production. Deploys start live with real sign-in. |
+| CI | Split into jobs that fit their limits. It still cannot run until GitHub Actions starts jobs on the account (AUD-DEF-001). |
+| Local gate | The bundle budget, the backup race and the perf harness are fixed. E2E went from 14 failures to 8 in one full run; 5 of those 8 were fixed during that run and pass when re-run. |
+| Fixed along the way | Three real defects: a silent failure of the self-service request form, a dashboard listed twice, and an unkeyed claim evidence list. |
+| Still red | The three visual-baseline tests (D-830), which need a reviewed re-baseline. |
+
+Details: `09-remediation-plan.md`, "Step 0 outcome". Status per finding: `08-defect-register.md`.

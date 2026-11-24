@@ -16,3 +16,5 @@ Commit audited: `ed225efd45f3040962958aac97a491c4ed38575f`. Started 2026-11-24.
 | 10 Final report | 00-executive-summary.md, 10-missing-and-incomplete.md, 11-production-readiness.md, README.md | Complete | 2026-11-24 |
 
 **Audit complete, 2026-11-24.** Every phase is written. All gate stages were executed, including the full E2E run (5 h 34 min). The tracked files that the E2E run rewrote under `docs/erp/` were restored from the commit. Only `audit-reports/` was committed. No defect was fixed: fixes wait for approval (audit rule).
+
+**Remediation step 0, 2026-11-24.** Approved by the owner after the audit. Fixes are on the same branch, recorded in `docs/erp/DEFECTS.md` D-819–D-833. The outcome is in `09-remediation-plan.md` and the status per finding in `08-defect-register.md`. Evidence is in `evidence/s0-*`.

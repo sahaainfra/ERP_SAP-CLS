@@ -1,0 +1,88 @@
+
+Running 54 tests using 1 worker
+
+[1/54] [desktop] › e2e/accountability.spec.js:59:1 › AC-01 FR-01 FR-02 FR-04 FR-06 the standard processes are applied to a project, the gap check empties, an actor's work appears in My Accountability, and the report shows it
+[2/54] [desktop] › e2e/accountability.spec.js:123:1 › FR-01 AC-03 a live project's change is sent for approval; a person without the permission is told so; the pages fit a phone
+[3/54] [desktop] › e2e/data-health.spec.js:18:1 › before any run the page lists every check as "not run yet" and offers to run them
+[4/54] [desktop] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so
+[5/54] [desktop] › e2e/data-health.spec.js:44:1 › drill-down: a check's history shows its earlier results
+[6/54] [desktop] › e2e/data-health.spec.js:57:1 › SYSADM can read the report but the run button is disabled with a reason
+[7/54] [desktop] › e2e/data-health.spec.js:65:1 › other roles get the no-permission state and no check data; the nav entry is hidden
+[8/54] [desktop] › e2e/data-health.spec.js:72:1 › the report exports a CSV
+[9/54] [desktop] › e2e/data-health.spec.js:80:1 › turning the feature flag OFF hides the entry and the page at once
+[10/54] [desktop] › e2e/data-health.spec.js:94:1 › a server failure shows the error state with the correlation id and a retry
+[11/54] [desktop] › e2e/data-health.spec.js:108:1 › a failing run is reported when the server cannot complete it
+[12/54] [desktop] › e2e/data-health.spec.js:118:1 › no horizontal scroll with wide fonts, in every theme
+[13/54] [desktop] › e2e/field-p16603.spec.js:59:1 › T-01 FR-01 FR-02 each field role reaches its daily task in one tap from Home; the task opens on its first step
+[14/54] [desktop] › e2e/field-p16603.spec.js:87:1 › FR-01 the field home: greeting band, today's tasks from the records, quick actions of the role, what is not sent yet
+[15/54] [desktop] › e2e/field-p16603.spec.js:112:1 › FR-01 the field home on a desktop: the same band, cards and tiles, laid out wide
+[16/54] [desktop] › e2e/field-p16603.spec.js:125:1 › T-03 FR-07 the field pages in Telugu: Telugu text, no missing key, the Telugu typeface, nothing scrolls sideways at 360 px
+[17/54] [desktop] › e2e/field-p16603.spec.js:158:1 › T-04 FR-03 a 4 MB camera photo is stored at 300 KB or less, with the time and position burnt in
+[18/54] [desktop] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID
+[19/54] [desktop] › e2e/operations-health.spec.js:61:1 › Operations Health: an objective change is a request, approved by the System Administrator
+[20/54] [desktop] › e2e/operations-health.spec.js:80:1 › Operations Health: SYSADM views but cannot act; a project manager has no access; the browser reports its errors
+[21/54] [desktop] › e2e/register.spec.js:68:1 › AC-01 the register, a regularisation from the employee to the supervisor, the overtime request and the lock of the period, in the browser
+  1) [desktop] › e2e/register.spec.js:68:1 › AC-01 the register, a regularisation from the employee to the supervisor, the overtime request and the lock of the period, in the browser 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByTestId('rq-note')
+    Expected substring: "was sent for approval"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" getByTestId('rq-note') with timeout 5000ms
+      - waiting for getByTestId('rq-note')
+
+
+      127 |   await shot(emp.page, '07-overtime-form');
+      128 |   await emp.page.getByTestId('rq-send').click();
+    > 129 |   await expect(emp.page.getByTestId('rq-note')).toContainText('was sent for approval');
+          |                                                 ^
+      130 |   // the period lock: the overtime request still waits, so the checklist says so; once decided, HR locks
+      131 |   await hr.page.goto('/att/lock');
+      132 |   await hr.page.getByTestId('pl-period').fill('2026-08-15');
+        at /home/user/ERP_SAP-CLS/e2e/register.spec.js:129:49
+
+    Error Context: test-results/register-AC-01-the-registe-33311-f-the-period-in-the-browser-desktop/error-context.md
+
+
+[22/54] [desktop] › e2e/tst-device-matrix.spec.js:40:1 › T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, keyboard and screen-reader journeys on every emulated device
+[23/54] [desktop] › e2e/tst-golive-readiness.spec.js:23:1 › Go-live readiness board, UAT, dry run and the go/no-go decision
+[24/54] [desktop] › e2e/tst-golive.spec.js:27:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit
+[25/54] [desktop] › e2e/users.spec.js:32:1 › Users: invite, find, filter, save a view, import with row errors, hand over and deactivate
+[26/54] [desktop] › e2e/users.spec.js:172:1 › Users: a role that only reads is not offered management, and a person without a role sees no users
+[27/54] [desktop] › e2e/users.spec.js:214:3 › Invitation to access › invite, accept, wait in onboarding, get a role by approval, and use the profile
+[28/54] [mobile] › e2e/accountability.spec.js:59:1 › AC-01 FR-01 FR-02 FR-04 FR-06 the standard processes are applied to a project, the gap check empties, an actor's work appears in My Accountability, and the report shows it
+[29/54] [mobile] › e2e/accountability.spec.js:123:1 › FR-01 AC-03 a live project's change is sent for approval; a person without the permission is told so; the pages fit a phone
+[30/54] [mobile] › e2e/data-health.spec.js:18:1 › before any run the page lists every check as "not run yet" and offers to run them
+[31/54] [mobile] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so
+[32/54] [mobile] › e2e/data-health.spec.js:44:1 › drill-down: a check's history shows its earlier results
+[33/54] [mobile] › e2e/data-health.spec.js:57:1 › SYSADM can read the report but the run button is disabled with a reason
+[34/54] [mobile] › e2e/data-health.spec.js:65:1 › other roles get the no-permission state and no check data; the nav entry is hidden
+[35/54] [mobile] › e2e/data-health.spec.js:72:1 › the report exports a CSV
+[36/54] [mobile] › e2e/data-health.spec.js:80:1 › turning the feature flag OFF hides the entry and the page at once
+[37/54] [mobile] › e2e/data-health.spec.js:94:1 › a server failure shows the error state with the correlation id and a retry
+[38/54] [mobile] › e2e/data-health.spec.js:108:1 › a failing run is reported when the server cannot complete it
+[39/54] [mobile] › e2e/data-health.spec.js:118:1 › no horizontal scroll with wide fonts, in every theme
+[40/54] [mobile] › e2e/field-p16603.spec.js:59:1 › T-01 FR-01 FR-02 each field role reaches its daily task in one tap from Home; the task opens on its first step
+[41/54] [mobile] › e2e/field-p16603.spec.js:87:1 › FR-01 the field home: greeting band, today's tasks from the records, quick actions of the role, what is not sent yet
+[42/54] [mobile] › e2e/field-p16603.spec.js:112:1 › FR-01 the field home on a desktop: the same band, cards and tiles, laid out wide
+[43/54] [mobile] › e2e/field-p16603.spec.js:125:1 › T-03 FR-07 the field pages in Telugu: Telugu text, no missing key, the Telugu typeface, nothing scrolls sideways at 360 px
+[44/54] [mobile] › e2e/field-p16603.spec.js:158:1 › T-04 FR-03 a 4 MB camera photo is stored at 300 KB or less, with the time and position burnt in
+[45/54] [mobile] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID
+[46/54] [mobile] › e2e/operations-health.spec.js:61:1 › Operations Health: an objective change is a request, approved by the System Administrator
+[47/54] [mobile] › e2e/operations-health.spec.js:80:1 › Operations Health: SYSADM views but cannot act; a project manager has no access; the browser reports its errors
+[48/54] [mobile] › e2e/register.spec.js:68:1 › AC-01 the register, a regularisation from the employee to the supervisor, the overtime request and the lock of the period, in the browser
+[49/54] [mobile] › e2e/tst-device-matrix.spec.js:40:1 › T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, keyboard and screen-reader journeys on every emulated device
+[50/54] [mobile] › e2e/tst-golive-readiness.spec.js:23:1 › Go-live readiness board, UAT, dry run and the go/no-go decision
+[51/54] [mobile] › e2e/tst-golive.spec.js:27:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit
+[52/54] [mobile] › e2e/users.spec.js:32:1 › Users: invite, find, filter, save a view, import with row errors, hand over and deactivate
+[53/54] [mobile] › e2e/users.spec.js:172:1 › Users: a role that only reads is not offered management, and a person without a role sees no users
+[54/54] [mobile] › e2e/users.spec.js:214:3 › Invitation to access › invite, accept, wait in onboarding, get a role by approval, and use the profile
+  1 failed
+    [desktop] › e2e/register.spec.js:68:1 › AC-01 the register, a regularisation from the employee to the supervisor, the overtime request and the lock of the period, in the browser 
+  7 skipped
+  46 passed (4.1m)
+exit=1

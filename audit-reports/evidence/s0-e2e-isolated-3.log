@@ -1,0 +1,84 @@
+
+Running 19 tests using 1 worker
+
+[1/19] [desktop] › e2e/bi-role-dashboards.spec.js:48:1 › Every role opens its role dashboard with its cards loaded
+[2/19] [desktop] › e2e/bi-role-dashboards.spec.js:74:1 › Dashboard Inventory: widgets, role coverage, dashboards and a clean scan
+  1) [desktop] › e2e/bi-role-dashboards.spec.js:74:1 › Dashboard Inventory: widgets, role coverage, dashboards and a clean scan 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. role-dashboard",
+    + ]
+
+       98 |   await page.getByTestId('inv-rescan').click();
+       99 |   await expect(page.getByTestId('inv-scan-card')).toContainText('No hard-coded figures');
+    > 100 |   expect(errors).toEqual([]);
+          |                  ^
+      101 | });
+      102 |
+        at /home/user/ERP_SAP-CLS/e2e/bi-role-dashboards.spec.js:100:18
+
+    Error Context: test-results/bi-role-dashboards-Dashboa-73e43-dashboards-and-a-clean-scan-desktop/error-context.md
+
+
+[3/19] [desktop] › e2e/bi-scenarios.spec.js:23:1 › Scenario Builder: drivers, live impact, save and compare without touching live data
+[4/19] [desktop] › e2e/bill-sub.spec.js:8:1 › Subcontractor measurement, signature, verification, bill with recoveries, approval
+[5/19] [desktop] › e2e/ctr-claims.spec.js:9:1 › Claims: claim, notice, quantum, evidence, approval, submission, determination with EOT, dispute, watchlist
+  2) [desktop] › e2e/ctr-claims.spec.js:9:1 › Claims: claim, notice, quantum, evidence, approval, submission, determination with EOT, dispute, watchlist 
+
+    Error: Each child in a list should have a unique "key" prop.%s%s See https://react.dev/link/warning-keys for more information. 
+
+    Check the render method of `R`. 
+    Each child in a list should have a unique "key" prop.%s%s See https://react.dev/link/warning-keys for more information. 
+
+    Check the render method of `R`. 
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 8
+
+    - Array []
+    + Array [
+    +   "Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. 
+    +
+    + Check the render method of `R`. ",
+    +   "Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. 
+    +
+    + Check the render method of `R`. ",
+    + ]
+
+      29 |   await p.goto('/ctr/claims'); await expect(p.getByTestId('ctr-claims')).toBeVisible(); await noOverflow(p); await shot(p, '6-register', info);
+      30 |   const pm = await open(browser, info, c, 'PM', s.u('pm'), '/ctr/claims'); await expect(pm.page.getByTestId('ctr-claims')).toBeVisible(); await noOverflow(pm.page);
+    > 31 |   expect(errors, errors.join('\n')).toEqual([]);
+         |                                     ^
+      32 | });
+      33 |
+        at /home/user/ERP_SAP-CLS/e2e/ctr-claims.spec.js:31:37
+
+    Error Context: test-results/ctr-claims-Claims-claim-no-8043d--with-EOT-dispute-watchlist-desktop/error-context.md
+
+
+[6/19] [desktop] › e2e/data-health.spec.js:18:1 › before any run the page lists every check as "not run yet" and offers to run them
+[7/19] [desktop] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so
+[8/19] [desktop] › e2e/data-health.spec.js:44:1 › drill-down: a check's history shows its earlier results
+[9/19] [desktop] › e2e/data-health.spec.js:57:1 › SYSADM can read the report but the run button is disabled with a reason
+[10/19] [desktop] › e2e/data-health.spec.js:65:1 › other roles get the no-permission state and no check data; the nav entry is hidden
+[11/19] [desktop] › e2e/data-health.spec.js:72:1 › the report exports a CSV
+[12/19] [desktop] › e2e/data-health.spec.js:80:1 › turning the feature flag OFF hides the entry and the page at once
+[13/19] [desktop] › e2e/data-health.spec.js:94:1 › a server failure shows the error state with the correlation id and a retry
+[14/19] [desktop] › e2e/data-health.spec.js:108:1 › a failing run is reported when the server cannot complete it
+[15/19] [desktop] › e2e/data-health.spec.js:118:1 › no horizontal scroll with wide fonts, in every theme
+[16/19] [desktop] › e2e/items.spec.js:72:1 › T-02 FR-01 FR-07 the New Item wizard: template attributes, units, the duplicate warning before sending; approval by the steward
+[17/19] [desktop] › e2e/items.spec.js:117:1 › FR-04 FR-06 AC-01 a bill of resources kept with the selector; the Item Master list; catalogue items into the lines of a sample request
+[18/19] [desktop] › e2e/letters.spec.js:57:1 › AC-01 inward registration, outward letter approved and issued, thread, time-bar countdown and serving, in the browser
+[19/19] [desktop] › e2e/letters.spec.js:168:1 › AC-03 a person without the right sees the no-permission state
+  2 failed
+    [desktop] › e2e/bi-role-dashboards.spec.js:74:1 › Dashboard Inventory: widgets, role coverage, dashboards and a clean scan 
+    [desktop] › e2e/ctr-claims.spec.js:9:1 › Claims: claim, notice, quantum, evidence, approval, submission, determination with EOT, dispute, watchlist 
+  17 passed (2.0m)
