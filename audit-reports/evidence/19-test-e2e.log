@@ -520,3 +520,20 @@ Running 866 tests using 1 worker
 [313/866] [desktop] › e2e/policies-screenshots.spec.js:51:1 › screenshots of the policy pages
 [314/866] [desktop] › e2e/policies.spec.js:56:1 › AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-07 a policy is written, approved, acknowledged with a quiz, revised and compared
 [315/866] [desktop] › e2e/policies.spec.js:146:1 › AC-01 AC-02 FR-05 BR-02 a requirement becomes a draft control point that stays inactive; the administrator sees it on the worklist
+[316/866] [desktop] › e2e/portal-p2501.spec.js:21:1 › external portal sign-in, account workflows and supplier transactions fit the viewport
+[317/866] [desktop] › e2e/posting-p2302.spec.js:49:1 › AC-01 FR-03 FR-04 FR-05 FR-01 history replayed after a dry run and its approval; the failed posting closed; the sub-ledgers agree; a rule tested
+[318/866] [desktop] › e2e/proc-ana.spec.js:45:1 › Procurement dashboard: tiles, drill-down to records, work queues and charts; spend, cycle time and compliance reports
+[319/866] [desktop] › e2e/proc-ana.spec.js:65:1 › Procurement dashboard: a project manager reads it; a storekeeper has no access
+[320/866] [desktop] › e2e/proc-cs.spec.js:50:1 › Comparative statement: generated from the quotations, L1 marked, non-L1 needs a reason, approved by value, hidden from site roles
+[321/866] [desktop] › e2e/proc-mrp.spec.js:53:1 › MRP: run for a project, drill to the activities, change and accept proposals into a draft requisition, the heat-map and long-lead items, parameters by maker and checker
+[322/866] [desktop] › e2e/proc-po.spec.js:52:1 › Purchase order: from an approved statement, approved and sent; the vendor acknowledges and tells the dispatch; amended with a comparison; the tracker; masked for the storekeeper
+[323/866] [desktop] › e2e/proc-rc.spec.js:42:1 › Rate contract: made and approved, call-off at the contract rate, the ceiling, price variation; service order and service entry sheet
+[324/866] [desktop] › e2e/proc-requests.spec.js:41:1 › material request to purchase requisition: stock shown on the phone, approval by the construction manager, consolidation, the stock check, approval by value, rates hidden from the site engineer
+[325/866] [desktop] › e2e/proc-rfq.spec.js:45:1 › RFQ: made from an approved requisition, vendors picked, issued; a vendor quotes on its own link which then stops working; a second quotation is keyed in; the comparison marks the lowest; rates are hidden from the project manager
+[326/866] [desktop] › e2e/proc-rti.spec.js:42:1 › Rate intelligence: benchmark and trend, a survey with an outlier, a correction, index upload and the project exposure
+[327/866] [desktop] › e2e/proc-rti.spec.js:63:1 › Rate intelligence: the direction reads without entry rights; a storekeeper has no access
+[328/866] [desktop] › e2e/proc-vnd.spec.js:41:1 › Vendor list: prequalified and approved, scored with evidence, ranked, then suspended by approval
+[329/866] [desktop] › e2e/proc-vnd.spec.js:69:1 › Vendor list: a storekeeper has no access; a project manager reads the list and the scorecards only
+[330/866] [desktop] › e2e/proc-xpd.spec.js:46:1 › Expediting: a plan is approved, the vendor moves a milestone, the risk shows; the inspection release note clears the dispatch; shipment tracked and delivered
+[331/866] [desktop] › e2e/proc-xpd.spec.js:75:1 › Expediting: a storekeeper reads the shipments and cannot call an inspection or change a plan
+[332/866] [desktop] › e2e/project.spec.js:57:1 › AC-01 a project set up with the wizard, activated with approval, and moved through its lifecycle with checklists, in the browser

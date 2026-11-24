@@ -58,3 +58,14 @@ Commit `ed225efd`. Every "Verified" below was executed in this session on scratc
 | Real-time room checks | **Verified by tests** (`security-api` BR-02) |
 | "There is no socket server yet (D-109)" | **Contradicted:** `platform/realtime/socket.js` exists (AUD-DEF-006) |
 | Background work runs with the person's grants | **Verified by tests** (`security-api` FR-02) |
+
+## Addendum — dynamic scan
+
+`node scripts/dast_scan.mjs` (the CI `dast` job, run locally with Node 24.22.3): the application in-process on an empty in-memory database, development headers as SYSADM.
+
+- **Requests and surface:** 5,670 requests; 1,091 guarded lists probed with injection payloads in `q`.
+- **Checks:** security headers; CORS from a foreign origin; error bodies (stack traces, paths, SQL text); body size limit; path traversal on file routes; sampled 401 when signed out.
+- **Result:** **0 findings**, exit 0, 14 s.
+- **Evidence:** `evidence/p5-dast.log`, `evidence/p5-dast.json`.
+
+**Limit:** an empty database means the `/:id` reads return 404, so the scan cannot find leaks like AUD-DEF-012. The cross-company probe on a populated copy is what found them.
