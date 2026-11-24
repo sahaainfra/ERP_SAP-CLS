@@ -111,7 +111,7 @@ See README, "Not Executed".
 | Cross-company leaks | Fixed: the two audited leaks and a third in the KPI history. A permanent probe of every `/:id` and list route runs in the regression and in CI; on the data of a full E2E run it finds 0 leaks. |
 | Dev-headers guard | Fixed: refused whenever the environment is staging or production. Deploys start live with real sign-in. |
 | CI | Split into jobs that fit their limits. It still cannot run until GitHub Actions starts jobs on the account (AUD-DEF-001). |
-| Local gate | The bundle budget, the backup race and the perf harness are fixed. E2E went from 14 failures to 8 in one full run; 5 of those 8 were fixed during that run and pass when re-run. |
+| Local gate | The bundle budget, the backup race and the perf harness are fixed. E2E went from 14 failures to 8 in one full run; 5 of those 8 were fixed during that run and all pass when re-run, so only the 3 visual-baseline tests remain. |
 | Fixed along the way | Three real defects: a silent failure of the self-service request form, a dashboard listed twice, and an unkeyed claim evidence list. |
 | Still red | The three visual-baseline tests (D-830), which need a reviewed re-baseline. |
 

@@ -122,7 +122,7 @@ Code at `48f3002f`, the same 4-vCPU machine and Node 24.22.3 as the audit. Logs 
 | Client build, installable app | Pass | Pass | full regression run |
 | Bundle budget | **Fail** (Hindi 259.5 KB) | **Pass** (largest chunk 171.7 KB) | full regression run |
 | E2E, 866 tests | 785 passed, **14 failed**, 67 skipped | 791 passed, **8 failed**, 67 skipped | `s0-e2e-full.log` |
-| E2E, the 5 of those 8 whose fixes came during that run, re-run | — | data-health, operations health, plant hire, bill-vinv and ctr-variations: **32 / 32 passed** on desktop and mobile. ui-v3: UIV3_RESULT | `s0-e2e-confirm.log`, `s0-e2e-uiv3.log` |
+| E2E, the 5 of those 8 whose fixes came during that run, re-run | — | data-health, operations health, plant hire, bill-vinv and ctr-variations: **32 / 32 passed** on desktop and mobile. ui-v3 sweep on desktop: **passed** (25.4 min). **All 5 confirmed.** | `s0-e2e-confirm.log`, `s0-e2e-uiv3.log` |
 | Scope probe (new stage) on the data of the full run | — (the audit's one-off probe found 2 leaks) | **0 leaks**: 837 detail routes × ids 1–3, 1,445 list routes | `s0-scope-probe.log` |
 | Performance baseline | Not a valid measurement (429s) | 0 errors; every journey within its standard | `docs/erp/perf/baseline.json` |
 
