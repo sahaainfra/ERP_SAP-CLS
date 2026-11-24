@@ -537,3 +537,14 @@ Running 866 tests using 1 worker
 [330/866] [desktop] › e2e/proc-xpd.spec.js:46:1 › Expediting: a plan is approved, the vendor moves a milestone, the risk shows; the inspection release note clears the dispatch; shipment tracked and delivered
 [331/866] [desktop] › e2e/proc-xpd.spec.js:75:1 › Expediting: a storekeeper reads the shipments and cannot call an inspection or change a plan
 [332/866] [desktop] › e2e/project.spec.js:57:1 › AC-01 a project set up with the wizard, activated with approval, and moved through its lifecycle with checklists, in the browser
+[333/866] [desktop] › e2e/project360.spec.js:58:1 › AC-01 Project 360 with live widgets and empty slots, tabs, period, and the portfolio overview, in the browser
+[334/866] [desktop] › e2e/punches.spec.js:68:1 › AC-01 punch in and out, the fence decides, crew punch, kiosk, anomalies and the report, in the browser
+[335/866] [desktop] › e2e/punches.spec.js:148:1 › AC-03 a worker has no report, no anomalies and no kiosk; the pages show no console errors
+[336/866] [desktop] › e2e/pwa.spec.js:20:1 › T-01 FR-03 the manifest, icons and service worker meet the browser's installability criteria
+[337/866] [desktop] › e2e/pwa.spec.js:56:1 › T-01 FR-03 the app shell opens with no connection, from the first load on
+[338/866] [desktop] › e2e/pwa.spec.js:72:1 › FR-03 a copy kept for offline use is never shown to another person on the same device
+[339/866] [desktop] › e2e/pwa.spec.js:89:1 › FR-03 a newer version waits for the person, who reloads into it from the notice
+[340/866] [desktop] › e2e/pwa.spec.js:117:1 › FR-03 the install notice appears when the browser offers installation, installs on a click, and stays away for a while when dismissed
+[341/866] [desktop] › e2e/pwa.spec.js:141:1 › FR-03 on an iPhone the install notice gives the steps of Safari, since it has no prompt
+[342/866] [desktop] › e2e/pwa.spec.js:151:1 › FR-06 low-bandwidth mode is a setting of this device in the account menu, on by itself for a data saver
+[343/866] [desktop] › e2e/qa-dash.spec.js:50:1 › Quality: dashboard KPIs and exceptions, control charts with limits and a flagged sample, ratings
