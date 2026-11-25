@@ -159,3 +159,23 @@ Code at `48f3002f`, the same 4-vCPU machine and Node 24.22.3 as the audit. Logs 
 The E2E suite therefore has no known failure left from the audit.
 
 **Before merging:** the reviewer of the pull request checks the 61 changed images.
+
+## Small fixes and D-833 (approved by the owner, 2026-11-25)
+
+| Item | Fix | Commit | Proof |
+|---|---|---|---|
+| AUD-DEF-002 | The stale "Not started" rows of 23.01–23.03 are removed, and `defects --check` refuses a part listed twice. D-001 is closed and D-002 annotated. | `452a70d0` | The check fails on the old file |
+| AUD-DEF-011 | The MB abstract and the GL ledger allow at most 200 rows a page; the ledger export reads 500 internally. A test refuses any validator above 200. | `452a70d0` | The test fails on the old limits |
+| AUD-DEF-019 | `/bi/leakage` and its menu entry declare `bi.leakage.view` (a data migration with a down script). A test guards the pages that are open by design. | `452a70d0`, `0249739d` | The tests and nav-check |
+| AUD-DEF-003 | A test caps the database calls in each mount file. Moving the existing SQL stays planned. | `9c81b566` | The test trips when a call is added |
+| AUD-DEF-010 | PDFs carrying JavaScript or a launch action are quarantined, compressed object streams included. | `9c81b566` | The files tests and 108 PDF tests pass |
+| D-828 | No provisional header is drawn before the session arrives, so keyboard focus is kept. | `22b87986` | Reproduced: focus lost on the old build, kept on the new; an E2E test |
+| AUD-DEF-006 | The threat model is reviewed. Token links and portal isolation are listed to verify. | `f1bd8d99` | Each new claim checked against the code |
+| D-833 | The owner's decision: payroll cost goes to the allocated project, even before the project's set-up is complete. Commitments still need the set-up. | `21e1c07b` | The payroll test fails on the old ledger; 59 budget and payroll tests pass |
+
+**Regression on `0249739d`, without E2E: all 16 stages pass** (`evidence/s1-regression-no-e2e.log`).
+
+**E2E run for these changes:** the specs they touch:
+
+- shell, sign-in and the new focus test: 23 passed;
+- leakage: 2 passed.
