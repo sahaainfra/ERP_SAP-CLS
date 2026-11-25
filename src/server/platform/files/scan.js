@@ -37,6 +37,50 @@ export function createBuiltinScanner() {
   };
 }
 
+/**
+ * Active content in documents (audit AUD-DEF-010). A PDF can carry JavaScript (`/JavaScript`, `/JS`) or an action that starts a program
+ * (`/Launch`); a desktop reader may run them when someone downloads the file. Neither the type check (first bytes only) nor an anti-virus
+ * flags them, so this scanner always runs beside the others and holds such a PDF in quarantine. The in-app viewer (pdf.js) never runs them.
+ */
+const PDF_ACTIVE = [/\/JavaScript\b/, /\/JS\s*[(<[\d]/, /\/Launch\b/];
+const ACTIVE_DETAIL = 'PDF-Active-Content: the PDF carries JavaScript or a launch action';
+/** True when a parsed PDF holds a JavaScript or launch action anywhere, including inside compressed object streams. */
+async function pdfHasActiveContent(bytes) {
+  const { PDFDocument, PDFDict, PDFName } = await import('pdf-lib');
+  let doc;
+  try { doc = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false, throwOnInvalidObject: false }); } catch { return null; }
+  const JS = PDFName.of('JS'); const JAVASCRIPT = PDFName.of('JavaScript'); const S = PDFName.of('S'); const LAUNCH = PDFName.of('Launch');
+  for (const [, obj] of doc.context.enumerateIndirectObjects()) {
+    const dict = obj instanceof PDFDict ? obj : obj?.dict instanceof PDFDict ? obj.dict : null;
+    if (!dict) continue;
+    if (dict.has(JS) || dict.has(JAVASCRIPT)) return true;
+    const kind = dict.get(S);
+    if (kind === JAVASCRIPT || kind === LAUNCH) return true;
+  }
+  return false;
+}
+export function createActiveContentScanner({ maxBytes = 200 * 1024 * 1024 } = {}) {
+  return {
+    name: 'active-content',
+    async scan(openStream) {
+      const parts = []; let size = 0; let isPdf = null;
+      for await (const chunk of openStream()) {
+        const b = Buffer.from(chunk);
+        if (isPdf === null) isPdf = b.subarray(0, 5).toString('latin1') === '%PDF-';
+        if (!isPdf) return { status: 'CLEAN', detail: null };
+        size += b.length; if (size > maxBytes) return { status: 'CLEAN', detail: null };
+        parts.push(b);
+      }
+      if (!isPdf) return { status: 'CLEAN', detail: null };
+      const bytes = Buffer.concat(parts);
+      const parsed = await pdfHasActiveContent(bytes);
+      // a PDF the parser cannot read is searched as text for the same markers
+      const found = parsed ?? PDF_ACTIVE.some((re) => re.test(bytes.toString('latin1')));
+      return found ? { status: 'INFECTED', detail: ACTIVE_DETAIL } : { status: 'CLEAN', detail: null };
+    },
+  };
+}
+
 /** Parse clamd's reply, for example "stream: OK" or "stream: Win.Test.EICAR_HDB-1 FOUND" or "INSTREAM size limit exceeded. ERROR". */
 export function parseClamdReply(text) {
   const reply = text.replace(/\0/g, '').trim();

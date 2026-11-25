@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { hasPermission } from '../../../platform/auth/index.js';
 import { eventTypes } from '../../../platform/events/index.js';
 import { fileEntities } from '../../../platform/files/entities.js';
-import { createClamdScanner, createBuiltinScanner } from '../../../platform/files/scan.js';
+import { createActiveContentScanner, createClamdScanner, createBuiltinScanner } from '../../../platform/files/scan.js';
 import { createSigner } from '../../../platform/files/signing.js';
 import { bindFiles } from '../../../platform/files/registry.js';
 import { createLocalStorage } from '../../../platform/files/storage.js';
@@ -41,7 +41,7 @@ fileEntities.register({
 /** Build the file service for a database and mount its routes (behind ff.core.p0105) and its signed download route. */
 export function mountFiles({ api, publicApi, db, config, runtime, approvals, opts, isFlagOn, storagePath, persist = true }) {
   const storage = createLocalStorage({ root: join(storagePath, 'files') });
-  const scanners = [createBuiltinScanner()];
+  const scanners = [createBuiltinScanner(), createActiveContentScanner()];
   if (config.clamav) scanners.push(createClamdScanner(config.clamav));
   const signer = createSigner(config.fileUrlSecret ?? randomBytes(32).toString('hex'));
   const service = createFileService({ db, storage, scanners, jobs: runtime.jobs, signer, approvals });

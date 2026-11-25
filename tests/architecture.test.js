@@ -50,6 +50,20 @@ test('BR-01 controllers hold no SQL and no business rules: no database access ou
   }
 });
 
+// Audit AUD-DEF-003: most modules keep SQL in services (there are 11 repository files) and some in the mount file (modules/<m>/index.js: job
+// handlers, event consumers, routes declared in place). Moving it is planned work; until then the mount files may not gain database calls.
+// Lower a number when SQL moves out; never raise it (put new SQL in a service or repository instead).
+const MOUNT_SQL_CEILING = Object.freeze({ admin: 8, ai: 5, bd: 4, bi: 3, bill: 31, bud: 2, core: 1, ctr: 18, eng: 9, engg: 2, est: 3, fin: 17, hr: 15, hse: 16, iam: 12, inv: 36, mdm: 7, msg: 2, pay: 20, plan: 29, plant: 38, pol: 2, portal: 2, proc: 69, proj: 8, qa: 20, rmc: 10, sec: 2, site: 44, tst: 1, ui: 4 });
+test('BR-01 the mount file of a module does not gain database calls (audit AUD-DEF-003)', () => {
+  const over = [];
+  for (const dir of readdirSync(join(ROOT, 'src', 'server', 'modules'))) {
+    let text; try { text = readFileSync(join(ROOT, 'src', 'server', 'modules', dir, 'index.js'), 'utf8'); } catch { continue; }
+    const n = (text.match(/\.prepare\(|\.exec\(/g) ?? []).length;
+    if (n > (MOUNT_SQL_CEILING[dir] ?? 0)) over.push(`modules/${dir}/index.js: ${n} database calls, ceiling ${MOUNT_SQL_CEILING[dir] ?? 0}`);
+  }
+  assert.deepEqual(over, []);
+});
+
 test('BR-02 no list endpoint can return an unbounded page', async () => {
   const r = await api.call('GET', '/api/v1/core/feature-flags?pageSize=201', { roles: 'SYSADM' });
   assert.equal(r.status, 400);

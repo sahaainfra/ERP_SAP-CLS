@@ -8,7 +8,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import '../src/server/modules/registry.js';
-import { EICAR, TEST_VIRUS, createBuiltinScanner, createClamdScanner, parseClamdReply, runScanners } from '../src/server/platform/files/scan.js';
+import { EICAR, TEST_VIRUS, createActiveContentScanner, createBuiltinScanner, createClamdScanner, parseClamdReply, runScanners } from '../src/server/platform/files/scan.js';
+import { PDFDocument } from 'pdf-lib';
 import { checkType, extensionOf, looksLikeText } from '../src/server/platform/files/types.js';
 import { createLocalStorage } from '../src/server/platform/files/storage.js';
 import { createSigner } from '../src/server/platform/files/signing.js';
@@ -592,6 +593,30 @@ test('the admin list filters by scan status and the whole feature is hidden whil
     await t.api.call('PATCH', `${C}/feature-flags/ff.core.p0105`, { ...sys, headers: { ...key(1), ...json }, body: { scope: { level: 'company', companyId: 1 }, enabled: false, reason: 'switching files off' } });
     for (const path of ['/files/overview', `/files?entity=sample_document&entityId=${t.doc.id}`]) assert.equal((await t.api.call('GET', C + path, sys)).status, 404, path);
     assert.equal((await t.api.call('GET', `${C}/financial-years`, sys)).status, 200, 'other parts are unaffected');
+  } finally {
+    await t.cleanup();
+  }
+});
+
+test('BR-AUD-010 a PDF carrying JavaScript is quarantined; an ordinary PDF passes (audit AUD-DEF-010)', async () => {
+  const plain = await PDFDocument.create(); plain.addPage([200, 200]);
+  const active = await PDFDocument.create(); active.addPage([200, 200]); active.addJavaScript('hello', 'app.alert("hello")');
+  const plainBytes = Buffer.from(await plain.save()); const activeBytes = Buffer.from(await active.save());
+  const once = (b) => () => (async function* () { yield b; })();
+  const s = createActiveContentScanner();
+  assert.equal((await s.scan(once(plainBytes))).status, 'CLEAN');
+  assert.equal((await s.scan(once(activeBytes))).status, 'INFECTED');
+  assert.equal((await s.scan(once(Buffer.from('a text that mentions /JavaScript is not a PDF')))).status, 'CLEAN');
+  const t = await setup();
+  try {
+    const good = await t.upload(plainBytes, 'drawing.pdf'); assert.equal(good.status, 201);
+    const bad = await t.upload(activeBytes, 'invoice.pdf'); assert.equal(bad.status, 201, 'a real PDF passes the type check');
+    await t.done();
+    assert.equal((await t.api.call('GET', `${C}/files/${good.json.data.id}`, pm)).json.data.scanStatus, 'CLEAN');
+    const meta = (await t.api.call('GET', `${C}/files/${bad.json.data.id}`, pm)).json.data;
+    assert.equal(meta.scanStatus, 'INFECTED');
+    assert.match(meta.scanDetail, /PDF-Active-Content/);
+    assert.equal((await t.api.call('GET', `${C}/files/${bad.json.data.id}/url`, pm)).status, 409, 'not downloadable');
   } finally {
     await t.cleanup();
   }
