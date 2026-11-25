@@ -28,6 +28,7 @@ const all = [
   { id: 'icon-map', title: 'Icon map generated from the icon registry (part 03.01)', cmd: [node, 'scripts/build_icons.mjs', '--check'] },
   { id: 'nav-check', title: 'Navigation registry: every page has an entry, every entry a page (part 03.05)', cmd: [node, 'scripts/nav_check.mjs'] },
   { id: 'route-check', title: 'Route registry: every route declared with its permission (part 02.07)', cmd: [node, 'scripts/route_check.mjs'] },
+  { id: 'openapi-check', title: 'OpenAPI: every declared route documented, none stale, the generated file current (audit AUD-DEF-005)', cmd: [node, 'scripts/openapi_routes.mjs', '--check'] },
   { id: 'permission-audit', title: 'Permission audit: every holder of a sensitive permission is reviewed (part 166.1)', cmd: [node, 'scripts/permission_audit.mjs'] },
   { id: 'defects', title: 'Defect register: target part and gate on every open row; the by-part list is current (part 166.1)', cmd: [node, 'scripts/defects_by_part.mjs', '--check'] },
   { id: 'db-check', title: 'Data-integrity suite (Critical failures block)', cmd: [node, 'scripts/db_check.mjs', '--fresh'] },

@@ -1052,7 +1052,7 @@ paths:
   /api/v1/iam/lookups/{name}:
     get: { summary: 'Generic lookup (projects, sites, cost-centres, departments, users): ?q=&page=&pageSize=&parent=&id=; { id, code, name, extra } rows and meta.columns', responses: { '200': { description: '{ data, meta }' } } }
   /api/v1/core/lookups/{name}:
-    get: { summary: 'Generic lookup (uoms)', responses: { '200': { description: '{ data, meta }' } } }
+    get: { summary: 'Generic lookup by its registered name (uoms; and the lookups modules register, for example hr/employees: approved employees still here, within the viewer''s scope, for the reporting manager, deployment and attendance fields)', responses: { '200': { description: '{ data, meta }' } } }
   /api/v1/core/holidays:
     get: { summary: 'Holidays between two dates for a place (?from=&to=&siteId=&stateCode=; at most 400 days)', responses: { '200': { description: '{ data }' } } }
   /api/v1/ui/lists/{code}:
@@ -3056,10 +3056,6 @@ paths:
   /api/v1/hr/employees/changes/{changeId}/cancel:
     post:
       summary: Cancel a change that is waiting
-      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
-  /api/v1/hr/lookups/employees:
-    get:
-      summary: Employees for the lookups of other forms (reporting manager, deployment, attendance)
       responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
   /api/v1/hr/plans:
     get:

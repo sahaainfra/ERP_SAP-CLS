@@ -44,6 +44,7 @@
     "erp:gen-data": "node scripts/gen_data.mjs",
     "erp:perf-baseline": "node scripts/perf_baseline.mjs",
     "erp:scope-probe": "node scripts/scope_probe.mjs",
+    "erp:openapi": "node scripts/openapi_routes.mjs",
     "erp:search-perf": "node scripts/search_perf.mjs",
     "erp:workflow-perf": "node scripts/workflow_perf.mjs",
     "erp:pcs-perf": "node scripts/pcs_perf.mjs",
