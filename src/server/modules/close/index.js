@@ -9,6 +9,7 @@ import { closureOf } from './closure.js';
 import { dlpOf } from './dlp.js';
 import { readinessProviders } from '../proj/project.js';
 import { handoverOf } from './handover.js';
+import { closureScope, companyIds, complaintScope, handoverCompany, handoverScope, hasTable, systemChildScope } from './repository.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { closeRoutes, closureRoutes, commissioningRoutes, dlpRoutes, handoverRoutes } from './routes.js';
 
@@ -29,14 +30,14 @@ integrityRegistry.register({
 
 // files: the client-signed copy of a certificate and the evidence of a test pack, seen and attached by who may act on them
 const fileOf = (table, editKey, closed) => (db, actor, id) => {
-  const r = db.prepare(`SELECT x.status, x.company_id, s.org_project_id, s.org_site_id FROM ${table} x JOIN tnc_systems s ON s.id = x.system_id WHERE x.id = ? AND x.company_id = ? AND x.deleted_at IS NULL`).get(Number(id), actor.companyId);
+  const r = systemChildScope(db, table, id, actor.companyId);
   if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined }).allowed;
   if (!at('tnc.view')) return null;
   return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined, canView: true, canEdit: at(editKey), locked: closed.includes(r.status) };
 };
 fileEntities.register({ entity: 'tnc_certificates', label: 'Commissioning certificate (the copy the client signed)', resolve: fileOf('tnc_certificates', 'tnc.certificate.sign', ['ISSUED', 'REJECTED', 'CANCELLED']) });
 const hoFile = (db, actor, id, table) => {
-  const r = db.prepare(`SELECT h.status, h.company_id, h.org_project_id, h.org_site_id FROM ${table === 'ho_handovers' ? 'ho_handovers h WHERE h.id = ?' : 'ho_checklist_items i JOIN ho_handovers h ON h.id = i.handover_id WHERE i.id = ?'} AND h.company_id = ? AND h.deleted_at IS NULL`).get(Number(id), actor.companyId);
+  const r = handoverScope(db, table, id, actor.companyId);
   if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined }).allowed;
   if (!at('ho.view')) return null;
   return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined, canView: true, canEdit: at(table === 'ho_handovers' ? 'ho.sign' : 'ho.manage'), locked: ['ISSUED', 'CANCELLED'].includes(r.status) };
@@ -44,13 +45,13 @@ const hoFile = (db, actor, id, table) => {
 fileEntities.register({ entity: 'ho_handovers', label: 'Handover certificate (the copy the client signed)', resolve: (db, actor, id) => hoFile(db, actor, id, 'ho_handovers') });
 fileEntities.register({ entity: 'ho_checklist_items', label: 'Handover checklist item (evidence for the dossier)', resolve: (db, actor, id) => hoFile(db, actor, id, 'ho_checklist_items') });
 fileEntities.register({ entity: 'dlp_complaints', label: 'Defects liability complaint (photographs and rectification evidence)', resolve: (db, actor, id) => {
-  const r = db.prepare('SELECT c.status, c.company_id, p.org_project_id, p.org_site_id FROM dlp_complaints c JOIN dlp_periods p ON p.id = c.period_id WHERE c.id = ? AND c.company_id = ? AND c.deleted_at IS NULL').get(Number(id), actor.companyId);
+  const r = complaintScope(db, id, actor.companyId);
   if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined }).allowed;
   if (!at('dlp.view')) return null;
   return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined, canView: true, canEdit: at('dlp.rectify') || at('dlp.complaint.create'), locked: ['CLOSED', 'REJECTED'].includes(r.status) };
 } });
 fileEntities.register({ entity: 'cls_closures', label: 'Project closeout (final account and checklist evidence)', resolve: (db, actor, id) => {
-  const r = db.prepare('SELECT status, company_id, org_project_id FROM cls_closures WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId);
+  const r = closureScope(db, id, actor.companyId);
   if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed;
   if (!at('cls.view')) return null;
   return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: at('cls.manage'), locked: ['SUBMITTED', 'APPROVED', 'CANCELLED'].includes(r.status) };
@@ -78,22 +79,22 @@ export const close = {
   /** Later parts add their routes here: (router, helpers, ctx). */
   parts: new Map(),
   mount(api, { db, config: appConfig }) {
-    if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tnc_systems'").get()) return;
+    if (!hasTable(db, 'tnc_systems')) return;
     const flags = createFlagService({ db, environment: appConfig.environment });
     const parts = { commissioning: (r, h) => commissioningRoutes(r, commissioningOf(db), h) };
-    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ho_handovers'").get()) parts.handover = (r, h) => handoverRoutes(r, handoverOf(db), h);
-    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'dlp_periods'").get()) {
+    if (hasTable(db, 'ho_handovers')) parts.handover = (r, h) => handoverRoutes(r, handoverOf(db), h);
+    if (hasTable(db, 'dlp_periods')) {
       const dlp = dlpOf(db); parts.dlp = (r, h) => dlpRoutes(r, dlp, h);
       const runtime = runtimeOf(db);
       // FR-01: an issued handover opens its defects liability period (when the part is on for the company; otherwise it is opened by hand later)
       runtime?.bus?.subscribe('ho.handover.issued', (event) => {
-        const h = db.prepare('SELECT company_id FROM ho_handovers WHERE id = ?').get(Number(event.data?.handoverId)); if (!h || !flags.isOn({ companyId: h.company_id }, 'ff.close.p2603')) return;
-        dlp.openFor(h.company_id, event.data.handoverId);
+        const companyId = handoverCompany(db, event.data?.handoverId); if (!companyId || !flags.isOn({ companyId }, 'ff.close.p2603')) return;
+        dlp.openFor(companyId, event.data.handoverId);
       }, { consumer: 'close.dlp.open' });
-      runtime?.jobs?.register('close.dlp_sweep', (jctx) => { let escalated = 0; let ending = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.close.p2603')) continue; const r = dlp.sweep(c.id); escalated += r.escalated; ending += r.ending; } jctx.log(`Escalated ${escalated} overdue complaint(s); told about ${ending} period(s) ending`); return { escalated, ending }; }, { maxAttempts: 2, description: 'Defects liability: overdue complaints escalated, periods ending within 30 days told' });
+      runtime?.jobs?.register('close.dlp_sweep', (jctx) => { let escalated = 0; let ending = 0; for (const companyId of companyIds(db)) { if (!flags.isOn({ companyId }, 'ff.close.p2603')) continue; const r = dlp.sweep(companyId); escalated += r.escalated; ending += r.ending; } jctx.log(`Escalated ${escalated} overdue complaint(s); told about ${ending} period(s) ending`); return { escalated, ending }; }, { maxAttempts: 2, description: 'Defects liability: overdue complaints escalated, periods ending within 30 days told' });
       runtime?.scheduler?.define({ code: 'close.dlp_sweep_hourly', cron: '25 * * * *', jobType: 'close.dlp_sweep', description: 'Hourly at :25: overdue defects liability complaints escalate; periods ending within 30 days are told once a day' });
     }
-    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'cls_closures'").get()) { flagsOf.set(db, flags); parts.closure = (r, h) => closureRoutes(r, closureOf(db), h); }
+    if (hasTable(db, 'cls_closures')) { flagsOf.set(db, flags); parts.closure = (r, h) => closureRoutes(r, closureOf(db), h); }
     for (const [name, make] of close.parts) parts[name] = (r, h) => make(r, h, { db, flags });
     api.use('/close', closeRoutes({ idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags, parts }));
   },
