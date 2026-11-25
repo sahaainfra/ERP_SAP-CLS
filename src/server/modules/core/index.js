@@ -72,6 +72,7 @@ integrityRegistry.register({
     core_backfill_runs: ['running', 'completed', 'failed'],
     core_financial_years: ['Open', 'Closed'],
     core_change_requests: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'],
+    core_flag_changes: ['PENDING', 'APPLIED', 'REJECTED', 'CANCELLED'],
     core_number_issues: ['ISSUED', 'CANCELLED'],
     core_sample_documents: ['DRAFT', 'SUBMITTED', 'CANCELLED'],
     core_inbox: ['PENDING', 'PROCESSED', 'DEAD', 'DISCARDED'],
