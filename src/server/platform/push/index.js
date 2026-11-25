@@ -38,6 +38,7 @@ export function makeVapidKeys() {
  * null, which means this installation offers no push.
  */
 export function loadVapid({ config, dir }) {
+  if (config.sandbox) return null; // part 30.04: no web push from the sandbox
   if (config.push) return { ...config.push };
   if (config.environment === 'production' || config.environment === 'staging' || !dir) return null;
   const file = join(dir, 'vapid.json');

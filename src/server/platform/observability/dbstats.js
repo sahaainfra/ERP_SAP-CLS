@@ -9,12 +9,25 @@ const TIMED = new Set(['run', 'get', 'all', 'iterate']);
  * ID, and inside a traced request each becomes a child span of the request. SQL text is normalised (literals become ?), so no
  * data reaches the metrics or the traces. Safe to call twice on one database.
  */
-/** @param {any} db @param {{ metrics?: any, tracer?: any, slowMs?: number, spanMs?: number }} [options] */
-export function instrumentDb(db, { metrics, tracer, slowMs = 100, spanMs = 0 } = {}) {
+/** @param {any} db @param {{ metrics?: any, tracer?: any, slowMs?: number, spanMs?: number, cacheSize?: number }} [options] */
+export function instrumentDb(db, { metrics, tracer, slowMs = 100, spanMs = 0, cacheSize = 2000 } = {}) {
   if (db[WRAPPED]) return db;
   const prepare = db.prepare.bind(db);
+  // Part 30.06 FR-03: compiling a statement was the largest single cost under load (8 of 40 busy seconds of the punch burst): the
+  // services prepare their SQL at each call. The compiled statement of each SQL text is kept (least recently used out first) and reused;
+  // SQLite recompiles a kept statement by itself after a schema change. `iterate` always gets a statement of its own, so an open
+  // iterator is never shared with another caller of the same SQL.
+  const cache = new Map();
+  const compiled = (sql) => {
+    let st = cache.get(sql);
+    if (st) { cache.delete(sql); cache.set(sql, st); return st; }
+    st = prepare(sql);
+    cache.set(sql, st);
+    if (cache.size > cacheSize) cache.delete(cache.keys().next().value);
+    return st;
+  };
   db.prepare = (sql) => {
-    const statement = prepare(sql);
+    const statement = typeof sql === 'string' && cacheSize > 0 ? compiled(sql) : prepare(sql);
     return new Proxy(statement, {
       get(target, prop) {
         const value = target[prop];
@@ -23,6 +36,7 @@ export function instrumentDb(db, { metrics, tracer, slowMs = 100, spanMs = 0 } =
         return (...args) => {
           const started = process.hrtime.bigint();
           try {
+            if (prop === 'iterate' && cache.get(sql) === target) return prepare(sql).iterate(...args);
             return value.apply(target, args);
           } finally {
             const ms = Number(process.hrtime.bigint() - started) / 1e6;

@@ -46,6 +46,8 @@ import af from './en/af.js';
 import di from './en/di.js';
 import cv from './en/cv.js';
 import adm from './en/adm.js';
+import tst from './en/tst.js';
+import close from './en/close.js';
 import con from './en/con.js';
 import dev from './en/dev.js';
 import bk from './en/bk.js';
@@ -117,6 +119,8 @@ export default {
   di: di,
   cv: cv,
   adm: adm,
+  tst: tst,
+  close: close,
   con: con,
   dev: dev,
   bk: bk,

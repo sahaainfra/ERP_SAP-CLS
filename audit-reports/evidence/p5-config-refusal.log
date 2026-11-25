@@ -1,0 +1,19 @@
+REFUSED   production + dev-headers -> Invalid configuration:
+  - AUTH_MODE=dev-headers is not allowed when NODE_ENV=production: it trusts client-supplied identity headers. The IAM module (part 02.x)
+REFUSED   staging + dev-headers -> Invalid configuration:
+  - AUTH_MODE=dev-headers is not allowed when NODE_ENV=staging: it trusts client-supplied identity headers. The IAM module (part 02.x) mu
+REFUSED   production, AUTH_MODE unset -> Invalid configuration:
+  - AUTH_MODE=dev-headers is not allowed when NODE_ENV=production: it trusts client-supplied identity headers. The IAM module (part 02.x)
+REFUSED   production, AUTH_MODE typo "dev_headers" -> Invalid configuration:
+  - AUTH_MODE: Invalid option: expected one of "dev-headers"|"iam". See .env.example.
+REFUSED   production, ERP_ENVIRONMENT=development with NODE_ENV=production + dev-headers -> Invalid configuration:
+  - AUTH_MODE=dev-headers is not allowed when NODE_ENV=production: it trusts client-supplied identity headers. The IAM module (part 02.x)
+ACCEPTED  NODE_ENV=test, ERP_ENVIRONMENT=production + dev-headers -> environment=production authMode=dev-headers
+REFUSED   production + iam, no AUTH_SECRET -> Invalid configuration:
+  - AUTH_SECRET is required when AUTH_MODE=iam and NODE_ENV=production: it signs the sign-in tokens and must be the same on every instanc
+ACCEPTED  production + iam, all secrets -> environment=production authMode=iam
+ACCEPTED  development, AUTH_MODE unset -> environment=development authMode=dev-headers
+REFUSED   NODE_ENV unset, ERP_ENVIRONMENT=production, AUTH_MODE unset -> Invalid configuration:
+  - NODE_ENV: is required but not set. See .env.example.
+REFUSED   NODE_ENV unset, ERP_ENVIRONMENT=staging, AUTH_MODE unset -> Invalid configuration:
+  - NODE_ENV: is required but not set. See .env.example.

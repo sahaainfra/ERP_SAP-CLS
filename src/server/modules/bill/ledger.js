@@ -1,6 +1,6 @@
 import { transaction } from '../../platform/db/index.js';
 import { toPdf } from '../../platform/export/index.js';
-import { conflict, unprocessable } from '../../platform/http/errors.js';
+import { badRequest, conflict, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { toCsv } from '../../platform/security/csv.js';
 import { daysBetween, todayIST } from '../../../shared/dates.js';
@@ -184,7 +184,8 @@ export function createLedgerService({ db, base }) {
       return { partyType, rows: rows.sort((a, b) => String(a.ref).localeCompare(String(b.ref)) || a.kind.localeCompare(b.kind)), totals: { deducted: sumOf(rows, 'deducted'), released: sumOf(rows, 'released'), balance: sumOf(rows, 'balance'), count: rows.length }, ageing: buckets };
     },
     entries(actor, q) {
-      gate(actor, 'bill.retention.view', 'see the retention ledger'); const partyType = q.partyType === 'SUBCONTRACTOR' ? 'SUBCONTRACTOR' : 'CLIENT'; const s = { partyType, kind: q.kind === 'SD' ? 'SD' : 'RETENTION', contractId: partyType === 'CLIENT' ? q.scopeId : null, woId: partyType === 'SUBCONTRACTOR' ? q.scopeId : null };
+      gate(actor, 'bill.retention.view', 'see the retention ledger'); if (q.scopeId == null) throw badRequest('Choose the contract or work order of the ledger.', [{ field: 'scopeId', message: 'Required' }]); // part 30.05: was a server error
+      const partyType = q.partyType === 'SUBCONTRACTOR' ? 'SUBCONTRACTOR' : 'CLIENT'; const s = { partyType, kind: q.kind === 'SD' ? 'SD' : 'RETENTION', contractId: partyType === 'CLIENT' ? q.scopeId : null, woId: partyType === 'SUBCONTRACTOR' ? q.scopeId : null };
       const rows = db.prepare(`SELECT * FROM bill_retention_ledger WHERE company_id = ? AND party_type = ? AND kind = ? AND ${scopeSql(s)} AND deleted_at IS NULL ORDER BY id`).all(actor.companyId, partyType, s.kind, q.scopeId); if (rows[0] && !may(actor, 'bill.retention.view', rows[0].org_project_id)) throw unprocessable('That ledger is not in your scope.');
       return { rows: rows.map((x) => ({ id: x.id, date: x.txn_date, type: x.txn_type, source: x.txn_source, ref: x.bill_ref, amount: rs(x.amount_paise), balance: rs(x.balance_paise) })) };
     },

@@ -5804,6 +5804,91 @@ Indexes:
 - ix_close_tasks_close_id: close_id
 - ux_close_tasks_code (unique): close_id, task_code
 
+## cls_checklist_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| closure_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| kind | TEXT | yes |  | 'MANUAL' |
+| mandatory | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'OPEN' |
+| file_id | INTEGER |  |  |  |
+| note | TEXT |  |  |  |
+| done_by | TEXT |  |  |  |
+| done_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), closure_id -> cls_closures(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_cls_checklist_items_file: file_id
+- ix_cls_checklist_items_status: company_id, status
+- ix_cls_checklist_items_closure: closure_id
+- ix_cls_checklist_items_company_id: company_id
+- ux_cls_checklist_code (unique): closure_id, code
+
+## cls_closures
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| final_account_paise | INTEGER |  |  |  |
+| final_account_agreed_on | TEXT |  |  |  |
+| final_account_file_id | INTEGER |  |  |  |
+| pl_snapshot_id | INTEGER |  |  |  |
+| revenue_paise | INTEGER |  |  |  |
+| cost_paise | INTEGER |  |  |  |
+| performance_json | TEXT | yes |  | '{}' |
+| summary | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| readiness_json | TEXT | yes |  | '{}' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: pl_snapshot_id -> pl_snapshots(id), final_account_file_id -> core_files(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_cls_closures_snapshot: pl_snapshot_id
+- ix_cls_closures_file: final_account_file_id
+- ix_cls_closures_status: company_id, status
+- ix_cls_closures_project: org_project_id
+- ix_cls_closures_company_id: company_id
+- ux_cls_closures_live (unique): org_project_id
+- ux_cls_closures_doc (unique): company_id, doc_no
+
 ## col_comments
 
 | Column | Type | Not null | Key | Default |
@@ -6765,6 +6850,52 @@ Indexes:
 - ix_core_financial_years_company_status: company_id, status
 - ux_core_financial_years_code (unique): company_id, code
 
+## core_flag_changes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| flag_key | TEXT | yes |  |  |
+| scope_level | TEXT | yes |  |  |
+| scope_environment | TEXT |  |  |  |
+| scope_company_id | INTEGER |  |  |  |
+| scope_project_id | INTEGER |  |  |  |
+| enabled | INTEGER | yes |  |  |
+| area | TEXT | yes |  | 'GENERAL' |
+| reason | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| requested_by | TEXT | yes |  |  |
+| first_approved_by | TEXT |  |  |  |
+| first_approved_at | TEXT |  |  |  |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| decision_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: scope_project_id -> org_projects(id), scope_company_id -> org_companies(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_core_flag_changes_scope_project_id: scope_project_id
+- ix_core_flag_changes_scope_company_id: scope_company_id
+- ix_core_flag_changes_key: flag_key
+- ix_core_flag_changes_status: company_id, status
+- ix_core_flag_changes_company_id: company_id
+- ux_core_flag_changes_doc (unique): company_id, doc_no
+
 ## core_formulas
 
 | Column | Type | Not null | Key | Default |
@@ -7279,6 +7410,7 @@ Indexes:
 | remarks | TEXT |  |  |  |
 
 Indexes:
+- ix_core_sample_documents_list: company_id, is_active, id
 - ix_core_sample_documents_project: project_id
 - ix_core_sample_documents_company_status: company_id, status
 - ux_core_sample_documents_doc_no (unique): company_id, doc_no
@@ -9577,6 +9709,144 @@ Indexes:
 - ix_di_extractions_queue: company_id, status, extracted_at
 - ux_di_extractions_file (unique): company_id, file_id
 - sqlite_autoindex_di_extractions_1 (unique): company_id, doc_no
+
+## dlp_complaints
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| asset_id | INTEGER |  |  |  |
+| doc_no | TEXT | yes |  |  |
+| reported_on | TEXT | yes |  |  |
+| reported_by | TEXT | yes |  |  |
+| source | TEXT | yes |  | 'CLIENT' |
+| location_text | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| severity | TEXT | yes |  | 'MINOR' |
+| due_at | TEXT | yes |  |  |
+| responsible_type | TEXT |  |  |  |
+| partner_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| rectified_by | TEXT |  |  |  |
+| rectified_at | TEXT |  |  |  |
+| rectification_note | TEXT |  |  |  |
+| rectify_file_id | INTEGER |  |  |  |
+| verified_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| recovery_amount | INTEGER | yes |  | 0 |
+| escalation_level | INTEGER | yes |  | 0 |
+| escalated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: rectify_file_id -> core_files(id), partner_id -> mdm_partners(id), asset_id -> ho_client_assets(id), period_id -> dlp_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_dlp_complaints_file: rectify_file_id
+- ix_dlp_complaints_partner: partner_id
+- ix_dlp_complaints_asset: asset_id
+- ix_dlp_complaints_status: company_id, status, due_at
+- ix_dlp_complaints_period: period_id, status
+- ix_dlp_complaints_company_id: company_id
+- ux_dlp_complaints_doc (unique): company_id, doc_no
+
+## dlp_periods
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| handover_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| area_label | TEXT |  |  |  |
+| starts_on | TEXT | yes |  |  |
+| ends_on | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| completed_at | TEXT |  |  |  |
+| expiry_notified_on | TEXT |  |  |  |
+| readiness_json | TEXT | yes |  | '{}' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: handover_id -> ho_handovers(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_dlp_periods_status: company_id, status, ends_on
+- ix_dlp_periods_handover: handover_id
+- ix_dlp_periods_site: org_site_id
+- ix_dlp_periods_project: org_project_id
+- ix_dlp_periods_company_id: company_id
+- ux_dlp_periods_handover (unique): handover_id
+- ux_dlp_periods_doc (unique): company_id, doc_no
+
+## dlp_warranty_claims
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| asset_id | INTEGER | yes |  |  |
+| complaint_id | INTEGER |  |  |  |
+| partner_id | INTEGER |  |  |  |
+| doc_no | TEXT | yes |  |  |
+| claimed_on | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| resolution_note | TEXT |  |  |  |
+| resolved_on | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), complaint_id -> dlp_complaints(id), asset_id -> ho_client_assets(id), period_id -> dlp_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_dlp_warranty_claims_status: company_id, status
+- ix_dlp_warranty_claims_partner: partner_id
+- ix_dlp_warranty_claims_complaint: complaint_id
+- ix_dlp_warranty_claims_asset: asset_id
+- ix_dlp_warranty_claims_period: period_id
+- ix_dlp_warranty_claims_company_id: company_id
+- ux_dlp_warranty_claims_doc (unique): company_id, doc_no
 
 ## doc_annotations
 
@@ -13366,6 +13636,233 @@ Indexes:
 - ix_gis_progress_project: org_project_id, activity, as_of
 - ix_gis_progress_company_id: company_id
 
+## golive_checklist
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| criterion | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| mandatory | INTEGER | yes |  | 1 |
+| evaluation | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| owner_id | TEXT |  |  |  |
+| evidence_links | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'OPEN' |
+| detail | TEXT |  |  |  |
+| measured_value | NUMERIC(18,4) |  |  |  |
+| target_value | NUMERIC(18,4) |  |  |  |
+| checked_by | TEXT |  |  |  |
+| checked_at | TEXT |  |  |  |
+| waiver_reason | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_checklist_status: company_id, status
+- ux_golive_checklist_criterion (unique): company_id, criterion
+
+## golive_cutover_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| window_minutes | INTEGER | yes |  |  |
+| planned_start | TEXT |  |  |  |
+| status | TEXT | yes |  | 'PLANNED' |
+| rollback_point | TEXT |  |  |  |
+| decision_id | INTEGER |  |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| elapsed_minutes | NUMERIC(18,2) |  |  |  |
+| within_window | INTEGER |  |  |  |
+| started_by | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_cutover_runs_decision: decision_id
+- ix_golive_cutover_runs_status: company_id, kind, status
+- ux_golive_cutover_runs_no (unique): company_id, run_no
+
+## golive_cutover_steps
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| seq | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| mode | TEXT | yes |  |  |
+| planned_minutes | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| done_by | TEXT |  |  |  |
+| detail | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: run_id -> golive_cutover_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_cutover_steps_company: company_id, status
+- ux_golive_cutover_steps_seq (unique): run_id, seq
+
+## golive_decisions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| decision_no | TEXT | yes |  |  |
+| meeting_at | TEXT | yes |  |  |
+| attendees_json | TEXT | yes |  | '[]' |
+| recommendation | TEXT | yes |  |  |
+| go_live_at | TEXT |  |  |  |
+| criteria_json | TEXT | yes |  | '[]' |
+| minutes | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SUBMITTED' |
+| request_id | INTEGER |  |  |  |
+| decided_at | TEXT |  |  |  |
+| communicated_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_decisions_request: request_id
+- ix_golive_decisions_status: company_id, status
+- ux_golive_decisions_no (unique): company_id, decision_no
+
+## golive_hypercare
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| decision_id | INTEGER |  |  |  |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| war_room_json | TEXT | yes |  | '[]' |
+| handover_notes | TEXT |  |  |  |
+| handover_request_id | INTEGER |  |  |  |
+| handed_over_by | TEXT |  |  |  |
+| handed_over_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: decision_id -> golive_decisions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_hypercare_decision: decision_id
+- ix_golive_hypercare_status: company_id, status
+
+## golive_hypercare_days
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| hypercare_id | INTEGER | yes |  |  |
+| report_date | TEXT | yes |  |  |
+| opened_count | INTEGER | yes |  | 0 |
+| closed_count | INTEGER | yes |  | 0 |
+| open_by_severity_json | TEXT | yes |  | '{}' |
+| kpis_json | TEXT | yes |  | '{}' |
+| triage_notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| published_by | TEXT |  |  |  |
+| published_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: hypercare_id -> golive_hypercare(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_golive_hypercare_days_company: company_id, report_date
+- ux_golive_hypercare_days_date (unique): hypercare_id, report_date
+
 ## gst_2b_imports
 
 | Column | Type | Not null | Key | Default |
@@ -14063,6 +14560,142 @@ Foreign keys: article_id -> hd_articles(id), company_id -> org_companies(id)
 Indexes:
 - ix_hd_tour_views_article: article_id
 - ux_hd_tour_views (unique): company_id, article_id, user_name
+
+## ho_checklist_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| handover_id | INTEGER | yes |  |  |
+| category | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| mandatory | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'OPEN' |
+| file_id | INTEGER |  |  |  |
+| doc_revision_id | INTEGER |  |  |  |
+| tnc_certificate_id | INTEGER |  |  |  |
+| note | TEXT |  |  |  |
+| done_by | TEXT |  |  |  |
+| done_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tnc_certificate_id -> tnc_certificates(id), doc_revision_id -> doc_versions(id), file_id -> core_files(id), handover_id -> ho_handovers(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ho_checklist_items_revision: doc_revision_id
+- ix_ho_checklist_items_certificate: tnc_certificate_id
+- ix_ho_checklist_items_file_id: file_id
+- ix_ho_checklist_items_status: company_id, status
+- ix_ho_checklist_items_handover: handover_id
+- ix_ho_checklist_items_company_id: company_id
+
+## ho_client_assets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| handover_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| tnc_system_id | INTEGER |  |  |  |
+| tag_no | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| category | TEXT | yes |  | 'EQUIPMENT' |
+| location_text | TEXT |  |  |  |
+| make | TEXT |  |  |  |
+| model | TEXT |  |  |  |
+| serial_no | TEXT |  |  |  |
+| capacity | TEXT |  |  |  |
+| warranty_until | TEXT |  |  |  |
+| maintenance_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tnc_system_id -> tnc_systems(id), org_project_id -> org_projects(id), handover_id -> ho_handovers(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ho_client_assets_status: company_id, status
+- ix_ho_client_assets_system: tnc_system_id
+- ix_ho_client_assets_project: org_project_id
+- ix_ho_client_assets_handover: handover_id
+- ix_ho_client_assets_company_id: company_id
+- ux_ho_client_assets_tag (unique): handover_id, tag_no
+
+## ho_handovers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| doc_no | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| scope_type | TEXT | yes |  | 'PROJECT' |
+| area_label | TEXT |  |  |  |
+| planned_on | TEXT |  |  |  |
+| effective_on | TEXT |  |  |  |
+| dlp_months | INTEGER | yes |  | 12 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| client_signatory | TEXT |  |  |  |
+| client_signed_on | TEXT |  |  |  |
+| client_file_id | INTEGER |  |  |  |
+| issued_by | TEXT |  |  |  |
+| issued_at | TEXT |  |  |  |
+| readiness_json | TEXT | yes |  | '{}' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: client_file_id -> core_files(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ho_handovers_client_file_id: client_file_id
+- ix_ho_handovers_status: company_id, status
+- ix_ho_handovers_location: location_id
+- ix_ho_handovers_site: org_site_id
+- ix_ho_handovers_project: org_project_id
+- ix_ho_handovers_company_id: company_id
+- ux_ho_handovers_doc (unique): company_id, doc_no
 
 ## hr_candidates
 
@@ -18587,6 +19220,85 @@ Indexes:
 - ix_jv_shares_project: company_id, org_project_id
 - ux_jv_shares_partner (unique): org_project_id, partner_name
 
+## kb_benchmarks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| closure_id | INTEGER |  |  |  |
+| metric_code | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| unit | TEXT | yes |  |  |
+| value_milli | INTEGER | yes |  |  |
+| basis | TEXT |  |  |  |
+| status | TEXT | yes |  | 'PROPOSED' |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: closure_id -> cls_closures(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_kb_benchmarks_status: company_id, status, metric_code
+- ix_kb_benchmarks_closure: closure_id
+- ix_kb_benchmarks_project: org_project_id
+- ix_kb_benchmarks_company_id: company_id
+- ux_kb_benchmarks_metric (unique): closure_id, metric_code
+
+## kb_lessons
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| doc_no | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| impact | TEXT | yes |  | 'NEGATIVE' |
+| what_happened | TEXT | yes |  |  |
+| recommendation | TEXT | yes |  |  |
+| tags | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| author | TEXT | yes |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| published_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_kb_lessons_author: company_id, author
+- ix_kb_lessons_status: company_id, status, category
+- ix_kb_lessons_project: org_project_id
+- ix_kb_lessons_company_id: company_id
+- ux_kb_lessons_doc (unique): company_id, doc_no
+
 ## lab_contractor_compliance
 
 | Column | Type | Not null | Key | Default |
@@ -18989,6 +19701,177 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_lv_year_runs_company_id: company_id
 - ux_lv_year_runs_year (unique): company_id, year
+
+## man_captures
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| capture_no | TEXT | yes |  |  |
+| build_id | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| baseline_id | INTEGER |  |  |  |
+| screens_count | INTEGER | yes |  | 0 |
+| same_count | INTEGER | yes |  | 0 |
+| changed_count | INTEGER | yes |  | 0 |
+| new_count | INTEGER | yes |  | 0 |
+| removed_count | INTEGER | yes |  | 0 |
+| removed_json | TEXT | yes |  | '[]' |
+| compared_at | TEXT |  |  |  |
+| accepted_by | TEXT |  |  |  |
+| accepted_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: baseline_id -> man_captures(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_man_captures_baseline: baseline_id
+- ix_man_captures_status: company_id, status
+- ux_man_captures_no (unique): company_id, capture_no
+
+## man_manuals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| package_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| role_or_module | TEXT | yes |  |  |
+| language | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| build_id | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  |  |
+| content_hash | TEXT | yes |  |  |
+| sections_count | INTEGER | yes |  | 0 |
+| pages_count | INTEGER | yes |  | 0 |
+| screens_count | INTEGER | yes |  | 0 |
+| routes_json | TEXT | yes |  | '[]' |
+| files_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'DRAFT' |
+| stale_reason | TEXT |  |  |  |
+| request_id | INTEGER |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: package_id -> man_packages(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_man_manuals_request: request_id
+- ix_man_manuals_owner: company_id, owner_role, status
+- ix_man_manuals_list: company_id, kind, status
+- ix_man_manuals_package: package_id
+- ux_man_manuals_code (unique): company_id, code, version_no
+
+## man_packages
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| package_no | TEXT | yes |  |  |
+| build_id | TEXT | yes |  |  |
+| version_label | TEXT |  |  |  |
+| capture_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| zip_path | TEXT |  |  |  |
+| zip_sha256 | TEXT |  |  |  |
+| zip_bytes | INTEGER |  |  |  |
+| manuals_count | INTEGER | yes |  | 0 |
+| files_count | INTEGER | yes |  | 0 |
+| progress_pct | INTEGER | yes |  | 0 |
+| error | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: capture_id -> man_captures(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_man_packages_capture: capture_id
+- ix_man_packages_status: company_id, status
+- ux_man_packages_no (unique): company_id, package_no
+
+## man_screens
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| capture_id | INTEGER | yes |  |  |
+| route | TEXT | yes |  |  |
+| viewport | TEXT | yes |  |  |
+| role_code | TEXT |  |  |  |
+| title | TEXT |  |  |  |
+| signature_hash | TEXT | yes |  |  |
+| signature_json | TEXT | yes |  |  |
+| image_file_id | INTEGER |  |  |  |
+| drift | TEXT | yes |  | 'NEW' |
+| diff_json | TEXT |  |  |  |
+| captured_at | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: image_file_id -> core_files(id), capture_id -> man_captures(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_man_screens_file: image_file_id
+- ix_man_screens_drift: capture_id, drift
+- ix_man_screens_company: company_id, route
+- ux_man_screens_route (unique): capture_id, route, viewport
 
 ## mc_monthly_closes
 
@@ -22260,6 +23143,156 @@ Indexes:
 - ix_ops_backups_status: status, finished_at
 - ux_ops_backups_name (unique): name
 
+## ops_deployments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| deploy_no | TEXT | yes |  |  |
+| environment_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| method | TEXT | yes |  | 'BLUE_GREEN' |
+| build_id | TEXT |  |  |  |
+| version_label | TEXT |  |  |  |
+| commit_ref | TEXT |  |  |  |
+| artifact_sha256 | TEXT |  |  |  |
+| pipeline_run | TEXT |  |  |  |
+| status | TEXT | yes |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT | yes |  |  |
+| duration_ms | INTEGER | yes |  | 0 |
+| requests_count | INTEGER |  |  |  |
+| failed_requests | INTEGER |  |  |  |
+| steps_json | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: environment_id -> ops_environments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ops_deployments_status: company_id, status
+- ix_ops_deployments_env: environment_id, id
+- ux_ops_deployments_no (unique): company_id, deploy_no
+
+## ops_environments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| url | TEXT |  |  |  |
+| hosts | TEXT |  |  |  |
+| status | TEXT | yes |  | 'PLANNED' |
+| active_build | TEXT |  |  |  |
+| active_slot | TEXT |  |  |  |
+| last_deploy_at | TEXT |  |  |  |
+| last_health_at | TEXT |  |  |  |
+| health_status | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ops_environments_status: company_id, status
+- ux_ops_environments_code (unique): company_id, code
+
+## ops_oncall
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| username | TEXT | yes |  |  |
+| support_level | TEXT | yes |  |  |
+| from_at | TEXT | yes |  |  |
+| to_at | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ops_oncall_status: company_id, status
+- ix_ops_oncall_window: company_id, support_level, from_at, to_at
+
+## ops_pages
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| alert_id | INTEGER | yes |  |  |
+| rule_code | TEXT | yes |  |  |
+| severity | TEXT | yes |  |  |
+| message | TEXT | yes |  |  |
+| username | TEXT |  |  |  |
+| support_level | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SENT' |
+| paged_at | TEXT | yes |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| acknowledged_by | TEXT |  |  |  |
+| escalated_page_id | INTEGER |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: escalated_page_id -> ops_pages(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ops_pages_escalated: escalated_page_id
+- ix_ops_pages_status: company_id, status
+- ux_ops_pages_alert (unique): company_id, alert_id, support_level
+
 ## ops_restore_requests
 
 | Column | Type | Not null | Key | Default |
@@ -22334,6 +23367,42 @@ Indexes:
 - ix_ops_restore_tests_report: report_file_id
 - ix_ops_restore_tests_kind: kind, status, id
 - ix_ops_restore_tests_backup: backup_id
+
+## ops_runbooks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| path | TEXT | yes |  |  |
+| content_hash | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| request_id | INTEGER |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ops_runbooks_request: request_id
+- ix_ops_runbooks_status: company_id, status
+- ux_ops_runbooks_version (unique): company_id, code, version_no
 
 ## org_assignments
 
@@ -31373,6 +32442,123 @@ Indexes:
 - ix_scn_scenarios_company_status: company_id, status
 - sqlite_autoindex_scn_scenarios_1 (unique): company_id, doc_no
 
+## sct_findings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| finding_no | TEXT | yes |  |  |
+| source | TEXT | yes |  |  |
+| severity | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| endpoint | TEXT |  |  |  |
+| cwe | TEXT |  |  |  |
+| fingerprint | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| scan_run_id | INTEGER |  |  |  |
+| reported_by | TEXT | yes |  |  |
+| fixed_in | TEXT |  |  |  |
+| fixed_by | TEXT |  |  |  |
+| fixed_at | TEXT |  |  |  |
+| retested_by | TEXT |  |  |  |
+| retested_at | TEXT |  |  |  |
+| retest_note | TEXT |  |  |  |
+| request_id | INTEGER |  |  |  |
+| last_seen_at | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), scan_run_id -> sct_scan_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_sct_findings_request: request_id
+- ix_sct_findings_run: scan_run_id
+- ix_sct_findings_source: company_id, source
+- ix_sct_findings_status: company_id, status, severity
+- ux_sct_findings_fp (unique): company_id, fingerprint
+- ux_sct_findings_no (unique): company_id, finding_no
+
+## sct_reviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| control_code | TEXT | yes |  |  |
+| area | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| evidence | TEXT | yes |  |  |
+| reviewed_by | TEXT | yes |  |  |
+| reviewed_at | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_sct_reviews_status: company_id, status
+- ix_sct_reviews_control: company_id, control_code, id
+
+## sct_scan_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| scan_kind | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DONE' |
+| checked_count | INTEGER | yes |  | 0 |
+| findings_count | INTEGER | yes |  | 0 |
+| summary_json | TEXT |  |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_sct_scan_runs_status: company_id, status
+- ix_sct_scan_runs_kind: company_id, scan_kind, id
+- ux_sct_scan_runs_no (unique): company_id, run_no
+
 ## scy_checkpoints
 
 | Column | Type | Not null | Key | Default |
@@ -33805,6 +34991,223 @@ Indexes:
 - ux_tds_returns_quarter (unique): company_id, form, quarter
 - ux_tds_returns_doc (unique): company_id, doc_no
 
+## tnc_certificates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| system_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SUBMITTED' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_at | TEXT |  |  |  |
+| client_signatory | TEXT |  |  |  |
+| client_signed_on | TEXT |  |  |  |
+| client_file_id | INTEGER |  |  |  |
+| issued_by | TEXT |  |  |  |
+| issued_at | TEXT |  |  |  |
+| readiness_json | TEXT | yes |  | '{}' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: client_file_id -> core_files(id), system_id -> tnc_systems(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tnc_certificates_client_file_id: client_file_id
+- ix_tnc_certificates_status: company_id, status
+- ix_tnc_certificates_system: system_id
+- ix_tnc_certificates_company_id: company_id
+- ux_tnc_certificates_open (unique): system_id, kind
+- ux_tnc_certificates_doc (unique): company_id, doc_no
+
+## tnc_checksheets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| tag_id | INTEGER | yes |  |  |
+| sheet_class | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| inspection_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| result_note | TEXT |  |  |  |
+| done_by | TEXT |  |  |  |
+| done_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: inspection_id -> qa_inspections(id), tag_id -> tnc_tags(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tnc_checksheets_status: company_id, status
+- ix_tnc_checksheets_inspection: inspection_id
+- ix_tnc_checksheets_tag: tag_id
+- ix_tnc_checksheets_company_id: company_id
+
+## tnc_punch_links
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| system_id | INTEGER | yes |  |  |
+| snag_id | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: snag_id -> qa_snags(id), system_id -> tnc_systems(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tnc_punch_links_snag: snag_id
+- ix_tnc_punch_links_company_id: company_id
+- ux_tnc_punch_links (unique): system_id, snag_id
+
+## tnc_systems
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| parent_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| discipline | TEXT | yes |  | 'GENERAL' |
+| stage | TEXT | yes |  | 'CONSTRUCTION' |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> tnc_systems(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tnc_systems_status: company_id, status
+- ix_tnc_systems_parent: parent_id
+- ix_tnc_systems_site: org_site_id
+- ix_tnc_systems_project: org_project_id
+- ix_tnc_systems_company_id: company_id
+- ux_tnc_systems_code (unique): company_id, org_project_id, code
+
+## tnc_tags
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| system_id | INTEGER | yes |  |  |
+| tag_no | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: system_id -> tnc_systems(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tnc_tags_status: company_id, status
+- ix_tnc_tags_system: system_id
+- ix_tnc_tags_company_id: company_id
+- ux_tnc_tags_no (unique): system_id, tag_no
+
+## tnc_test_packs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| system_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| pack_type | TEXT | yes |  |  |
+| procedure_ref | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PLANNED' |
+| witnessed_by | TEXT |  |  |  |
+| witness_party | TEXT |  |  |  |
+| tested_on | TEXT |  |  |  |
+| result_note | TEXT |  |  |  |
+| evidence_file_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: evidence_file_id -> core_files(id), system_id -> tnc_systems(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tnc_test_packs_evidence_file_id: evidence_file_id
+- ix_tnc_test_packs_status: company_id, status
+- ix_tnc_test_packs_system: system_id
+- ix_tnc_test_packs_company_id: company_id
+- ux_tnc_test_packs_doc (unique): company_id, doc_no
+
 ## tpl_auto_rules
 
 | Column | Type | Not null | Key | Default |
@@ -34559,6 +35962,688 @@ Indexes:
 - ix_tsk_tasks_log: company_id, id
 - ix_tsk_tasks_list: company_id, status, due_date
 - ux_tsk_tasks_no (unique): company_id, task_no
+
+## tst_a11y_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| page_code | TEXT |  |  |  |
+| route | TEXT |  |  |  |
+| journey | TEXT |  |  |  |
+| status | TEXT | yes |  |  |
+| critical_count | INTEGER | yes |  | 0 |
+| serious_count | INTEGER | yes |  | 0 |
+| moderate_count | INTEGER | yes |  | 0 |
+| minor_count | INTEGER | yes |  | 0 |
+| violations_json | TEXT | yes |  | '[]' |
+| overflow_px | INTEGER | yes |  | 0 |
+| small_targets | INTEGER | yes |  | 0 |
+| tiny_inputs | INTEGER | yes |  | 0 |
+| load_ms | INTEGER |  |  |  |
+| steps_json | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| issue_status | TEXT | yes |  | 'NONE' |
+| fixed_in | TEXT |  |  |  |
+| fixed_by | TEXT |  |  |  |
+| fixed_at | TEXT |  |  |  |
+| retested_run_id | INTEGER |  |  |  |
+| retested_at | TEXT |  |  |  |
+| tested_by | TEXT | yes |  |  |
+| tested_at | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: retested_run_id -> tst_a11y_runs(id), run_id -> tst_a11y_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_a11y_results_retest: retested_run_id
+- ix_tst_a11y_results_issue: company_id, issue_status
+- ix_tst_a11y_results_page: company_id, page_code, id
+- ix_tst_a11y_results_run: run_id, status
+
+## tst_a11y_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| run_kind | TEXT | yes |  |  |
+| device_id | INTEGER |  |  |  |
+| width | INTEGER |  |  |  |
+| height | INTEGER |  |  |  |
+| theme | TEXT | yes |  | 'light' |
+| language | TEXT | yes |  | 'en' |
+| network | TEXT | yes |  | 'FAST' |
+| assistive_tech | TEXT |  |  |  |
+| status | TEXT | yes |  | 'RUNNING' |
+| items_count | INTEGER | yes |  | 0 |
+| failed_count | INTEGER | yes |  | 0 |
+| serious_count | INTEGER | yes |  | 0 |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: device_id -> tst_devices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_a11y_runs_device: device_id
+- ix_tst_a11y_runs_status: company_id, status
+- ix_tst_a11y_runs_kind: company_id, run_kind, id
+- ux_tst_a11y_runs_no (unique): company_id, run_no
+
+## tst_devices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| device_class | TEXT | yes |  |  |
+| os | TEXT | yes |  |  |
+| browser | TEXT | yes |  |  |
+| width | INTEGER | yes |  |  |
+| height | INTEGER | yes |  |  |
+| ram_gb | NUMERIC(18,3) |  |  |  |
+| cpu_slowdown | INTEGER | yes |  | 1 |
+| network | TEXT | yes |  | 'FAST' |
+| automation | TEXT | yes |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'ACTIVE' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_devices_status: company_id, status
+- ux_tst_devices_code (unique): , code
+
+## tst_integration_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| result_status | TEXT |  |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| totals_json | TEXT |  |  |  |
+| result_json | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_integration_runs_status: company_id, status, id
+- ux_tst_integration_runs_no (unique): company_id, run_no
+
+## tst_latency_probes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| probe_no | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SENT' |
+| sent_at | TEXT | yes |  |  |
+| consumed_at | TEXT |  |  |  |
+| realtime_at | TEXT |  |  |  |
+| notified_at | TEXT |  |  |  |
+| latency_ms | INTEGER |  |  |  |
+| target_ms | INTEGER | yes |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_latency_probes_status: company_id, status, id
+- ux_tst_latency_probes_no (unique): company_id, probe_no
+
+## tst_page_audit
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| page_code | TEXT | yes |  |  |
+| route | TEXT | yes |  |  |
+| audit_kind | TEXT | yes |  |  |
+| viewport | TEXT |  |  |  |
+| role_tested | TEXT | yes |  |  |
+| checklist_json | TEXT | yes |  | '[]' |
+| defects_json | TEXT | yes |  | '[]' |
+| evidence_file_ids | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  |  |
+| notes | TEXT |  |  |  |
+| run_id | INTEGER |  |  |  |
+| tested_by | TEXT | yes |  |  |
+| tested_at | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: run_id -> tst_page_audit_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_page_audit_run: run_id
+- ix_tst_page_audit_status: company_id, status
+- ix_tst_page_audit_page: company_id, page_code, audit_kind, id
+
+## tst_page_audit_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| run_kind | TEXT | yes |  |  |
+| viewport | TEXT |  |  |  |
+| status | TEXT | yes |  | 'RUNNING' |
+| pages_count | INTEGER | yes |  | 0 |
+| failed_count | INTEGER | yes |  | 0 |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_page_audit_runs_status: company_id, status
+- ix_tst_page_audit_runs_kind: company_id, run_kind, id
+- ux_tst_page_audit_runs_no (unique): company_id, run_no
+
+## tst_perf_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| model | TEXT | yes |  |  |
+| journey | TEXT | yes |  |  |
+| slo_kind | TEXT | yes |  |  |
+| slo_ms | INTEGER | yes |  |  |
+| requests_count | INTEGER | yes |  |  |
+| errors_count | INTEGER | yes |  | 0 |
+| p50_ms | NUMERIC | yes |  |  |
+| p95_ms | NUMERIC | yes |  |  |
+| p99_ms | NUMERIC | yes |  |  |
+| max_ms | NUMERIC | yes |  |  |
+| throughput_rps | NUMERIC | yes |  |  |
+| target_rps | NUMERIC |  |  |  |
+| status | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: run_id -> tst_perf_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_perf_results_status: company_id, status
+- ix_tst_perf_results_run: run_id, status
+
+## tst_perf_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| profile | TEXT | yes |  |  |
+| tool | TEXT | yes |  |  |
+| environment | TEXT | yes |  |  |
+| machine | TEXT |  |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT | yes |  |  |
+| duration_s | INTEGER | yes |  |  |
+| users_count | INTEGER | yes |  | 0 |
+| requests_count | INTEGER | yes |  | 0 |
+| errors_count | INTEGER | yes |  | 0 |
+| rss_start_mb | INTEGER |  |  |  |
+| rss_end_mb | INTEGER |  |  |  |
+| rss_max_mb | INTEGER |  |  |  |
+| memory_json | TEXT |  |  |  |
+| result_status | TEXT | yes |  |  |
+| commit_ref | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_perf_runs_status: company_id, result_status
+- ix_tst_perf_runs_profile: company_id, profile, id
+- ux_tst_perf_runs_no (unique): company_id, run_no
+
+## tst_recon_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| check_code | TEXT | yes |  |  |
+| scope_key | TEXT |  |  |  |
+| label | TEXT | yes |  |  |
+| expected_value | NUMERIC |  |  |  |
+| actual_value | NUMERIC |  |  |  |
+| difference_value | NUMERIC | yes |  | 0 |
+| unit | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| severity | TEXT | yes |  | 'INFO' |
+| drill_route | TEXT |  |  |  |
+| detail | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: run_id -> tst_recon_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_recon_results_status: company_id, status
+- ix_tst_recon_results_company: company_id, check_code
+- ix_tst_recon_results_run: run_id, status, check_code
+
+## tst_recon_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| as_of | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| result_status | TEXT |  |  |  |
+| checks_count | INTEGER | yes |  | 0 |
+| failed_count | INTEGER | yes |  | 0 |
+| critical_count | INTEGER | yes |  | 0 |
+| trace_bp | INTEGER |  |  |  |
+| trace_json | TEXT |  |  |  |
+| tolerance_json | TEXT |  |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_recon_runs_status: company_id, status, id
+- ux_tst_recon_runs_no (unique): company_id, run_no
+
+## tst_sandbox_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| pack | TEXT |  |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| result_status | TEXT |  |  |  |
+| params_json | TEXT | yes |  | '{}' |
+| expected_json | TEXT |  |  |  |
+| actual_json | TEXT |  |  |  |
+| counts_json | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_sandbox_runs_status: company_id, status, id
+- ux_tst_sandbox_runs_no (unique): company_id, run_no
+
+## tst_test_catalogue
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| test_id | TEXT | yes |  |  |
+| part_id | TEXT |  |  |  |
+| requirement_ref | TEXT |  |  |  |
+| test_type | TEXT | yes |  |  |
+| automated | INTEGER | yes |  | 1 |
+| file | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| last_result | TEXT |  |  |  |
+| last_run_id | INTEGER |  |  |  |
+| last_run_at | TEXT |  |  |  |
+| last_duration_ms | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: last_run_id -> tst_test_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_test_catalogue_run: last_run_id
+- ix_tst_test_catalogue_status: company_id, status, last_result
+- ix_tst_test_catalogue_part: company_id, part_id
+- ux_tst_test_catalogue_id (unique): company_id, test_id
+
+## tst_test_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_no | TEXT | yes |  |  |
+| run_source | TEXT | yes |  |  |
+| suite | TEXT | yes |  |  |
+| commit_ref | TEXT |  |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| total_count | INTEGER | yes |  | 0 |
+| passed_count | INTEGER | yes |  | 0 |
+| failed_count | INTEGER | yes |  | 0 |
+| skipped_count | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DONE' |
+| requested_by | TEXT | yes |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tst_test_runs_status: company_id, status, id
+- ux_tst_test_runs_no (unique): company_id, run_no
+
+## uat_defects
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| defect_no | TEXT | yes |  |  |
+| phase | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| script_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| severity | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| owner_id | TEXT |  |  |  |
+| reported_by | TEXT | yes |  |  |
+| reported_at | TEXT | yes |  |  |
+| triaged_by | TEXT |  |  |  |
+| triaged_at | TEXT |  |  |  |
+| fixed_in | TEXT |  |  |  |
+| fixed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| deferred_reason | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: script_id -> uat_scripts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_uat_defects_script: script_id
+- ix_uat_defects_module: company_id, module
+- ix_uat_defects_open: company_id, status, severity
+- ux_uat_defects_no (unique): company_id, defect_no
+
+## uat_scripts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| role_code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| scenario_source | TEXT | yes |  |  |
+| steps_json | TEXT | yes |  | '[]' |
+| expected | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'NOT_RUN' |
+| executed_by | TEXT |  |  |  |
+| executed_at | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_uat_scripts_module: company_id, module, status
+- ux_uat_scripts_code (unique): company_id, code
+
+## uat_signoffs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| module | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SUBMITTED' |
+| scripts_total | INTEGER | yes |  | 0 |
+| scripts_passed | INTEGER | yes |  | 0 |
+| open_defects | INTEGER | yes |  | 0 |
+| requested_by | TEXT | yes |  |  |
+| requested_at | TEXT | yes |  |  |
+| signed_by | TEXT |  |  |  |
+| signed_at | TEXT |  |  |  |
+| request_id | INTEGER |  |  |  |
+| created_by | TEXT | yes |  | 'system' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| deleted_at | TEXT |  |  |  |
+| is_active | INTEGER | yes |  | 1 |
+| version | INTEGER | yes |  | 1 |
+| source_type | TEXT | yes |  | 'api' |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_uat_signoffs_request: request_id
+- ix_uat_signoffs_module: company_id, module, status
 
 ## ui_bottom_bar
 

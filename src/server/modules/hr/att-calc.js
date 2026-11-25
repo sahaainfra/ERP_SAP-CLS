@@ -117,7 +117,15 @@ export function patternShift(pattern, date) {
 }
 
 /** The attendance period a date falls in when periods start on `startDay` (1 = the calendar month; 26 = the 26th to the 25th). */
+const periodMemo = new Map();
+/** The attendance period a date falls in (memoised: the register asks it for every person and day; 30.06 FR-03). */
 export function periodFor(startDay, date) {
+  const k = `${startDay}|${date}`; const hit = periodMemo.get(k); if (hit) return { ...hit };
+  const out = periodForUncached(startDay, date);
+  if (periodMemo.size > 20_000) periodMemo.clear();
+  periodMemo.set(k, out); return { ...out };
+}
+function periodForUncached(startDay, date) {
   const y = Number(date.slice(0, 4)); const m = Number(date.slice(5, 7)); const d = Number(date.slice(8, 10));
   const sm = d >= startDay ? m : m - 1;
   const start = new Date(Date.UTC(y, sm - 1, startDay));

@@ -1,0 +1,74 @@
+{
+  "ok": true,
+  "steps": [
+    {
+      "name": "deploy build A (first deploy, blue)",
+      "ok": true,
+      "ms": 5794,
+      "detail": "5780 ms on blue"
+    },
+    {
+      "name": "deploy build B to green and switch, under traffic (zero downtime)",
+      "ok": true,
+      "ms": 6876,
+      "detail": "5338 ms; switched to green at 2026-11-23T20:11:53.089Z",
+      "traffic": {
+        "requests": 1476,
+        "failed": 0,
+        "builds": [
+          "zd-A",
+          "zd-B"
+        ]
+      }
+    },
+    {
+      "name": "roll back to A, under traffic (zero downtime)",
+      "ok": true,
+      "ms": 1393,
+      "detail": "1363 ms back to blue, migrations down-migrations",
+      "traffic": {
+        "requests": 354,
+        "failed": 0,
+        "builds": [
+          "zd-B",
+          "zd-A"
+        ]
+      }
+    },
+    {
+      "name": "drill: a failing migration leaves A serving, under traffic",
+      "ok": true,
+      "ms": 1879,
+      "detail": "1840 ms: migration failed: Error: near \"THIS\": syntax error",
+      "traffic": {
+        "requests": 52,
+        "failed": 0,
+        "builds": [
+          "zd-A"
+        ]
+      }
+    },
+    {
+      "name": "drill: a build that does not start leaves A serving, under traffic",
+      "ok": true,
+      "ms": 6959,
+      "detail": "6917 ms: smoke test failed: the server did not become healthy in time",
+      "traffic": {
+        "requests": 1466,
+        "failed": 0,
+        "builds": [
+          "zd-A"
+        ]
+      }
+    },
+    {
+      "name": "zero failed requests through every switch",
+      "ok": true,
+      "ms": 0,
+      "detail": "3348 requests, 0 failed; 3 switches"
+    }
+  ],
+  "requests": 3348,
+  "failed": 0,
+  "at": "2026-11-23T20:12:06.461Z"
+}

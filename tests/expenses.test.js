@@ -237,3 +237,13 @@ test('FR-01 a travel request goes to the manager and the project manager (or the
   assert.equal((await t.call(emp1, 'GET', `${H}/expenses/analysis`)).status, 403);
   void a;
 });
+
+test('BR-SCOPE the history of a policy is not shown to another company (audit AUD-DEF-013)', async () => {
+  const t = await setup();
+  const p = await policy(t, { category: 'LODGING', limit: 3000, receiptAbove: 500 });
+  const own = await t.call(acc1, 'GET', `${H}/expenses/policies/${p.id}/history`);
+  assert.equal(own.status, 200); assert.ok(own.json.data.length >= 2, 'its own company sees the create and the activation');
+  t.api.db.prepare("INSERT OR IGNORE INTO org_companies (id, code, legal_name, short_name, created_by, source_type) VALUES (2, 'TWO', 'Two Infra Pvt Ltd', 'Two', 't', 'test')").run();
+  const other = await t.call(as('ACCMGR', 'acc9', '2'), 'GET', `${H}/expenses/policies/${p.id}/history`);
+  assert.equal(other.status, 404, JSON.stringify(other.json));
+});

@@ -103,6 +103,14 @@ test('AC-01 the payroll is posted by project, paid through a checked bank file, 
   assert.equal(pj.lines.find((l) => l.code === '240011').credit_paise, 3 * 144300, 'gratuity provision'); assert.equal(pj.lines.find((l) => l.code === '230004').credit_paise, 300000, 'TDS payable');
   // the labour cost goes to the project cost ledger, a project at a time
   const lc = r.events('hr.payroll.posted'); assert.equal(lc.length, 2); assert.equal(lc.find((x) => x.projectId === r.B).lines[0].resourceType, 'LABOUR');
+  // D-833 (owner's decision): the labour cost is charged to the allocated projects in the cost ledger, even though neither project's set-up
+  // (proj_projects) is complete in this fixture; it used to be refused, retried and dead-lettered
+  await r.drain(); await r.drain();
+  const actual = (pid) => d.prepare("SELECT COALESCE(SUM(amount), 0) AS n FROM bud_actuals WHERE company_id = 1 AND src_type = 'pay_runs' AND src_id = ? AND org_project_id = ? AND deleted_at IS NULL").get(String(f.run), pid).n;
+  const costOf = (pid) => lc.find((x) => x.projectId === pid).lines.reduce((t, l) => t + Math.round(Number(l.amount) * 100), 0);
+  assert.ok(actual(r.A) > 0 && actual(r.B) > 0, 'both allocated projects carry their labour cost');
+  assert.equal(actual(r.A), costOf(r.A)); assert.equal(actual(r.B), costOf(r.B));
+  assert.equal(d.prepare("SELECT COUNT(*) AS n FROM core_inbox WHERE consumer = 'bud.ledger' AND status = 'DEAD'").get().n, 0, 'nothing dead-lettered');
   const page = await call(U.pay, 'GET', `/posting/runs/${f.run}`); assert.equal(page.status, 200, JSON.stringify(page.json)); assert.equal(page.json.data.posting.status, 'POSTED'); assert.equal(page.json.data.totals.balanced, true);
   assert.equal((await call(U.pay, 'POST', `/posting/runs/${f.run}/post`)).json.data.posting.status, 'POSTED', 'posting again changes nothing (one journal an event)');
   assert.equal(d.prepare("SELECT COUNT(*) AS n FROM fin_journals WHERE source_type = 'pay_runs'").get().n, 1);

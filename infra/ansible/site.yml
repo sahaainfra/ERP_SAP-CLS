@@ -1,0 +1,61 @@
+# Part 30.08 FR-01: provisions an ERP host from nothing (Ubuntu 24.04 LTS), the same way for staging, production and the sandbox.
+#   ansible-playbook -i infra/ansible/inventory.ini infra/ansible/site.yml --limit staging
+# Secrets are not here: the vault agent writes /etc/erp/secrets.env (0600, root) and the systemd unit reads it.
+- name: ERP application host
+  hosts: erp
+  become: true
+  vars:
+    erp_root: /opt/erp
+    erp_data: /var/lib/erp
+    erp_backup: /backup
+  tasks:
+    - name: Packages (Docker engine and compose plugin, firewall, certbot, unattended upgrades)
+      ansible.builtin.apt:
+        name: [docker.io, docker-compose-v2, ufw, certbot, unattended-upgrades, logrotate, sqlite3]
+        state: present
+        update_cache: true
+    - name: Firewall allows SSH, HTTP and HTTPS only
+      community.general.ufw: { rule: allow, port: "{{ item }}", proto: tcp }
+      loop: ["22", "80", "443"]
+    - name: Firewall on, deny by default
+      community.general.ufw: { state: enabled, policy: deny }
+    - name: Service user
+      ansible.builtin.user: { name: erp, system: true, groups: docker, append: true, shell: /usr/sbin/nologin }
+    - name: Directories
+      ansible.builtin.file: { path: "{{ item }}", state: directory, owner: erp, group: erp, mode: "0750" }
+      loop: ["{{ erp_root }}", "{{ erp_data }}", "{{ erp_backup }}/offsite/{{ erp_env }}", /etc/erp]
+    - name: Compose file, nginx configuration and the environment's settings
+      ansible.builtin.copy: { src: "{{ playbook_dir }}/../../{{ item.src }}", dest: "{{ erp_root }}/{{ item.dest }}", owner: erp, group: erp, mode: "0640" }
+      loop:
+        - { src: docker-compose.yml, dest: docker-compose.yml }
+        - { src: infra/nginx/erp.conf, dest: infra/nginx/erp.conf }
+        - { src: "infra/environments/{{ erp_env }}.env", dest: "infra/environments/{{ erp_env }}.env" }
+    - name: The active slot starts as blue (the deploy rewrites it)
+      ansible.builtin.copy: { content: "server 127.0.0.1:3301;\n", dest: "{{ erp_root }}/infra/nginx/active-upstream.conf", force: false, owner: erp, mode: "0640" }
+    - name: systemd unit of the environment (reads the vault's secrets file)
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/erp.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=ERP {{ erp_env }}
+          After=docker.service
+          Requires=docker.service
+          [Service]
+          Type=oneshot
+          RemainAfterExit=true
+          WorkingDirectory={{ erp_root }}
+          EnvironmentFile=/etc/erp/secrets.env
+          Environment=ERP_ENV={{ erp_env }}
+          ExecStart=/usr/bin/docker compose --env-file infra/environments/{{ erp_env }}.env up -d blue nginx
+          ExecStop=/usr/bin/docker compose down
+          [Install]
+          WantedBy=multi-user.target
+    - name: Certificate renewal twice a day (runbook certificate-renewal.md)
+      ansible.builtin.cron: { name: certbot renew, minute: "17", hour: "3,15", job: "certbot renew --quiet --deploy-hook 'docker compose -f {{ erp_root }}/docker-compose.yml exec nginx nginx -s reload'" }
+    - name: Nightly backup copied off the host (runbook restore.md)
+      ansible.builtin.cron: { name: erp backup, minute: "41", hour: "1", job: "cd {{ erp_root }} && docker compose exec -T blue node scripts/db_backup.mjs >> /var/log/erp-backup.log 2>&1" }
+    - name: Log retention (container logs rotate at 50 MB x 10; system logs kept 90 days)
+      ansible.builtin.copy: { dest: /etc/logrotate.d/erp, mode: "0644", content: "/var/log/erp-*.log {\n  daily\n  rotate 90\n  compress\n  missingok\n  notifempty\n}\n" }
+    - name: Start the environment
+      ansible.builtin.systemd: { name: erp, enabled: true, state: started, daemon_reload: true }

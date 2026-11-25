@@ -1,0 +1,46 @@
+// Audit probe (temporary, not committed): a person of a brand-new company with every internal role and every feature on
+// asks for records by id and for lists, on a copy of the E2E database that holds the records of 192 other companies.
+import { DatabaseSync } from 'node:sqlite';
+import { writeFileSync } from 'node:fs';
+import '../src/server/modules/registry.js';
+import { createApp } from '../src/server/app.js';
+import { testConfig } from './helpers.js';
+import { ROUTE_POLICY } from '../src/server/platform/security/route-policy.js';
+import { TEMPLATE_PERMISSIONS } from '../src/server/platform/authz/templates.js';
+const file = process.argv[2]; const out = process.argv[3];
+const db = new DatabaseSync(file);
+db.exec('PRAGMA foreign_keys = OFF');
+const z = Number(db.prepare("INSERT INTO org_companies (code, legal_name, short_name, created_by) VALUES ('AUDITZ', 'Audit Probe Pvt Ltd', 'AuditZ', 'audit') RETURNING id").get().id);
+for (const { key } of db.prepare('SELECT DISTINCT key FROM core_feature_flags WHERE company_id IS NULL').all()) db.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES (?, ?, 'audit', 0, 1)").run(key, z);
+const roles = Object.keys(TEMPLATE_PERMISSIONS).filter((c) => !/^X-/.test(c)).join(',');
+const app = createApp({ config: testConfig({}), db, logger: { info() {}, warn() {}, error() {}, debug() {} } });
+const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
+const base = `http://127.0.0.1:${server.address().port}`;
+const H = { 'x-erp-user': 'auditor-z', 'x-erp-roles': roles, 'x-erp-company': String(z) };
+const results = { company: z, byId: [], lists: [] };
+const gets = ROUTE_POLICY.filter((r) => r.m === 'GET' && r.p.startsWith('/api/v1/') && r.g !== 'public');
+// detail routes with a single numeric-looking parameter
+for (const r of gets.filter((x) => (x.p.match(/:/g) ?? []).length === 1 && /\/:id($|\/)/.test(x.p))) {
+  for (const n of [1, 2, 3]) {
+    const url = r.p.replace(':id', String(n));
+    try {
+      const res = await fetch(base + url, { headers: H }); const text = await res.text();
+      if (res.status === 200 && !/export|pdf|print|download|content/.test(url)) results.byId.push({ route: r.p, id: n, status: 200, sample: text.slice(0, 300) });
+    } catch (e) { /* ignore */ }
+  }
+}
+// list routes without parameters: a new company has no records of its own
+for (const r of gets.filter((x) => !x.p.includes(':'))) {
+  try {
+    const res = await fetch(base + r.p, { headers: H }); if (res.status !== 200) continue;
+    const body = await res.json().catch(() => null); const d = body?.data;
+    const rows = Array.isArray(d) ? d : Array.isArray(d?.rows) ? d.rows : Array.isArray(d?.items) ? d.items : null;
+    if (rows?.length) {
+      const foreign = rows.filter((x) => x && typeof x === 'object' && ((x.companyId != null && x.companyId !== z) || (x.company_id != null && x.company_id !== z)));
+      results.lists.push({ route: r.p, rows: rows.length, foreignCompanyRows: foreign.length, sample: JSON.stringify(rows[0]).slice(0, 200) });
+    }
+  } catch (e) { /* ignore */ }
+}
+writeFileSync(out, JSON.stringify(results, null, 1));
+console.log(`detail routes answering 200 for a stranger: ${results.byId.length}; list routes returning rows to an empty company: ${results.lists.length}; of them with rows that name another company: ${results.lists.filter((l) => l.foreignCompanyRows).length}`);
+server.close(); process.exit(0);

@@ -134,7 +134,10 @@ export function createLedgerService({ db, base }) {
 
   /** FR-03: an actual cost reduces the commitment it names by what it consumes and is recorded once (T-02): the same document again changes nothing. */
   function postActual(actor, b) {
-    const o = orgOf(b.projectId); if (!o || o.company_id !== actor.companyId || !projOf(o.id)) throw notFound('That project does not exist.');
+    // D-833 (owner's decision, 2026-11-25): a cost already incurred is charged to the project it was allocated to (payroll: the days at the
+    // project's sites, else the deployment), even before the project's set-up (proj_projects) is complete; it was refused and dead-lettered.
+    // A commitment still needs the set-up, because it is checked against the budget.
+    const o = orgOf(b.projectId); if (!o || o.company_id !== actor.companyId) throw notFound('That project does not exist.');
     return transaction(db, () => {
       const out = []; const date = b.date ?? todayIST();
       for (const l of b.lines) {

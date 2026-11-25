@@ -5,6 +5,7 @@ import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx
 import { RFI_PRIORITIES, DISCIPLINES, dayIST, eg, rf, uploadToRfi } from './api.js';
 import { ProjectSelect } from './parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 
 // Raise RFI with photo markup (part 11.02, FR-01, mobile): big fields, a photo from the camera or the gallery with the problem circled on it with a finger, and the RFI sent to the design coordinator from the same screen.
 function Markup({ onChange }) {
@@ -58,6 +59,7 @@ export default function RfiRaisePage() {
   return (
     <section aria-labelledby="raise-h" data-testid="rfi-raise">
       <PageHeader id="raise-h" title={t('raise.title')} />
+      {st.isLoading && <Skeleton label={'Loading the project structure'} rows={2} />}{st.isError && st.error?.status !== 403 && <ErrorState error={st.error} onRetry={st.refetch} />}{dr.isLoading && <Skeleton label={'Loading the drawings'} rows={2} />}{dr.isError && dr.error?.status !== 403 && <ErrorState error={dr.error} onRetry={dr.refetch} />}
       <p className={online ? 'muted' : 'mdm-banner'} role="status" data-testid="raise-online">{online ? t('raise.online') : t('raise.offline')}</p>
       <form className="mdm-panel" onSubmit={(e) => { e.preventDefault(); go(true); }} data-testid="raise-form">
         <div className="form-grid">

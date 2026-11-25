@@ -39,7 +39,7 @@ import { createArchitectureService } from './architecture/service.js';
 import { changeRequestRoutes } from './change-requests/routes.js';
 import { createChangeRequestService } from './change-requests/service.js';
 import { featureFlagRoutes } from './feature-flags/routes.js';
-import { createFlagService } from './feature-flags/service.js';
+import { createFlagChanges, createFlagService } from './feature-flags/service.js';
 import { financialYearRoutes } from './financial-years/routes.js';
 import { createFinancialYearService, periodReopenHandler } from './financial-years/service.js';
 import { holidayRoutes } from './holidays/routes.js';
@@ -72,6 +72,7 @@ integrityRegistry.register({
     core_backfill_runs: ['running', 'completed', 'failed'],
     core_financial_years: ['Open', 'Closed'],
     core_change_requests: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'],
+    core_flag_changes: ['PENDING', 'APPLIED', 'REJECTED', 'CANCELLED'],
     core_number_issues: ['ISSUED', 'CANCELLED'],
     core_sample_documents: ['DRAFT', 'SUBMITTED', 'CANCELLED'],
     core_inbox: ['PENDING', 'PROCESSED', 'DEAD', 'DISCARDED'],
@@ -102,7 +103,7 @@ export const core = {
   ownerPart: '01.x',
   status: 'Reference implementation',
   tables: [
-    'core_feature_flags', 'core_audit_log', 'core_route_registry', 'core_security_settings', 'core_audit_chain', 'core_security_events', 'core_audit_verifications', 'core_audit_segments', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs',
+    'core_feature_flags', 'core_flag_changes', 'core_audit_log', 'core_route_registry', 'core_security_settings', 'core_audit_chain', 'core_security_events', 'core_audit_verifications', 'core_audit_segments', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs',
     'core_company_settings', 'core_financial_years', 'core_periods', 'core_parameters', 'core_holiday_calendars', 'core_holidays',
     'core_document_types', 'core_number_series', 'core_number_counters', 'core_number_issues', 'core_change_requests', 'core_change_request_steps',
     'core_sample_documents', 'core_event_types', 'core_inbox', 'core_jobs', 'core_schedules', 'core_projection_event_counts', 'core_files', 'core_file_uploads', 'core_file_settings', 'core_formulas', 'core_calc_traces', 'core_calc_shadow_results', 'core_uoms', 'core_uom_conversions', 'core_sample_bills', 'core_slo_definitions', 'core_alert_rules', 'core_alerts', 'core_metric_samples', 'core_client_events', 'core_connectors', 'core_connector_secrets', 'core_integration_logs', 'core_webhook_receipts', 'core_schema_migrations',
@@ -132,7 +133,7 @@ export const core = {
     api.use('/core', aboutRoutes(createAboutService({ db, config, buildInfo })));
     api.use('/core', architectureRoutes(createArchitectureService({ modules, isFlagOn })));
     api.use('/core', integrityRoutes(createIntegrityService({ db, isFlagOn }), opts));
-    api.use('/core', featureFlagRoutes(flags, opts));
+    api.use('/core', featureFlagRoutes(flags, { ...opts, changes: createFlagChanges({ db }) }));
     api.use('/core', displaySettingsRoutes(settings));
 
     // Event bus, jobs and schedules (part 01.04): hidden while ff.core.p0104 is OFF for the company.

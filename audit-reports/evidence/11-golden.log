@@ -1,0 +1,14 @@
+
+> erp-sap-cls@0.1.0 erp:golden
+> node scripts/golden.mjs
+
+OK       prog.flag_evaluation_matrix
+OK       calc.boq_line_amount
+OK       calc.gst_split
+OK       calc.stock_weighted_average
+OK       calc.billing_net_payable
+OK       calc.ra_line_amount
+OK       calc.ra_unit_rate
+OK       calc.uom_conversions
+Golden comparison OK: 8 output(s).
+exit=0 seconds=3

@@ -92,6 +92,9 @@ export function createFlagService({ db, environment }) {
       if ((scope.level === 'company' || scope.level === 'project') && scope.companyId !== actor.companyId) {
         throw forbidden('You can only change overrides for your own company.');
       }
+      // Audit AUD-DEF-009 / D-002: in staging and production a flag change is a configuration change, maker-checker by the approval reference
+      // (part 29.01: SYSADM -> ITADM; financial and security modules -> CFO or DIR too). It is recorded and applied when approved.
+      if (MAKER_CHECKER_ENVIRONMENTS.includes(environment)) return { pending: true, request: requestChange(db, repo, actor, key, { scope, enabled, reason }) };
       return setFlagRow(db, repo, {
         key,
         scope: {
@@ -164,6 +167,88 @@ function setFlagRow(db, repo, { key, scope, enabled, reason, version, actor, cor
 
 // Entry points for callers that already hold a database handle and have done their own authorisation
 // (golden-output runners, seeds, other services). They skip the actor guards by design.
+// ---- maker-checker of flag changes (audit AUD-DEF-009, D-002) -------------------------------------------------------------------------------
+// The approval reference (07, part 29.01) and the role catalogue (06, SYSADM) make a configuration change maker-checker: SYSADM proposes,
+// ITADM approves, and a change in a financial or security area also needs the CFO or a director. It is kept in this module, not in the
+// workflow engine, because that engine is itself switched on by a flag (ff.eng.p0401): a flag change must never wait on a flag.
+/** The environments in which a flag change waits for its checkers. Development and test change at once (audited), so suites can set flags. */
+export const MAKER_CHECKER_ENVIRONMENTS = Object.freeze(['staging', 'production']);
+const FINANCIAL_MODULES = new Set(['fin', 'pay', 'bud', 'bill', 'ctr', 'ap', 'ar', 'pmt', 'cash']);
+const SECURITY_MODULES = new Set(['iam', 'sec', 'admin']);
+/** The area of a flag from its module (ff.<module>.<feature>): a financial or security flag needs a CFO or director as a second checker. */
+export const flagArea = (key) => { const m = /^ff\.([a-z0-9]+)\./.exec(key)?.[1] ?? ''; return FINANCIAL_MODULES.has(m) ? 'FINANCIAL' : SECURITY_MODULES.has(m) ? 'SECURITY' : 'GENERAL'; };
+const changeView = (r) => ({ id: r.id, docNo: r.doc_no, key: r.flag_key, level: r.scope_level, environment: r.scope_environment, companyId: r.scope_company_id, projectId: r.scope_project_id, enabled: r.enabled === 1, area: r.area, reason: r.reason, status: r.status, requestedBy: r.requested_by, requestedAt: r.created_at, firstApprovedBy: r.first_approved_by, decidedBy: r.decided_by, decidedAt: r.decided_at, note: r.decision_note, version: r.version });
+const rolesOf = (actor) => (Array.isArray(actor.roles) ? actor.roles : String(actor.roles ?? '').split(',')).map((x) => String(x).trim()).filter(Boolean);
+const sameUser = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
+
+function requestChange(db, repo, actor, key, { scope, enabled, reason }) {
+  if (!repo.findScopeRow(key, {})) throw notFound(`Feature flag ${key} is not defined. Flags are created by a reference-seed migration.`);
+  if (scope.level === 'default') throw badRequest('The default row of a flag always exists and cannot be created.');
+  const open = db.prepare("SELECT doc_no FROM core_flag_changes WHERE company_id = ? AND flag_key = ? AND scope_level = ? AND COALESCE(scope_environment, '') = ? AND COALESCE(scope_company_id, 0) = ? AND COALESCE(scope_project_id, 0) = ? AND status = 'PENDING' AND deleted_at IS NULL")
+    .get(actor.companyId, key, scope.level, scope.environment ?? '', scope.companyId ?? 0, scope.projectId ?? 0);
+  if (open) throw unprocessable(`A change of ${key} at this scope is already waiting for approval (${open.doc_no}).`);
+  return transaction(db, () => {
+    const n = (db.prepare('SELECT COUNT(*) AS n FROM core_flag_changes WHERE company_id = ?').get(actor.companyId).n ?? 0) + 1;
+    const docNo = `FLG/${String(n).padStart(5, '0')}`; const area = flagArea(key);
+    const id = Number(db.prepare("INSERT INTO core_flag_changes (company_id, doc_no, flag_key, scope_level, scope_environment, scope_company_id, scope_project_id, enabled, area, reason, status, requested_by, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, 'api')")
+      .run(actor.companyId, docNo, key, scope.level, scope.level === 'environment' ? scope.environment : null, scope.companyId ?? null, scope.projectId ?? null, enabled ? 1 : 0, area, reason, actor.user, actor.user).lastInsertRowid);
+    writeAudit(db, { companyId: actor.companyId, entity: 'core_flag_changes', entityId: String(id), action: 'request', actor: actor.user, reason, newValues: { key, scope, enabled, area } });
+    return changeView(db.prepare('SELECT * FROM core_flag_changes WHERE id = ?').get(id));
+  });
+}
+
+/** The checks of a change of the actor's company: list, approve or reject (core.flag.approve, never one's own), cancel (the requester). */
+export function createFlagChanges({ db }) {
+  const rowOf = (actor, id) => { const r = db.prepare('SELECT * FROM core_flag_changes WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) throw notFound('That flag change does not exist.'); return r; };
+  const close = (r, actor, status, note) => {
+    const now = new Date().toISOString();
+    db.prepare('UPDATE core_flag_changes SET status = ?, decided_by = ?, decided_at = ?, decision_note = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(status, actor.user, now, note ?? null, actor.user, now, r.id);
+    writeAudit(db, { companyId: r.company_id, entity: 'core_flag_changes', entityId: String(r.id), action: status.toLowerCase(), actor: actor.user, reason: note ?? undefined, newValues: { status } });
+  };
+  return {
+    list(actor, { status = null } = {}) {
+      assertPermission(actor, 'core.flag.view');
+      const rows = db.prepare(`SELECT * FROM core_flag_changes WHERE company_id = ? AND deleted_at IS NULL ${status ? 'AND status = ?' : ''} ORDER BY id DESC LIMIT 100`).all(...[actor.companyId, ...(status ? [status] : [])]);
+      return rows.map(changeView);
+    },
+    decide(actor, id, { decision, note }) {
+      assertPermission(actor, 'core.flag.approve');
+      return transaction(db, () => {
+        const r = rowOf(actor, id);
+        if (r.status !== 'PENDING') throw unprocessable(`${r.doc_no} is ${r.status.toLowerCase()}: it is not decided again.`);
+        if (sameUser(r.requested_by, actor.user)) throw forbidden('You asked for this change: somebody else approves or rejects it.');
+        if (r.first_approved_by && sameUser(r.first_approved_by, actor.user)) throw forbidden('You approved this change already: a different person gives the second approval.');
+        if (decision === 'REJECT') { if (!note) throw badRequest('Say why the change is rejected.'); close(r, actor, 'REJECTED', note); return changeView(rowOf(actor, id)); }
+        const roles = rolesOf(actor); const twoStep = r.area !== 'GENERAL';
+        // the second approval of a financial or security flag is the CFO's or a director's; the first is the IT administrator's
+        if (twoStep && r.first_approved_by && !roles.some((x) => ['CFO', 'DIR'].includes(x))) throw forbidden(`A ${r.area.toLowerCase()} flag is approved a second time by the CFO or a director.`);
+        if (twoStep && !r.first_approved_by) {
+          const now = new Date().toISOString();
+          db.prepare('UPDATE core_flag_changes SET first_approved_by = ?, first_approved_at = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(actor.user, now, actor.user, now, r.id);
+          writeAudit(db, { companyId: r.company_id, entity: 'core_flag_changes', entityId: String(r.id), action: 'first_approval', actor: actor.user, reason: note ?? undefined });
+          return changeView(rowOf(actor, id));
+        }
+        const repo = createFlagRepository(db);
+        const scope = { level: r.scope_level, environment: r.scope_level === 'environment' ? r.scope_environment : undefined, companyId: r.scope_company_id ?? undefined, projectId: r.scope_project_id ?? undefined };
+        const current = repo.findScopeRow(r.flag_key, scope);
+        const approvers = [r.first_approved_by, actor.user].filter(Boolean).join(' and ');
+        setFlagRow(db, repo, { key: r.flag_key, scope, enabled: r.enabled === 1, reason: `${r.reason} (${r.doc_no}, requested by ${r.requested_by}, approved by ${approvers})`, version: current?.version, actor: actor.user, companyId: r.company_id, correlationId: null });
+        close(r, actor, 'APPLIED', note);
+        return changeView(rowOf(actor, id));
+      });
+    },
+    cancel(actor, id, { reason }) {
+      assertPermission(actor, 'core.flag.configure');
+      return transaction(db, () => {
+        const r = rowOf(actor, id);
+        if (r.status !== 'PENDING') throw unprocessable(`${r.doc_no} is ${r.status.toLowerCase()}.`);
+        if (!sameUser(r.requested_by, actor.user)) throw forbidden('Only the person who asked for the change cancels it.');
+        close(r, actor, 'CANCELLED', reason); return changeView(rowOf(actor, id));
+      });
+    },
+  };
+}
+
 export const resolveFlag = (db, key, context) => resolveWith(createFlagRepository(db), key, context);
 export const isEnabled = (db, key, context) => resolveFlag(db, key, context).enabled;
 export const setFlag = (db, opts) => setFlagRow(db, createFlagRepository(db), opts);

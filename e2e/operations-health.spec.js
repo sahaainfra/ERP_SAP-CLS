@@ -36,7 +36,11 @@ test('Operations Health: figures, objectives, alert rules, baseline; a forced er
   }
   await expect(page.getByTestId('slo-login')).toBeVisible();
   await expect(page.getByTestId('slo-bill_calculation')).toContainText('Calculate a bill');
-  await expect(page.getByTestId('no-open-alerts')).toBeVisible();
+  // alerts are installation-wide: after the other specs of a full run one may be open (a dead letter, an error spike), so the page must show
+  // either the calm state or the count of open alerts in red, matching the store (audit E2E triage)
+  const openAlerts = (() => { const d = new DatabaseSync('data/e2e.sqlite', { readOnly: true }); try { return d.prepare("SELECT COUNT(*) AS n FROM core_alerts WHERE status = 'OPEN'").get().n; } finally { d.close(); } })();
+  if (openAlerts === 0) await expect(page.getByTestId('no-open-alerts')).toBeVisible();
+  else { await expect(page.getByTestId('no-open-alerts')).toHaveCount(0); await expect(page.getByTestId('tile-alerts')).toContainText(String(openAlerts)); }
 
   await page.locator('summary', { hasText: 'Alert rules' }).click();
   await expect(page.getByTestId('rule-error_spike')).toBeVisible();

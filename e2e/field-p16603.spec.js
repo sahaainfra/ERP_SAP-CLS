@@ -29,6 +29,7 @@ async function world(request, code) {
   const project = await api(request, c, 'PM', `pm-${code}`, 'post', '/iam/org/projects', { code: `${code}P`, name: 'Ring road package 2', type: 'ROAD' });
   const site = await api(request, c, 'PM', `pm-${code}`, 'post', '/iam/org/sites', { code: `${code}S`, name: 'Km 4 camp', projectId: project.id });
   const db = new DatabaseSync(process.env.DATABASE_PATH ?? 'data/e2e.sqlite');
+  db.exec('PRAGMA busy_timeout = 8000;'); // the server writes too; wait for its lock as the other specs do (audit E2E triage: "database is locked")
   db.prepare("UPDATE org_sites SET status = 'ACTIVE' WHERE id = ?").run(site.id); // a new site is a draft; the field works on active ones
   db.close();
   return { c, project, site };

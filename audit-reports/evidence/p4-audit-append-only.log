@@ -1,0 +1,5 @@
+triggers on the audit tables: [{"name":"trg_core_audit_log_no_update","tbl_name":"core_audit_log"},{"name":"trg_core_audit_log_no_delete","tbl_name":"core_audit_log"},{"name":"trg_core_security_events_no_update","tbl_name":"core_security_events"},{"name":"trg_core_security_events_no_delete","tbl_name":"core_security_events"}]
+columns: id,entity,entity_id,action,old_values,new_values,reason,actor,correlation_id,created_at
+inserted audit row 1
+UPDATE: REFUSED -> The audit trail is append-only: rows cannot be changed.
+DELETE: REFUSED -> The audit trail is append-only: rows cannot be deleted.

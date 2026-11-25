@@ -1,0 +1,14 @@
+Cross-company probe, 2026-11-24, on a VACUUM INTO copy of data/e2e.sqlite (192 companies of E2E data). A new company (id 193) with every feature on; a user holding every internal role.
+Detail routes (GET with one :id, ids 1-3; export/print/download/content excluded): 30 answers of 200 on 10 routes.
+List routes without parameters: 0 returned rows to the empty company.
+
+/api/v1/admin/archive/erasures/check/:id ids [1, 2, 3]: OK: answers "No such employee"
+/api/v1/core/jobs/:id ids [1, 2, 3]: OK for ids 1-3: system jobs (company empty); company-owned jobs not probed
+/api/v1/iam/roles/:id ids [1, 2, 3]: OK: system role template (company empty)
+/api/v1/tpl/templates/:id ids [1, 2, 3]: OK: shared standard template (company empty)
+/api/v1/hr/employees/:id/deployments ids [1, 2, 3]: OK: empty list
+/api/v1/hr/performance/team/:id ids [1, 2, 3]: LEAK: employee of company 17 (name, code, designation, department) shown to company 193
+/api/v1/hr/performance/kpis/:id/history ids [1, 2, 3]: OK: empty list
+/api/v1/hr/expenses/policies/:id/history ids [1, 2, 3]: LEAK: audit history (creator, approver, values) of another company's expense policy
+/api/v1/pay/statutory-params/:id ids [1, 2, 3]: OK: national statutory rule (company empty)
+/api/v1/fin/posting-rules/:id ids [1, 2, 3]: OK: standard posting rule (company empty)

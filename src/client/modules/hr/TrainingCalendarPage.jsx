@@ -56,9 +56,8 @@ export default function TrainingCalendarPage() {
       {q.isPending ? <Skeleton label={t('cal.title')} rows={6} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : (
         <>
           <div className="trn-cal" role="grid" aria-label={month} data-testid="tcal-grid">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => <div key={d} className="trn-dow" role="columnheader">{t(`dow.${d}`)}</div>)}
-            {Array.from({ length: firstDow }, (_, i) => <div key={`b${i}`} className="trn-blank" />)}
-            {days.map((d) => (
+            <div role="row" style={{ display: 'contents' }}>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => <div key={d} className="trn-dow" role="columnheader">{t(`dow.${d}`)}</div>)}</div>
+            {weeks(firstDow, days).map((week, w) => <div key={`w${w}`} role="row" style={{ display: 'contents' }}>{week.map((d, i) => d === null ? <div key={`b${w}-${i}`} className="trn-blank" role="gridcell" /> : (
               <div key={d} className={`trn-day${bySession(d).length ? ' trn-has' : ''}`} role="gridcell" data-day={d} onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => { e.preventDefault(); const s = rows.find((x) => x.id === Number(e.dataTransfer.getData('text/plain'))); if (s) move(s, d); }}>
                 <span className="trn-date">{Number(d.slice(8))}</span>
@@ -69,7 +68,7 @@ export default function TrainingCalendarPage() {
                   </a>
                 ))}
               </div>
-            ))}
+            ))}</div>)}
           </div>
           <h2>{t('cal.list')}</h2>
           {rows.length === 0 ? <p className="muted" data-testid="tcal-none">{t('cal.none')}</p> : (
@@ -88,6 +87,9 @@ export default function TrainingCalendarPage() {
     </section>
   );
 }
+
+// Part 30.07: the month grid in rows of seven (axe aria-required-children), blanks before the first day as empty cells.
+const weeks = (firstDow, days) => { const cells = [...Array(firstDow).fill(null), ...days]; return Array.from({ length: Math.ceil(cells.length / 7) }, (_, w) => cells.slice(w * 7, w * 7 + 7)); };
 
 export function SessionForm({ close, existing = null }) {
   const t = useT('trn');

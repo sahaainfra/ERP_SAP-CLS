@@ -33,7 +33,12 @@ export function loadArea(ns) {
 }
 /** Fetch every English area not yet here (after the first screen; a failure is fetched again when a screen asks). */
 export const loadAllAreas = () => Promise.all(Object.keys(AREA_LOADERS).map(loadArea));
-const LOADERS = { hi: () => import('../../../shared/i18n/locales/hi.js'), te: () => import('../../../shared/i18n/locales/te.js') };
+// Audit AUD-DEF-014: the Hindi text is one file per area (each its own chunk, fetched together); one file of it passed the bundle budget
+const HI_AREAS = import.meta.env ? import.meta.glob('../../../shared/i18n/locales/hi/*.js') : null;
+const loadHindi = HI_AREAS
+  ? () => Promise.all(Object.entries(HI_AREAS).map(([path, load]) => load().then((m) => [path.replace(/^.*\/|\.js$/g, ''), m.default]))).then((areas) => ({ default: Object.fromEntries(areas) }))
+  : () => import('../../../shared/i18n/locales/hi.js');
+const LOADERS = { hi: loadHindi, te: () => import('../../../shared/i18n/locales/te.js') };
 const loading = {};
 /** The built-in text of a language: resolves once it is here (at once for English). */
 export function loadLanguage(lang) {

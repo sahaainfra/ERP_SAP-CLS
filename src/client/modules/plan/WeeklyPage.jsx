@@ -195,8 +195,8 @@ export default function WeeklyPage() {
   return (
     <section aria-labelledby="wp-h" data-testid="plan-weekly">
       <PageHeader id="wp-h" srOnly title={t('wp.title')} />
-      <div role="tablist" aria-label={t('wp.title')} className="actions-row no-print">
-        {['plans', 'report'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'btn btn-primary' : 'btn'} onClick={() => setTab(k)} data-testid={`wp-tab-${k}`}>{t(k === 'plans' ? 'wp.title' : 'wp.report')}</button>)}
+      <div className="actions-row no-print">
+        <div role="tablist" aria-label={t('wp.title')} style={{ display: 'contents' }}>{['plans', 'report'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'btn btn-primary' : 'btn'} onClick={() => setTab(k)} data-testid={`wp-tab-${k}`}>{t(k === 'plans' ? 'wp.title' : 'wp.report')}</button>)}</div>
         {tab === 'plans' && perms.includes('plan.weekly_plan.create') && <button type="button" className="btn" onClick={() => setAdding(!adding)} data-testid="wp-new">{t('wp.new')}</button>}
         <Link to="/plan/lookahead">{t('la.title')}</Link>
       </div>

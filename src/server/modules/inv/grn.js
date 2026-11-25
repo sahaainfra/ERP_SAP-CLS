@@ -39,7 +39,7 @@ export function createGrnService({ db, base, invSvc, gate }) {
   const canValues = (actor, pid) => may(actor, 'inv.stock.values', pid); const mask = (v, actor, pid) => (canValues(actor, pid) ? v : null);
   const scope = (actor, key, alias = 'x', withSite = true) => { need(actor, key, 'see the goods receipts'); const f = authz.scopeFilter(actor, key, { project: `${alias}.org_project_id`, ...(withSite ? { site: `${alias}.org_site_id` } : {}) }); return { sql: `${alias}.company_id = :c AND ${f.sql}`, params: { c: actor.companyId, ...(f.params ?? {}) } }; };
   const taskOf = (actor, instanceId) => workflowOf(db).listTasks(actor, { mine: 'assigned', limit: 200 }).rows.find((t) => t.instance?.id === instanceId)?.id ?? null;
-  const partner = (id) => db.prepare('SELECT id, code, legal_name AS name FROM mdm_partners WHERE id = ?').get(id);
+  const partner = (id) => (id == null ? null : db.prepare('SELECT id, code, legal_name AS name FROM mdm_partners WHERE id = ?').get(id));
   const tol = (companyId) => Number(param(companyId, 'inv.grn.excess_tolerance_pct') ?? 50000);
   const fileOk = (actor, fileId, entity, entityId) => { const f = db.prepare('SELECT id, original_name FROM core_files WHERE id = ? AND company_id = ? AND linked_entity = ? AND linked_id = ?').get(rid(fileId), actor.companyId, entity, entityId); if (!f) throw unprocessable('That file is not attached to this record. Upload it to the record first.'); return f; };
   const mandatoryInspection = (poId) => Boolean(poId && db.prepare("SELECT 1 FROM xpd_inspections WHERE po_id = ? AND mandatory = 1 AND status NOT IN ('CANCELLED', 'SUPERSEDED', 'REJECTED') AND deleted_at IS NULL").get(poId));

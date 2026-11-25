@@ -5,6 +5,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { attp, smallPhoto } from './api.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 
 // Kiosk Mode (HR, part 07.05, FR-04): a tablet at the site gate. The worker holds the ID card to the camera (the QR holds the employee code) or the code is typed, and a photo is taken; the punch is made against the
 // site chosen for the tablet and the screen answers in large type for five seconds, then clears for the next person. The site stays chosen on the tablet. The QR is read with the browser's own detector where it has one.
@@ -50,6 +51,7 @@ export default function KioskPage() {
   return (
     <section aria-labelledby="ki-title" data-testid="kiosk" className="att-punch att-kiosk">
       <PageHeader id="ki-title" title={"Kiosk Mode"} />
+      {today.isLoading && <Skeleton label={'Loading the site\'s attendance'} rows={2} />}{today.isError && today.error?.status !== 403 && <ErrorState error={today.error} onRetry={today.refetch} />}
       {answer ? (
         <div className={`att-answer ${answer.result === 'REJECTED' ? 'is-bad' : 'is-good'}`} role="status" aria-live="assertive" data-testid="ki-answer"><p className="att-answer-big">{answer.result === 'REJECTED' ? 'Not accepted' : answer.type === 'IN' ? 'Welcome' : 'Goodbye'}</p><p>{answer.person ?? ''} {answer.result === 'REJECTED' ? answer.reasonText : `${answer.type === 'IN' ? 'In' : 'Out'} at ${formatDateTime(answer.effectiveTime)}`}</p><button type="button" className="btn" onClick={reset} data-testid="ki-next">Next person</button></div>
       ) : (

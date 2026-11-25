@@ -28,6 +28,7 @@ const all = [
   { id: 'icon-map', title: 'Icon map generated from the icon registry (part 03.01)', cmd: [node, 'scripts/build_icons.mjs', '--check'] },
   { id: 'nav-check', title: 'Navigation registry: every page has an entry, every entry a page (part 03.05)', cmd: [node, 'scripts/nav_check.mjs'] },
   { id: 'route-check', title: 'Route registry: every route declared with its permission (part 02.07)', cmd: [node, 'scripts/route_check.mjs'] },
+  { id: 'openapi-check', title: 'OpenAPI: every declared route documented, none stale, the generated file current (audit AUD-DEF-005)', cmd: [node, 'scripts/openapi_routes.mjs', '--check'] },
   { id: 'permission-audit', title: 'Permission audit: every holder of a sensitive permission is reviewed (part 166.1)', cmd: [node, 'scripts/permission_audit.mjs'] },
   { id: 'defects', title: 'Defect register: target part and gate on every open row; the by-part list is current (part 166.1)', cmd: [node, 'scripts/defects_by_part.mjs', '--check'] },
   { id: 'db-check', title: 'Data-integrity suite (Critical failures block)', cmd: [node, 'scripts/db_check.mjs', '--fresh'] },
@@ -43,6 +44,7 @@ if (!skipE2e) {
   all.push({ id: 'pwa-check', title: 'Installable app: manifest, icons and the files of the service worker (part 03.06)', cmd: [node, 'scripts/pwa_check.mjs'] });
   all.push({ id: 'bundle-budget', title: 'Bundle budget: first download at most 350 KB gzip, each chunk at most 250 KB gzip; report in reports/ (part 166.4)', cmd: [node, 'scripts/bundle_budget.mjs'] });
   all.push({ id: 'e2e', title: 'Playwright E2E (desktop and mobile)', cmd: [node, bin('@playwright/test', 'cli.js'), 'test'] });
+  all.push({ id: 'scope-probe', title: 'Cross-company probe of every /:id and list route on a copy of the E2E database (audit step 0.2)', cmd: [node, 'scripts/scope_probe.mjs'] });
 }
 const steps = only ? all.filter((s) => only.has(s.id)) : all;
 

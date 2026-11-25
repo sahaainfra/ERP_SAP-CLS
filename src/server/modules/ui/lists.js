@@ -10,6 +10,8 @@ import { footerLines, writeExport, FORMATS } from '../../platform/export/index.j
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { describeList, filtersOf, listExports, listRegistry, parseListRequest, queryOf } from '../../platform/list/index.js';
 import { createExportGuard } from '../../platform/security/export.js';
+import { securityHandlers } from '../../platform/security/handlers.js';
+import { createApprovalEngine } from '../../platform/approvals/index.js';
 import { parse } from '../../platform/validation/index.js';
 import { fromUnits, toUnits } from '../../../shared/money.js';
 
@@ -128,7 +130,8 @@ export function createSavedViewService({ db, managedList = '' }) {
  * the person finds it under My Exports (and the event ui.export.completed is published). Every export is audited by the export guard.
  */
 export function createExportService({ db, storagePath, jobs, devHeaders = false }) {
-  const guard = createExportGuard({ db, approvals: null });
+  // part 30.06: a bulk export of personal data raises its approval request (02.07) instead of failing with a server error
+  const guard = createExportGuard({ db, approvals: createApprovalEngine({ db, handlers: { bulk_personal_export: securityHandlers.bulk_personal_export } }) });
   const sources = new Map();
   const downloadChecks = new Map();
   const sourceParameters = new Map();
@@ -164,16 +167,19 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
       if (!src0) throw notFound(`There is no export for ${code}.`);
       const def = listRegistry.get(code);
       const parameters = sourceParameters.get(code) ?? [];
-      const req = parseListRequest(def, query, { extra: ['format', ...parameters] });
+      const req = parseListRequest(def, query, { extra: ['format', 'approvalId', ...parameters] });
       const format = String(req.format ?? 'csv');
       if (!FORMATS[format]) throw badRequest('Some fields are invalid.', [{ field: 'format', message: 'Use xlsx, csv or pdf' }]);
       const src = src0(actor, req);
       const count = src.count();
       const background = queued || count > guard.maxRows(actor.companyId);
-      guard.authorize(actor, { report: code, permission: src.permission, rows: count, personal: Boolean(src.personal), filters: filtersOf(req), anywhere: true, background });
+      const approvalId = req.approvalId == null || req.approvalId === '' ? null : Number(req.approvalId);
+      if (approvalId != null && !Number.isSafeInteger(approvalId)) throw badRequest('Some fields are invalid.', [{ field: 'approvalId', message: 'The number of the approved request' }]);
+      const grant = guard.authorize(actor, { report: code, permission: src.permission, rows: count, personal: Boolean(src.personal), filters: filtersOf(req), anywhere: true, background, approvalId });
+      if (grant.status === 'APPROVAL_REQUIRED') throw unprocessable(`This export holds ${count} people's records: it needs the approval of the HR manager or a director. Request ${grant.request.id} is waiting; export again with approvalId=${grant.request.id} once it is approved.`, [{ field: 'approvalId', message: String(grant.request.id) }]);
       if (!background) {
         const out = build(actor, code, req, format);
-        guard.complete(actor, { report: code, format, rows: out.rows, filters: filtersOf(req), personal: Boolean(src.personal) });
+        guard.complete(actor, { report: code, format, rows: out.rows, filters: filtersOf(req), personal: Boolean(src.personal), approvalId: grant.approvalId ?? null });
         return { kind: 'file', ...out, contentType: FORMATS[format] };
       }
       return transaction(db, () => {

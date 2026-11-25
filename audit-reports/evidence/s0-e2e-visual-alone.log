@@ -1,0 +1,144 @@
+
+Running 6 tests using 1 worker
+
+[1/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px
+  1) [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px 
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      8547 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: admin.users-light-768.png
+
+    Call log:
+      - Expect "toHaveScreenshot(admin.users-light-768.png)" with timeout 60000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 8547 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 8547 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      42 |         // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
+      43 |         if (VOLATILE.has(p.route)) await page.addStyleTag({ content: 'main > *:not(:first-child), .sh-crumbs { visibility: hidden !important; }' }); // a rule, so a page that draws again keeps it
+    > 44 |         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {
+         |                            ^
+      45 |           animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01, timeout: 60_000, // a large page (the registry grows with every part) under the load of the whole run needs longer than 5 s to settle; the comparison is unchanged
+      46 |         });
+      47 |       }
+        at /home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js:44:28
+
+    attachment #1: admin-users-light-768 (image/png) ───────────────────────────────────────────────
+    Expected: e2e/a0-visual.spec.js-snapshots/admin-users-light-768-desktop-linux.png
+    Received: test-results/a0-visual-T-01-FR-05-visua-494fd-heme-at-360-768-and-1280-px-desktop/admin-users-light-768-actual.png
+    Diff:     test-results/a0-visual-T-01-FR-05-visua-494fd-heme-at-360-768-and-1280-px-desktop/admin-users-light-768-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/a0-visual-T-01-FR-05-visua-494fd-heme-at-360-768-and-1280-px-desktop/error-context.md
+
+
+[2/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px
+  2) [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px 
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      8376 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: admin.users-dark-768.png
+
+    Call log:
+      - Expect "toHaveScreenshot(admin.users-dark-768.png)" with timeout 60000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 8376 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 8376 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      42 |         // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
+      43 |         if (VOLATILE.has(p.route)) await page.addStyleTag({ content: 'main > *:not(:first-child), .sh-crumbs { visibility: hidden !important; }' }); // a rule, so a page that draws again keeps it
+    > 44 |         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {
+         |                            ^
+      45 |           animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01, timeout: 60_000, // a large page (the registry grows with every part) under the load of the whole run needs longer than 5 s to settle; the comparison is unchanged
+      46 |         });
+      47 |       }
+        at /home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js:44:28
+
+    attachment #1: admin-users-dark-768 (image/png) ────────────────────────────────────────────────
+    Expected: e2e/a0-visual.spec.js-snapshots/admin-users-dark-768-desktop-linux.png
+    Received: test-results/a0-visual-T-01-FR-05-visua-e9b6d-heme-at-360-768-and-1280-px-desktop/admin-users-dark-768-actual.png
+    Diff:     test-results/a0-visual-T-01-FR-05-visua-e9b6d-heme-at-360-768-and-1280-px-desktop/admin-users-dark-768-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/a0-visual-T-01-FR-05-visua-e9b6d-heme-at-360-768-and-1280-px-desktop/error-context.md
+
+
+[3/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+  3) [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px 
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      9173 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: admin.integrations-high-contrast-768.png
+
+    Call log:
+      - Expect "toHaveScreenshot(admin.integrations-high-contrast-768.png)" with timeout 60000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 9173 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 9173 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      42 |         // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
+      43 |         if (VOLATILE.has(p.route)) await page.addStyleTag({ content: 'main > *:not(:first-child), .sh-crumbs { visibility: hidden !important; }' }); // a rule, so a page that draws again keeps it
+    > 44 |         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {
+         |                            ^
+      45 |           animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01, timeout: 60_000, // a large page (the registry grows with every part) under the load of the whole run needs longer than 5 s to settle; the comparison is unchanged
+      46 |         });
+      47 |       }
+        at /home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js:44:28
+
+    attachment #1: admin-integrations-high-contrast-768 (image/png) ────────────────────────────────
+    Expected: e2e/a0-visual.spec.js-snapshots/admin-integrations-high-contrast-768-desktop-linux.png
+    Received: test-results/a0-visual-T-01-FR-05-visua-3d7d1-heme-at-360-768-and-1280-px-desktop/admin-integrations-high-contrast-768-actual.png
+    Diff:     test-results/a0-visual-T-01-FR-05-visua-3d7d1-heme-at-360-768-and-1280-px-desktop/admin-integrations-high-contrast-768-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/a0-visual-T-01-FR-05-visua-3d7d1-heme-at-360-768-and-1280-px-desktop/error-context.md
+
+
+[4/6] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px
+[5/6] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px
+[6/6] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+  3 failed
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px 
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px 
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px 
+  3 skipped
+exit=1

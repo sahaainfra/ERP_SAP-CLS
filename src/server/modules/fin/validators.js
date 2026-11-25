@@ -52,7 +52,7 @@ export const parseJournalImport = (b) => parse(z.object({ rows: z.array(z.object
 export const parseRecurring = (b) => parse(z.object({ name: z.string().trim().min(3).max(120), voucherType: z.enum(['JV', 'PV', 'RV', 'CV', 'PJ', 'SJ', 'DN', 'CN']).default('JV'), frequency: z.enum(['MONTHLY', 'QUARTERLY', 'YEARLY']), nextRunOn: date, endOn: date.nullable().optional(), narration, lines: z.array(jLine).min(2).max(200), version: version.optional() }).strict(), b);
 export const parseRecurringStatus = (b) => parse(z.object({ status: z.enum(['ACTIVE', 'PAUSED', 'ENDED']), reason: z.string().trim().min(5).max(300) }).strict(), b);
 const dimQ = { branchId: ref, projectId: ref, siteId: ref, wbsId: ref, costCentreId: ref, profitCentreId: ref, departmentId: ref, costCodeId: ref, partnerId: ref, employeeId: ref, equipmentId: ref };
-export const parseLedger = (q) => parse(z.object({ accountId: id, from: date.optional(), to: date.optional(), page: z.coerce.number().int().min(1).optional(), pageSize: z.coerce.number().int().min(1).max(500).optional(), ...dimQ }).strict(), q);
+export const parseLedger = (q) => parse(z.object({ accountId: id, from: date.optional(), to: date.optional(), page: z.coerce.number().int().min(1).optional(), pageSize: z.coerce.number().int().min(1).max(200).optional(), ...dimQ }).strict(), q);
 export const parseTrialBalance = (q) => parse(z.object({ asOf: date.optional(), from: date.optional(), ...dimQ }).strict(), q);
 export const parseCarryForward = (b) => parse(z.object({ fyId: id }).strict(), b);
 

@@ -10,19 +10,19 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 ## Totals
 | | Pages |
 |---|---|
-| Registered | 633 |
-| With PageHeader | 633 (lint rule `erp/page-header-required`: no `<h1>` outside PageHeader) |
-| Migrated | 375 |
-| Migrated (partly) | 189 |
-| Exception | 69 |
+| Registered | 739 |
+| With PageHeader | 739 (lint rule `erp/page-header-required`: no `<h1>` outside PageHeader) |
+| Migrated | 446 |
+| Migrated (partly) | 219 |
+| Exception | 74 |
 
 | Pattern | Pages |
 |---|---|
-| List report | 222 |
+| List report | 234 |
 | Object page | 2 |
-| Form | 285 |
-| Overview page | 37 |
-| Report | 87 |
+| Form | 328 |
+| Overview page | 49 |
+| Report | 126 |
 
 ## Pages
 | Route | Page | Module | Pattern | Components | Status | Reason / closing part | Phone check | Screenshots |
@@ -66,9 +66,9 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/admin/sod/rules` | SoD Rules | iam | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/admin/sod/violations` | SoD Violations | iam | List report | PageHeader, KpiRow | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/account/elevation` | Request Elevated Access | iam | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
-| `/admin/elevation-approvals` | Elevation Approvals | iam | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/elevation-approvals` | Elevation Approvals | iam | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/admin/access-reviews` | Access Reviews | iam | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
-| `/account/access-review` | My Access Review | iam | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/account/access-review` | My Access Review | iam | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/admin/security/policy` | Authentication Policy | iam | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/organisation` | Organisation | iam | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/projects` | Projects & Sites | iam | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
@@ -78,13 +78,13 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/search` | Advanced Search | ui | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/search` | Search Administration | ui | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/translations` | Translations | ui | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
-| `/admin/migration` | Screen Migration Tracker | ui | Form | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/migration` | Screen Migration Tracker | ui | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/work` | My Work | ui | Overview page | PageHeader, Dashboard | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/sample-requests/overview` | Requests Overview | ui | Overview page | PageHeader, Dashboard | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/dashboards` | Dashboard Designer | ui | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
 | `/field` | Field Home | ui | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/field/scan` | Scan | ui | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/home` | Home | ui | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/home` | Home | ui | Overview page | PageHeader, Dashboard | Migrated |  | e2e/ui-v3.spec.js | [before-home-desktop.png](screenshots/166.2/before-home-desktop.png) |
 | `/admin/navigation` | Navigation Registry | ui | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/console` | Technical Console | ui | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/design-system` | Design System | ui | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
@@ -92,12 +92,12 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/account/drafts` | My Drafts | ui | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/admin/design-system/lists` | List Report | ui | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/design-system/object-page` | Object Page | ui | Object page | PageHeader, ObjectPage | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/admin/design-system/patterns` | Page Patterns | ui | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/design-system/patterns` | Page Patterns | ui | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js | [page-patterns-desktop.png](screenshots/166.2/page-patterns-desktop.png) [page-patterns-mobile.png](screenshots/166.2/page-patterns-mobile.png) |
 | `/account/exports` | My Exports | ui | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/admin/sample-requests` | Sample Material Requests | ui | Object page | PageHeader, ListReport, ObjectPage | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/workflows` | Workflow Definitions | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/workflows/editor` | Workflow Definition Editor | eng | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/admin/workflows/monitor` | Workflow Monitor | eng | Form | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/workflows/monitor` | Workflow Monitor | eng | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/workflow/instance` | Workflow Instance | eng | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/admin/approval-matrix` | Approval Matrix | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/approval-matrix/editor` | Matrix Rule Editor | eng | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -112,21 +112,21 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/admin/controls` | Control Points | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/reason-codes` | Reason Codes | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/controls/exceptions` | Exceptions Register | eng | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
-| `/controls/dashboard` | Controls Dashboard | eng | Overview page | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/controls/dashboard` | Controls Dashboard | eng | Overview page | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
 | `/admin/raci` | RACI Matrix | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/accountability` | My Accountability | eng | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/reports/accountability` | Accountability Report | eng | Form | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/reports/accountability` | Accountability Report | eng | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/notifications` | Notifications | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/notifications/preferences` | Notification Preferences | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/notification-templates` | Notification Templates | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/admin/notification-deliveries` | Delivery Log | eng | List report | PageHeader, Chart | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
-| `/admin/communication-log` | Communication Log | eng | List report | PageHeader, Chart | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
+| `/admin/notification-deliveries` | Delivery Log | eng | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/communication-log` | Communication Log | eng | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/communication-channels` | Channel Settings | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/communication-consents` | Consent Register | eng | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/tasks` | My Tasks | eng | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/tasks/task` | Task | eng | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/tasks/new` | New Task / Senior Instruction | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/tasks/team` | Team Tasks | eng | List report | PageHeader, KpiRow, Chart | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
+| `/tasks/team` | Team Tasks | eng | Report | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/task-routing` | Department Responsibility Matrix | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/alerts` | Alert Centre | eng | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/alert-rules` | Alert Rules | eng | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
@@ -179,6 +179,11 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/admin/master-data/common/banks` | Banks & IFSC | mdm | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/master-data/common/payment-terms` | Payment & Delivery Terms | mdm | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/master-data/common/lookups` | Lookup Lists | mdm | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/master-data/statutory` | Statutory Changes | mdm | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/master-data/common/tds-forms` | TDS Forms | mdm | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/master-data/common/statutory-calendar` | Statutory Calendar | mdm | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/master-data/common/labour-rules` | Labour Code Rules | mdm | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/master-data/common/pay-components` | Pay Components | mdm | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/master-data/lookup-manager` | Lookup List Manager | mdm | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
 | `/admin/items` | Item Master | mdm | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/admin/items/item` | Item | mdm | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
@@ -197,8 +202,54 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/finance/chart-of-accounts` | Chart of Accounts | fin | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/finance/accounts/account` | Account | fin | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/finance/cost-codes` | Cost Heads & Cost Codes | fin | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/journals` | Journals | fin | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/journal-entry` | Manual Journal | fin | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/ledger` | Account Ledger | fin | List report | PageHeader, KpiRow | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/trial-balance` | Trial Balance | fin | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/recurring-journals` | Recurring Journals | fin | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/posting-rules` | Posting Rules | fin | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/failed-postings` | Failed Postings | fin | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/posting-replay` | Replay Events | fin | List report | PageHeader, KpiRow | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/reconciliation` | Sub-ledger vs GL | fin | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/ap-bills` | AP Bills | fin | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/debit-notes` | Debit Notes | fin | List report | PageHeader, ListReport, KpiRow, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/payables` | Vendor Ledger & Payables Reports | fin | Report | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/payment-proposals` | Payment Proposals | fin | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/payments` | Payments & Cheque Register | fin | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/bank-accounts` | Company Bank Accounts | fin | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/receivables` | Receivables & Receipts | fin | List report | PageHeader, ListReport, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/collections` | Collections Follow-up | fin | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/bank-reconciliation` | Bank Reconciliation | fin | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/imprest` | Site Imprest & Petty Cash | fin | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/cash-position` | Daily Cash & Bank Position | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/e-invoices` | e-Invoice & e-Way Bill Register | fin | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/e-way-bills` | e-Way Bills | fin | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/gst-settings` | GST Settings | fin | Form | PageHeader, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/gst-reconciliation` | GSTR-2B Reconciliation & ITC Review | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/gst-returns` | GST & TDS Returns, Compliance Calendar | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/assets` | Asset Register | fin | List report | PageHeader, ListReport, KpiRow, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/asset-accounting` | Capitalise, Depreciate & FA Reports | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/revenue-recognition` | Revenue Recognition | fin | Form | PageHeader, KpiRow, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/project-accounts` | Project Trial Balance & WIP | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/cost-forecasts` | Forecast Workbench | fin | Form | PageHeader, KpiRow, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/forecast-reports` | EAC Trend & Forecast Variance | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/project-pl` | Project P&L | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/profitability` | Profitability Overview | fin | Overview page | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/treasury` | Treasury & Cash Position | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/cash-reports` | Cash Reports | fin | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/close` | Period Close | fin | Form | PageHeader, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/statements` | Financial Statements | fin | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/dashboard` | Finance Dashboard | fin | Overview page | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
+| `/finance/year-end` | Year-End Closing | fin | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/inter-company` | Inter-company Transactions | fin | Form | PageHeader, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/finance/ic-reconciliation` | Inter-company Reconciliation | fin | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/consolidation` | Consolidated Statements | fin | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/finance/jv` | JV Partner Statement | fin | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/finance/category-mapping` | Item Category → GL / Cost Code Mapping | fin | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/hr` | HR Overview | hr | Overview page | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/hr` | HR Overview | hr | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
+| `/hr/workforce` | Workforce Dashboard | hr | Overview page | PageHeader, Dashboard | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/gates` | Programme Gates | hr | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/gate` | Gate | hr | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/hr/employees` | Employee Directory | hr | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/hr/employees/employee` | Employee 360 | hr | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
 | `/hr/employees/new` | New Employee | hr | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -323,7 +374,7 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/est/bbs-summary` | BBS Summary by Diameter | est | Overview page | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/est/mto-delta` | Revision Delta Report | est | Report | PageHeader, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/est/mto-explosion` | Material Requirement Explosion | est | Report | PageHeader, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/est/review` | Estimate Review | est | Form | PageHeader, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/est/review` | Estimate Review | est | Report | PageHeader, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/est/bid-price` | Bid Price Finalisation | est | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/proj/projects` | Project Portfolio | proj | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/proj/project` | Project | proj | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -356,7 +407,7 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/proj/gis-config` | Layers and Overlays | proj | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/proj/project-360` | Project 360 | proj | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
 | `/proj/portfolio` | Portfolio Overview | proj | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
-| `/engg/dashboard` | Drawings Dashboard | engg | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
+| `/engg/dashboard` | Drawings Dashboard | engg | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
 | `/engg/drawings` | Drawing Register | engg | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/engg/drawing` | Drawing | engg | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/engg/transmittals` | Transmittals | engg | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
@@ -379,12 +430,12 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/engg/letter-draft` | Draft Outward Letter | engg | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/engg/time-bars` | Notices and Time Bars | engg | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bud/budgets` | Budget Versions | bud | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/bud/budget` | Budget Workbench | bud | Form | PageHeader, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/bud/budget` | Budget Workbench | bud | Report | PageHeader, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/bud/generate` | Generate Budget from Baseline | bud | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bud/changes` | Budget Change Requests | bud | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bud/change` | Budget Change Request | bud | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/bud/compare` | Budget Version Comparison | bud | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/bud/ledger` | Budget vs Committed vs Actual | bud | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
+| `/bud/ledger` | Budget vs Committed vs Actual | bud | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bud/check-settings` | Budget Check Settings | bud | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bud/dept-budgets` | Department Budget Workbench | bud | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bud/dept-budget` | Department Budget | bud | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -407,14 +458,14 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/plan/tia` | Time Impact Analysis | plan | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/plan/delay-summary` | Delay Summary | plan | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
 | `/plan/calendars` | Work Calendars | plan | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/site/board` | Site Work Board | site | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/site/board` | Site Work Board | site | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
 | `/site/work-authorisations` | Work Authorisations | site | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/site/daily-plans` | Daily Work Plan | site | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/site/wa-mobile` | Approve and Close WA | site | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/site/dpr-entry` | Daily Progress Report Entry | site | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/site/dprs` | DPR Register | site | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/site/dpr-report` | Daily Site and Progress Reports | site | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/site/dpr-compliance` | DPR Compliance | site | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/site/dpr-report` | Daily Site and Progress Reports | site | Report | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/site/dpr-compliance` | DPR Compliance | site | Report | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/site/weather` | Weather Log | site | List report | PageHeader, ListReport, KpiRow, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/site/hindrances` | Hindrance Register | site | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/site/diary` | Site Diary | site | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -424,21 +475,21 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/site/progress` | Progress Dashboard | site | Overview page | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/site/progress-report` | Progress by WBS and Activity | site | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/site/periods` | Progress Period Close | site | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/site/client-progress` | Client Progress Report | site | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/site/client-progress` | Client Progress Report | site | Report | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/site/productivity` | Productivity Dashboard | site | Overview page | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/site/productivity-report` | Productivity Variance and Loss Reasons | site | Form | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/site/productivity-report` | Productivity Variance and Loss Reasons | site | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/site/productivity-norms` | Productivity Norms | site | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/site/productivity-records` | Productivity Records | site | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/site/control` | Project Cost Control | site | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/site/control-variance` | Quantity and Rate Variance Analysis | site | Form | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/site/control` | Project Cost Control | site | Report | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js | [before-after-control-tower-desktop.png](screenshots/166.2/before-after-control-tower-desktop.png) |
+| `/site/control-variance` | Quantity and Rate Variance Analysis | site | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/site/control-unallocated` | Unallocated Costs | site | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/proc/material-requests/new` | New Material Request | proc | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/proc/material-requests` | Material Requests | proc | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/proc/requisitions` | Purchase Requisitions | proc | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/proc/consolidate` | Consolidate MRs into PR | proc | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/proc/mrp` | Run MRP | proc | Form | PageHeader, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/proc/mrp` | Run MRP | proc | Report | PageHeader, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/proc/mrp-proposals` | PR Proposals | proc | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/proc/mrp-heatmap` | Shortage Heat-map and Long-Lead Items | proc | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/proc/mrp-heatmap` | Shortage Heat-map and Long-Lead Items | proc | Report | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/proc/item-params` | Item Planning Parameters | proc | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/proc/rfqs` | RFQs | proc | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/proc/rfq-new` | Create RFQ from PRs | proc | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
@@ -462,11 +513,11 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/proc/rate-intelligence` | Rate Intelligence | proc | List report | PageHeader, ListReport, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/proc/rate-exposure` | Project Rate Exposure | proc | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/proc/rate-survey` | Market Survey and Index Upload | proc | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/proc/dashboard` | Procurement Dashboard | proc | Overview page | PageHeader, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/proc/dashboard` | Procurement Dashboard | proc | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
 | `/proc/spend-analysis` | Spend Analysis | proc | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/proc/cycle-time` | Procurement Cycle Time | proc | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/proc/procurement-compliance` | Procurement Compliance | proc | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/inv/dashboard` | Stores Dashboard | inv | Overview page | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/inv/dashboard` | Stores Dashboard | inv | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
 | `/inv/stores` | Stores and Bins | inv | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/inv/balances` | Stock Balances | inv | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/inv/ledger` | Stock Ledger | inv | List report | PageHeader | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
@@ -495,7 +546,7 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/inv/scrap` | Scrap, Disposal and Expiry | inv | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/inv/reorder-params` | Reorder Parameters | inv | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/inv/reorder-suggestions` | Reorder Suggestions | inv | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/inv/ageing` | Stock Ageing and Non-moving | inv | Form | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/inv/ageing` | Stock Ageing and Non-moving | inv | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/inv/labels` | Print Labels | inv | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/inv/rta` | Formwork and Scaffolding | inv | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/inv/rta-movements` | Returnable Asset Movements | inv | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -508,7 +559,7 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/inv/wastage-trend` | Wastage Trend | inv | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/inv/materials-dashboard` | Materials Management Dashboard | inv | Overview page | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/inv/material-funnel` | Material Lifecycle Funnel | inv | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/plant/dashboard` | Plant Dashboard | plant | Overview page | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/plant/dashboard` | Plant Dashboard | plant | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
 | `/plant/equipment` | Equipment Register | plant | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/plant/equipment/new` | New Equipment | plant | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/plant/requisitions` | Equipment Requisitions | plant | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -526,13 +577,13 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/plant/fuel-tanks` | Fuel Stores | plant | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/plant/fuel-reports` | Fuel Reports | plant | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/plant/fuel-anomalies` | Fuel Anomalies | plant | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/plant/maintenance` | Maintenance Dashboard | plant | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
+| `/plant/maintenance` | Maintenance Dashboard | plant | Overview page | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/plant/pm-schedule` | PM Schedule | plant | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/plant/job-cards` | Job Cards | plant | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/plant/hire-agreements` | Hire Agreements | plant | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/plant/hire-bill` | Compute Hire Bill | plant | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/plant/hire-comparison` | Hire Cost vs Owned Cost | plant | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/plant/fleet-tower` | Fleet Control Tower | plant | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
+| `/plant/fleet-tower` | Fleet Control Tower | plant | Overview page | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/plant/owning-cost` | Owning and Operating Cost | plant | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/plant/replacement` | Replacement Candidates | plant | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/plant/capacity` | Resource Capacity Heat-map | plant | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
@@ -542,29 +593,29 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/qa/templates` | Checklist Templates | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/qa/perform` | Perform Inspection | qa | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/inspection-requests` | Inspection Requests | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/qa/inspection-requests/new` | Raise Inspection Request | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/qa/ir-analysis` | IR Rejection Analysis | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/qa/inspection-requests/new` | Raise Inspection Request | qa | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/qa/ir-analysis` | IR Rejection Analysis | qa | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/receiving` | Receiving Inspections | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/test-requests` | Test Requests | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/qa/test-compliance` | Test Frequency Compliance | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/lab-equipment` | Lab Equipment and Calibration | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/qa/test-catalogue` | Test Catalogue | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/qa/ncrs` | NCR Register | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/qa/ncrs/new` | Raise NCR | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/qa/ncr-analysis` | NCR Analysis | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/qa/ncrs/new` | Raise NCR | qa | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/qa/ncr-analysis` | NCR Analysis | qa | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/pour-cards` | Pour Cards | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/qa/cubes` | Cube Register | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/qa/concrete-acceptance` | Concrete Strength Acceptance | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/concrete-traceability` | Concrete Traceability | qa | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/snag-walk` | Snag Walk | qa | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/snags` | Snag Register | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/qa/snag-status` | Snag Status by Area and Party | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/qa/snag-status` | Snag Status by Area and Party | qa | Report | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/snag-report` | Unit Snag Report | qa | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/qa/dashboard` | Quality Dashboard | qa | Overview page | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/qa/control-charts` | Concrete Control Charts | qa | Form | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/qa/dashboard` | Quality Dashboard | qa | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
+| `/qa/control-charts` | Concrete Control Charts | qa | Report | PageHeader, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/ratings` | Quality Ratings | qa | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/qa/inspections` | Inspections | qa | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/hse/dashboard` | HSE Dashboard | hse | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
+| `/hse/dashboard` | HSE Dashboard | hse | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
 | `/hse/plans` | HSE Plans | hse | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/hse/hira` | HIRA Register | hse | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/hse/jsa` | JSA Builder | hse | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -572,7 +623,7 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/hse/toolbox` | Toolbox Talks | hse | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/hse/library` | Induction Content and Talk Topics | hse | List report | PageHeader, ListReport | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/hse/compliance` | Induction and Toolbox Compliance | hse | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
-| `/hse/permit-request` | Request Permit | hse | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/hse/permit-request` | Request Permit | hse | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/hse/permit-approvals` | Permit Approvals | hse | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/hse/permit-board` | Active Permits Board | hse | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/hse/permits` | Permit Register | hse | List report | PageHeader, ListReport | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
@@ -655,8 +706,63 @@ no key figure in a form grid, tables as cards or opted out with `data-no-cards`,
 | `/bill/vendor-invoice-new` | Register Vendor Invoice | bill | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bill/invoice-hub` | Invoice Management Hub | bill | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bill/cvr` | CVR Workbench | bill | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
-| `/bill/control-tower` | Contract Control Tower | bill | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js |  |
-| `/bill/qs-dashboard` | QS Management Dashboard | bill | Overview page | PageHeader, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bill/control-tower` | Contract Control Tower | bill | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js | [before-after-control-tower-desktop.png](screenshots/166.2/before-after-control-tower-desktop.png) |
+| `/bill/qs-dashboard` | QS Management Dashboard | bill | Overview page | PageHeader | Exception | overview drawn as panels and tables; cards to follow — 166.5 | e2e/ui-v3.spec.js | [before-after-qs-dashboard-mobile.png](screenshots/166.2/before-after-qs-dashboard-mobile.png) |
 | `/bill/retention` | Retention Summary | bill | Overview page | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
 | `/bill/advances` | Advances | bill | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
 | `/bill/releases` | Release Requests | bill | List report | PageHeader, ListReport, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/payroll/components` | Pay Components & Salary Structures | pay | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/payroll/assignments` | Employee Pay Assignments & Revisions | pay | Form | PageHeader, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/payroll/statutory` | Statutory Parameters | pay | Form | PageHeader | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/payroll/calendar` | Payroll Calendar | pay | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/payroll/runs` | Payroll Run | pay | Form | PageHeader, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/payroll/register` | Payroll Register & Variance | pay | Form | PageHeader, KpiRow, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/payroll/wage-runs` | Wage Run | pay | Form | PageHeader, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/payroll/wage-register` | Wage Register & Muster Roll | pay | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/payroll/contractor-wages` | Contractor Wage Verification | pay | Form | PageHeader, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/payroll/compliance` | Statutory Calendar & Filings | pay | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/payroll/registers` | Labour Registers, Form 16 & Bonus / Gratuity | pay | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/payroll/posting` | Post Payroll & Create Payment | pay | Form | PageHeader, KpiRow | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/payroll/fnf` | Full & Final Settlement | pay | Form | PageHeader, KpiRow | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/payroll/my-payslips` | My Payslips | pay | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/payroll/declarations` | Tax Declarations | pay | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/control-tower` | Enterprise Control Tower | bi | Overview page | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js | [before-after-control-tower-desktop.png](screenshots/166.2/before-after-control-tower-desktop.png) |
+| `/bi/exec-alerts` | Executive Alerts | bi | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/scenarios` | Scenario Builder | bi | Report | PageHeader, Card, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/bi/role-dashboard` | My Role Dashboard | bi | Overview page | PageHeader, Dashboard | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/dashboard-inventory` | Dashboard Inventory | bi | Overview page | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/leakage` | Leakage & Controls Tower | bi | Overview page | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/explain` | Variance Explainer | bi | Form | PageHeader, KpiRow, Card | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/bi/monthly-close` | Monthly Close Status | bi | Form | PageHeader, KpiRow, Card | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/bi/execution` | Daily Execution Intelligence | bi | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/morning-report` | Morning Report | bi | Report | PageHeader, KpiRow, Card, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/bi/morning-reports` | Report Archive | bi | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/metrics` | Metric Catalogue | bi | Form | PageHeader, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/reports` | Report Catalogue | bi | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/builder` | Report Builder | bi | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/subscriptions` | Report Subscriptions | bi | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/bi/usage` | Report Usage | bi | Form | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/ai/features` | AI Features & Enablement | ai | Report | PageHeader, KpiRow, Card, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/ai/forecasts` | Forecasts & Anomalies | ai | Report | PageHeader, KpiRow, Card, Chart | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/ai/documents` | Extraction Review | ai | Form | PageHeader, KpiRow, Card | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/ai/vision` | Vision Suggestions | ai | Form | PageHeader, KpiRow, Card | Migrated (partly) | record view drawn by the page (header via PageHeader with its key facts); anchor tabs of ObjectPage to follow — 166.6 | e2e/ui-v3.spec.js |  |
+| `/ai/assistant` | AI Assistant | ai | Report | PageHeader | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/control` | Enterprise Control Center | admin | Overview page | PageHeader, Dashboard, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js | [before-after-control-tower-desktop.png](screenshots/166.2/before-after-control-tower-desktop.png) |
+| `/admin/connectors` | Business Connectors | admin | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/api` | API Clients & Webhooks | admin | Form | PageHeader, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/bulk` | Template Packs & Bulk Entry | admin | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/data-migration` | Migration Cockpit | admin | Overview page | PageHeader, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/backups` | Backup & DR | admin | Form | PageHeader, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/archive` | Retention & Archival | admin | Form | PageHeader, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/help` | Help & Support | admin | Form | PageHeader, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/support` | Support Desk | admin | Overview page | PageHeader, Dashboard, KpiRow, Card | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/integration-matrix` | Integration Matrix | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/reconciliation-health` | Reconciliation Health | tst | Overview page | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/page-audit` | Page Completion Audit | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/test-coverage` | Test Coverage & Results | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/security-findings` | Security Findings & Remediation | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/performance-tests` | Performance Test Results | tst | Form | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/accessibility-validation` | Accessibility & Device Validation | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/admin/operations-runbooks` | Operations Runbooks & Environments | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |
+| `/help/documentation` | Documentation Library | tst | List report | PageHeader, Card | Exception | hand-made list (own filter row and table); its phone cards come from the shared table style. Moving it onto ListReport needs a list endpoint with the paging contract — 166.6 | e2e/ui-v3.spec.js |  |
+| `/admin/go-live` | Go-Live Readiness | tst | Report | PageHeader, KpiRow, Card, Chart | Migrated |  | e2e/ui-v3.spec.js |  |

@@ -92,6 +92,13 @@ test('FR-02 the new widgets read the owners\' records; FR-01 the inventory; role
   assert.equal(d.widgets.find((x) => x.code === 'hse.ltifr').supersededBy, 'ov.hse.ltifr');
   assert.ok(d.widgets.find((x) => x.code === 'site.wa_today').roles.includes('SE'));
   assert.deepEqual(d.scan.findings, []);
+  // a saved role layout of the role dashboard lists it once, not twice (audit E2E triage: React's duplicate-key warning on the inventory)
+  t.api.db.prepare("INSERT INTO ui_dashboards (company_id, code, name, owner_type, owner_ref) VALUES (1, 'role-dashboard', 'Role dashboard', 'role', 'SE')").run();
+  const again = (await t.get(sys, '/api/v1/bi/dashboard-inventory')).json.data;
+  const codes = again.dashboards.map((x) => x.code);
+  assert.deepEqual(codes, [...new Set(codes)], 'each dashboard once');
+  assert.equal(again.totals.dashboards, codes.length);
+  assert.equal(again.dashboards.find((x) => x.code === 'role-dashboard').roleDefaults, 1);
   assert.equal((await t.get(sys, '/api/v1/bi/dashboard-inventory?status=RETIRED')).json.data.widgets.length, 7);
   const x = await t.api.raw('GET', '/api/v1/bi/dashboard-inventory/export?format=csv', sys); assert.equal(x.status, 200); assert.match(x.buffer.toString('utf8'), /site\.wa_today/);
   assert.equal((await t.get(se, '/api/v1/bi/dashboard-inventory')).status, 403);

@@ -164,6 +164,9 @@ function Shell({ iam, user }) {
     </div>
   );
 
+  // D-828: until the session has arrived, nothing is drawn that is then thrown away. The old header (skip link, menu, identity bar) used to
+  // appear for a moment and be replaced by the shell, and a keyboard user's focus fell back to the page body with it.
+  if (!s && !session.isError) return <FeedbackProvider><main id="main"><Skeleton label="Loading" rows={3} /></main></FeedbackProvider>;
   if (s && (mode === 'loading' || landing)) return <FeedbackProvider><main id="main"><Skeleton label="Loading" rows={3} /></main></FeedbackProvider>;
   if (s && shellOn) {
     return (

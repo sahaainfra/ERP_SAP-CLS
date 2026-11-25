@@ -16,10 +16,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: verify
+  # Audit AUD-DEF-020: the whole regression (about 35 minutes of unit tests with coverage, then hours of E2E) cannot finish inside one
+  # 20-minute job, so it runs as four jobs with timeouts that fit them; "verify" is the gate that needs all of them (the required check).
+  unit:
+    name: unit, API and static checks
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 75
     env:
       COVERAGE_MIN: '60'
       COVERAGE_BASE: origin/${{ github.base_ref || 'main' }}
@@ -32,19 +34,70 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # lint, type check, unit/API/permission tests with coverage, coverage gate for changed files,
-      # migration up/down check, schema-diff, golden outputs, secret scan, build, Playwright E2E
-      # (desktop and mobile viewports; Chrome is preinstalled on the runner).
-      - run: npm run erp:regression
+      # lint, type check, unit/API/permission tests with coverage, coverage gate for changed files, migration up/down check, schema
+      # lint and diff, tokens, icons, navigation, routes, permissions, defects, integrity suite, golden outputs, secret scan
+      - run: npm run erp:regression -- --skip-e2e
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: regression-report
+          name: regression-report-unit
+          path: reports/regression
+          if-no-files-found: ignore
+
+  client:
+    name: client build, installable app and bundle budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run erp:regression -- --only build,pwa-check,bundle-budget
+
+  e2e:
+    name: E2E shard ${{ matrix.shard }} of 8
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # desktop and mobile viewports; Chrome is preinstalled on the runner. Each shard starts its own throw-away databases.
+      - run: npx playwright test --shard=${{ matrix.shard }}/8 --trace off
+      # audit step 0.2: the cross-company probe on what the shard's tests left in the database
+      - run: npm run erp:scope-probe
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shard-${{ matrix.shard }}
           path: |
-            reports/regression
+            reports/scope-probe.json
             playwright-report
             test-results
           if-no-files-found: ignore
+
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [unit, client, e2e]
+    timeout-minutes: 5
+    steps:
+      - name: every part of the regression passed
+        run: |
+          echo "unit: ${{ needs.unit.result }}, client: ${{ needs.client.result }}, e2e: ${{ needs.e2e.result }}"
+          test "${{ needs.unit.result }}" = success && test "${{ needs.client.result }}" = success && test "${{ needs.e2e.result }}" = success
 
   clock:
     name: unit suite on a Sunday and on the last day of the year (part 166.1 F-09)
@@ -83,6 +136,49 @@ jobs:
       - run: npm run erp:audit
       - run: npm run erp:secret-scan
 
+  # Part 30.05 FR-02: the dynamic scan of the application started on the runner (headers, CORS, error leakage, injection payloads on
+  # every guarded list, traversal, signed-out access). A Critical or High finding fails the job.
+  dast:
+    name: dast
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/dast_scan.mjs --out reports/dast.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dast-report
+          path: reports/dast.json
+          if-no-files-found: ignore
+
+  # Part 30.06 FR-02: the performance smoke on every change (the load models at small scale against the real server, judged against the
+  # SLOs by the report); the full load and the soak run on a schedule (.github/workflows/perf.yml).
+  perf-smoke:
+    name: perf-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/load_test.mjs --profile smoke --environment ci
+      - run: node scripts/perf_verdict.mjs reports/load-smoke.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-smoke
+          path: reports/load-smoke.json
+          if-no-files-found: ignore
+
   # A pull request that adds or raises a dependency with a known vulnerability, or a licence we cannot ship, is refused (part 02.07, FR-06).
   dependency-review:
     name: dependency-review
@@ -97,21 +193,34 @@ jobs:
         with:
           fail-on-severity: high
 
-  # Container image scan. The repository has no Dockerfile yet (defect D-110); the job scans one as soon as it exists.
+  # Container image scan (part 30.08 added the Dockerfile, closing D-110): build the image, check the compose file, scan with Trivy.
   container-scan:
     name: container-scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Scan the image
-        if: ${{ hashFiles('Dockerfile') != '' }}
+      - name: Build and scan the image
         run: |
           docker build -t erp:scan .
+          AUTH_SECRET=ci-placeholder-secret-0123456789abcdef VAULT_KEY=ci-placeholder docker compose config --quiet
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.58.0 image --severity HIGH,CRITICAL --exit-code 1 erp:scan
-      - name: No Dockerfile
-        if: ${{ hashFiles('Dockerfile') == '' }}
-        run: echo "No Dockerfile in the repository, nothing to scan (defect D-110)."
+
+  # Part 30.08: environment parity (every environment defined by code, same keys, no secrets) and the zero-downtime blue-green deploy
+  # and rollback rehearsal under traffic, with its two failure drills. Production changes go only through this pipeline (BR-01).
+  deploy-rehearsal:
+    name: deploy-rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/env_parity.mjs
+      - run: node scripts/rehearse_zero_downtime.mjs
 
   # Not blocking until code scanning is enabled in the repository settings (defect D-012); the job then
   # fails at upload with "Code scanning is not enabled". Remove continue-on-error once it is enabled.

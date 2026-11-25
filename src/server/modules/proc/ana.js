@@ -1,4 +1,4 @@
-import { notFound } from '../../platform/http/errors.js';
+import { badRequest, notFound } from '../../platform/http/errors.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { todayIST } from '../../../shared/dates.js';
 import { rid } from './base.js';
@@ -162,6 +162,7 @@ export function createAnaService({ db, base }) {
   const spendReport = (actor, q = {}) => { const pj = projectOf(actor, q.projectId); const p = period(q); const groupBy = q.groupBy ?? 'category'; return { project: pj ? { id: pj.id, code: pj.code } : null, period: p, ...spendBy(actor, pj, p, groupBy), concentration: groupBy === 'vendor' ? concentration(spendBy(actor, pj, p, 'vendor').rows.map((r) => r.value)) : null }; };
   /** The orders behind a row of the spend report. */
   function spendDetail(actor, q) {
+    if (q.key == null || q.key === '') throw badRequest('Choose the row of the spend report: key is required.', [{ field: 'key', message: 'Required' }]); // part 30.05: was a server error
     const pj = projectOf(actor, q.projectId); const p = period(q); const w = where(actor, 'o', pj); const P = { ...w.params, ...p, k: q.key }; const b = `${w.sql} AND o.status IN ('APPROVED', 'CLOSED') AND substr(o.approved_at, 1, 10) BETWEEN :from AND :to`;
     const filter = q.groupBy === 'vendor' ? 'AND o.vendor_id = :k' : q.groupBy === 'project' ? 'AND o.org_project_id = :k' : q.groupBy === 'month' ? 'AND substr(o.approved_at, 1, 7) = :k' : Number(q.key) === 0 ? 'AND EXISTS (SELECT 1 FROM proc_po_lines l LEFT JOIN mdm_items i ON i.id = l.item_id WHERE l.po_id = o.id AND l.deleted_at IS NULL AND i.category_id IS NULL)' : 'AND EXISTS (SELECT 1 FROM proc_po_lines l JOIN mdm_items i ON i.id = l.item_id WHERE l.po_id = o.id AND l.deleted_at IS NULL AND i.category_id = :k)';
     const rows = db.prepare(`SELECT o.id, o.doc_no, o.org_project_id, o.vendor_id, o.total_amount, substr(o.approved_at, 1, 10) AS d FROM proc_purchase_orders o WHERE ${b} ${filter} ORDER BY o.approved_at DESC LIMIT 200`).all(P);

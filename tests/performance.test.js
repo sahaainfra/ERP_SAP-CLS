@@ -267,3 +267,17 @@ test('FR-05 the review cycle: self, manager, calibration, final approval by the 
   assert.equal((await t.post(hr1, `${H}/performance/cycles/${cyc.id}/close`, {})).status, 422, 'a rating is still in approval');
   assert.equal(performanceOf(t.api.db).widget({ ...hr1, companyId: 1, user: 'hr1', roles: ['HRMGR'] }).value >= 0, true);
 });
+
+test('BR-SCOPE a person and a KPI history of one company are not shown to an HR manager of another (audit AUD-DEF-012)', async () => {
+  const t = await setup(); const { a } = t.ids;
+  const k = await activeKpi(t);
+  const hr9 = as('HRMGR', 'hr9', '2');
+  // its own company's HR manager sees the person and the history
+  assert.equal((await t.call(as('HRMGR', 'hr3'), 'GET', `${H}/performance/team/${a}`)).status, 200);
+  assert.equal((await t.call(hr1, 'GET', `${H}/performance/kpis/${k.id}/history`)).status, 200);
+  // another company's HR manager, who sees all of their own company, finds nothing
+  const team = await t.call(hr9, 'GET', `${H}/performance/team/${a}`);
+  assert.equal(team.status, 404, JSON.stringify(team.json));
+  assert.ok(!JSON.stringify(team.json).includes('Asha'), 'no name of the other company');
+  assert.equal((await t.call(hr9, 'GET', `${H}/performance/kpis/${k.id}/history`)).status, 404);
+});

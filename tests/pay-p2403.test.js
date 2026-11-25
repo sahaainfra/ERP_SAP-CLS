@@ -4,6 +4,10 @@ import { ready as qaReady, as, attachFile, fill, key, partnerOf, U as QU } from 
 import { authzOf } from '../src/server/platform/authz/index.js';
 import { payOf } from '../src/server/modules/pay/index.js';
 import { compareSheet, cycleOf, dayOf, wageOf } from '../src/server/modules/pay/wages.js';
+import { todayIST } from '../src/shared/dates.js';
+
+// 30.04 D-806: the week still running, worked out from today (the fixed 16-Nov week was over by 23-Nov)
+const thisMonday = () => { const d = new Date(`${todayIST()}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
 
 // Part 24.03: labour wages and contract labour payroll.
 //  T-01 overtime at the statutory multiplier and minimum-wage enforcement (BR-01); contractor variance detection.
@@ -58,7 +62,7 @@ test('AC-01 labour wages computed from the punches, approved SACC → PM → HRM
   day(w2, '2026-11-02', '08:00', '17:00'); day(w2, '2026-11-03', '08:00', '17:00'); day(w2, '2026-11-12', '08:00', '17:00');
 
   assert.equal((await call(U.aud, 'POST', '/wage-runs', { siteId: r.site, contractorId: dept, cycle: 'WEEKLY', periodFrom: '2026-11-02' })).status, 403, 'the auditor reads only');
-  assert.equal((await call(U.se, 'POST', '/wage-runs', { siteId: r.site, contractorId: dept, cycle: 'WEEKLY', periodFrom: '2026-11-16' })).status, 422, 'a period not yet over');
+  assert.equal((await call(U.se, 'POST', '/wage-runs', { siteId: r.site, contractorId: dept, cycle: 'WEEKLY', periodFrom: thisMonday() })).status, 422, 'a period not yet over (this week)');
   assert.equal((await call(U.se, 'POST', '/wage-runs', { siteId: r.site, contractorId: dept, cycle: 'FORTNIGHTLY', periodFrom: '2026-11-03' })).status, 400, 'a fortnight starts on the 1st or the 16th');
   const c = await call(U.se, 'POST', '/wage-runs', { siteId: r.site, contractorId: dept, cycle: 'WEEKLY', periodFrom: '2026-11-02' }); assert.equal(c.status, 201, JSON.stringify(c.json)); let run = c.json.data;
   assert.equal((await call(U.se, 'POST', '/wage-runs', { siteId: r.site, contractorId: dept, cycle: 'MONTHLY', periodFrom: '2026-11-01' })).status, 422, 'November is not over');

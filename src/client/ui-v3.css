@@ -516,3 +516,11 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
   .aa-fab { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .aa-dock { left: 0; right: 0; bottom: 0; width: auto; max-height: 70vh; max-height: 70dvh; border-radius: 16px 16px 0 0; }
 }
+
+/* Parts 30.01-30.03: the go-live consoles. On a phone the totals row of a report table stays in view above the tab bar (analytical report
+   §3.5: table as cards with a sticky totals footer); the points of the page audit checklist are separated. */
+@media (max-width: 767px) {
+  :root[data-ui-v3] tfoot.sticky-total { position: sticky; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); z-index: 1; background: var(--erp-color-bg-surface); border-top: 2px solid var(--erp-color-border-strong); }
+}
+.pa-point { border-bottom: 1px solid var(--erp-color-border-subtle); padding: var(--erp-space-2) 0; }
+.pa-point p { margin: 0 0 var(--erp-space-1); }

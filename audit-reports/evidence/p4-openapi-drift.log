@@ -1,0 +1,6 @@
+declared API routes (route policy, /api/v1) 5182 | documented operations 3665 {"admin-openapi.yaml":119,"ai-openapi.yaml":65,"bi-openapi.yaml":93,"openapi.yaml":3251,"portal-openapi.yaml":44,"tst-openapi.yaml":95}
+routes not in any OpenAPI file 1522 (29.4 %)
+OpenAPI operations with no declared route 2
+examples undocumented: GET /core/change-requests/:p | POST /core/change-requests/:p/resubmit | POST /core/change-requests/:p/withdraw | PATCH /core/document-types/:p | PATCH /core/holiday-calendars/:p | GET /core/lookups
+examples stale: GET /metrics | GET /hr/lookups/employees
+undocumented by first path segment: {"hse":276,"plant":226,"ctr":208,"bill":197,"qa":171,"fin":112,"rmc":105,"site":53,"doc":30,"proc":26,"tsk":24,"ntf":18,"alr":17,"comm":15,"core":14,"acc":12,"inv":8,"iam":2,"mdm":2,"hr":2,"proj":2,"workflow":1,"tpl":1}

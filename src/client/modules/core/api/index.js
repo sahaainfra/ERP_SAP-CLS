@@ -53,6 +53,19 @@ export function useFeatureFlag(key) {
   return data?.[key] === true;
 }
 
+/** Audit AUD-DEF-009: the flag changes of the company that wait for their checkers (staging and production), and the recent decisions. */
+export function useFlagChanges(enabled = true) {
+  return useQuery({ queryKey: [...queryKeys.core.flags.all, 'changes'], queryFn: async () => (await api.get('/core/feature-flags/changes')).data, enabled });
+}
+/** Approve or reject a flag change (core.flag.approve, never one's own), or cancel one's own request. */
+export function useFlagChangeAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action, decision, note, reason }) => api.post(`/core/feature-flags/changes/${id}/${action}`, action === 'decide' ? { decision, ...(note ? { note } : {}) } : { reason }, { headers: { 'idempotency-key': globalThis.crypto.randomUUID() } }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.core.flags.all }); qc.invalidateQueries({ queryKey: ['shell'] }); },
+  });
+}
+
 /** Change a flag. On success every flag list and evaluation is refetched, so scoped screens update at once. */
 export function useSetFlag() {
   const qc = useQueryClient();

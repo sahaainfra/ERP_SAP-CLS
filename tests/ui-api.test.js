@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { startApi } from './helpers.js';
+import { startApi, testConfig } from './helpers.js';
 
 const U = '/api/v1/ui';
 const json = { 'content-type': 'application/json' };
@@ -72,7 +72,9 @@ test('FR-07 AC-02 the style guide: everyone outside production, only ui.stylegui
   assert.equal(open.json.data.tokens.color.light['brand.primary'], '#1D4F91');
   assert.deepEqual(open.json.data.icons.counts, { groups: 13, actions: 40, states: 11, construction: 14, modules: 175 });
   await api.close();
-  const prod = await startApi({ ERP_ENVIRONMENT: 'production' });
+  // a production environment name with the test's header identities: loadConfig refuses that combination since AUD-DEF-007 (D-821), so the
+  // test gives the app a test configuration whose environment is production; the rule under test is the style guide's, not the configuration's
+  const prod = await startApi({}, { config: { ...testConfig(), environment: 'production' } });
   prod.db.prepare("UPDATE core_feature_flags SET enabled = 1, default_enabled = 1 WHERE key = 'ff.ui.p0301'").run(); // switched on for production
   assert.equal((await prod.call('GET', `${U}/style-guide`, { roles: 'EMP', user: 'emp1' })).status, 403);
   assert.equal((await prod.call('GET', `${U}/style-guide`, { roles: 'PM', user: 'pm1' })).status, 403);

@@ -1,0 +1,6 @@
+
+Running 6 tests using 1 worker
+
+[1/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px
+[2/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px
+[3/6] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px

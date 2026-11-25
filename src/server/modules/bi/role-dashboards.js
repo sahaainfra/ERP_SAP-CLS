@@ -225,11 +225,11 @@ export function createRoleDashboards(context) {
     });
     const byModule = Object.entries(widgets.reduce((m, w) => { m[w.module] = (m[w.module] ?? 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).map(([module, count]) => ({ module, count }));
     const totals = { widgets: widgets.length, ok: widgets.filter((w) => w.status === 'OK').length, review: widgets.filter((w) => w.status === 'REVIEW').length, retired: widgets.filter((w) => w.status === 'RETIRED').length,
-      noProvider: widgets.filter((w) => w.status === 'NO_PROVIDER').length, certified: widgets.filter((w) => w.source === 'CERTIFIED_METRIC').length, dashboards: new Set(dashboards.map((d) => d.code)).size + 1,
+      noProvider: widgets.filter((w) => w.status === 'NO_PROVIDER').length, certified: widgets.filter((w) => w.source === 'CERTIFIED_METRIC').length, dashboards: new Set([...dashboards.map((d) => d.code), ROLE_DASHBOARD]).size,
       roles: roles.length, rolesCovered: roles.filter((r) => r.visible >= 2).length };
     if (!lastScan) lastScan = scanSources();
     return { asOf: new Date().toISOString(), totals, byModule, widgets, roles,
-      dashboards: [...new Set(dashboards.map((d) => d.code)), ROLE_DASHBOARD].sort().map((code) => { const list = dashboards.filter((d) => d.code === code); return { code, name: list[0]?.name ?? 'Role dashboard', layouts: list.length, roleDefaults: list.filter((d) => d.owner_type === 'role').length, personal: list.filter((d) => d.owner_type === 'user').length }; }),
+      dashboards: [...new Set([...dashboards.map((d) => d.code), ROLE_DASHBOARD])].sort().map((code) => { const list = dashboards.filter((d) => d.code === code); return { code, name: list[0]?.name ?? 'Role dashboard', layouts: list.length, roleDefaults: list.filter((d) => d.owner_type === 'role').length, personal: list.filter((d) => d.owner_type === 'user').length }; }),
       scan: { available: lastScan.available, files: lastScan.files, findings: lastScan.findings, scannedAt: lastScan.scannedAt } };
   }
   function rescan(actor) { requireRoleDashboards(context, actor); assertPermissionAnywhere(actor, 'bi.dashboard_inventory.view'); lastScan = scanSources(); writeAudit(db, { companyId: actor.companyId, entity: 'ui_widgets', entityId: 0, action: 'scan', newValues: { files: lastScan.files, findings: lastScan.findings.length }, actor: actor.user }); return lastScan; }

@@ -50,7 +50,7 @@ test('FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completio
     for (const size of SIZES) {
       await page.setViewportSize(size);
       await page.goto(p.route);
-      await expect(page.locator('main')).toBeVisible();
+      await expect(page.locator('main')).toBeVisible({ timeout: 30_000 }); // the workspace can take more than 5 s to open on a loaded machine (audit E2E triage); the checks below allow 30 s too
       await expect(page.getByTestId('page-loading')).toHaveCount(0, { timeout: 30_000 });
       await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${p.route}` }).toEqual([]);
       const at = `${p.route} @${size.width}`;

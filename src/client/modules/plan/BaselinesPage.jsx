@@ -84,7 +84,7 @@ function Baseline({ t, id, onGone }) {
         <div><dt>{t('f.project')}</dt><dd>{b.projectCode} · {b.projectName}</dd></div><div><dt>{t('bl.revision')}</dt><dd>{b.baselineNo} · {t(`bl.kind.${b.revisionType}`)}</dd></div>
         <div><dt>{t('f.schedule')}</dt><dd><Link to={`/plan/activities?scheduleId=${b.scheduleId}`}>{b.scheduleDocNo} v{b.scheduleVersionNo}</Link> · {t(`st.${b.scheduleStatus}`)}</dd></div>
         <div><dt>{t('f.start')}</dt><dd>{fmtDate(b.startDate)}</dd></div><div><dt>{t('f.finish')}</dt><dd data-testid="bl-finish">{fmtDate(b.finishDate)}</dd></div><div><dt>{t('f.activities')}</dt><dd>{b.activities}</dd></div>
-        <div><dt>{t('f.critical')}</dt><dd>{b.critical}</dd></div><div><dt>{t('bl.links')}</dt><dd>{b.links}</dd></div>{b.referenceNo && <div><dt>{t('bl.reference')}</dt><dd>{b.referenceNo}</dd></div>}
+        <div><dt>{t('f.critical')}</dt><dd>{b.critical}</dd></div><div><dt>{t('bl.links')}</dt><dd>{b.links}</dd></div>{b.referenceNo && <div><dt>{t('bl.reference')}</dt><dd>{b.referenceNo}{b.eotAward ? ` · ${t('bl.eotAwardOption', { claim: b.eotAward.claimNo ?? b.eotAward.claimDocNo, days: b.eotAward.days })}` : ''}</dd></div>}
         <div><dt>{t('bl.preparedBy')}</dt><dd>{b.requestedBy ?? '—'}</dd></div>{b.approvedAt && <div><dt>{t('bl.approvedBy')}</dt><dd>{b.approvedBy} · {fmtDate(b.approvedAt.slice(0, 10))}</dd></div>}
       </dl>
       <p><strong>{t('f.reason')}:</strong> {b.reason}</p>
@@ -119,11 +119,12 @@ function Baseline({ t, id, onGone }) {
         </form>
       )}
       {rev && (
-        <form className="mdm-panel" onSubmit={async (e) => { e.preventDefault(); const n = await run(() => pl.baselineAct(b.id, 'amend', { revisionType: rev.revisionType, reason: rev.reason.trim(), changeSummary: rev.changeSummary.trim() || null, referenceNo: rev.referenceNo.trim() || null })); if (n) { setRev(null); navigateTo(`/plan/baselines?id=${n.id}`); } }} data-testid="bl-amend-form" aria-label={t('bl.revise')}>
+        <form className="mdm-panel" onSubmit={async (e) => { e.preventDefault(); const n = await run(() => pl.baselineAct(b.id, 'amend', { revisionType: rev.revisionType, reason: rev.reason.trim(), changeSummary: rev.changeSummary.trim() || null, ...(rev.revisionType === 'EOT' && rev.eotAwardId ? { eotAwardId: rev.eotAwardId } : { referenceNo: rev.referenceNo.trim() || null }) })); if (n) { setRev(null); navigateTo(`/plan/baselines?id=${n.id}`); } }} data-testid="bl-amend-form" aria-label={t('bl.revise')}>
           <h2>{t('bl.revise')}</h2><p className="muted">{t('bl.reviseHint')}</p>
           <div className="form-grid">
             <Field label={t('bl.kind')} name="revisionType" error={error}><select value={rev.revisionType} onChange={(e) => setRev({ ...rev, revisionType: e.target.value })} data-testid="bl-amend-kind">{REVISIONS.map((k) => <option key={k} value={k}>{t(`bl.kind.${k}`)}</option>)}</select></Field>
-            <Field label={t('bl.reference')} name="referenceNo" error={error}><input value={rev.referenceNo} onChange={(e) => setRev({ ...rev, referenceNo: e.target.value })} maxLength={80} data-testid="bl-amend-ref" /></Field>
+            {rev.revisionType === 'EOT' && (b.eotAwards?.length ?? 0) > 0 && <Field label={t('bl.eotAward')} name="eotAwardId" error={error} hint={t('bl.eotAwardHint')}><select value={rev.eotAwardId ?? ''} onChange={(e) => setRev({ ...rev, eotAwardId: e.target.value ? Number(e.target.value) : null })} data-testid="bl-amend-eot"><option value="">{t('bl.eotAwardNone')}</option>{b.eotAwards.map((a) => <option key={a.id} value={a.id}>{t('bl.eotAwardOption', { claim: a.claimNo ?? a.claimDocNo, days: a.days })}</option>)}</select></Field>}
+            {!(rev.revisionType === 'EOT' && rev.eotAwardId) && <Field label={t('bl.reference')} name="referenceNo" error={error}><input value={rev.referenceNo} onChange={(e) => setRev({ ...rev, referenceNo: e.target.value })} maxLength={80} data-testid="bl-amend-ref" /></Field>}
           </div>
           <Field label={t('f.reason')} name="reason" error={error}><textarea value={rev.reason} onChange={(e) => setRev({ ...rev, reason: e.target.value })} required minLength={5} maxLength={1000} rows={2} data-testid="bl-amend-reason" /></Field>
           <Field label={t('bl.changeSummary')} name="changeSummary" error={error}><textarea value={rev.changeSummary} onChange={(e) => setRev({ ...rev, changeSummary: e.target.value })} maxLength={2000} rows={2} data-testid="bl-amend-summary" /></Field>

@@ -62,3 +62,15 @@ test('demo seed is idempotent and kept apart from reference seed rows', () => {
   assert.equal(seedDemo(db), 0);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM core_feature_flags WHERE source_type = 'demo_seed'").get().n, 2);
 });
+
+test('BR-AUD-007 an installation that calls itself staging or production refuses the development headers whatever NODE_ENV says', () => {
+  for (const env of ['production', 'staging']) {
+    assert.throws(() => loadConfig({ NODE_ENV: 'test', ERP_ENVIRONMENT: env, DATABASE_PATH: 'x', AUTH_MODE: 'dev-headers' }), new RegExp(`AUTH_MODE=dev-headers is not allowed when ERP_ENVIRONMENT=${env}`));
+    assert.throws(() => loadConfig({ NODE_ENV: 'development', ERP_ENVIRONMENT: env, DATABASE_PATH: 'x', AUTH_MODE: 'dev-headers' }), /AUTH_MODE=dev-headers is not allowed/);
+    // and the secrets of a production-like installation are required too
+    assert.throws(() => loadConfig({ NODE_ENV: 'test', ERP_ENVIRONMENT: env, DATABASE_PATH: 'x', AUTH_MODE: 'iam' }), /AUTH_SECRET is required/);
+  }
+  assert.throws(() => loadConfig({ NODE_ENV: 'test', ERP_ENVIRONMENT: 'production', DATABASE_PATH: 'x', ERP_DEMO_SEED: 'true' }), /ERP_DEMO_SEED=true is not allowed when ERP_ENVIRONMENT=production/);
+  // a test or development installation keeps the headers
+  assert.equal(loadConfig({ NODE_ENV: 'test', ERP_ENVIRONMENT: 'test', DATABASE_PATH: 'x' }).authMode, 'dev-headers');
+});

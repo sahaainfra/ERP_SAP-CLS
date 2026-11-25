@@ -124,7 +124,20 @@ export function createShellService({ db, flags, approvals }) {
   const user = (actor) => actor.user;
 
   // ---- navigation ----
-  const rowsFor = (actor) => withTe(db, actor.companyId, db.prepare('SELECT * FROM ui_navigation_entries WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY sort_order, id').all(actor.companyId));
+  // Part 30.06 FR-03: the menu was read and labelled from the registry on every request (16 of 80 busy seconds with 1,000 people). The
+  // labelled rows of a company are kept and used again while the registry and its labels have not changed (a count and the latest change
+  // of each, checked on every call, so a change through the registry API or straight in the database shows at once).
+  const navCache = new Map();
+  const navStamp = (companyId) => { const a = db.prepare('SELECT COUNT(*) AS n, MAX(id) AS i, MAX(COALESCE(updated_at, created_at)) AS u, SUM(is_active) AS s, MAX(deleted_at) AS d FROM ui_navigation_entries WHERE company_id IS NULL OR company_id = ?').get(companyId); const b = db.prepare('SELECT COUNT(*) AS n, MAX(id) AS i, MAX(COALESCE(updated_at, created_at)) AS u FROM ui_navigation_labels WHERE company_id IS NULL OR company_id = ?').get(companyId); return `${a.n}|${a.i}|${a.u}|${a.s}|${a.d}|${b.n}|${b.i}|${b.u}`; };
+  const rowsUncached = (actor) => withTe(db, actor.companyId, db.prepare('SELECT * FROM ui_navigation_entries WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY sort_order, id').all(actor.companyId));
+  const rowsFor = (actor) => {
+    const stamp = navStamp(actor.companyId); const hit = navCache.get(actor.companyId);
+    if (hit && hit.stamp === stamp) return hit.rows;
+    const rows = rowsUncached(actor);
+    if (navCache.size > 200) navCache.clear();
+    navCache.set(actor.companyId, { stamp, rows });
+    return rows;
+  };
   // a right held for some projects or sites only still opens the page: the page and its API apply the data scope
   const allowedBy = (actor, key) => (key === null || key === SELF ? true : hasPermissionAnywhere(actor, key));
 

@@ -1,0 +1,10 @@
+
+Running 2 tests using 1 worker
+
+[1/2] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+[2/2] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+  Slow test file: [desktop] › e2e/a0-visual.spec.js (1.4h)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 skipped
+  1 passed (1.4h)
+exit=0 seconds=5010

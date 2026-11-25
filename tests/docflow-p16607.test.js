@@ -32,7 +32,7 @@ async function chain() {
   return { r, d, mr, pr, rfq, cs, po, gate, grn, vi };
 }
 
-test('T-02 the flow of a purchase order: MR, PR, RFQ, CS, PO, gate entry, GRN and vendor invoice in order, with statuses and amounts; the payment is not yet available', async () => {
+test('T-02 the flow of a purchase order: MR, PR, RFQ, CS, PO, gate entry, GRN and vendor invoice in order, with statuses and amounts; no step listed as not yet available (payments arrived in 23.04)', async () => {
   const w = await chain();
   const res = await w.r.api.call('GET', `/api/v1/ui/doc-flow?type=PO&id=${w.po}`, as('PROCMGR', 'flow-proc'));
   assert.equal(res.status, 200, JSON.stringify(res.json));
@@ -47,9 +47,9 @@ test('T-02 the flow of a purchase order: MR, PR, RFQ, CS, PO, gate entry, GRN an
   assert.equal(own.status, 200, JSON.stringify(own.json));
   assert.equal(Number(String(own.json.data.totalAmount).replace(/,/g, '')), po.amount);
   assert.equal(po.route, `/proc/purchase-orders?id=${w.po}`);
-  assert.deepEqual(f.later.map((l) => [l.after, l.label]), [['VINV', 'Payment to the vendor']]);
+  // part 30.01: the payment is part of the chain now (23.04); nothing is listed as not yet available
+  assert.deepEqual(f.later, []);
   assert.ok(f.related.some((r) => r.type === 'GRN' && r.route === '/inv/grns'), 'related lists');
-  assert.match(f.later[0].note, /Not yet available/);
   // links run both ways: the same flow from the material request and from the vendor invoice
   for (const [type, id, role] of [['MR', w.mr, 'PROCMGR'], ['VINV', w.vi, 'ACCMGR']]) {
     const res2 = await w.r.api.call('GET', `/api/v1/ui/doc-flow?type=${type}&id=${id}`, as(role, `flow-${role.toLowerCase()}`));

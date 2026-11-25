@@ -1,0 +1,981 @@
+{
+ "at": "2026-11-23T22:24:31.030Z",
+ "report": [
+  {
+   "device": "android-low",
+   "journeys": [
+    {
+     "journey": "Field: reach the DPR entry",
+     "steps": [
+      {
+       "step": "open Home",
+       "result": "PASS",
+       "ms": 5301
+      },
+      {
+       "step": "tap the DPR tile (or menu entry)",
+       "result": "PASS",
+       "ms": 5482
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 10
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 1825
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 12618
+    },
+    {
+     "journey": "Hindi field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 8665
+      },
+      {
+       "step": "Hindi text on the page",
+       "result": "PASS",
+       "ms": 21
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 13
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 31
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 8730
+    },
+    {
+     "journey": "Telugu field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 1033
+      },
+      {
+       "step": "Telugu text on the page",
+       "result": "PASS",
+       "ms": 27
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 26
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 182
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 1268
+    },
+    {
+     "journey": "Offline and back on the field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 1036
+      },
+      {
+       "step": "the connection drops: the offline banner shows",
+       "result": "PASS",
+       "ms": 120
+      },
+      {
+       "step": "the page still answers",
+       "result": "PASS",
+       "ms": 12
+      },
+      {
+       "step": "the connection returns: the banner goes",
+       "result": "PASS",
+       "ms": 84
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 1252
+    },
+    {
+     "journey": "Approvals inbox",
+     "steps": [
+      {
+       "step": "open the approvals inbox",
+       "result": "PASS",
+       "ms": 706
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 18
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 1375
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 2099
+    },
+    {
+     "journey": "Screen-reader tree of the approvals inbox",
+     "steps": [
+      {
+       "step": "banner, navigation and main landmarks",
+       "result": "PASS",
+       "ms": 86
+      },
+      {
+       "step": "one level-1 heading",
+       "result": "PASS",
+       "ms": 31
+      },
+      {
+       "step": "every visible button has a name",
+       "result": "PASS",
+       "ms": 28
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 145
+    }
+   ]
+  },
+  {
+   "device": "android-mid",
+   "journeys": [
+    {
+     "journey": "Field: reach the DPR entry",
+     "steps": [
+      {
+       "step": "open Home",
+       "result": "PASS",
+       "ms": 1643
+      },
+      {
+       "step": "tap the DPR tile (or menu entry)",
+       "result": "PASS",
+       "ms": 2290
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 6
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 541
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 4480
+    },
+    {
+     "journey": "Hindi field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 474
+      },
+      {
+       "step": "Hindi text on the page",
+       "result": "PASS",
+       "ms": 16
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 11
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 60
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 561
+    },
+    {
+     "journey": "Telugu field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 322
+      },
+      {
+       "step": "Telugu text on the page",
+       "result": "PASS",
+       "ms": 13
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 11
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 22
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 368
+    },
+    {
+     "journey": "Offline and back on the field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 268
+      },
+      {
+       "step": "the connection drops: the offline banner shows",
+       "result": "PASS",
+       "ms": 47
+      },
+      {
+       "step": "the page still answers",
+       "result": "PASS",
+       "ms": 11
+      },
+      {
+       "step": "the connection returns: the banner goes",
+       "result": "PASS",
+       "ms": 61
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 387
+    },
+    {
+     "journey": "Approvals inbox",
+     "steps": [
+      {
+       "step": "open the approvals inbox",
+       "result": "PASS",
+       "ms": 439
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 4
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 506
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 949
+    },
+    {
+     "journey": "Screen-reader tree of the approvals inbox",
+     "steps": [
+      {
+       "step": "banner, navigation and main landmarks",
+       "result": "PASS",
+       "ms": 32
+      },
+      {
+       "step": "one level-1 heading",
+       "result": "PASS",
+       "ms": 10
+      },
+      {
+       "step": "every visible button has a name",
+       "result": "PASS",
+       "ms": 16
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 58
+    }
+   ]
+  },
+  {
+   "device": "iphone-se",
+   "journeys": [
+    {
+     "journey": "Field: reach the DPR entry",
+     "steps": [
+      {
+       "step": "open Home",
+       "result": "PASS",
+       "ms": 1659
+      },
+      {
+       "step": "tap the DPR tile (or menu entry)",
+       "result": "PASS",
+       "ms": 2289
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 8
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 533
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 4489
+    },
+    {
+     "journey": "Hindi field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 534
+      },
+      {
+       "step": "Hindi text on the page",
+       "result": "PASS",
+       "ms": 15
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 11
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 62
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 622
+    },
+    {
+     "journey": "Telugu field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 316
+      },
+      {
+       "step": "Telugu text on the page",
+       "result": "PASS",
+       "ms": 17
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 15
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 19
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 367
+    },
+    {
+     "journey": "Offline and back on the field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 328
+      },
+      {
+       "step": "the connection drops: the offline banner shows",
+       "result": "PASS",
+       "ms": 55
+      },
+      {
+       "step": "the page still answers",
+       "result": "PASS",
+       "ms": 17
+      },
+      {
+       "step": "the connection returns: the banner goes",
+       "result": "PASS",
+       "ms": 22
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 422
+    },
+    {
+     "journey": "Approvals inbox",
+     "steps": [
+      {
+       "step": "open the approvals inbox",
+       "result": "PASS",
+       "ms": 296
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 14
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 483
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 793
+    },
+    {
+     "journey": "Screen-reader tree of the approvals inbox",
+     "steps": [
+      {
+       "step": "banner, navigation and main landmarks",
+       "result": "PASS",
+       "ms": 24
+      },
+      {
+       "step": "one level-1 heading",
+       "result": "PASS",
+       "ms": 16
+      },
+      {
+       "step": "every visible button has a name",
+       "result": "PASS",
+       "ms": 20
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 60
+    }
+   ]
+  },
+  {
+   "device": "tablet-10",
+   "journeys": [
+    {
+     "journey": "Field: reach the DPR entry",
+     "steps": [
+      {
+       "step": "open Home",
+       "result": "PASS",
+       "ms": 333
+      },
+      {
+       "step": "tap the DPR tile (or menu entry)",
+       "result": "PASS",
+       "ms": 857
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 50
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 1117
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 2357
+    },
+    {
+     "journey": "Hindi field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 548
+      },
+      {
+       "step": "Hindi text on the page",
+       "result": "PASS",
+       "ms": 25
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 11
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 157
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 741
+    },
+    {
+     "journey": "Telugu field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 729
+      },
+      {
+       "step": "Telugu text on the page",
+       "result": "PASS",
+       "ms": 31
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 10
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 14
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 784
+    },
+    {
+     "journey": "Offline and back on the field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 460
+      },
+      {
+       "step": "the connection drops: the offline banner shows",
+       "result": "PASS",
+       "ms": 128
+      },
+      {
+       "step": "the page still answers",
+       "result": "PASS",
+       "ms": 8
+      },
+      {
+       "step": "the connection returns: the banner goes",
+       "result": "PASS",
+       "ms": 49
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 645
+    },
+    {
+     "journey": "Approvals inbox",
+     "steps": [
+      {
+       "step": "open the approvals inbox",
+       "result": "PASS",
+       "ms": 566
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 15
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 1568
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 2149
+    },
+    {
+     "journey": "Screen-reader tree of the approvals inbox",
+     "steps": [
+      {
+       "step": "banner, navigation and main landmarks",
+       "result": "PASS",
+       "ms": 125
+      },
+      {
+       "step": "one level-1 heading",
+       "result": "PASS",
+       "ms": 31
+      },
+      {
+       "step": "every visible button has a name",
+       "result": "PASS",
+       "ms": 8
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 164
+    }
+   ]
+  },
+  {
+   "device": "desktop-1280",
+   "journeys": [
+    {
+     "journey": "Field: reach the DPR entry",
+     "steps": [
+      {
+       "step": "open Home",
+       "result": "PASS",
+       "ms": 159
+      },
+      {
+       "step": "tap the DPR tile (or menu entry)",
+       "result": "PASS",
+       "ms": 501
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 7
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 859
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 1526
+    },
+    {
+     "journey": "Hindi field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 418
+      },
+      {
+       "step": "Hindi text on the page",
+       "result": "PASS",
+       "ms": 7
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 12
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 12
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 449
+    },
+    {
+     "journey": "Telugu field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 303
+      },
+      {
+       "step": "Telugu text on the page",
+       "result": "PASS",
+       "ms": 9
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 19
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 20
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 351
+    },
+    {
+     "journey": "Offline and back on the field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 317
+      },
+      {
+       "step": "the connection drops: the offline banner shows",
+       "result": "PASS",
+       "ms": 19
+      },
+      {
+       "step": "the page still answers",
+       "result": "PASS",
+       "ms": 7
+      },
+      {
+       "step": "the connection returns: the banner goes",
+       "result": "PASS",
+       "ms": 22
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 365
+    },
+    {
+     "journey": "Approvals inbox",
+     "steps": [
+      {
+       "step": "open the approvals inbox",
+       "result": "PASS",
+       "ms": 303
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 12
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 1089
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 1404
+    },
+    {
+     "journey": "Screen-reader tree of the approvals inbox",
+     "steps": [
+      {
+       "step": "banner, navigation and main landmarks",
+       "result": "PASS",
+       "ms": 18
+      },
+      {
+       "step": "one level-1 heading",
+       "result": "PASS",
+       "ms": 4
+      },
+      {
+       "step": "every visible button has a name",
+       "result": "PASS",
+       "ms": 3
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 25
+    },
+    {
+     "journey": "Keyboard only",
+     "steps": [
+      {
+       "step": "Tab reaches a control with a visible focus ring",
+       "result": "PASS",
+       "ms": 15
+      },
+      {
+       "step": "Ctrl+K opens the command palette and Escape closes it",
+       "result": "PASS",
+       "ms": 397
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 412
+    }
+   ]
+  },
+  {
+   "device": "desktop-1920",
+   "journeys": [
+    {
+     "journey": "Field: reach the DPR entry",
+     "steps": [
+      {
+       "step": "open Home",
+       "result": "PASS",
+       "ms": 131
+      },
+      {
+       "step": "tap the DPR tile (or menu entry)",
+       "result": "PASS",
+       "ms": 459
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 12
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 745
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 1347
+    },
+    {
+     "journey": "Hindi field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 371
+      },
+      {
+       "step": "Hindi text on the page",
+       "result": "PASS",
+       "ms": 14
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 53
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 26
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 464
+    },
+    {
+     "journey": "Telugu field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 306
+      },
+      {
+       "step": "Telugu text on the page",
+       "result": "PASS",
+       "ms": 9
+      },
+      {
+       "step": "no missing translation keys",
+       "result": "PASS",
+       "ms": 19
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 83
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 417
+    },
+    {
+     "journey": "Offline and back on the field home",
+     "steps": [
+      {
+       "step": "open the field home",
+       "result": "PASS",
+       "ms": 223
+      },
+      {
+       "step": "the connection drops: the offline banner shows",
+       "result": "PASS",
+       "ms": 78
+      },
+      {
+       "step": "the page still answers",
+       "result": "PASS",
+       "ms": 14
+      },
+      {
+       "step": "the connection returns: the banner goes",
+       "result": "PASS",
+       "ms": 24
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 339
+    },
+    {
+     "journey": "Approvals inbox",
+     "steps": [
+      {
+       "step": "open the approvals inbox",
+       "result": "PASS",
+       "ms": 446
+      },
+      {
+       "step": "no sideways scroll",
+       "result": "PASS",
+       "ms": 18
+      },
+      {
+       "step": "no serious or critical axe finding",
+       "result": "PASS",
+       "ms": 1135
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 1599
+    },
+    {
+     "journey": "Screen-reader tree of the approvals inbox",
+     "steps": [
+      {
+       "step": "banner, navigation and main landmarks",
+       "result": "PASS",
+       "ms": 21
+      },
+      {
+       "step": "one level-1 heading",
+       "result": "PASS",
+       "ms": 16
+      },
+      {
+       "step": "every visible button has a name",
+       "result": "PASS",
+       "ms": 3
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 40
+    },
+    {
+     "journey": "Keyboard only",
+     "steps": [
+      {
+       "step": "Tab reaches a control with a visible focus ring",
+       "result": "PASS",
+       "ms": 10
+      },
+      {
+       "step": "Ctrl+K opens the command palette and Escape closes it",
+       "result": "PASS",
+       "ms": 351
+      }
+     ],
+     "result": "PASS",
+     "loadMs": 361
+    }
+   ]
+  }
+ ]
+}

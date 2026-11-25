@@ -59,7 +59,7 @@ test('T-01 T-02 T-03 T-04 every registered page has the page header, no key figu
   let tablesAsCards = 0; let tablesOptedOut = 0;
   for (const p of pages) {
     await page.goto(p.route);
-    await expect(page.locator('main')).toBeVisible();
+    await expect(page.locator('main')).toBeVisible({ timeout: 30_000 }); // the workspace can take more than 5 s to open on a loaded machine (audit E2E triage); the checks below allow 30 s too
     await expect(page.getByTestId('page-loading')).toHaveCount(0, { timeout: 30_000 });
     await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${p.route}` }).toEqual([]);
     const f = await page.evaluate(facts);

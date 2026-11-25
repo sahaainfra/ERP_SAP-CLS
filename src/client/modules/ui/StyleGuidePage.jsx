@@ -20,7 +20,7 @@ function ThemeSample({ theme, label }) {
         <h3>Running bill RA-07</h3>
         <p>Primary text. <span className="muted">Secondary text.</span> <a href="#preview">A link</a></p>
         <p><StatusBadge status="SUBMITTED" /> <StatusBadge status="APPROVED" /> <StatusBadge status="OVERDUE" /></p>
-        <div className="actions"><button type="button" className="btn btn-primary"><Icon name="erp.action.approve" size={16} />Approve</button><button type="button" className="btn"><Icon name="erp.action.return" size={16} />Return</button></div>
+        <div className="actions"><button type="button" className="btn btn-primary" data-sample><Icon name="erp.action.approve" size={16} />Approve</button><button type="button" className="btn" data-sample><Icon name="erp.action.return" size={16} />Return</button></div>
       </div>
     </div>
   );
@@ -112,7 +112,7 @@ export default function StyleGuidePage() {
               <div key={v} data-density={v} data-testid={`density-${v}`}>
                 <strong>{l}: rows {t.density[v].row}px, controls {t.density[v].control}px</strong>
                 <div className="table-wrap"><table><caption className="sr-only">{l} rows</caption><thead><tr><th>Item</th><th className="num">Qty</th></tr></thead><tbody><tr><td data-label="Item">Cement OPC 53</td><td data-label="Qty" className="num">120.000</td></tr><tr><td data-label="Item">TMT 12 mm</td><td data-label="Qty" className="num">4.500</td></tr></tbody></table></div>
-                <p><input aria-label={`${l} sample field`} defaultValue="Sample" /> <button type="button" className="btn">Button</button></p>
+                <p><input aria-label={`${l} sample field`} defaultValue="Sample" /> <button type="button" className="btn" data-sample>Button</button></p>
               </div>
             ))}
           </div>

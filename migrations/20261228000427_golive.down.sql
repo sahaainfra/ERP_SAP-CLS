@@ -1,0 +1,13 @@
+DELETE FROM ui_page_migration WHERE page_code = 'admin.go-live' AND source_type = 'reference_seed';
+DELETE FROM ui_navigation_entries WHERE code = 'golive-readiness' AND source_type = 'reference_seed';
+DELETE FROM ntf_templates WHERE code IN ('golive.announcement', 'golive.hypercare.daily') AND source_type = 'reference_seed';
+DROP TABLE IF EXISTS golive_hypercare_days;
+DROP TABLE IF EXISTS golive_hypercare;
+DROP TABLE IF EXISTS golive_decisions;
+DROP TABLE IF EXISTS golive_cutover_steps;
+DROP TABLE IF EXISTS golive_cutover_runs;
+DROP TABLE IF EXISTS uat_signoffs;
+DROP TABLE IF EXISTS uat_defects;
+DROP TABLE IF EXISTS uat_scripts;
+DROP TABLE IF EXISTS golive_checklist;
+DELETE FROM core_feature_flags WHERE key = 'ff.qa.p3010' AND source_type = 'reference_seed';

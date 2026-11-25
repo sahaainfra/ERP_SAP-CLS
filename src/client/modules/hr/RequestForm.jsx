@@ -27,7 +27,8 @@ export default function RequestForm({ kind, testid }) {
   const set = (p) => setV({ ...form, ...p });
   const fe = (k) => error?.fields?.[k];
   const body = () => ({
-    employeeId: Number(form.employeeId) || null, workDate: form.workDate, arrears: form.arrears, reason: form.reason.trim(),
+    // self-service: always the signed-in person, even when the form was typed into before their profile arrived (the id was then empty)
+    employeeId: others ? Number(form.employeeId) || null : (me.data?.id ?? (Number(form.employeeId) || null)), workDate: form.workDate, arrears: form.arrears, reason: form.reason.trim(),
     ...(kind === 'regularisation' ? { requestedIn: form.requestedIn || null, requestedOut: form.requestedOut || null } : kind === 'overtime' ? { otType: form.otType, minutes: Math.round(Number(form.hours) * 60) } : { entryStatus: form.entryStatus, inTime: form.inTime || null, outTime: form.outTime || null }),
   });
   const save = async (submit) => {
@@ -48,6 +49,7 @@ export default function RequestForm({ kind, testid }) {
     <div data-testid={testid}>
       {error?.form && <p className="field-error" role="alert" data-testid="rq-error">{error.form}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="rq-note">{note}</p>}
+      {!others && me.isError && <p className="field-error" role="alert" data-testid="rq-no-employee">{errorInfo(me.error).form ?? 'Your user account is not linked to an employee record. Ask HR to link it.'}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); save(false); }}>
         {others
           ? <LookupField id="rq-employee" label="Employee" lookup="hr/employees" value={form.employeeId} onChange={(x) => set({ employeeId: x })} error={fe('employeeId')} required />
@@ -70,8 +72,8 @@ export default function RequestForm({ kind, testid }) {
         <label className="check"><input type="checkbox" checked={form.arrears} onChange={(e) => set({ arrears: e.target.checked })} data-testid="rq-arrears" /> The day is in a locked period: raise it as arrears for payroll</label>
       </form>
       <div className="actions">
-        <button type="button" className="btn" disabled={busy} onClick={() => save(false)} data-testid="rq-save">Save draft</button>
-        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => save(true)} data-testid="rq-send">{busy ? 'Saving...' : 'Send for approval'}</button>
+        <button type="button" className="btn" disabled={busy || (!others && !me.data)} onClick={() => save(false)} data-testid="rq-save">Save draft</button>
+        <button type="button" className="btn btn-primary" disabled={busy || (!others && !me.data)} onClick={() => save(true)} data-testid="rq-send">{busy ? 'Saving...' : 'Send for approval'}</button>
       </div>
       <h2>{LABELS[kind]}s made</h2>
       {mine.isError ? <ErrorState error={mine.error} onRetry={mine.refetch} /> : mine.isPending ? <Skeleton label="Loading" rows={3} /> : rows.length === 0 ? <p className="muted" data-testid="rq-empty">Nothing yet.</p> : (

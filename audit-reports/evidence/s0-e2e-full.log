@@ -1,0 +1,1150 @@
+
+Running 866 tests using 1 worker
+
+[1/866] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px
+  1) [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px 
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      8550 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: admin.users-light-768.png
+
+    Call log:
+      - Expect "toHaveScreenshot(admin.users-light-768.png)" with timeout 60000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 8550 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 8550 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      42 |         // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
+      43 |         if (VOLATILE.has(p.route)) await page.addStyleTag({ content: 'main > *:not(:first-child), .sh-crumbs { visibility: hidden !important; }' }); // a rule, so a page that draws again keeps it
+    > 44 |         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {
+         |                            ^
+      45 |           animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01, timeout: 60_000, // a large page (the registry grows with every part) under the load of the whole run needs longer than 5 s to settle; the comparison is unchanged
+      46 |         });
+      47 |       }
+        at /home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js:44:28
+
+    attachment #1: admin-users-light-768 (image/png) ───────────────────────────────────────────────
+    Expected: e2e/a0-visual.spec.js-snapshots/admin-users-light-768-desktop-linux.png
+    Received: test-results/a0-visual-T-01-FR-05-visua-494fd-heme-at-360-768-and-1280-px-desktop/admin-users-light-768-actual.png
+    Diff:     test-results/a0-visual-T-01-FR-05-visua-494fd-heme-at-360-768-and-1280-px-desktop/admin-users-light-768-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/a0-visual-T-01-FR-05-visua-494fd-heme-at-360-768-and-1280-px-desktop/error-context.md
+
+
+[2/866] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px
+  2) [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px 
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      8376 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: admin.users-dark-768.png
+
+    Call log:
+      - Expect "toHaveScreenshot(admin.users-dark-768.png)" with timeout 60000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 8376 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 8376 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      42 |         // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
+      43 |         if (VOLATILE.has(p.route)) await page.addStyleTag({ content: 'main > *:not(:first-child), .sh-crumbs { visibility: hidden !important; }' }); // a rule, so a page that draws again keeps it
+    > 44 |         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {
+         |                            ^
+      45 |           animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01, timeout: 60_000, // a large page (the registry grows with every part) under the load of the whole run needs longer than 5 s to settle; the comparison is unchanged
+      46 |         });
+      47 |       }
+        at /home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js:44:28
+
+    attachment #1: admin-users-dark-768 (image/png) ────────────────────────────────────────────────
+    Expected: e2e/a0-visual.spec.js-snapshots/admin-users-dark-768-desktop-linux.png
+    Received: test-results/a0-visual-T-01-FR-05-visua-e9b6d-heme-at-360-768-and-1280-px-desktop/admin-users-dark-768-actual.png
+    Diff:     test-results/a0-visual-T-01-FR-05-visua-e9b6d-heme-at-360-768-and-1280-px-desktop/admin-users-dark-768-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/a0-visual-T-01-FR-05-visua-e9b6d-heme-at-360-768-and-1280-px-desktop/error-context.md
+
+
+[3/866] [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+  3) [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px 
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      9173 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: admin.integrations-high-contrast-768.png
+
+    Call log:
+      - Expect "toHaveScreenshot(admin.integrations-high-contrast-768.png)" with timeout 60000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 9173 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 9173 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      42 |         // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
+      43 |         if (VOLATILE.has(p.route)) await page.addStyleTag({ content: 'main > *:not(:first-child), .sh-crumbs { visibility: hidden !important; }' }); // a rule, so a page that draws again keeps it
+    > 44 |         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {
+         |                            ^
+      45 |           animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01, timeout: 60_000, // a large page (the registry grows with every part) under the load of the whole run needs longer than 5 s to settle; the comparison is unchanged
+      46 |         });
+      47 |       }
+        at /home/user/ERP_SAP-CLS/e2e/a0-visual.spec.js:44:28
+
+    attachment #1: admin-integrations-high-contrast-768 (image/png) ────────────────────────────────
+    Expected: e2e/a0-visual.spec.js-snapshots/admin-integrations-high-contrast-768-desktop-linux.png
+    Received: test-results/a0-visual-T-01-FR-05-visua-3d7d1-heme-at-360-768-and-1280-px-desktop/admin-integrations-high-contrast-768-actual.png
+    Diff:     test-results/a0-visual-T-01-FR-05-visua-3d7d1-heme-at-360-768-and-1280-px-desktop/admin-integrations-high-contrast-768-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/a0-visual-T-01-FR-05-visua-3d7d1-heme-at-360-768-and-1280-px-desktop/error-context.md
+
+
+[4/866] [desktop] › e2e/a11y.spec.js:60:3 › T-03 FR-06 the component gallery and the design system have no serious or critical findings (light)
+[5/866] [desktop] › e2e/a11y.spec.js:60:3 › T-03 FR-06 the component gallery and the design system have no serious or critical findings (dark)
+[6/866] [desktop] › e2e/a11y.spec.js:60:3 › T-03 FR-06 the component gallery and the design system have no serious or critical findings (high-contrast)
+[7/866] [desktop] › e2e/a11y.spec.js:74:1 › FR-06 the key pages have no serious or critical findings
+[8/866] [desktop] › e2e/a11y.spec.js:94:1 › FR-06 the open palette and the shortcut list have no serious or critical findings, and a dialog traps focus and returns it
+[9/866] [desktop] › e2e/a11y.spec.js:111:1 › FR-05 focus returns to what opened the palette, a person who asked for less motion gets none, and the focus ring is visible
+[10/866] [desktop] › e2e/about.spec.js:14:1 › administrators see version, build, commit, environment and applied migrations
+[11/866] [desktop] › e2e/about.spec.js:25:1 › IT administrators can view it too
+[12/866] [desktop] › e2e/about.spec.js:30:1 › other roles get the no-permission state and no build data
+[13/866] [desktop] › e2e/about.spec.js:36:1 › the shell navigation moves between Feature Flags and About without a reload
+[14/866] [desktop] › e2e/about.spec.js:46:1 › the build ID never appears on the business-facing flags page
+[15/866] [desktop] › e2e/about.spec.js:52:1 › no horizontal scroll and the migrations table adapts on a phone
+[16/866] [desktop] › e2e/accountability.spec.js:59:1 › AC-01 FR-01 FR-02 FR-04 FR-06 the standard processes are applied to a project, the gap check empties, an actor's work appears in My Accountability, and the report shows it
+[17/866] [desktop] › e2e/accountability.spec.js:123:1 › FR-01 AC-03 a live project's change is sent for approval; a person without the permission is told so; the pages fit a phone
+[18/866] [desktop] › e2e/admin-api.spec.js:23:1 › API clients and webhooks: a sandbox client, an approved write client, a verified webhook test and the portal try-it
+[19/866] [desktop] › e2e/admin-archive.spec.js:22:1 › Retention & archival: a policy, a legal hold, an approved archival job that skips it, and a read-only archived record
+[20/866] [desktop] › e2e/admin-backups.spec.js:22:1 › Backup & DR: a verified backup, a drill within RPO and RTO, and a production restore approved by IT and a director
+[21/866] [desktop] › e2e/admin-bulk.spec.js:22:1 › Bulk entry: paste from Excel, cells in error highlighted, a batch submitted whole and approved by the module approver
+[22/866] [desktop] › e2e/admin-connectors.spec.js:34:1 › Business connectors: health, a bank statement sync that matches, an approved mapping and a de-duplicated biometric pull
+[23/866] [desktop] › e2e/admin-control.spec.js:22:1 › Enterprise Control Center: governance, a maker-checker change, read-only mode and an environment diff
+[24/866] [desktop] › e2e/admin-helpdesk.spec.js:22:1 › Help desk: help on a page, a ticket raised from it, a failed call carried to support, resolved and rated
+[25/866] [desktop] › e2e/admin-migration.spec.js:22:1 › Migration cockpit: plan, map, two trial loads, sign-off, freeze and a reconciled final load
+[26/866] [desktop] › e2e/ai-assistant.spec.js:22:1 › Assistant panel: governed answer with its query and records, feedback, and an RFI saved as a DRAFT
+[27/866] [desktop] › e2e/ai-documents.spec.js:27:1 › Extraction Review: an invoice and a letter read on upload, reviewed beside the document and accepted into drafts
+[28/866] [desktop] › e2e/ai-features.spec.js:22:1 › AI features: evaluate, approve SYSADM → DIR, a governed call, the kill switch, usage and log
+[29/866] [desktop] › e2e/ai-forecasts.spec.js:25:1 › Forecasts & Anomalies: official rate forecast with range and labels, anomaly review, and the back-testing report
+[30/866] [desktop] › e2e/ai-vision.spec.js:38:1 › Vision Suggestions: a DPR photograph analysed on upload, faces blurred, a suggestion confirmed into an observation and one marked wrong
+[31/866] [desktop] › e2e/alerts.spec.js:41:1 › AC-01 FR-02 FR-04 FR-05 FR-06 a standard rule from the library: dry-run, run, then the alert is acknowledged and resolved in the Alert Centre; the run log shows it
+[32/866] [desktop] › e2e/alerts.spec.js:93:1 › FR-01 FR-05 the Rule Builder: a rule is built, tried on today's data and saved; one that sends messages outside says it goes for approval
+[33/866] [desktop] › e2e/alerts.spec.js:140:1 › AC-03 the pages refuse a person without the permission and name it; everybody has their own Alert Centre
+[34/866] [desktop] › e2e/ap-p2303.spec.js:49:1 › AC-01 a direct expense bill with its TDS, approved and posted, held; the AP bills list; the vendor ledger and the payables reports
+[35/866] [desktop] › e2e/ar-p2305.spec.js:48:1 › AC-01 receivables with ageing; a receipt with deductions set against the oldest invoices; the collections worklist and a follow-up with a promise
+[36/866] [desktop] › e2e/architecture.spec.js:17:1 › administrators read the guide: sections, module map, error codes and the pagination contract
+[37/866] [desktop] › e2e/architecture.spec.js:29:1 › the error-code table filters, shows an empty state and exports a CSV
+[38/866] [desktop] › e2e/architecture.spec.js:44:1 › the table of contents links jump to a section
+[39/866] [desktop] › e2e/architecture.spec.js:51:1 › other roles get the no-permission state
+[40/866] [desktop] › e2e/architecture.spec.js:57:1 › navigation shows Architecture for administrators and hides it from other roles
+[41/866] [desktop] › e2e/architecture.spec.js:70:1 › turning the feature flag OFF for the company hides the entry and the guide at once
+[42/866] [desktop] › e2e/architecture.spec.js:86:1 › a server failure shows an error with the correlation id and a retry
+[43/866] [desktop] › e2e/architecture.spec.js:100:1 › no horizontal scroll with wide fonts, in every theme
+[44/866] [desktop] › e2e/attendance.spec.js:75:1 › AC-01 shifts, policy with examples, assignment and who gets what, roster planner with a change, in the browser
+[45/866] [desktop] › e2e/attendance.spec.js:177:1 › AC-03 a site engineer reads shifts and cannot change them; the pages show no console errors
+[46/866] [desktop] › e2e/audit.spec.js:28:1 › Audit Explorer: changes made through the application appear with their diff, filter, open a record timeline, verify the chain and export
+[47/866] [desktop] › e2e/audit.spec.js:71:1 › Security Events: severity filters, the refused request appears, and people without the right are told
+[48/866] [desktop] › e2e/audit.spec.js:98:1 › Record History: the rule page shows its own history
+[49/866] [desktop] › e2e/award.spec.js:58:1 › AC-01 credentials, EMD, submission, opening results, award and EMD refund, in the browser
+[50/866] [desktop] › e2e/baseline.spec.js:68:1 › AC-01 award to project to a signed-off baseline pack, with links to the tender and the estimate, in the browser
+[51/866] [desktop] › e2e/bd.spec.js:59:1 › AC-01 a lead is qualified and converted, the opportunity gets the go-ahead, moves on the pipeline, with interactions, competitors, the influence map, the forecast and Hindi, in the browser
+[52/866] [desktop] › e2e/bi-control-tower.spec.js:31:1 › Enterprise control tower: executive dashboard, health matrix, drill-down and early warnings on desktop and phone
+[53/866] [desktop] › e2e/bi-execution.spec.js:23:1 › Daily execution intelligence: work done, WIP, site comparison and valuation on desktop and phone
+[54/866] [desktop] › e2e/bi-explain.spec.js:23:1 › Variance Explainer: Why? waterfall, contributors, margin bridge and drill-down on desktop and phone
+[55/866] [desktop] › e2e/bi-leakage.spec.js:24:1 › Leakage & Controls Tower: rules run, tower, finding closed with an outcome, rules — desktop and phone
+[56/866] [desktop] › e2e/bi-monthly-close.spec.js:24:1 › Monthly close: board, blocked step, chain QS → PM → PD, locked close with MIS and Budget Master
+[57/866] [desktop] › e2e/bi-morning-report.spec.js:24:1 › Morning report: summary, exceptions, sections, reproducibility, archive and settings on desktop and phone
+[58/866] [desktop] › e2e/bi-reports.spec.js:24:1 › BI reports, subscriptions and metric catalogue work on desktop and phone
+[59/866] [desktop] › e2e/bi-role-dashboards.spec.js:48:1 › Every role opens its role dashboard with its cards loaded
+[60/866] [desktop] › e2e/bi-role-dashboards.spec.js:74:1 › Dashboard Inventory: widgets, role coverage, dashboards and a clean scan
+[61/866] [desktop] › e2e/bi-scenarios.spec.js:23:1 › Scenario Builder: drivers, live impact, save and compare without touching live data
+[62/866] [desktop] › e2e/bill-cert.spec.js:9:1 › Certification, tax invoice, IRN and the submitted against certified analysis
+[63/866] [desktop] › e2e/bill-client.spec.js:9:1 › Client RA bill: prepare from the certified measurements, approve, send to the client, abstract
+[64/866] [desktop] › e2e/bill-cvr.spec.js:9:1 › CVR: workbench, approval and lock, control tower
+[65/866] [desktop] › e2e/bill-ledger.spec.js:9:1 › Ledgers: retention summary, advance recovery, release request
+[66/866] [desktop] › e2e/bill-mb.spec.js:8:1 › Measurement book: record on the phone, check measurement, certification, lock, warning beyond the BOQ, abstract and book
+[67/866] [desktop] › e2e/bill-qsdash.spec.js:8:1 › QS dashboard: tiles, drill-down, queues, margin right
+[68/866] [desktop] › e2e/bill-recon.spec.js:9:1 › Quantity reconciliation, forecast, limits, deviation statement to the client and the extra item
+[69/866] [desktop] › e2e/bill-sub.spec.js:8:1 › Subcontractor measurement, signature, verification, bill with recoveries, approval
+[70/866] [desktop] › e2e/bill-vinv.spec.js:9:1 › Vendor invoice: register, match, exception, debit note, approval, hub
+[71/866] [desktop] › e2e/boq.spec.js:61:1 › AC-01 client BOQ imported with the wizard, mapped to the WBS with norms, frozen with approval, and reported, in the browser
+[72/866] [desktop] › e2e/budget-changes.spec.js:81:1 › AC-01 revision, transfer check, contingency drawdown and the version comparison, in the browser
+[73/866] [desktop] › e2e/budget-check.spec.js:77:1 › AC-01 setting proposed and approved, PO committed, GRN consumed, ledger report, drill-down and availability probe, in the browser
+[74/866] [desktop] › e2e/budget.spec.js:68:1 › AC-01 generate from the baseline, adjust, phase, approve and revise, in the browser
+[75/866] [desktop] › e2e/calculations.spec.js:22:1 › AC-01 the registry lists every business calculation and the test bench shows result and trace
+[76/866] [desktop] › e2e/calculations.spec.js:48:1 › FR-03 / T-02 unit conversion on the page: an item factor chains with the generic one and beats a generic factor for the same pair
+[77/866] [desktop] › e2e/calculations.spec.js:80:1 › AC-02 / AC-03 a bill is calculated by the engine and "Show calculation" opens the steps and the formula version
+[78/866] [desktop] › e2e/calculations.spec.js:112:1 › AC-06 a new version goes draft, shadow, comparison, request, two approvals and only then takes over
+[79/866] [desktop] › e2e/calculations.spec.js:201:1 › PM gets the no-access state on the registry and no navigation to it
+[80/866] [desktop] › e2e/calculations.spec.js:207:1 › Approvals: the requester cannot decide their own request and an empty inbox says so
+[81/866] [desktop] › e2e/cash-p2306.spec.js:57:1 › AC-01 a statement imported and matched; an imprest voucher with its bill photo from the phone; the daily position
+[82/866] [desktop] › e2e/cf-p2313.spec.js:44:1 › AC-01 the cash position, the forecast of this week adjusted and published by the CFO, the project cash curve on desktop and phone
+[83/866] [desktop] › e2e/cl-p2314.spec.js:43:1 › AC-01 the month closed through its checklist and locks, the statements and the dashboard on desktop and phone
+[84/866] [desktop] › e2e/collab.spec.js:37:1 › AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-05 Discussion, Timeline and Trace on a record; a thread, a reaction, an edit, a mention of no one, the mentions inbox and the project feed
+[85/866] [desktop] › e2e/comcenter-screenshots.spec.js:49:1 › screenshots of the Communication Center pages
+[86/866] [desktop] › e2e/comcenter.spec.js:54:1 › AC-01 AC-02 FR-02 FR-03 FR-05 the Center, an instruction with acknowledgement and register, a message turned into a task
+[87/866] [desktop] › e2e/comcenter.spec.js:122:1 › AC-01 AC-02 FR-04 an announcement with a quiz: written, counted, published, read, confirmed, tracked
+[88/866] [desktop] › e2e/comcenter.spec.js:167:1 › AC-04 FR-01 auto group rules: changed only after approval, then the discipline group has the people assigned to the project
+[89/866] [desktop] › e2e/common-masters-screenshots.spec.js:65:1 › screenshots of the common master pages
+[90/866] [desktop] › e2e/common-masters.spec.js:64:1 › T-01 FR-02 a GST change of an HSN code from a date: proposed on the page, approved, and the rate as of a date
+[91/866] [desktop] › e2e/common-masters.spec.js:102:1 › T-02 T-03 FR-06 FR-08 banks reject an invalid IFSC; the lookup list manager saves Hindi labels; every register page loads
+[92/866] [desktop] › e2e/communication.spec.js:44:1 › AC-01 AC-05 Channel Settings: a change is sent for approval and the settings in force stay; the log shows a sample and a blocked text message with the reason; the consent register records a choice
+[93/866] [desktop] › e2e/communication.spec.js:121:1 › AC-06 pages refuse a person without the permission, with the permission named
+[94/866] [desktop] › e2e/configuration.spec.js:20:1 › Company Settings: the System Administrator saves the tax identity and gets field errors for a bad PAN
+[95/866] [desktop] › e2e/configuration.spec.js:36:1 › Company Settings: the Accounts Manager can read but not change
+[96/866] [desktop] › e2e/configuration.spec.js:43:1 › Financial Years: create a year, see twelve open periods, soft-close one module
+[97/866] [desktop] › e2e/configuration.spec.js:67:1 › Numbering: the live preview shows the number and flags a format that would repeat
+[98/866] [desktop] › e2e/configuration.spec.js:88:1 › Parameters: set a company value and see it in the history; PM has no access
+[99/866] [desktop] › e2e/configuration.spec.js:102:1 › Holidays: add a calendar and a holiday, a duplicate date is refused, then delete it
+[100/866] [desktop] › e2e/configuration.spec.js:131:1 › the new pages show the no-access state for a role without the permission
+[101/866] [desktop] › e2e/controls.spec.js:47:1 › AC-01 FR-02 FR-03 FR-05 FR-07 a control stops a sample document, an exception is raised from the dialog with evidence, the project manager approves it, the document goes ahead; the register and the dashboard show it
+[102/866] [desktop] › e2e/controls.spec.js:119:1 › FR-01 FR-04 FR-06 the registry shows the mode and what a control would have stopped; reason codes are one master; a person without the permission is told so
+[103/866] [desktop] › e2e/ctr-claims.spec.js:9:1 › Claims: claim, notice, quantum, evidence, approval, submission, determination with EOT, dispute, watchlist
+[104/866] [desktop] › e2e/ctr-contracts.spec.js:9:1 › Client contract: from baseline, clause, obligation, three-level activation, obligations calendar, amendment
+[105/866] [desktop] › e2e/ctr-pvc.spec.js:9:1 › PVC and LD: indices, formula, escalation with workings, approval, LD exposure and deduction
+[106/866] [desktop] › e2e/ctr-securities.spec.js:9:1 › Securities: guarantee approval, extension request and confirmation, policy and claim, exposure against the bank limit
+[107/866] [desktop] › e2e/ctr-subcontractors.spec.js:8:1 › Subcontractor workspace: compliance, hold, waiver request, verification, strength, rating
+[108/866] [desktop] › e2e/ctr-variations.spec.js:8:1 › Variation: change request, review, evaluation, approval, client answer, variation order, register
+[109/866] [desktop] › e2e/ctr-workorders.spec.js:9:1 › Work order: from the client BOQ, margin, approval, acceptance, amendment, margin report, closure
+[110/866] [desktop] › e2e/dashboard.spec.js:54:1 › FR-01 FR-05 FR-06 BR-02 AC-01 T-02 My Work is live, empty where nothing exists yet, and every figure opens the list with the same filters and count
+[111/866] [desktop] › e2e/dashboard.spec.js:92:1 › FR-03 FR-04 T-03 a person arranges their own dashboard by buttons or dragging; it is kept on the server and follows them to another device; reset returns the default
+[112/866] [desktop] › e2e/dashboard.spec.js:148:1 › FR-08 the Requests Overview: charts have a tooltip, a legend and the same figures as a table, export to CSV and PNG, drill to the list, and follow the dark theme
+[113/866] [desktop] › e2e/dashboard.spec.js:194:1 › FR-03 AC-02 AC-05 the designer: an administrator asks for the default of a role, another approves, and a new person of that role sees it; changes are recorded
+[114/866] [desktop] › e2e/data-health.spec.js:18:1 › before any run the page lists every check as "not run yet" and offers to run them
+[115/866] [desktop] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so
+  4) [desktop] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  getByTestId('count-fail')
+    Expected: "0"
+    Received: "1"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" getByTestId('count-fail') with timeout 5000ms
+      - waiting for getByTestId('count-fail')
+        14 × locator resolved to <strong data-testid="count-fail">1</strong>
+           - unexpected value "1"
+
+
+      33 |   await page.getByRole('button', { name: 'Run checks now' }).first().click();
+      34 |   await expect(page.getByRole('status')).toContainText('Checks finished');
+    > 35 |   await expect(page.getByTestId('count-fail')).toHaveText('0');
+         |                                                ^
+      36 |   await expect(page.getByTestId('last-run')).toContainText('Last run');
+      37 |   await expect(page.getByTestId('last-run')).toContainText('e2e-health');
+      38 |   // a document with lines (the sample material request of 03.02) may already exist in the shared database: either state is right
+        at /home/user/ERP_SAP-CLS/e2e/data-health.spec.js:35:48
+
+    Error Context: test-results/data-health-ITADM-runs-the-b4256-ith-nothing-to-check-say-so-desktop/error-context.md
+
+
+[116/866] [desktop] › e2e/data-health.spec.js:44:1 › drill-down: a check's history shows its earlier results
+[117/866] [desktop] › e2e/data-health.spec.js:57:1 › SYSADM can read the report but the run button is disabled with a reason
+[118/866] [desktop] › e2e/data-health.spec.js:65:1 › other roles get the no-permission state and no check data; the nav entry is hidden
+[119/866] [desktop] › e2e/data-health.spec.js:72:1 › the report exports a CSV
+[120/866] [desktop] › e2e/data-health.spec.js:80:1 › turning the feature flag OFF hides the entry and the page at once
+[121/866] [desktop] › e2e/data-health.spec.js:94:1 › a server failure shows the error state with the correlation id and a retry
+[122/866] [desktop] › e2e/data-health.spec.js:108:1 › a failing run is reported when the server cannot complete it
+[123/866] [desktop] › e2e/data-health.spec.js:118:1 › no horizontal scroll with wide fonts, in every theme
+[124/866] [desktop] › e2e/deployments.spec.js:69:1 › AC-01 deployment, board with a move, crew, transfer with handover, in the browser
+[125/866] [desktop] › e2e/deployments.spec.js:191:1 › AC-03 a site engineer sees the board of nothing and cannot deploy; a pages sweep has no console errors
+[126/866] [desktop] › e2e/dept-budget.spec.js:60:1 › AC-01 department budget prepared, approved by the chain, compared with a new version, set against actual, and the overhead allocated, in the browser
+[127/866] [desktop] › e2e/design.spec.js:20:1 › Style guide: themes side by side, the contrast report, typography with the served fonts, density, status, and every icon
+[128/866] [desktop] › e2e/design.spec.js:65:1 › T-02 the theme changes every component at once, without a reload, and the choice follows the person to another device
+[129/866] [desktop] › e2e/design.spec.js:98:1 › a first visit follows the device: a device that asks for dark gets the dark theme until the person chooses
+[130/866] [desktop] › e2e/docflow-p16607.spec.js:61:1 › T-02 the document flow of a purchase order: MR, PR, PO, GRN and vendor invoice in order with their statuses; no step listed as not yet available (30.01)
+[131/866] [desktop] › e2e/docflow-p16607.spec.js:82:1 › FR-01 a list shows its title with the count and groups its rows; FR-04 on a phone its filters open in a sheet
+[132/866] [desktop] › e2e/documents.spec.js:60:1 › AC-01 FR-01 FR-02 FR-05 FR-07 register a document in the form, attach the file, approve it; the viewer shows it and keeps a markup
+[133/866] [desktop] › e2e/documents.spec.js:101:1 › AC-02 FR-02 FR-06 an issued document is distributed; the controller sees who has not yet acknowledged and the revisions
+[134/866] [desktop] › e2e/documents.spec.js:123:1 › AC-03 FR-03 Document Types & Folder Templates: the configuration is shown and a change is sent for approval
+[135/866] [desktop] › e2e/employees-screenshots.spec.js:65:1 › screenshots of the HR pages
+[136/866] [desktop] › e2e/employees.spec.js:77:1 › FR-01 FR-02 FR-06 FR-09 AC-01 the wizard: the duplicate PAN shown while typing, the documents, sent for approval, approved by another HR manager, Employee 360 with history and masking
+[137/866] [desktop] › e2e/employees.spec.js:161:1 › FR-02 FR-07 BR-02 an employment change asked for on Employee 360 is approved and applied on its date; the overview and the directory show the live figures; the employee asks for a change of their own
+[138/866] [desktop] › e2e/engg.spec.js:61:1 › AC-01 T-01 T-02 register, IFC approval, controlled copy, supersession, comparison, transmittal and responses, in the browser
+[139/866] [desktop] › e2e/engg.spec.js:209:1 › AC-03 a person without the right sees the no-permission state
+[140/866] [desktop] › e2e/epc.spec.js:56:1 › AC-01 deliverable register with weighted progress, S-curve, comments, holds and vendor document tracking, in the browser
+[141/866] [desktop] › e2e/epc.spec.js:153:1 › AC-03 a person without the right sees the no-permission state
+[142/866] [desktop] › e2e/ess.spec.js:70:1 › AC-01 My HR, My Attendance, a letter from request to PDF, a profile change, My Team and Hindi, in the browser
+[143/866] [desktop] › e2e/estimate.spec.js:60:1 › AC-01 an estimate built from the pasted client BOQ with analyses, indirects and the resource summary; versions compared; approved; masked for QS, in the browser
+[144/866] [desktop] › e2e/excel.spec.js:45:1 › AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-05 the Import Center end to end: template, upload, preview, row errors, error file, commit of the correct rows, history
+[145/866] [desktop] › e2e/excel.spec.js:96:1 › AC-04 AC-03 the template designer: a change waits for a second person, takes effect when a director approves it; a person without the right sees nothing
+[146/866] [desktop] › e2e/exit.spec.js:73:1 › T-01 resignation, approvals, interview, a termination whose last day passed, clearance, F&F and letter, an anonymous grievance, a disciplinary case and Hindi, in the browser
+[147/866] [desktop] › e2e/expenses.spec.js:73:1 › AC-01 policy, a claim with a bill photo and a flag, the approvals by band, pass for payment, a salary advance, the analysis and Hindi, in the browser
+[148/866] [desktop] › e2e/fa-p2309.spec.js:41:1 › AC-01 an asset capitalised from a capex bill and approved; depreciation run; the register and the schedule on desktop and phone
+[149/866] [desktop] › e2e/fc-p2311.spec.js:41:1 › AC-01 a forecast prepared with a method per line, its bridge, approved by PCMGR, PM and PD; the reports on desktop and phone
+[150/866] [desktop] › e2e/feature-flags.spec.js:20:1 › SYSADM sees the flags, toggles one with a reason and the page chip reacts at once
+[151/866] [desktop] › e2e/feature-flags.spec.js:49:1 › a too-short reason is blocked and the dialog can be cancelled
+[152/866] [desktop] › e2e/feature-flags.spec.js:60:1 › ITADM can view but the toggles are disabled with a reason
+[153/866] [desktop] › e2e/feature-flags.spec.js:67:1 › a role without access sees the no-permission state
+[154/866] [desktop] › e2e/feature-flags.spec.js:72:1 › search narrows the list and shows an empty state with a clear action
+[155/866] [desktop] › e2e/feature-flags.spec.js:80:1 › a server failure shows the error state with a correlation id and retry
+[156/866] [desktop] › e2e/feature-flags.spec.js:93:1 › CSV export downloads a file
+[157/866] [desktop] › e2e/feature-flags.spec.js:100:1 › no horizontal page scroll and themes apply
+[158/866] [desktop] › e2e/field-p16603.spec.js:60:1 › T-01 FR-01 FR-02 each field role reaches its daily task in one tap from Home; the task opens on its first step
+[159/866] [desktop] › e2e/field-p16603.spec.js:88:1 › FR-01 the field home: greeting band, today's tasks from the records, quick actions of the role, what is not sent yet
+[160/866] [desktop] › e2e/field-p16603.spec.js:113:1 › FR-01 the field home on a desktop: the same band, cards and tiles, laid out wide
+[161/866] [desktop] › e2e/field-p16603.spec.js:126:1 › T-03 FR-07 the field pages in Telugu: Telugu text, no missing key, the Telugu typeface, nothing scrolls sideways at 360 px
+[162/866] [desktop] › e2e/field-p16603.spec.js:159:1 › T-04 FR-03 a 4 MB camera photo is stored at 300 KB or less, with the time and position burnt in
+[163/866] [desktop] › e2e/field.spec.js:56:1 › FR-07 BR-01 a site person lands on the field home: quick actions for the role, whether the device is online, what waits to be sent, and the location notice
+[164/866] [desktop] › e2e/field.spec.js:90:1 › FR-01 on a phone the bottom navigation has Home, Tasks (My Work), Scan and More; More opens the whole menu; every target is thumb-sized
+[165/866] [desktop] › e2e/field.spec.js:118:1 › FR-01 a tablet has a rail that opens on demand, a computer the full sidebar
+[166/866] [desktop] › e2e/field.spec.js:139:1 › FR-04 the scanner takes a typed number to the record, tells a wrong code from one it may not open, and reads a code with the camera
+[167/866] [desktop] › e2e/field.spec.js:184:1 › FR-04 the scanner says so when the camera cannot be used, and the typed way still works
+[168/866] [desktop] › e2e/field.spec.js:200:1 › BR-01 FR-04 the position is read once, on the button, with the notice; its accuracy and signs of a mocked position are shown; nothing is followed
+[169/866] [desktop] › e2e/field.spec.js:230:1 › BR-02 FR-04 FR-06 a photo is made smaller before it goes anywhere, the time and position the camera wrote stay in it, and low-bandwidth mode makes it smaller still
+[170/866] [desktop] › e2e/field.spec.js:277:1 › FR-05 on a phone a list row is swiped to show its actions, and a pull down refreshes the list
+[171/866] [desktop] › e2e/files.spec.js:47:1 › AC-01 upload by drag-and-drop style input: progress, scan, preview and a short-lived link that really downloads
+[172/866] [desktop] › e2e/files.spec.js:84:1 › FR-03 bad files are refused with a clear message: wrong type, a program renamed to .pdf
+[173/866] [desktop] › e2e/files.spec.js:98:1 › T-01 a file that fails the virus scan is quarantined, cannot be opened, and shows on the administrator overview
+[174/866] [desktop] › e2e/files.spec.js:115:1 › FR-02 a large file goes up in chunks, then a new version replaces it; submitting locks the record so files cannot be removed
+[175/866] [desktop] › e2e/files.spec.js:137:1 › Removing a file asks for a reason and hides it from the record
+[176/866] [desktop] › e2e/files.spec.js:152:1 › FR-08 the camera button is there on a phone-sized screen and asks for the rear camera
+[177/866] [desktop] › e2e/files.spec.js:165:1 › AC-06 file settings: SYSADM asks, ITADM approves, and the limit changes; PM has no access
+[178/866] [desktop] › e2e/fin-screenshots.spec.js:47:1 › screenshots of the finance master pages
+[179/866] [desktop] › e2e/fin.spec.js:61:1 › FR-01 FR-02 the chart of accounts: tree and filters, a new account proposed and approved by the CFO; a project manager only reads
+[180/866] [desktop] › e2e/fin.spec.js:100:1 › T-01 FR-04 the account page: a manual posting without a project is rejected; a dimension rule change goes to the CFO; BR-01 a control account
+[181/866] [desktop] › e2e/fin.spec.js:132:1 › FR-03 FR-05 FR-06 cost codes by project controls (accounts manager, then CFO), the item category mapping is complete, a Tally ledger list gives its mapping report
+[182/866] [desktop] › e2e/forms.spec.js:54:1 › Form Components gallery: every field type in five states, the line grid and the live registry
+[183/866] [desktop] › e2e/forms.spec.js:88:1 › Reference form AC-02 T-01: context auto-fill, dependent lookups, 50 rows pasted from Excel, server errors on fields, submit and numbering
+[184/866] [desktop] › e2e/forms.spec.js:151:1 › Drafts T-02: a half-filled form survives a crash, is offered back, and is listed and discarded in My Drafts
+[185/866] [desktop] › e2e/forms.spec.js:178:1 › T-04 a request completed with the keyboard alone
+[186/866] [desktop] › e2e/gates-p0714.spec.js:31:1 › the workforce dashboard: attendance today and contract labour first, each card from its HR service, no sideways scroll on a phone
+[187/866] [desktop] › e2e/gates-p0714.spec.js:45:1 › T-G2 a gate page: evidence opens, a criterion is met or not met with a reason, sign-off is refused while criteria are open, the report downloads
+[188/866] [desktop] › e2e/gates-p0714.spec.js:80:1 › a gate signed by the technical lead and the director is shown as passed, with its sign-off
+[189/866] [desktop] › e2e/gis.spec.js:60:1 › AC-01 project map with layers and overlays, list mode, progress and the chainage strip chart, in the browser
+[190/866] [desktop] › e2e/gl-p2301.spec.js:27:1 › AC-01 T-01 a manual journal typed with its dimensions, balanced live, approved and posted; the ledger and the trial balance
+[191/866] [desktop] › e2e/gst-p2307.spec.js:53:1 › AC-01 an IRN from the worklist through the sandbox with its QR; an e-way bill for the invoice; the register and the settings on desktop and phone
+[192/866] [desktop] › e2e/gstrecon-p2308.spec.js:47:1 › AC-01 GSTR-2B imported and matched; the ITC review approved by the CFO; GSTR-1/3B; desktop and phone
+[193/866] [desktop] › e2e/hse-camp.spec.js:8:1 › Camp: set-up, bed by badge, check-in, muster, meals, welfare inspection, month recovery
+[194/866] [desktop] › e2e/hse-esg.spec.js:8:1 › ESG: monthly data, factor maker-checker, carbon report, waste, consents, dashboard
+[195/866] [desktop] › e2e/hse-incidents.spec.js:8:1 › Incident: report, classify, investigate, actions, statutory, closure approval, lesson shared
+[196/866] [desktop] › e2e/hse-kpi.spec.js:8:1 › HSE dashboard: rates from man-hours and incidents, safe man-hours, leading indicators, trend, sites, export and monthly report
+[197/866] [desktop] › e2e/hse-permits.spec.js:8:1 › Permit to work: type, request, issue, board, gas-test suspension, resume and closure with handback
+[198/866] [desktop] › e2e/hse-plans.spec.js:9:1 › HSE: plan and HIRA with their approvals, JSA, induction by badge with the quiz, toolbox talk attendance, library and compliance
+[199/866] [desktop] › e2e/hse-safety.spec.js:8:1 › Safety: observation card, action and verification, PPE issue by QR, equipment register, contractor scorecard
+[200/866] [desktop] › e2e/hse-security.spec.js:7:1 › Security: visitor gate with host approval, patrol scan, roster board, security incident
+[201/866] [desktop] › e2e/i18n.spec.js:34:1 › T-01 AC-01 the field screens, the shell and the palette in Hindi: every text is Hindi, none is missing, and English comes back
+[202/866] [desktop] › e2e/i18n.spec.js:79:1 › AC-05 FR-02 the Translations page: a change of wording is a request another administrator approves; the workbook for translators
+[203/866] [desktop] › e2e/ic-p2315.spec.js:40:1 › AC-01 a charge mirrored in both companies, reconciled and eliminated in the consolidated statements on desktop and phone
+[204/866] [desktop] › e2e/inbox.spec.js:45:1 › AC-01 FR-01 FR-04 the inbox: counts, filters, a saved variant, approving several together, the one with a risk flag left for its own decision
+[205/866] [desktop] › e2e/inbox.spec.js:89:1 › AC-01 FR-02 FR-03 the task page: the document, the evidence, the history and the decision; then a secure link works once
+[206/866] [desktop] › e2e/inbox.spec.js:127:1 › FR-05 AC-01 on a phone: cards in order of urgency, one tap to approve, a reason to reject, nothing scrolls sideways
+[207/866] [desktop] › e2e/inbox.spec.js:156:1 › FR-07 My Submissions & Watch List: what I raised with who it waits for; what I follow; the approval settings of the document types
+[208/866] [desktop] › e2e/integrations.spec.js:32:1 › Connectors: create by request, approve, test, send a sample through the abstraction and read the redacted log
+[209/866] [desktop] › e2e/integrations.spec.js:87:1 › Connector configuration: a change and a key rotation are requests; the connector can be switched off at once
+[210/866] [desktop] › e2e/integrations.spec.js:117:1 › Integrations: SYSADM can view but not act; a project manager has no access; CFO sees the bank request in Approvals
+[211/866] [desktop] › e2e/inv-asset.spec.js:50:1 › Tools and small assets: register and approve, calibration blocks the issue, issue by QR with the receiver code, the custody statement, and a loss approved by CM, PM and HR
+[212/866] [desktop] › e2e/inv-count.spec.js:42:1 › Physical verification: a plan is approved, started, counted blind with a recount, closed, reviewed and adjusted; scrap is entered and written off; expiry is shown
+[213/866] [desktop] › e2e/inv-gate.spec.js:46:1 › Gate: a delivery is entered, weighed, handed over and leaves; an unexpected one is held; a returnable gate pass is approved, verified once by QR, overdue and marked back
+[214/866] [desktop] › e2e/inv-grn.spec.js:46:1 › Goods receipt: made from the gate entry, approved and posted; QC passes part and fails part; the failed and rejected material goes back on an approved return
+[215/866] [desktop] › e2e/inv-issue.spec.js:52:1 › Material issue: issued against a work authorisation with the receiver code, stopped beyond it, returned at the issue rate, and a subcontractor free issue reconciled against the norms
+[216/866] [desktop] › e2e/inv-mmd.spec.js:49:1 › Materials dashboard: the value equals the ledger, a tile opens its records, queues and the lifecycle funnel open the documents; the storekeeper is refused
+[217/866] [desktop] › e2e/inv-mrc.spec.js:52:1 › Monthly material reconciliation: the site is flagged missing, the QS makes it, explains the excess, the project manager and director approve and lock it; the month can be closed
+[218/866] [desktop] › e2e/inv-reorder.spec.js:42:1 › Reorder control: parameters approved by a second person, a suggestion becomes a draft material request, ageing and redeployment shown, labels made, a scanned code fills a transfer line
+[219/866] [desktop] › e2e/inv-rta.spec.js:50:1 › Returnable site assets: issue on the phone and approval, dashboard and reconciliation, return good / repairable / lost, recoveries approved, a hired-in lot billed and checked
+[220/866] [desktop] › e2e/inv-stock.spec.js:40:1 › Stores: a store is approved, stock is received and issued at the weighted average, adjusted with approval, valued; the keeper sees no values
+[221/866] [desktop] › e2e/inv-stock.spec.js:65:1 › Stores: a project manager reads the stores and the dashboard; a storekeeper of another store sees none
+[222/866] [desktop] › e2e/inv-transfer.spec.js:42:1 › Stock transfer: requested, approved, dispatched into transit, received with a damaged bag and a shortage, reported in transit, and both discrepancies resolved
+[223/866] [desktop] › e2e/items-screenshots.spec.js:73:1 › screenshots of the item master pages
+[224/866] [desktop] › e2e/items.spec.js:72:1 › T-02 FR-01 FR-07 the New Item wizard: template attributes, units, the duplicate warning before sending; approval by the steward
+[225/866] [desktop] › e2e/items.spec.js:117:1 › FR-04 FR-06 AC-01 a bill of resources kept with the selector; the Item Master list; catalogue items into the lines of a sample request
+[226/866] [desktop] › e2e/labour.spec.js:59:1 › AC-01 register a worker, approve, clear, deploy-ready, print the card, set the licence and the wage rates, in the browser
+[227/866] [desktop] › e2e/leave.spec.js:63:1 › AC-01 apply, approve and cancel leave, the balance, the team calendar, the types and the year-end, in the browser
+[228/866] [desktop] › e2e/letters.spec.js:57:1 › AC-01 inward registration, outward letter approved and issued, thread, time-bar countdown and serving, in the browser
+[229/866] [desktop] › e2e/letters.spec.js:168:1 › AC-03 a person without the right sees the no-permission state
+[230/866] [desktop] › e2e/list.spec.js:42:1 › List Report on the reference register: filters, totals, columns kept, a default view, bulk submit, export and row links
+[231/866] [desktop] › e2e/list.spec.js:107:1 › the system administrator sees the commercial total masked, also in the totals and the export
+[232/866] [desktop] › e2e/list.spec.js:124:1 › T-04 cards at phone width without horizontal page scroll; My Exports and the List Report documentation
+[233/866] [desktop] › e2e/matrix.spec.js:45:1 › FR-01 FR-09 BR-01 BR-02 AC-02 a new version of a matrix: edit the rules, check for gaps, ask to activate from tomorrow, approve, and the simulator shows the new chain from that date
+[234/866] [desktop] › e2e/matrix.spec.js:101:1 › FR-03 the authority limits grid: change a limit, ask, approve, and the grid shows it
+[235/866] [desktop] › e2e/matrix.spec.js:126:1 › FR-05 AC-02 delegations from the browser: delegate, see it listed, end it; a long one waits for the manager
+[236/866] [desktop] › e2e/matrix.spec.js:162:1 › FR-06 FR-07 the escalation hierarchy and the SLA settings are shown and changed through approval
+[237/866] [desktop] › e2e/matrix.spec.js:184:1 › FR-08 AC-03 on a phone: the simulator runs and no page scrolls sideways
+[238/866] [desktop] › e2e/matrix.spec.js:203:1 › AC-04 who sees what: an employee without the right gets the no-permission state
+[239/866] [desktop] › e2e/mdm-screenshots.spec.js:73:1 › screenshots of the master data governance pages
+[240/866] [desktop] › e2e/mdm.spec.js:73:1 › FR-02 BR-01 a similar partner is flagged before it is sent, compared and merged; the merged record stays and points to the survivor
+[241/866] [desktop] › e2e/mdm.spec.js:128:1 › FR-03 FR-05 FR-07 FR-08 the dashboard, a change from a later date with its history and as of, the change requests worklist and the rules and stewards
+[242/866] [desktop] › e2e/meetings.spec.js:58:1 › AC-01 team, stakeholders, communication matrix, minutes issued by the chair and actions tracked as tasks, in the browser
+[243/866] [desktop] › e2e/messages.spec.js:46:1 › AC-01 AC-02 FR-02 FR-03 FR-04 FR-07 one Messages app: a direct conversation, a file and a record card, unread counts, a reply in real time, panes by width, the pop-out window and the dock
+[244/866] [desktop] › e2e/messages.spec.js:132:1 › AC-01 a person who is not in a conversation does not see it, and cannot open it by its address
+[245/866] [desktop] › e2e/messaging-features.spec.js:45:1 › AC-01 AC-03 AC-04 FR-02 FR-03 FR-05 receipts, search with a jump to the message, a star, a pin, and no page overflow
+[246/866] [desktop] › e2e/messaging-features.spec.js:82:1 › AC-05 FR-09 Messaging Settings: a change waits for a second person, the history lists it
+[247/866] [desktop] › e2e/messaging-screenshots.spec.js:42:1 › screenshots of the messaging feature pages
+[248/866] [desktop] › e2e/migration.spec.js:30:1 › FR-06 FR-07 BR-02 the tracker: progress by module, filters, a defect blocks verification, the owner verifies, the module is signed off, the export
+[249/866] [desktop] › e2e/migration.spec.js:95:1 › T-03 FR-04 an old address leads to its page with its query and fragment, after another administrator approves it; an unknown address goes Home
+[250/866] [desktop] › e2e/migration.spec.js:123:1 › FR-06 the tracker on a phone: progress, chart, filters and the table fit the screen and open a page's details
+[251/866] [desktop] › e2e/mto.spec.js:61:1 › AC-01 take-off and BBS sheets give quantities with revisions and deltas; the explosion gives the material requirements, in the browser
+[252/866] [desktop] › e2e/notifications.spec.js:40:1 › AC-01 FR-04 FR-07 a decision on a document reaches the originator's open screen at once: the bell counts it, the drawer shows it, the centre opens the document; read, archive and read-all work
+[253/866] [desktop] › e2e/notifications.spec.js:82:1 › FR-05 AC-02 preferences are kept and respected; the templates are read in both languages, previewed, and a change waits for the IT administrator; the delivery log shows what left
+[254/866] [desktop] › e2e/object.spec.js:42:1 › Object Page: the header and the buttons follow the viewer; checklist, discussion, approval, timeline and print work end to end
+[255/866] [desktop] › e2e/object.spec.js:118:1 › Object Page: return with a reason code, amend and send again; the comparison marks what changed; the owner sees why it came back
+[256/866] [desktop] › e2e/object.spec.js:169:1 › T-02 a missing record shows the error state with the correlation ID the page sent; a person without the right sees what is missing
+[257/866] [desktop] › e2e/object.spec.js:187:1 › T-04 the Object Page at phone width: no horizontal page scroll, tabs scroll inside their bar, the buttons are reachable
+[258/866] [desktop] › e2e/object.spec.js:204:1 › Feedback components: toasts, banners, confirmation with a reason code, the progress dialog, the offline banner and the standard states
+[259/866] [desktop] › e2e/offline.spec.js:38:1 › AC-01 FR-01 FR-03 FR-04 FR-05 FR-07 FR-08 a form captured offline with a photo, kept encrypted, sent when the connection returns; T-03 a revoked device wipes its local store
+[260/866] [desktop] › e2e/offline.spec.js:142:1 › AC-03 a person without the right sees the no-permission state on the Devices page
+[261/866] [desktop] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID
+[262/866] [desktop] › e2e/operations-health.spec.js:61:1 › Operations Health: an objective change is a request, approved by the System Administrator
+[263/866] [desktop] › e2e/operations-health.spec.js:80:1 › Operations Health: SYSADM views but cannot act; a project manager has no access; the browser reports its errors
+[264/866] [desktop] › e2e/operations.spec.js:23:1 › Monitor: key figures, consumers, the event log with masked data, and the catalogue
+[265/866] [desktop] › e2e/operations.spec.js:46:1 › Replay: ITADM queues a replay, it runs in the background and the job page shows its log
+[266/866] [desktop] › e2e/operations.spec.js:68:1 › Dead-letter queue: empty state, filters, and view-only for a role that cannot re-drive
+[267/866] [desktop] › e2e/operations.spec.js:80:1 › Schedules: ITADM previews a cron and asks for a change; SYSADM approves it and the schedule changes
+[268/866] [desktop] › e2e/operations.spec.js:108:1 › PM gets the no-access state and no navigation to the console
+[269/866] [desktop] › e2e/organisation.spec.js:36:1 › Departments and designations: create, search, edit, export, and a blocked deactivation lists what blocks it
+[270/866] [desktop] › e2e/organisation.spec.js:109:1 › Companies and branches: only the system administrator manages them
+[271/866] [desktop] › e2e/organisation.spec.js:131:1 › Project and site: create, approve activation, draw and test a geofence, then change it by approval
+[272/866] [desktop] › e2e/organisation.spec.js:242:1 › Site deactivation is blocked while a cost centre is still mapped to it, with the blocker listed
+[273/866] [desktop] › e2e/organisation.spec.js:268:1 › Organisation chart: search, move a department with undo, and the other views
+[274/866] [desktop] › e2e/organisation.spec.js:307:1 › Cost and profit centres: list, map to a project, hierarchy view, and no access without the permission
+[275/866] [desktop] › e2e/overviews-p16605.spec.js:25:1 › FR-02 the QS dashboard is an overview page: cards with a subtitle, the figure and the source; "View all ›" opens the list with the dashboard's project
+[276/866] [desktop] › e2e/overviews-p16605.spec.js:58:1 › FR-04 T-03 a chart card shows its figures as a table on request; on a phone the chart is at least 220 px tall and the legend stays readable at a large text size
+[277/866] [desktop] › e2e/overviews-p16605.spec.js:92:1 › FR-03 Home shows the insight cards of the person's role: approvals waiting, then the figures of their work; a stores keeper sees the stores
+[278/866] [desktop] › e2e/overviews-p16605.spec.js:116:1 › FR-03 a stores keeper's Home: approvals, items below reorder level, what waits for approval
+[279/866] [desktop] › e2e/pa-p2310.spec.js:43:1 › AC-01 a month recognised by the project controls manager, approved by the accounts manager and the CFO; project trial balance and WIP on desktop and phone
+[280/866] [desktop] › e2e/pages.spec.js:30:1 › every registered page is a page of the tracker, and no page is registered twice
+[281/866] [desktop] › e2e/pages.spec.js:36:1 › FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completion Checklist that a machine can make
+[282/866] [desktop] › e2e/partners-screenshots.spec.js:73:1 › screenshots of the business partner pages
+[283/866] [desktop] › e2e/partners.spec.js:72:1 › FR-01 FR-07 AC-01 the registration wizard: duplicate shown while typing, sent for approval, approved by the steward and the accounts manager
+[284/866] [desktop] › e2e/partners.spec.js:115:1 › FR-02 BR-01 BR-03 FR-06 a bank change on Partner 360 holds payments and is confirmed by a call-back; masked for a site engineer; a blacklisting approved by the director; the worklist
+[285/866] [desktop] › e2e/pay-p2401.spec.js:39:1 › AC-01 components, a structure previewed and an employee pay assignment approved, on desktop and phone
+[286/866] [desktop] › e2e/pay-p2402.spec.js:45:1 › AC-01 the payroll of a month computed from locked attendance, a salary held, approved and locked; the register; a declaration, on desktop and phone
+[287/866] [desktop] › e2e/pay-p2403.spec.js:59:1 › AC-01 labour wages from the punches approved SACC → PM → HRMGR, paid and acknowledged on the phone; the register; a contractor's wage sheet held for variances, on desktop and phone
+[288/866] [desktop] › e2e/pay-p2404.spec.js:45:1 › AC-01 the statutory payment of a month: the ECR prepared from the locked payroll, sent, approved by the accounts manager and the CFO, the challan recorded; the registers and the Form 16 batch
+[289/866] [desktop] › e2e/pay-p2405.spec.js:57:1 › AC-01 the payroll posted, paid by bank file and its payslips distributed; the full-and-final of a cleared leaver approved
+[290/866] [desktop] › e2e/perf-p16604.spec.js:42:1 › the network of a page › FR-01 T-03 the first screen fetches the shell and its own page only; another page's code comes when it is opened
+[291/866] [desktop] › e2e/perf-p16604.spec.js:59:1 › the network of a page › FR-01 a page whose code cannot be fetched says so; a reload opens it
+[292/866] [desktop] › e2e/perf-p16604.spec.js:77:1 › the network of a page › FR-01 on a phone the field home fetches the code of the bottom bar's pages once it is idle, before they are tapped
+[293/866] [desktop] › e2e/perf-p16604.spec.js:89:1 › the network of a page › the first script of the application fails once (aborted, dropped): the page reloads by itself instead of staying blank
+[294/866] [desktop] › e2e/perf-p16604.spec.js:98:1 › the network of a page › the first script never arrives: after two reloads the page says so instead of staying blank
+[295/866] [desktop] › e2e/perf-p16604.spec.js:105:1 › the network of a page › FR-03 in low-bandwidth mode a chart is drawn as its table, and the chart only on request
+[296/866] [desktop] › e2e/perf-p16604.spec.js:128:1 › FR-04 "A new version is ready — Reload": the half-filled form is saved as a draft first and offered back after the reload
+[297/866] [desktop] › e2e/performance.spec.js:71:1 › AC-01 KPI library, cycle, KPIs with evidence and a dispute, goals, the review through approval, the letter, team, feedback and Hindi, in the browser
+[298/866] [desktop] › e2e/pl-p2312.spec.js:41:1 › AC-01 the project P&L equal to the ledger, drilled to its journal lines, its snapshot frozen; the profitability overview on desktop and phone
+[299/866] [desktop] › e2e/plan-baselines.spec.js:56:1 › AC-01 baselines are approved and frozen; variance, quality, the baseline bars, a revision and the import of an MS Project file work
+[300/866] [desktop] › e2e/plan-delays.spec.js:51:1 › AC-01 a delay is recorded with evidence and its time impact, approved and locked; the summary shows it for the claims
+[301/866] [desktop] › e2e/plan-gantt.spec.js:57:1 › AC-01 planners edit the schedule on the Gantt, histograms show the resource loading, the programme exports as PDF
+[302/866] [desktop] › e2e/plan-lookahead.spec.js:64:1 › AC-01 the look-ahead board shows the constraints found in engineering; a ready card is planned, approved, recorded and closed; PPC is reported
+[303/866] [desktop] › e2e/plan.spec.js:53:1 › AC-01 schedule created from a template, linked, calculated with critical path and progress-updated, in the browser
+[304/866] [desktop] › e2e/plant-alloc.spec.js:48:1 › Plant allocation: requisition, approvals, allocation, arrival with checklist, operator certificate check, Gantt, demobilisation
+[305/866] [desktop] › e2e/plant-capacity.spec.js:52:1 › Plant capacity: the heat-map, the shortage and surplus report, a move plan evaluated and approved by four levels, and its requests
+[306/866] [desktop] › e2e/plant-equip.spec.js:40:1 › Plant: register a vehicle with certificates, approve it, deploy it; an expired insurance blocks deployment until renewed; the dashboard and the register show it
+[307/866] [desktop] › e2e/plant-fleet.spec.js:53:1 › Plant fleet: the control tower, the owning and operating cost, telematics, and the disposal recommendation approved by three levels
+[308/866] [desktop] › e2e/plant-fuel.spec.js:53:1 › Plant fuel: the issue entered on the phone, flagged above the norm, verified; a dip against the book; the anomaly explained and accepted; the reports
+[309/866] [desktop] › e2e/plant-hire.spec.js:52:1 › Plant hire: the agreement approved, the bill computed from verified logs and certified, the comparison with owned cost
+[310/866] [desktop] › e2e/plant-log.spec.js:50:1 › Plant log books: the day of a machine entered on the phone, verified from the worklist, utilisation, and a breakdown
+[311/866] [desktop] › e2e/plant-maint.spec.js:51:1 › Plant maintenance: a plan falls due, the job card is raised, approved, spares reserved and issued, the work closed; the dashboard
+[312/866] [desktop] › e2e/pmt-p2304.spec.js:52:1 › AC-01 a payment proposal in three steps, approved, released with the bank file by a third person, confirmed with the UTR; the payments list
+[313/866] [desktop] › e2e/policies-screenshots.spec.js:51:1 › screenshots of the policy pages
+[314/866] [desktop] › e2e/policies.spec.js:56:1 › AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-07 a policy is written, approved, acknowledged with a quiz, revised and compared
+[315/866] [desktop] › e2e/policies.spec.js:146:1 › AC-01 AC-02 FR-05 BR-02 a requirement becomes a draft control point that stays inactive; the administrator sees it on the worklist
+[316/866] [desktop] › e2e/portal-p2501.spec.js:21:1 › external portal sign-in, account workflows and supplier transactions fit the viewport
+[317/866] [desktop] › e2e/posting-p2302.spec.js:49:1 › AC-01 FR-03 FR-04 FR-05 FR-01 history replayed after a dry run and its approval; the failed posting closed; the sub-ledgers agree; a rule tested
+[318/866] [desktop] › e2e/proc-ana.spec.js:45:1 › Procurement dashboard: tiles, drill-down to records, work queues and charts; spend, cycle time and compliance reports
+[319/866] [desktop] › e2e/proc-ana.spec.js:65:1 › Procurement dashboard: a project manager reads it; a storekeeper has no access
+[320/866] [desktop] › e2e/proc-cs.spec.js:50:1 › Comparative statement: generated from the quotations, L1 marked, non-L1 needs a reason, approved by value, hidden from site roles
+[321/866] [desktop] › e2e/proc-mrp.spec.js:53:1 › MRP: run for a project, drill to the activities, change and accept proposals into a draft requisition, the heat-map and long-lead items, parameters by maker and checker
+[322/866] [desktop] › e2e/proc-po.spec.js:52:1 › Purchase order: from an approved statement, approved and sent; the vendor acknowledges and tells the dispatch; amended with a comparison; the tracker; masked for the storekeeper
+[323/866] [desktop] › e2e/proc-rc.spec.js:42:1 › Rate contract: made and approved, call-off at the contract rate, the ceiling, price variation; service order and service entry sheet
+[324/866] [desktop] › e2e/proc-requests.spec.js:41:1 › material request to purchase requisition: stock shown on the phone, approval by the construction manager, consolidation, the stock check, approval by value, rates hidden from the site engineer
+[325/866] [desktop] › e2e/proc-rfq.spec.js:45:1 › RFQ: made from an approved requisition, vendors picked, issued; a vendor quotes on its own link which then stops working; a second quotation is keyed in; the comparison marks the lowest; rates are hidden from the project manager
+[326/866] [desktop] › e2e/proc-rti.spec.js:42:1 › Rate intelligence: benchmark and trend, a survey with an outlier, a correction, index upload and the project exposure
+[327/866] [desktop] › e2e/proc-rti.spec.js:63:1 › Rate intelligence: the direction reads without entry rights; a storekeeper has no access
+[328/866] [desktop] › e2e/proc-vnd.spec.js:41:1 › Vendor list: prequalified and approved, scored with evidence, ranked, then suspended by approval
+[329/866] [desktop] › e2e/proc-vnd.spec.js:69:1 › Vendor list: a storekeeper has no access; a project manager reads the list and the scorecards only
+[330/866] [desktop] › e2e/proc-xpd.spec.js:46:1 › Expediting: a plan is approved, the vendor moves a milestone, the risk shows; the inspection release note clears the dispatch; shipment tracked and delivered
+[331/866] [desktop] › e2e/proc-xpd.spec.js:75:1 › Expediting: a storekeeper reads the shipments and cannot call an inspection or change a plan
+[332/866] [desktop] › e2e/project.spec.js:57:1 › AC-01 a project set up with the wizard, activated with approval, and moved through its lifecycle with checklists, in the browser
+[333/866] [desktop] › e2e/project360.spec.js:58:1 › AC-01 Project 360 with live widgets and empty slots, tabs, period, and the portfolio overview, in the browser
+[334/866] [desktop] › e2e/punches.spec.js:68:1 › AC-01 punch in and out, the fence decides, crew punch, kiosk, anomalies and the report, in the browser
+[335/866] [desktop] › e2e/punches.spec.js:148:1 › AC-03 a worker has no report, no anomalies and no kiosk; the pages show no console errors
+[336/866] [desktop] › e2e/pwa.spec.js:20:1 › T-01 FR-03 the manifest, icons and service worker meet the browser's installability criteria
+[337/866] [desktop] › e2e/pwa.spec.js:56:1 › T-01 FR-03 the app shell opens with no connection, from the first load on
+[338/866] [desktop] › e2e/pwa.spec.js:72:1 › FR-03 a copy kept for offline use is never shown to another person on the same device
+[339/866] [desktop] › e2e/pwa.spec.js:89:1 › FR-03 a newer version waits for the person, who reloads into it from the notice
+[340/866] [desktop] › e2e/pwa.spec.js:117:1 › FR-03 the install notice appears when the browser offers installation, installs on a click, and stays away for a while when dismissed
+[341/866] [desktop] › e2e/pwa.spec.js:141:1 › FR-03 on an iPhone the install notice gives the steps of Safari, since it has no prompt
+[342/866] [desktop] › e2e/pwa.spec.js:151:1 › FR-06 low-bandwidth mode is a setting of this device in the account menu, on by itself for a data saver
+[343/866] [desktop] › e2e/qa-dash.spec.js:50:1 › Quality: dashboard KPIs and exceptions, control charts with limits and a flagged sample, ratings
+[344/866] [desktop] › e2e/qa-inspect.spec.js:43:1 › Quality: template designer with preview, ITP applied to an activity, an inspection performed with a failing reading and approved
+[345/866] [desktop] › e2e/qa-ir.spec.js:42:1 › Quality: an inspection request releases a hold point; a rejection keeps its reason and asks for a re-inspection
+[346/866] [desktop] › e2e/qa-ncr.spec.js:39:1 › Quality: raise an NCR, action, rectification, re-inspection and closure by severity
+[347/866] [desktop] › e2e/qa-pour.spec.js:45:1 › Quality: pour card with approved inspections, pour and cubes, a failing result raised as an NCR, acceptance and traceability
+[348/866] [desktop] › e2e/qa-snags.spec.js:38:1 › Quality: snag walk with plan pins, rectification with an after-photograph, closure by another person, status and the unit report
+[349/866] [desktop] › e2e/qa-tests.spec.js:43:1 › Quality: receiving inspection, a failed and a passed test, calibration, compliance and the catalogue
+[350/866] [desktop] › e2e/rate-analysis-screenshots.spec.js:73:1 › screenshots of the rate analysis pages
+[351/866] [desktop] › e2e/rate-analysis.spec.js:69:1 › FR-01 FR-02 the rate library and a schedule of rates: filters, a new rate, items pasted and the edition put in use
+[352/866] [desktop] › e2e/rate-analysis.spec.js:97:1 › FR-03 FR-04 BR-01 T-03 an M25 analysis from the template, priced from the library, released by the director, locked and amended
+[353/866] [desktop] › e2e/rate-analysis.spec.js:136:1 › FR-05 T-02 the impact of a cement price rise on the analyses, read by the quantity surveyor
+[354/866] [desktop] › e2e/recruitment.spec.js:59:1 › AC-01 requisition, candidate, interview, offer, acceptance by link, joining, employee and checklist, in the browser
+[355/866] [desktop] › e2e/register.spec.js:68:1 › AC-01 the register, a regularisation from the employee to the supervisor, the overtime request and the lock of the period, in the browser
+[356/866] [desktop] › e2e/responsive.spec.js:28:1 › T-03 AC-02 every page of the application renders at 360 px without a horizontal page scroll and without console errors
+[357/866] [desktop] › e2e/responsive.spec.js:51:1 › FR-02 the key pages fit at 768, 1280 and 1920 px as well
+[358/866] [desktop] › e2e/review.spec.js:57:1 › AC-01 an estimate reviewed and approved with its bid summary; the priced BOQ exported in the client format, in the browser
+[359/866] [desktop] › e2e/rfi.spec.js:57:1 › AC-01 RFI raised with a photo markup, routed, answered, verified and closed with impacts recorded, in the browser
+[360/866] [desktop] › e2e/rfi.spec.js:144:1 › AC-03 a person without the right sees the no-permission state
+[361/866] [desktop] › e2e/risk.spec.js:60:1 › AC-01 risk dashboard, register, risk page, trigger, contingency, closure, issue log and monthly review, in the browser
+[362/866] [desktop] › e2e/rmc-costing.spec.js:10:1 › Plant costing: collect, enter, transfer rate by approval, close, cost per m3, charges and profit
+[363/866] [desktop] › e2e/rmc-plants.spec.js:8:1 › Batching plant and mix design: plant with silo and scale, approval, mix proportions checked live, two-level quality approval
+[364/866] [desktop] › e2e/rmc-production.spec.js:9:1 › Production and dispatch: requisition, schedule board, batch, ticket, receipt at site, approval, consumption
+[365/866] [desktop] › e2e/roles.spec.js:34:1 › Roles: system templates are locked, a clone is edited in the matrix, approved, activated and compared
+[366/866] [desktop] › e2e/roles.spec.js:124:1 › Assignments, effective permissions and the legacy comparison
+[367/866] [desktop] › e2e/roles.spec.js:191:1 › Roles: a role that may only read is shown the pages without the buttons
+[368/866] [desktop] › e2e/search.spec.js:57:1 › FR-02 FR-03 AC-01 the palette opens with Ctrl+K anywhere, groups records, pages and actions, and works from the keyboard
+[369/866] [desktop] › e2e/search.spec.js:116:1 › FR-05 Advanced Search: filters by kind, project and status, paging, saved filters, export, empty and no-result states
+[370/866] [desktop] › e2e/search.spec.js:173:1 › BR-02 FR-06 Search Administration: index status, a rebuild with a reason, and the searches that found nothing
+[371/866] [desktop] › e2e/secure-messaging.spec.js:62:1 › AC-01 AC-05 FR-01 FR-07 the licence register and the policy: the gate is closed until the review is approved by the IT administrator and the director, then the policy is switched on by an approved change
+[372/866] [desktop] › e2e/secure-messaging.spec.js:120:1 › AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation across two devices: encrypted text and file, safety numbers that match, a warning when a device is added, only ciphertext in the database
+[373/866] [desktop] › e2e/secure-screenshots.spec.js:57:1 › screenshots of the secure messaging pages
+[374/866] [desktop] › e2e/security.spec.js:28:1 › T-03 the content security policy blocks an injected inline script, and the application still works under it
+[375/866] [desktop] › e2e/security.spec.js:58:1 › Route Registry: every route with its protection, filters, and a self-test that records the result
+[376/866] [desktop] › e2e/security.spec.js:98:1 › Security Settings: a change is a request, approved by someone else; the history, the secrets and the limits of each role
+[377/866] [desktop] › e2e/shell.spec.js:64:1 › T-01 FR-01 FR-02 three roles see exactly the entries they may open; the technical console is apart from the business groups
+[378/866] [desktop] › e2e/shell.spec.js:100:1 › T-02 FR-08 a page the role may not open shows the no-permission state, and the API behind it answers 403
+[379/866] [desktop] › e2e/shell.spec.js:116:1 › T-03 FR-03 the working context filters the list, fills the form, is remembered per person, and asks before it costs unsaved work
+[380/866] [desktop] › e2e/shell.spec.js:170:1 › FR-06 the launchpad: what is waiting, tiles for the role, favourites in the person's order, recent records, and the bell for the approver
+[381/866] [desktop] › e2e/shell.spec.js:215:1 › FR-04 FR-07 header and keyboard: search or go to, quick create, g-shortcuts, the shortcut list, language and the collapsible menu
+[382/866] [desktop] › e2e/shell.spec.js:280:1 › AC-05 FR-01 FR-08 FR-09 the registry is changed by request and approval: a page may need a project; history, export and import follow
+[383/866] [desktop] › e2e/signatures.spec.js:47:1 › AC-01 AC-02 FR-02 FR-03 BR-01 the QR page opens without signing in: a genuine signed purchase order, its signer, and the file compared with the stored hash; one byte changed is detected
+[384/866] [desktop] › e2e/signatures.spec.js:82:1 › AC-01 AC-02 AC-03 FR-01 FR-04 BR-02 the register, signing and cancelling from the document page, revoking by the administrator; the public check follows; a person without the right
+[385/866] [desktop] › e2e/signin.spec.js:49:1 › Sign-in: the same message for every failure, a question after repeated failures, a lock, and English or Hindi
+[386/866] [desktop] › e2e/signin.spec.js:88:1 › A privileged role must set up an authenticator before it gets in; later sign-ins ask for the second step
+[387/866] [desktop] › e2e/signin.spec.js:133:1 › My Sessions & Devices: remember a device, set a PIN, unlock with it; an administrator's forced sign-out ends the session at once
+[388/866] [desktop] › e2e/signin.spec.js:178:1 › Authentication Policy and Login History: a change is a request the other administrator approves; history, forced sign-out and unlock
+[389/866] [desktop] › e2e/signin.spec.js:244:1 › Forgotten password gives the same answer for any name; a project manager has no security administration; a signed-out visitor sees only the sign-in
+[390/866] [desktop] › e2e/site-conditions.spec.js:51:1 › weather, hindrance, diary and visitors work end to end
+[391/866] [desktop] › e2e/site-control.spec.js:51:1 › project cost control: the dashboard drills to the source documents, the variance is analysed and exported, an unallocated cost is allocated by QS and approved by the PM
+[392/866] [desktop] › e2e/site-dpr.spec.js:72:1 › AC-01 a DPR is made on the phone from the day's work and attendance, sent with a photo, approved, reported on; a report made offline waits and goes when the signal returns
+[393/866] [desktop] › e2e/site-instructions.spec.js:42:1 › instructions are registered, issued, acknowledged, complied with and closed
+[394/866] [desktop] › e2e/site-productivity.spec.js:48:1 › a norm is entered and approved, the records are scored, and the dashboard and the report explain the losses
+[395/866] [desktop] › e2e/site-progress.spec.js:54:1 › a progress period is prepared, closed and shown on the dashboard, the report and the client report
+[396/866] [desktop] › e2e/site-wa.spec.js:63:1 › AC-01 a daily plan raises a WA, approved on the phone; stores and DPR book against it; it is closed and reconciled
+[397/866] [desktop] › e2e/sod.spec.js:29:1 › SoD rules: the ten standard rules, filtering, a rule opened, a new rule proposed and approved by the auditor
+[398/866] [desktop] › e2e/sod.spec.js:78:1 › SoD violations: the report, a scan, the dormant tab and the person without the right
+[399/866] [desktop] › e2e/sod.spec.js:103:1 › Elevated access and access reviews: the pages, their empty states and the refusals they show
+[400/866] [desktop] › e2e/statutory-p16608.spec.js:49:1 › T-01 T-02 FR-03 FR-04 the Statutory Changes page: cement 28 % then 18 %, section 393(1) with Form 131, the calendar and a draft invoice to review
+[401/866] [desktop] › e2e/statutory-p16608.spec.js:74:1 › T-03 S-04 the Salary tab: basic 40 % and allowances 60 % make wages 50 %; S-05 the wage rates page names the Code on Wages
+[402/866] [desktop] › e2e/structure.spec.js:56:1 › AC-01 WBS from a template, edited and baselined; work packages, locations and the matrix; a change after the baseline, in the browser
+[403/866] [desktop] › e2e/submittal.spec.js:57:1 › AC-01 a material approval reviewed through two cycles, approved make visible to procurement, in the browser
+[404/866] [desktop] › e2e/submittal.spec.js:139:1 › AC-03 a person without the right sees the no-permission state
+[405/866] [desktop] › e2e/tasks.spec.js:42:1 › AC-01 FR-04 a task from the form to closing: evidence is asked for, the checklist and discussion work, the views show it as list, board and calendar
+[406/866] [desktop] › e2e/tasks.spec.js:104:1 › FR-06 FR-05 Team Tasks shows the workload and what is late; an instruction with nobody to go to is refused with what to do
+[407/866] [desktop] › e2e/tasks.spec.js:133:1 › AC-04 the Department Responsibility Matrix: a change is sent for approval, the matrix in force stays until the system administrator approves, then the topic routes
+[408/866] [desktop] › e2e/templates.spec.js:41:1 › AC-01 AC-02 FR-01 FR-03 BR-01 the library, a new version of the tax invoice format: refused with an unknown variable, previewed, sent for approval, approved by the CFO and then the active one
+[409/866] [desktop] › e2e/templates.spec.js:93:1 › AC-01 AC-02 AC-03 FR-04 FR-05 FR-06 generate a tax invoice from approved data, open it, send it, make a new version with a reason; a person without the right sees nothing
+[410/866] [desktop] › e2e/tender.spec.js:59:1 › AC-01 a tender is registered, evaluated, worked on (eligibility, addenda, queries, tasks, documents) and made ready, with the calendar, the dashboard and Hindi, in the browser
+[411/866] [desktop] › e2e/training.spec.js:64:1 › AC-01 course set-up, a session with QR sign-in, attendance, completion, calendar move, certificates, skill matrix, compliance and Hindi, in the browser
+[412/866] [desktop] › e2e/tst-a11y-sweep.spec.js:37:1 › T-01 FR-02 FR-03 every page at 360 px: axe, overflow, touch targets
+[413/866] [desktop] › e2e/tst-device-matrix.spec.js:40:1 › T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, keyboard and screen-reader journeys on every emulated device
+[414/866] [desktop] › e2e/tst-golive-docs.spec.js:30:1 › Accessibility validation, operations runbooks and the documentation library
+[415/866] [desktop] › e2e/tst-golive-readiness.spec.js:23:1 › Go-live readiness board, UAT, dry run and the go/no-go decision
+[416/866] [desktop] › e2e/tst-golive.spec.js:27:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit
+[417/866] [desktop] › e2e/tst-manual-screens.spec.js:38:1 › FR-01 FR-03 the screens of the build: signature and image of every page, compared with the baseline
+[418/866] [desktop] › e2e/tst-page-crawl.spec.js:25:1 › T-01 the crawler opens every registered route and the audit reports 100 % coverage
+[419/866] [desktop] › e2e/tst-qa.spec.js:32:1 › Test programme, security findings and performance consoles
+[420/866] [desktop] › e2e/ui-v3.spec.js:50:1 › T-01 T-02 T-03 T-04 every registered page has the page header, no key figure in a form grid, and fits the screen
+  5) [desktop] › e2e/ui-v3.spec.js:50:1 › T-01 T-02 T-03 T-04 every registered page has the page header, no key figure in a form grid, and fits the screen 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('main')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" locator('main') with timeout 5000ms
+      - waiting for locator('main')
+
+
+      60 |   for (const p of pages) {
+      61 |     await page.goto(p.route);
+    > 62 |     await expect(page.locator('main')).toBeVisible();
+         |                                        ^
+      63 |     await expect(page.getByTestId('page-loading')).toHaveCount(0, { timeout: 30_000 });
+      64 |     await expect.poll(settled, { timeout: 30_000, message: `Page requests settled for ${p.route}` }).toEqual([]);
+      65 |     const f = await page.evaluate(facts);
+        at /home/user/ERP_SAP-CLS/e2e/ui-v3.spec.js:62:40
+
+    Error Context: test-results/ui-v3-T-01-T-02-T-03-T-04--8bfd1-rm-grid-and-fits-the-screen-desktop/error-context.md
+
+
+[421/866] [desktop] › e2e/users.spec.js:32:1 › Users: invite, find, filter, save a view, import with row errors, hand over and deactivate
+[422/866] [desktop] › e2e/users.spec.js:172:1 › Users: a role that only reads is not offered management, and a person without a role sees no users
+[423/866] [desktop] › e2e/users.spec.js:214:3 › Invitation to access › invite, accept, wait in onboarding, get a role by approval, and use the profile
+[424/866] [desktop] › e2e/workflow.spec.js:41:1 › AC-01 AC-03 the sample document: submit, two approvers decide in the browser, it is locked, and an amendment starts a linked approval
+[425/866] [desktop] › e2e/workflow.spec.js:90:1 › FR-03 FR-04 return, resubmit and the question: a returned document keeps its history; a question is answered by the originator
+[426/866] [desktop] › e2e/workflow.spec.js:128:1 › FR-01 FR-08 AC-04 a new version of a definition: edit the steps, see the diagram, request activation; only a maker may; the chain runs
+[427/866] [desktop] › e2e/workflow.spec.js:188:1 › BR-02 FR-08 nobody to approve: the task waits in the administrators' queue, shows on the monitor, and an administrator assigns it
+[428/866] [desktop] › e2e/workflow.spec.js:221:1 › FR-05 AC-03 on a phone: an approver sees the tasks waiting, decides one, and nothing scrolls sideways
+[429/866] [desktop] › e2e/workflow.spec.js:247:1 › AC-04 who sees what: an employee without a part in an approval cannot open it, and the pages say so
+[430/866] [desktop] › e2e/zz-appearance.spec.js:20:1 › T-02 appearance chosen in My Profile applies at once and follows the person to another device
+[431/866] [desktop] › e2e/zz-format.spec.js:10:1 › FR-03 AC-01 number grouping and hour format: examples, saved per person, back to the company setting
+[432/866] [desktop] › e2e/zz-scope-isolation.spec.js:29:1 › a person assigned to one project sees that project only, and the pages say what they may do
+[433/866] [desktop] › e2e/zz-sod-elevation.spec.js:28:1 › a project manager asks for the auditor role, the IT administrator approves, and the access appears and is logged
+[434/866] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px
+[435/866] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px
+[436/866] [mobile] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px
+[437/866] [mobile] › e2e/a11y.spec.js:60:3 › T-03 FR-06 the component gallery and the design system have no serious or critical findings (light)
+[438/866] [mobile] › e2e/a11y.spec.js:60:3 › T-03 FR-06 the component gallery and the design system have no serious or critical findings (dark)
+[439/866] [mobile] › e2e/a11y.spec.js:60:3 › T-03 FR-06 the component gallery and the design system have no serious or critical findings (high-contrast)
+[440/866] [mobile] › e2e/a11y.spec.js:74:1 › FR-06 the key pages have no serious or critical findings
+[441/866] [mobile] › e2e/a11y.spec.js:94:1 › FR-06 the open palette and the shortcut list have no serious or critical findings, and a dialog traps focus and returns it
+[442/866] [mobile] › e2e/a11y.spec.js:111:1 › FR-05 focus returns to what opened the palette, a person who asked for less motion gets none, and the focus ring is visible
+[443/866] [mobile] › e2e/about.spec.js:14:1 › administrators see version, build, commit, environment and applied migrations
+[444/866] [mobile] › e2e/about.spec.js:25:1 › IT administrators can view it too
+[445/866] [mobile] › e2e/about.spec.js:30:1 › other roles get the no-permission state and no build data
+[446/866] [mobile] › e2e/about.spec.js:36:1 › the shell navigation moves between Feature Flags and About without a reload
+[447/866] [mobile] › e2e/about.spec.js:46:1 › the build ID never appears on the business-facing flags page
+[448/866] [mobile] › e2e/about.spec.js:52:1 › no horizontal scroll and the migrations table adapts on a phone
+[449/866] [mobile] › e2e/accountability.spec.js:59:1 › AC-01 FR-01 FR-02 FR-04 FR-06 the standard processes are applied to a project, the gap check empties, an actor's work appears in My Accountability, and the report shows it
+[450/866] [mobile] › e2e/accountability.spec.js:123:1 › FR-01 AC-03 a live project's change is sent for approval; a person without the permission is told so; the pages fit a phone
+[451/866] [mobile] › e2e/admin-api.spec.js:23:1 › API clients and webhooks: a sandbox client, an approved write client, a verified webhook test and the portal try-it
+[452/866] [mobile] › e2e/admin-archive.spec.js:22:1 › Retention & archival: a policy, a legal hold, an approved archival job that skips it, and a read-only archived record
+[453/866] [mobile] › e2e/admin-backups.spec.js:22:1 › Backup & DR: a verified backup, a drill within RPO and RTO, and a production restore approved by IT and a director
+[454/866] [mobile] › e2e/admin-bulk.spec.js:22:1 › Bulk entry: paste from Excel, cells in error highlighted, a batch submitted whole and approved by the module approver
+[455/866] [mobile] › e2e/admin-connectors.spec.js:34:1 › Business connectors: health, a bank statement sync that matches, an approved mapping and a de-duplicated biometric pull
+[456/866] [mobile] › e2e/admin-control.spec.js:22:1 › Enterprise Control Center: governance, a maker-checker change, read-only mode and an environment diff
+[457/866] [mobile] › e2e/admin-helpdesk.spec.js:22:1 › Help desk: help on a page, a ticket raised from it, a failed call carried to support, resolved and rated
+[458/866] [mobile] › e2e/admin-migration.spec.js:22:1 › Migration cockpit: plan, map, two trial loads, sign-off, freeze and a reconciled final load
+[459/866] [mobile] › e2e/ai-assistant.spec.js:22:1 › Assistant panel: governed answer with its query and records, feedback, and an RFI saved as a DRAFT
+[460/866] [mobile] › e2e/ai-documents.spec.js:27:1 › Extraction Review: an invoice and a letter read on upload, reviewed beside the document and accepted into drafts
+[461/866] [mobile] › e2e/ai-features.spec.js:22:1 › AI features: evaluate, approve SYSADM → DIR, a governed call, the kill switch, usage and log
+[462/866] [mobile] › e2e/ai-forecasts.spec.js:25:1 › Forecasts & Anomalies: official rate forecast with range and labels, anomaly review, and the back-testing report
+[463/866] [mobile] › e2e/ai-vision.spec.js:38:1 › Vision Suggestions: a DPR photograph analysed on upload, faces blurred, a suggestion confirmed into an observation and one marked wrong
+[464/866] [mobile] › e2e/alerts.spec.js:41:1 › AC-01 FR-02 FR-04 FR-05 FR-06 a standard rule from the library: dry-run, run, then the alert is acknowledged and resolved in the Alert Centre; the run log shows it
+[465/866] [mobile] › e2e/alerts.spec.js:93:1 › FR-01 FR-05 the Rule Builder: a rule is built, tried on today's data and saved; one that sends messages outside says it goes for approval
+[466/866] [mobile] › e2e/alerts.spec.js:140:1 › AC-03 the pages refuse a person without the permission and name it; everybody has their own Alert Centre
+[467/866] [mobile] › e2e/ap-p2303.spec.js:49:1 › AC-01 a direct expense bill with its TDS, approved and posted, held; the AP bills list; the vendor ledger and the payables reports
+[468/866] [mobile] › e2e/ar-p2305.spec.js:48:1 › AC-01 receivables with ageing; a receipt with deductions set against the oldest invoices; the collections worklist and a follow-up with a promise
+[469/866] [mobile] › e2e/architecture.spec.js:17:1 › administrators read the guide: sections, module map, error codes and the pagination contract
+[470/866] [mobile] › e2e/architecture.spec.js:29:1 › the error-code table filters, shows an empty state and exports a CSV
+[471/866] [mobile] › e2e/architecture.spec.js:44:1 › the table of contents links jump to a section
+[472/866] [mobile] › e2e/architecture.spec.js:51:1 › other roles get the no-permission state
+[473/866] [mobile] › e2e/architecture.spec.js:57:1 › navigation shows Architecture for administrators and hides it from other roles
+[474/866] [mobile] › e2e/architecture.spec.js:70:1 › turning the feature flag OFF for the company hides the entry and the guide at once
+[475/866] [mobile] › e2e/architecture.spec.js:86:1 › a server failure shows an error with the correlation id and a retry
+[476/866] [mobile] › e2e/architecture.spec.js:100:1 › no horizontal scroll with wide fonts, in every theme
+[477/866] [mobile] › e2e/attendance.spec.js:75:1 › AC-01 shifts, policy with examples, assignment and who gets what, roster planner with a change, in the browser
+[478/866] [mobile] › e2e/attendance.spec.js:177:1 › AC-03 a site engineer reads shifts and cannot change them; the pages show no console errors
+[479/866] [mobile] › e2e/audit.spec.js:28:1 › Audit Explorer: changes made through the application appear with their diff, filter, open a record timeline, verify the chain and export
+[480/866] [mobile] › e2e/audit.spec.js:71:1 › Security Events: severity filters, the refused request appears, and people without the right are told
+[481/866] [mobile] › e2e/audit.spec.js:98:1 › Record History: the rule page shows its own history
+[482/866] [mobile] › e2e/award.spec.js:58:1 › AC-01 credentials, EMD, submission, opening results, award and EMD refund, in the browser
+[483/866] [mobile] › e2e/baseline.spec.js:68:1 › AC-01 award to project to a signed-off baseline pack, with links to the tender and the estimate, in the browser
+[484/866] [mobile] › e2e/bd.spec.js:59:1 › AC-01 a lead is qualified and converted, the opportunity gets the go-ahead, moves on the pipeline, with interactions, competitors, the influence map, the forecast and Hindi, in the browser
+[485/866] [mobile] › e2e/bi-control-tower.spec.js:31:1 › Enterprise control tower: executive dashboard, health matrix, drill-down and early warnings on desktop and phone
+[486/866] [mobile] › e2e/bi-execution.spec.js:23:1 › Daily execution intelligence: work done, WIP, site comparison and valuation on desktop and phone
+[487/866] [mobile] › e2e/bi-explain.spec.js:23:1 › Variance Explainer: Why? waterfall, contributors, margin bridge and drill-down on desktop and phone
+[488/866] [mobile] › e2e/bi-leakage.spec.js:24:1 › Leakage & Controls Tower: rules run, tower, finding closed with an outcome, rules — desktop and phone
+[489/866] [mobile] › e2e/bi-monthly-close.spec.js:24:1 › Monthly close: board, blocked step, chain QS → PM → PD, locked close with MIS and Budget Master
+[490/866] [mobile] › e2e/bi-morning-report.spec.js:24:1 › Morning report: summary, exceptions, sections, reproducibility, archive and settings on desktop and phone
+[491/866] [mobile] › e2e/bi-reports.spec.js:24:1 › BI reports, subscriptions and metric catalogue work on desktop and phone
+[492/866] [mobile] › e2e/bi-role-dashboards.spec.js:48:1 › Every role opens its role dashboard with its cards loaded
+[493/866] [mobile] › e2e/bi-role-dashboards.spec.js:74:1 › Dashboard Inventory: widgets, role coverage, dashboards and a clean scan
+[494/866] [mobile] › e2e/bi-scenarios.spec.js:23:1 › Scenario Builder: drivers, live impact, save and compare without touching live data
+[495/866] [mobile] › e2e/bill-cert.spec.js:9:1 › Certification, tax invoice, IRN and the submitted against certified analysis
+[496/866] [mobile] › e2e/bill-client.spec.js:9:1 › Client RA bill: prepare from the certified measurements, approve, send to the client, abstract
+[497/866] [mobile] › e2e/bill-cvr.spec.js:9:1 › CVR: workbench, approval and lock, control tower
+[498/866] [mobile] › e2e/bill-ledger.spec.js:9:1 › Ledgers: retention summary, advance recovery, release request
+[499/866] [mobile] › e2e/bill-mb.spec.js:8:1 › Measurement book: record on the phone, check measurement, certification, lock, warning beyond the BOQ, abstract and book
+[500/866] [mobile] › e2e/bill-qsdash.spec.js:8:1 › QS dashboard: tiles, drill-down, queues, margin right
+[501/866] [mobile] › e2e/bill-recon.spec.js:9:1 › Quantity reconciliation, forecast, limits, deviation statement to the client and the extra item
+[502/866] [mobile] › e2e/bill-sub.spec.js:8:1 › Subcontractor measurement, signature, verification, bill with recoveries, approval
+[503/866] [mobile] › e2e/bill-vinv.spec.js:9:1 › Vendor invoice: register, match, exception, debit note, approval, hub
+[504/866] [mobile] › e2e/boq.spec.js:61:1 › AC-01 client BOQ imported with the wizard, mapped to the WBS with norms, frozen with approval, and reported, in the browser
+[505/866] [mobile] › e2e/budget-changes.spec.js:81:1 › AC-01 revision, transfer check, contingency drawdown and the version comparison, in the browser
+[506/866] [mobile] › e2e/budget-check.spec.js:77:1 › AC-01 setting proposed and approved, PO committed, GRN consumed, ledger report, drill-down and availability probe, in the browser
+[507/866] [mobile] › e2e/budget.spec.js:68:1 › AC-01 generate from the baseline, adjust, phase, approve and revise, in the browser
+[508/866] [mobile] › e2e/calculations.spec.js:22:1 › AC-01 the registry lists every business calculation and the test bench shows result and trace
+[509/866] [mobile] › e2e/calculations.spec.js:48:1 › FR-03 / T-02 unit conversion on the page: an item factor chains with the generic one and beats a generic factor for the same pair
+[510/866] [mobile] › e2e/calculations.spec.js:80:1 › AC-02 / AC-03 a bill is calculated by the engine and "Show calculation" opens the steps and the formula version
+[511/866] [mobile] › e2e/calculations.spec.js:112:1 › AC-06 a new version goes draft, shadow, comparison, request, two approvals and only then takes over
+[512/866] [mobile] › e2e/calculations.spec.js:201:1 › PM gets the no-access state on the registry and no navigation to it
+[513/866] [mobile] › e2e/calculations.spec.js:207:1 › Approvals: the requester cannot decide their own request and an empty inbox says so
+[514/866] [mobile] › e2e/cash-p2306.spec.js:57:1 › AC-01 a statement imported and matched; an imprest voucher with its bill photo from the phone; the daily position
+[515/866] [mobile] › e2e/cf-p2313.spec.js:44:1 › AC-01 the cash position, the forecast of this week adjusted and published by the CFO, the project cash curve on desktop and phone
+[516/866] [mobile] › e2e/cl-p2314.spec.js:43:1 › AC-01 the month closed through its checklist and locks, the statements and the dashboard on desktop and phone
+[517/866] [mobile] › e2e/collab.spec.js:37:1 › AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-05 Discussion, Timeline and Trace on a record; a thread, a reaction, an edit, a mention of no one, the mentions inbox and the project feed
+[518/866] [mobile] › e2e/comcenter-screenshots.spec.js:49:1 › screenshots of the Communication Center pages
+[519/866] [mobile] › e2e/comcenter.spec.js:54:1 › AC-01 AC-02 FR-02 FR-03 FR-05 the Center, an instruction with acknowledgement and register, a message turned into a task
+[520/866] [mobile] › e2e/comcenter.spec.js:122:1 › AC-01 AC-02 FR-04 an announcement with a quiz: written, counted, published, read, confirmed, tracked
+[521/866] [mobile] › e2e/comcenter.spec.js:167:1 › AC-04 FR-01 auto group rules: changed only after approval, then the discipline group has the people assigned to the project
+[522/866] [mobile] › e2e/common-masters-screenshots.spec.js:65:1 › screenshots of the common master pages
+[523/866] [mobile] › e2e/common-masters.spec.js:64:1 › T-01 FR-02 a GST change of an HSN code from a date: proposed on the page, approved, and the rate as of a date
+[524/866] [mobile] › e2e/common-masters.spec.js:102:1 › T-02 T-03 FR-06 FR-08 banks reject an invalid IFSC; the lookup list manager saves Hindi labels; every register page loads
+[525/866] [mobile] › e2e/communication.spec.js:44:1 › AC-01 AC-05 Channel Settings: a change is sent for approval and the settings in force stay; the log shows a sample and a blocked text message with the reason; the consent register records a choice
+[526/866] [mobile] › e2e/communication.spec.js:121:1 › AC-06 pages refuse a person without the permission, with the permission named
+[527/866] [mobile] › e2e/configuration.spec.js:20:1 › Company Settings: the System Administrator saves the tax identity and gets field errors for a bad PAN
+[528/866] [mobile] › e2e/configuration.spec.js:36:1 › Company Settings: the Accounts Manager can read but not change
+[529/866] [mobile] › e2e/configuration.spec.js:43:1 › Financial Years: create a year, see twelve open periods, soft-close one module
+[530/866] [mobile] › e2e/configuration.spec.js:67:1 › Numbering: the live preview shows the number and flags a format that would repeat
+[531/866] [mobile] › e2e/configuration.spec.js:88:1 › Parameters: set a company value and see it in the history; PM has no access
+[532/866] [mobile] › e2e/configuration.spec.js:102:1 › Holidays: add a calendar and a holiday, a duplicate date is refused, then delete it
+[533/866] [mobile] › e2e/configuration.spec.js:131:1 › the new pages show the no-access state for a role without the permission
+[534/866] [mobile] › e2e/controls.spec.js:47:1 › AC-01 FR-02 FR-03 FR-05 FR-07 a control stops a sample document, an exception is raised from the dialog with evidence, the project manager approves it, the document goes ahead; the register and the dashboard show it
+[535/866] [mobile] › e2e/controls.spec.js:119:1 › FR-01 FR-04 FR-06 the registry shows the mode and what a control would have stopped; reason codes are one master; a person without the permission is told so
+[536/866] [mobile] › e2e/ctr-claims.spec.js:9:1 › Claims: claim, notice, quantum, evidence, approval, submission, determination with EOT, dispute, watchlist
+[537/866] [mobile] › e2e/ctr-contracts.spec.js:9:1 › Client contract: from baseline, clause, obligation, three-level activation, obligations calendar, amendment
+[538/866] [mobile] › e2e/ctr-pvc.spec.js:9:1 › PVC and LD: indices, formula, escalation with workings, approval, LD exposure and deduction
+[539/866] [mobile] › e2e/ctr-securities.spec.js:9:1 › Securities: guarantee approval, extension request and confirmation, policy and claim, exposure against the bank limit
+[540/866] [mobile] › e2e/ctr-subcontractors.spec.js:8:1 › Subcontractor workspace: compliance, hold, waiver request, verification, strength, rating
+[541/866] [mobile] › e2e/ctr-variations.spec.js:8:1 › Variation: change request, review, evaluation, approval, client answer, variation order, register
+[542/866] [mobile] › e2e/ctr-workorders.spec.js:9:1 › Work order: from the client BOQ, margin, approval, acceptance, amendment, margin report, closure
+[543/866] [mobile] › e2e/dashboard.spec.js:54:1 › FR-01 FR-05 FR-06 BR-02 AC-01 T-02 My Work is live, empty where nothing exists yet, and every figure opens the list with the same filters and count
+[544/866] [mobile] › e2e/dashboard.spec.js:92:1 › FR-03 FR-04 T-03 a person arranges their own dashboard by buttons or dragging; it is kept on the server and follows them to another device; reset returns the default
+[545/866] [mobile] › e2e/dashboard.spec.js:148:1 › FR-08 the Requests Overview: charts have a tooltip, a legend and the same figures as a table, export to CSV and PNG, drill to the list, and follow the dark theme
+[546/866] [mobile] › e2e/dashboard.spec.js:194:1 › FR-03 AC-02 AC-05 the designer: an administrator asks for the default of a role, another approves, and a new person of that role sees it; changes are recorded
+[547/866] [mobile] › e2e/data-health.spec.js:18:1 › before any run the page lists every check as "not run yet" and offers to run them
+[548/866] [mobile] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so
+  6) [mobile] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  getByTestId('count-fail')
+    Expected: "0"
+    Received: "2"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" getByTestId('count-fail') with timeout 5000ms
+      - waiting for getByTestId('count-fail')
+        14 × locator resolved to <strong data-testid="count-fail">2</strong>
+           - unexpected value "2"
+
+
+      33 |   await page.getByRole('button', { name: 'Run checks now' }).first().click();
+      34 |   await expect(page.getByRole('status')).toContainText('Checks finished');
+    > 35 |   await expect(page.getByTestId('count-fail')).toHaveText('0');
+         |                                                ^
+      36 |   await expect(page.getByTestId('last-run')).toContainText('Last run');
+      37 |   await expect(page.getByTestId('last-run')).toContainText('e2e-health');
+      38 |   // a document with lines (the sample material request of 03.02) may already exist in the shared database: either state is right
+        at /home/user/ERP_SAP-CLS/e2e/data-health.spec.js:35:48
+
+    Error Context: test-results/data-health-ITADM-runs-the-b4256-ith-nothing-to-check-say-so-mobile/error-context.md
+
+
+[549/866] [mobile] › e2e/data-health.spec.js:44:1 › drill-down: a check's history shows its earlier results
+[550/866] [mobile] › e2e/data-health.spec.js:57:1 › SYSADM can read the report but the run button is disabled with a reason
+[551/866] [mobile] › e2e/data-health.spec.js:65:1 › other roles get the no-permission state and no check data; the nav entry is hidden
+[552/866] [mobile] › e2e/data-health.spec.js:72:1 › the report exports a CSV
+[553/866] [mobile] › e2e/data-health.spec.js:80:1 › turning the feature flag OFF hides the entry and the page at once
+[554/866] [mobile] › e2e/data-health.spec.js:94:1 › a server failure shows the error state with the correlation id and a retry
+[555/866] [mobile] › e2e/data-health.spec.js:108:1 › a failing run is reported when the server cannot complete it
+[556/866] [mobile] › e2e/data-health.spec.js:118:1 › no horizontal scroll with wide fonts, in every theme
+[557/866] [mobile] › e2e/deployments.spec.js:69:1 › AC-01 deployment, board with a move, crew, transfer with handover, in the browser
+[558/866] [mobile] › e2e/deployments.spec.js:191:1 › AC-03 a site engineer sees the board of nothing and cannot deploy; a pages sweep has no console errors
+[559/866] [mobile] › e2e/dept-budget.spec.js:60:1 › AC-01 department budget prepared, approved by the chain, compared with a new version, set against actual, and the overhead allocated, in the browser
+[560/866] [mobile] › e2e/design.spec.js:20:1 › Style guide: themes side by side, the contrast report, typography with the served fonts, density, status, and every icon
+[561/866] [mobile] › e2e/design.spec.js:65:1 › T-02 the theme changes every component at once, without a reload, and the choice follows the person to another device
+[562/866] [mobile] › e2e/design.spec.js:98:1 › a first visit follows the device: a device that asks for dark gets the dark theme until the person chooses
+[563/866] [mobile] › e2e/docflow-p16607.spec.js:61:1 › T-02 the document flow of a purchase order: MR, PR, PO, GRN and vendor invoice in order with their statuses; no step listed as not yet available (30.01)
+[564/866] [mobile] › e2e/docflow-p16607.spec.js:82:1 › FR-01 a list shows its title with the count and groups its rows; FR-04 on a phone its filters open in a sheet
+[565/866] [mobile] › e2e/documents.spec.js:60:1 › AC-01 FR-01 FR-02 FR-05 FR-07 register a document in the form, attach the file, approve it; the viewer shows it and keeps a markup
+[566/866] [mobile] › e2e/documents.spec.js:101:1 › AC-02 FR-02 FR-06 an issued document is distributed; the controller sees who has not yet acknowledged and the revisions
+[567/866] [mobile] › e2e/documents.spec.js:123:1 › AC-03 FR-03 Document Types & Folder Templates: the configuration is shown and a change is sent for approval
+[568/866] [mobile] › e2e/employees-screenshots.spec.js:65:1 › screenshots of the HR pages
+[569/866] [mobile] › e2e/employees.spec.js:77:1 › FR-01 FR-02 FR-06 FR-09 AC-01 the wizard: the duplicate PAN shown while typing, the documents, sent for approval, approved by another HR manager, Employee 360 with history and masking
+[570/866] [mobile] › e2e/employees.spec.js:161:1 › FR-02 FR-07 BR-02 an employment change asked for on Employee 360 is approved and applied on its date; the overview and the directory show the live figures; the employee asks for a change of their own
+[571/866] [mobile] › e2e/engg.spec.js:61:1 › AC-01 T-01 T-02 register, IFC approval, controlled copy, supersession, comparison, transmittal and responses, in the browser
+[572/866] [mobile] › e2e/engg.spec.js:209:1 › AC-03 a person without the right sees the no-permission state
+[573/866] [mobile] › e2e/epc.spec.js:56:1 › AC-01 deliverable register with weighted progress, S-curve, comments, holds and vendor document tracking, in the browser
+[574/866] [mobile] › e2e/epc.spec.js:153:1 › AC-03 a person without the right sees the no-permission state
+[575/866] [mobile] › e2e/ess.spec.js:70:1 › AC-01 My HR, My Attendance, a letter from request to PDF, a profile change, My Team and Hindi, in the browser
+[576/866] [mobile] › e2e/estimate.spec.js:60:1 › AC-01 an estimate built from the pasted client BOQ with analyses, indirects and the resource summary; versions compared; approved; masked for QS, in the browser
+[577/866] [mobile] › e2e/excel.spec.js:45:1 › AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-05 the Import Center end to end: template, upload, preview, row errors, error file, commit of the correct rows, history
+[578/866] [mobile] › e2e/excel.spec.js:96:1 › AC-04 AC-03 the template designer: a change waits for a second person, takes effect when a director approves it; a person without the right sees nothing
+[579/866] [mobile] › e2e/exit.spec.js:73:1 › T-01 resignation, approvals, interview, a termination whose last day passed, clearance, F&F and letter, an anonymous grievance, a disciplinary case and Hindi, in the browser
+[580/866] [mobile] › e2e/expenses.spec.js:73:1 › AC-01 policy, a claim with a bill photo and a flag, the approvals by band, pass for payment, a salary advance, the analysis and Hindi, in the browser
+[581/866] [mobile] › e2e/fa-p2309.spec.js:41:1 › AC-01 an asset capitalised from a capex bill and approved; depreciation run; the register and the schedule on desktop and phone
+[582/866] [mobile] › e2e/fc-p2311.spec.js:41:1 › AC-01 a forecast prepared with a method per line, its bridge, approved by PCMGR, PM and PD; the reports on desktop and phone
+[583/866] [mobile] › e2e/feature-flags.spec.js:20:1 › SYSADM sees the flags, toggles one with a reason and the page chip reacts at once
+[584/866] [mobile] › e2e/feature-flags.spec.js:49:1 › a too-short reason is blocked and the dialog can be cancelled
+[585/866] [mobile] › e2e/feature-flags.spec.js:60:1 › ITADM can view but the toggles are disabled with a reason
+[586/866] [mobile] › e2e/feature-flags.spec.js:67:1 › a role without access sees the no-permission state
+[587/866] [mobile] › e2e/feature-flags.spec.js:72:1 › search narrows the list and shows an empty state with a clear action
+[588/866] [mobile] › e2e/feature-flags.spec.js:80:1 › a server failure shows the error state with a correlation id and retry
+[589/866] [mobile] › e2e/feature-flags.spec.js:93:1 › CSV export downloads a file
+[590/866] [mobile] › e2e/feature-flags.spec.js:100:1 › no horizontal page scroll and themes apply
+[591/866] [mobile] › e2e/field-p16603.spec.js:60:1 › T-01 FR-01 FR-02 each field role reaches its daily task in one tap from Home; the task opens on its first step
+[592/866] [mobile] › e2e/field-p16603.spec.js:88:1 › FR-01 the field home: greeting band, today's tasks from the records, quick actions of the role, what is not sent yet
+[593/866] [mobile] › e2e/field-p16603.spec.js:113:1 › FR-01 the field home on a desktop: the same band, cards and tiles, laid out wide
+[594/866] [mobile] › e2e/field-p16603.spec.js:126:1 › T-03 FR-07 the field pages in Telugu: Telugu text, no missing key, the Telugu typeface, nothing scrolls sideways at 360 px
+[595/866] [mobile] › e2e/field-p16603.spec.js:159:1 › T-04 FR-03 a 4 MB camera photo is stored at 300 KB or less, with the time and position burnt in
+[596/866] [mobile] › e2e/field.spec.js:56:1 › FR-07 BR-01 a site person lands on the field home: quick actions for the role, whether the device is online, what waits to be sent, and the location notice
+[597/866] [mobile] › e2e/field.spec.js:90:1 › FR-01 on a phone the bottom navigation has Home, Tasks (My Work), Scan and More; More opens the whole menu; every target is thumb-sized
+[598/866] [mobile] › e2e/field.spec.js:118:1 › FR-01 a tablet has a rail that opens on demand, a computer the full sidebar
+[599/866] [mobile] › e2e/field.spec.js:139:1 › FR-04 the scanner takes a typed number to the record, tells a wrong code from one it may not open, and reads a code with the camera
+[600/866] [mobile] › e2e/field.spec.js:184:1 › FR-04 the scanner says so when the camera cannot be used, and the typed way still works
+[601/866] [mobile] › e2e/field.spec.js:200:1 › BR-01 FR-04 the position is read once, on the button, with the notice; its accuracy and signs of a mocked position are shown; nothing is followed
+[602/866] [mobile] › e2e/field.spec.js:230:1 › BR-02 FR-04 FR-06 a photo is made smaller before it goes anywhere, the time and position the camera wrote stay in it, and low-bandwidth mode makes it smaller still
+[603/866] [mobile] › e2e/field.spec.js:277:1 › FR-05 on a phone a list row is swiped to show its actions, and a pull down refreshes the list
+[604/866] [mobile] › e2e/files.spec.js:47:1 › AC-01 upload by drag-and-drop style input: progress, scan, preview and a short-lived link that really downloads
+[605/866] [mobile] › e2e/files.spec.js:84:1 › FR-03 bad files are refused with a clear message: wrong type, a program renamed to .pdf
+[606/866] [mobile] › e2e/files.spec.js:98:1 › T-01 a file that fails the virus scan is quarantined, cannot be opened, and shows on the administrator overview
+[607/866] [mobile] › e2e/files.spec.js:115:1 › FR-02 a large file goes up in chunks, then a new version replaces it; submitting locks the record so files cannot be removed
+[608/866] [mobile] › e2e/files.spec.js:137:1 › Removing a file asks for a reason and hides it from the record
+[609/866] [mobile] › e2e/files.spec.js:152:1 › FR-08 the camera button is there on a phone-sized screen and asks for the rear camera
+[610/866] [mobile] › e2e/files.spec.js:165:1 › AC-06 file settings: SYSADM asks, ITADM approves, and the limit changes; PM has no access
+[611/866] [mobile] › e2e/fin-screenshots.spec.js:47:1 › screenshots of the finance master pages
+[612/866] [mobile] › e2e/fin.spec.js:61:1 › FR-01 FR-02 the chart of accounts: tree and filters, a new account proposed and approved by the CFO; a project manager only reads
+[613/866] [mobile] › e2e/fin.spec.js:100:1 › T-01 FR-04 the account page: a manual posting without a project is rejected; a dimension rule change goes to the CFO; BR-01 a control account
+[614/866] [mobile] › e2e/fin.spec.js:132:1 › FR-03 FR-05 FR-06 cost codes by project controls (accounts manager, then CFO), the item category mapping is complete, a Tally ledger list gives its mapping report
+[615/866] [mobile] › e2e/forms.spec.js:54:1 › Form Components gallery: every field type in five states, the line grid and the live registry
+[616/866] [mobile] › e2e/forms.spec.js:88:1 › Reference form AC-02 T-01: context auto-fill, dependent lookups, 50 rows pasted from Excel, server errors on fields, submit and numbering
+[617/866] [mobile] › e2e/forms.spec.js:151:1 › Drafts T-02: a half-filled form survives a crash, is offered back, and is listed and discarded in My Drafts
+[618/866] [mobile] › e2e/forms.spec.js:178:1 › T-04 a request completed with the keyboard alone
+[619/866] [mobile] › e2e/gates-p0714.spec.js:31:1 › the workforce dashboard: attendance today and contract labour first, each card from its HR service, no sideways scroll on a phone
+[620/866] [mobile] › e2e/gates-p0714.spec.js:45:1 › T-G2 a gate page: evidence opens, a criterion is met or not met with a reason, sign-off is refused while criteria are open, the report downloads
+[621/866] [mobile] › e2e/gates-p0714.spec.js:80:1 › a gate signed by the technical lead and the director is shown as passed, with its sign-off
+[622/866] [mobile] › e2e/gis.spec.js:60:1 › AC-01 project map with layers and overlays, list mode, progress and the chainage strip chart, in the browser
+[623/866] [mobile] › e2e/gl-p2301.spec.js:27:1 › AC-01 T-01 a manual journal typed with its dimensions, balanced live, approved and posted; the ledger and the trial balance
+[624/866] [mobile] › e2e/gst-p2307.spec.js:53:1 › AC-01 an IRN from the worklist through the sandbox with its QR; an e-way bill for the invoice; the register and the settings on desktop and phone
+[625/866] [mobile] › e2e/gstrecon-p2308.spec.js:47:1 › AC-01 GSTR-2B imported and matched; the ITC review approved by the CFO; GSTR-1/3B; desktop and phone
+[626/866] [mobile] › e2e/hse-camp.spec.js:8:1 › Camp: set-up, bed by badge, check-in, muster, meals, welfare inspection, month recovery
+[627/866] [mobile] › e2e/hse-esg.spec.js:8:1 › ESG: monthly data, factor maker-checker, carbon report, waste, consents, dashboard
+[628/866] [mobile] › e2e/hse-incidents.spec.js:8:1 › Incident: report, classify, investigate, actions, statutory, closure approval, lesson shared
+[629/866] [mobile] › e2e/hse-kpi.spec.js:8:1 › HSE dashboard: rates from man-hours and incidents, safe man-hours, leading indicators, trend, sites, export and monthly report
+[630/866] [mobile] › e2e/hse-permits.spec.js:8:1 › Permit to work: type, request, issue, board, gas-test suspension, resume and closure with handback
+[631/866] [mobile] › e2e/hse-plans.spec.js:9:1 › HSE: plan and HIRA with their approvals, JSA, induction by badge with the quiz, toolbox talk attendance, library and compliance
+[632/866] [mobile] › e2e/hse-safety.spec.js:8:1 › Safety: observation card, action and verification, PPE issue by QR, equipment register, contractor scorecard
+[633/866] [mobile] › e2e/hse-security.spec.js:7:1 › Security: visitor gate with host approval, patrol scan, roster board, security incident
+[634/866] [mobile] › e2e/i18n.spec.js:34:1 › T-01 AC-01 the field screens, the shell and the palette in Hindi: every text is Hindi, none is missing, and English comes back
+[635/866] [mobile] › e2e/i18n.spec.js:79:1 › AC-05 FR-02 the Translations page: a change of wording is a request another administrator approves; the workbook for translators
+[636/866] [mobile] › e2e/ic-p2315.spec.js:40:1 › AC-01 a charge mirrored in both companies, reconciled and eliminated in the consolidated statements on desktop and phone
+[637/866] [mobile] › e2e/inbox.spec.js:45:1 › AC-01 FR-01 FR-04 the inbox: counts, filters, a saved variant, approving several together, the one with a risk flag left for its own decision
+[638/866] [mobile] › e2e/inbox.spec.js:89:1 › AC-01 FR-02 FR-03 the task page: the document, the evidence, the history and the decision; then a secure link works once
+[639/866] [mobile] › e2e/inbox.spec.js:127:1 › FR-05 AC-01 on a phone: cards in order of urgency, one tap to approve, a reason to reject, nothing scrolls sideways
+[640/866] [mobile] › e2e/inbox.spec.js:156:1 › FR-07 My Submissions & Watch List: what I raised with who it waits for; what I follow; the approval settings of the document types
+[641/866] [mobile] › e2e/integrations.spec.js:32:1 › Connectors: create by request, approve, test, send a sample through the abstraction and read the redacted log
+[642/866] [mobile] › e2e/integrations.spec.js:87:1 › Connector configuration: a change and a key rotation are requests; the connector can be switched off at once
+[643/866] [mobile] › e2e/integrations.spec.js:117:1 › Integrations: SYSADM can view but not act; a project manager has no access; CFO sees the bank request in Approvals
+[644/866] [mobile] › e2e/inv-asset.spec.js:50:1 › Tools and small assets: register and approve, calibration blocks the issue, issue by QR with the receiver code, the custody statement, and a loss approved by CM, PM and HR
+[645/866] [mobile] › e2e/inv-count.spec.js:42:1 › Physical verification: a plan is approved, started, counted blind with a recount, closed, reviewed and adjusted; scrap is entered and written off; expiry is shown
+[646/866] [mobile] › e2e/inv-gate.spec.js:46:1 › Gate: a delivery is entered, weighed, handed over and leaves; an unexpected one is held; a returnable gate pass is approved, verified once by QR, overdue and marked back
+[647/866] [mobile] › e2e/inv-grn.spec.js:46:1 › Goods receipt: made from the gate entry, approved and posted; QC passes part and fails part; the failed and rejected material goes back on an approved return
+[648/866] [mobile] › e2e/inv-issue.spec.js:52:1 › Material issue: issued against a work authorisation with the receiver code, stopped beyond it, returned at the issue rate, and a subcontractor free issue reconciled against the norms
+[649/866] [mobile] › e2e/inv-mmd.spec.js:49:1 › Materials dashboard: the value equals the ledger, a tile opens its records, queues and the lifecycle funnel open the documents; the storekeeper is refused
+[650/866] [mobile] › e2e/inv-mrc.spec.js:52:1 › Monthly material reconciliation: the site is flagged missing, the QS makes it, explains the excess, the project manager and director approve and lock it; the month can be closed
+[651/866] [mobile] › e2e/inv-reorder.spec.js:42:1 › Reorder control: parameters approved by a second person, a suggestion becomes a draft material request, ageing and redeployment shown, labels made, a scanned code fills a transfer line
+[652/866] [mobile] › e2e/inv-rta.spec.js:50:1 › Returnable site assets: issue on the phone and approval, dashboard and reconciliation, return good / repairable / lost, recoveries approved, a hired-in lot billed and checked
+[653/866] [mobile] › e2e/inv-stock.spec.js:40:1 › Stores: a store is approved, stock is received and issued at the weighted average, adjusted with approval, valued; the keeper sees no values
+[654/866] [mobile] › e2e/inv-stock.spec.js:65:1 › Stores: a project manager reads the stores and the dashboard; a storekeeper of another store sees none
+[655/866] [mobile] › e2e/inv-transfer.spec.js:42:1 › Stock transfer: requested, approved, dispatched into transit, received with a damaged bag and a shortage, reported in transit, and both discrepancies resolved
+[656/866] [mobile] › e2e/items-screenshots.spec.js:73:1 › screenshots of the item master pages
+[657/866] [mobile] › e2e/items.spec.js:72:1 › T-02 FR-01 FR-07 the New Item wizard: template attributes, units, the duplicate warning before sending; approval by the steward
+[658/866] [mobile] › e2e/items.spec.js:117:1 › FR-04 FR-06 AC-01 a bill of resources kept with the selector; the Item Master list; catalogue items into the lines of a sample request
+[659/866] [mobile] › e2e/labour.spec.js:59:1 › AC-01 register a worker, approve, clear, deploy-ready, print the card, set the licence and the wage rates, in the browser
+[660/866] [mobile] › e2e/leave.spec.js:63:1 › AC-01 apply, approve and cancel leave, the balance, the team calendar, the types and the year-end, in the browser
+[661/866] [mobile] › e2e/letters.spec.js:57:1 › AC-01 inward registration, outward letter approved and issued, thread, time-bar countdown and serving, in the browser
+[662/866] [mobile] › e2e/letters.spec.js:168:1 › AC-03 a person without the right sees the no-permission state
+[663/866] [mobile] › e2e/list.spec.js:42:1 › List Report on the reference register: filters, totals, columns kept, a default view, bulk submit, export and row links
+[664/866] [mobile] › e2e/list.spec.js:107:1 › the system administrator sees the commercial total masked, also in the totals and the export
+[665/866] [mobile] › e2e/list.spec.js:124:1 › T-04 cards at phone width without horizontal page scroll; My Exports and the List Report documentation
+[666/866] [mobile] › e2e/matrix.spec.js:45:1 › FR-01 FR-09 BR-01 BR-02 AC-02 a new version of a matrix: edit the rules, check for gaps, ask to activate from tomorrow, approve, and the simulator shows the new chain from that date
+[667/866] [mobile] › e2e/matrix.spec.js:101:1 › FR-03 the authority limits grid: change a limit, ask, approve, and the grid shows it
+[668/866] [mobile] › e2e/matrix.spec.js:126:1 › FR-05 AC-02 delegations from the browser: delegate, see it listed, end it; a long one waits for the manager
+[669/866] [mobile] › e2e/matrix.spec.js:162:1 › FR-06 FR-07 the escalation hierarchy and the SLA settings are shown and changed through approval
+[670/866] [mobile] › e2e/matrix.spec.js:184:1 › FR-08 AC-03 on a phone: the simulator runs and no page scrolls sideways
+[671/866] [mobile] › e2e/matrix.spec.js:203:1 › AC-04 who sees what: an employee without the right gets the no-permission state
+[672/866] [mobile] › e2e/mdm-screenshots.spec.js:73:1 › screenshots of the master data governance pages
+[673/866] [mobile] › e2e/mdm.spec.js:73:1 › FR-02 BR-01 a similar partner is flagged before it is sent, compared and merged; the merged record stays and points to the survivor
+[674/866] [mobile] › e2e/mdm.spec.js:128:1 › FR-03 FR-05 FR-07 FR-08 the dashboard, a change from a later date with its history and as of, the change requests worklist and the rules and stewards
+[675/866] [mobile] › e2e/meetings.spec.js:58:1 › AC-01 team, stakeholders, communication matrix, minutes issued by the chair and actions tracked as tasks, in the browser
+[676/866] [mobile] › e2e/messages.spec.js:46:1 › AC-01 AC-02 FR-02 FR-03 FR-04 FR-07 one Messages app: a direct conversation, a file and a record card, unread counts, a reply in real time, panes by width, the pop-out window and the dock
+[677/866] [mobile] › e2e/messages.spec.js:132:1 › AC-01 a person who is not in a conversation does not see it, and cannot open it by its address
+[678/866] [mobile] › e2e/messaging-features.spec.js:45:1 › AC-01 AC-03 AC-04 FR-02 FR-03 FR-05 receipts, search with a jump to the message, a star, a pin, and no page overflow
+[679/866] [mobile] › e2e/messaging-features.spec.js:82:1 › AC-05 FR-09 Messaging Settings: a change waits for a second person, the history lists it
+[680/866] [mobile] › e2e/messaging-screenshots.spec.js:42:1 › screenshots of the messaging feature pages
+[681/866] [mobile] › e2e/migration.spec.js:30:1 › FR-06 FR-07 BR-02 the tracker: progress by module, filters, a defect blocks verification, the owner verifies, the module is signed off, the export
+[682/866] [mobile] › e2e/migration.spec.js:95:1 › T-03 FR-04 an old address leads to its page with its query and fragment, after another administrator approves it; an unknown address goes Home
+[683/866] [mobile] › e2e/migration.spec.js:123:1 › FR-06 the tracker on a phone: progress, chart, filters and the table fit the screen and open a page's details
+[684/866] [mobile] › e2e/mto.spec.js:61:1 › AC-01 take-off and BBS sheets give quantities with revisions and deltas; the explosion gives the material requirements, in the browser
+[685/866] [mobile] › e2e/notifications.spec.js:40:1 › AC-01 FR-04 FR-07 a decision on a document reaches the originator's open screen at once: the bell counts it, the drawer shows it, the centre opens the document; read, archive and read-all work
+[686/866] [mobile] › e2e/notifications.spec.js:82:1 › FR-05 AC-02 preferences are kept and respected; the templates are read in both languages, previewed, and a change waits for the IT administrator; the delivery log shows what left
+[687/866] [mobile] › e2e/object.spec.js:42:1 › Object Page: the header and the buttons follow the viewer; checklist, discussion, approval, timeline and print work end to end
+[688/866] [mobile] › e2e/object.spec.js:118:1 › Object Page: return with a reason code, amend and send again; the comparison marks what changed; the owner sees why it came back
+[689/866] [mobile] › e2e/object.spec.js:169:1 › T-02 a missing record shows the error state with the correlation ID the page sent; a person without the right sees what is missing
+[690/866] [mobile] › e2e/object.spec.js:187:1 › T-04 the Object Page at phone width: no horizontal page scroll, tabs scroll inside their bar, the buttons are reachable
+[691/866] [mobile] › e2e/object.spec.js:204:1 › Feedback components: toasts, banners, confirmation with a reason code, the progress dialog, the offline banner and the standard states
+[692/866] [mobile] › e2e/offline.spec.js:38:1 › AC-01 FR-01 FR-03 FR-04 FR-05 FR-07 FR-08 a form captured offline with a photo, kept encrypted, sent when the connection returns; T-03 a revoked device wipes its local store
+[693/866] [mobile] › e2e/offline.spec.js:142:1 › AC-03 a person without the right sees the no-permission state on the Devices page
+[694/866] [mobile] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID
+  7) [mobile] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('no-open-alerts')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('no-open-alerts') with timeout 5000ms
+      - waiting for getByTestId('no-open-alerts')
+
+
+      37 |   await expect(page.getByTestId('slo-login')).toBeVisible();
+      38 |   await expect(page.getByTestId('slo-bill_calculation')).toContainText('Calculate a bill');
+    > 39 |   await expect(page.getByTestId('no-open-alerts')).toBeVisible();
+         |                                                    ^
+      40 |
+      41 |   await page.locator('summary', { hasText: 'Alert rules' }).click();
+      42 |   await expect(page.getByTestId('rule-error_spike')).toBeVisible();
+        at /home/user/ERP_SAP-CLS/e2e/operations-health.spec.js:39:52
+
+    Error Context: test-results/operations-health-Operatio-c66b6-o-end-by-its-correlation-ID-mobile/error-context.md
+
+
+[695/866] [mobile] › e2e/operations-health.spec.js:61:1 › Operations Health: an objective change is a request, approved by the System Administrator
+[696/866] [mobile] › e2e/operations-health.spec.js:80:1 › Operations Health: SYSADM views but cannot act; a project manager has no access; the browser reports its errors
+[697/866] [mobile] › e2e/operations.spec.js:23:1 › Monitor: key figures, consumers, the event log with masked data, and the catalogue
+[698/866] [mobile] › e2e/operations.spec.js:46:1 › Replay: ITADM queues a replay, it runs in the background and the job page shows its log
+[699/866] [mobile] › e2e/operations.spec.js:68:1 › Dead-letter queue: empty state, filters, and view-only for a role that cannot re-drive
+[700/866] [mobile] › e2e/operations.spec.js:80:1 › Schedules: ITADM previews a cron and asks for a change; SYSADM approves it and the schedule changes
+[701/866] [mobile] › e2e/operations.spec.js:108:1 › PM gets the no-access state and no navigation to the console
+[702/866] [mobile] › e2e/organisation.spec.js:36:1 › Departments and designations: create, search, edit, export, and a blocked deactivation lists what blocks it
+[703/866] [mobile] › e2e/organisation.spec.js:109:1 › Companies and branches: only the system administrator manages them
+[704/866] [mobile] › e2e/organisation.spec.js:131:1 › Project and site: create, approve activation, draw and test a geofence, then change it by approval
+[705/866] [mobile] › e2e/organisation.spec.js:242:1 › Site deactivation is blocked while a cost centre is still mapped to it, with the blocker listed
+[706/866] [mobile] › e2e/organisation.spec.js:268:1 › Organisation chart: search, move a department with undo, and the other views
+[707/866] [mobile] › e2e/organisation.spec.js:307:1 › Cost and profit centres: list, map to a project, hierarchy view, and no access without the permission
+[708/866] [mobile] › e2e/overviews-p16605.spec.js:25:1 › FR-02 the QS dashboard is an overview page: cards with a subtitle, the figure and the source; "View all ›" opens the list with the dashboard's project
+[709/866] [mobile] › e2e/overviews-p16605.spec.js:58:1 › FR-04 T-03 a chart card shows its figures as a table on request; on a phone the chart is at least 220 px tall and the legend stays readable at a large text size
+[710/866] [mobile] › e2e/overviews-p16605.spec.js:92:1 › FR-03 Home shows the insight cards of the person's role: approvals waiting, then the figures of their work; a stores keeper sees the stores
+[711/866] [mobile] › e2e/overviews-p16605.spec.js:116:1 › FR-03 a stores keeper's Home: approvals, items below reorder level, what waits for approval
+[712/866] [mobile] › e2e/pa-p2310.spec.js:43:1 › AC-01 a month recognised by the project controls manager, approved by the accounts manager and the CFO; project trial balance and WIP on desktop and phone
+[713/866] [mobile] › e2e/pages.spec.js:30:1 › every registered page is a page of the tracker, and no page is registered twice
+[714/866] [mobile] › e2e/pages.spec.js:36:1 › FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completion Checklist that a machine can make
+[715/866] [mobile] › e2e/partners-screenshots.spec.js:73:1 › screenshots of the business partner pages
+[716/866] [mobile] › e2e/partners.spec.js:72:1 › FR-01 FR-07 AC-01 the registration wizard: duplicate shown while typing, sent for approval, approved by the steward and the accounts manager
+[717/866] [mobile] › e2e/partners.spec.js:115:1 › FR-02 BR-01 BR-03 FR-06 a bank change on Partner 360 holds payments and is confirmed by a call-back; masked for a site engineer; a blacklisting approved by the director; the worklist
+[718/866] [mobile] › e2e/pay-p2401.spec.js:39:1 › AC-01 components, a structure previewed and an employee pay assignment approved, on desktop and phone
+[719/866] [mobile] › e2e/pay-p2402.spec.js:45:1 › AC-01 the payroll of a month computed from locked attendance, a salary held, approved and locked; the register; a declaration, on desktop and phone
+[720/866] [mobile] › e2e/pay-p2403.spec.js:59:1 › AC-01 labour wages from the punches approved SACC → PM → HRMGR, paid and acknowledged on the phone; the register; a contractor's wage sheet held for variances, on desktop and phone
+[721/866] [mobile] › e2e/pay-p2404.spec.js:45:1 › AC-01 the statutory payment of a month: the ECR prepared from the locked payroll, sent, approved by the accounts manager and the CFO, the challan recorded; the registers and the Form 16 batch
+[722/866] [mobile] › e2e/pay-p2405.spec.js:57:1 › AC-01 the payroll posted, paid by bank file and its payslips distributed; the full-and-final of a cleared leaver approved
+[723/866] [mobile] › e2e/perf-p16604.spec.js:42:1 › the network of a page › FR-01 T-03 the first screen fetches the shell and its own page only; another page's code comes when it is opened
+[724/866] [mobile] › e2e/perf-p16604.spec.js:59:1 › the network of a page › FR-01 a page whose code cannot be fetched says so; a reload opens it
+[725/866] [mobile] › e2e/perf-p16604.spec.js:77:1 › the network of a page › FR-01 on a phone the field home fetches the code of the bottom bar's pages once it is idle, before they are tapped
+[726/866] [mobile] › e2e/perf-p16604.spec.js:89:1 › the network of a page › the first script of the application fails once (aborted, dropped): the page reloads by itself instead of staying blank
+[727/866] [mobile] › e2e/perf-p16604.spec.js:98:1 › the network of a page › the first script never arrives: after two reloads the page says so instead of staying blank
+[728/866] [mobile] › e2e/perf-p16604.spec.js:105:1 › the network of a page › FR-03 in low-bandwidth mode a chart is drawn as its table, and the chart only on request
+[729/866] [mobile] › e2e/perf-p16604.spec.js:128:1 › FR-04 "A new version is ready — Reload": the half-filled form is saved as a draft first and offered back after the reload
+[730/866] [mobile] › e2e/performance.spec.js:71:1 › AC-01 KPI library, cycle, KPIs with evidence and a dispute, goals, the review through approval, the letter, team, feedback and Hindi, in the browser
+[731/866] [mobile] › e2e/pl-p2312.spec.js:41:1 › AC-01 the project P&L equal to the ledger, drilled to its journal lines, its snapshot frozen; the profitability overview on desktop and phone
+[732/866] [mobile] › e2e/plan-baselines.spec.js:56:1 › AC-01 baselines are approved and frozen; variance, quality, the baseline bars, a revision and the import of an MS Project file work
+[733/866] [mobile] › e2e/plan-delays.spec.js:51:1 › AC-01 a delay is recorded with evidence and its time impact, approved and locked; the summary shows it for the claims
+[734/866] [mobile] › e2e/plan-gantt.spec.js:57:1 › AC-01 planners edit the schedule on the Gantt, histograms show the resource loading, the programme exports as PDF
+[735/866] [mobile] › e2e/plan-lookahead.spec.js:64:1 › AC-01 the look-ahead board shows the constraints found in engineering; a ready card is planned, approved, recorded and closed; PPC is reported
+[736/866] [mobile] › e2e/plan.spec.js:53:1 › AC-01 schedule created from a template, linked, calculated with critical path and progress-updated, in the browser
+[737/866] [mobile] › e2e/plant-alloc.spec.js:48:1 › Plant allocation: requisition, approvals, allocation, arrival with checklist, operator certificate check, Gantt, demobilisation
+[738/866] [mobile] › e2e/plant-capacity.spec.js:52:1 › Plant capacity: the heat-map, the shortage and surplus report, a move plan evaluated and approved by four levels, and its requests
+[739/866] [mobile] › e2e/plant-equip.spec.js:40:1 › Plant: register a vehicle with certificates, approve it, deploy it; an expired insurance blocks deployment until renewed; the dashboard and the register show it
+[740/866] [mobile] › e2e/plant-fleet.spec.js:53:1 › Plant fleet: the control tower, the owning and operating cost, telematics, and the disposal recommendation approved by three levels
+[741/866] [mobile] › e2e/plant-fuel.spec.js:53:1 › Plant fuel: the issue entered on the phone, flagged above the norm, verified; a dip against the book; the anomaly explained and accepted; the reports
+[742/866] [mobile] › e2e/plant-hire.spec.js:52:1 › Plant hire: the agreement approved, the bill computed from verified logs and certified, the comparison with owned cost
+  8) [mobile] › e2e/plant-hire.spec.js:52:1 › Plant hire: the agreement approved, the bill computed from verified logs and certified, the comparison with owned cost 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('hb-decide')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('hb-decide') with timeout 5000ms
+      - waiting for getByTestId('hb-decide')
+
+
+      62 |   await expect(q.getByTestId('hc-result')).toBeVisible(); await expect(q.getByTestId('hc-working')).toHaveText('24'); await expect(q.getByTestId('hc-billable')).toHaveText('33.333'); await noOverflow(q); await shot(q, '3-bill-preview', info);
+      63 |   await q.getByTestId('hc-save').click(); await expect(q.getByTestId('hb-object')).toHaveAttribute('data-status', 'DRAFT'); const burl = q.url().replace(/^https?:\/\/[^/]+/, ''); await q.getByTestId('hb-submit').click(); await expect(q.getByTestId('hb-object')).toHaveAttribute('data-status', 'SUBMITTED');
+    > 64 |   for (const [role, user] of [['PMSUP', s.u('su1')], ['PM', s.u('pm')]]) { const a = await open(browser, info, c, role, user, burl); await expect(a.page.getByTestId('hb-decide')).toBeVisible(); await a.page.getByTestId('hb-approve').click(); await expect(a.page.getByTestId('hb-note')).toBeVisible(); await a.context.close(); }
+         |                                                                                                                                                                                    ^
+      65 |   await q.goto(burl); await expect(q.getByTestId('hb-object')).toHaveAttribute('data-status', 'APPROVED'); await expect(q.getByTestId('hb-details')).toContainText('33,333'); await noOverflow(q); await shot(q, '4-bill-certified', info);
+      66 |   await q.goto('/plant/hire-comparison'); await expect(q.getByTestId('plant-hire-comparison')).toBeVisible(); await expect(q.getByTestId('hp-row').first()).toBeVisible(); await noOverflow(q); await shot(q, '5-comparison', info);
+      67 |   await q.goto('/plant/hire-agreements'); await expect(q.getByTestId('plant-hire-agreements')).toBeVisible(); const dl = q.waitForEvent('download'); await q.getByTestId('hl-export').click(); expect((await dl).suggestedFilename()).toMatch(/hire-agreements/); await noOverflow(q); await shot(q, '6-list', info); await pl.context.close();
+        at /home/user/ERP_SAP-CLS/e2e/plant-hire.spec.js:64:180
+
+    Error Context: test-results/plant-hire-Plant-hire-the--0c2bd--comparison-with-owned-cost-mobile/error-context.md
+
+
+[743/866] [mobile] › e2e/plant-log.spec.js:50:1 › Plant log books: the day of a machine entered on the phone, verified from the worklist, utilisation, and a breakdown
+[744/866] [mobile] › e2e/plant-maint.spec.js:51:1 › Plant maintenance: a plan falls due, the job card is raised, approved, spares reserved and issued, the work closed; the dashboard
+[745/866] [mobile] › e2e/pmt-p2304.spec.js:52:1 › AC-01 a payment proposal in three steps, approved, released with the bank file by a third person, confirmed with the UTR; the payments list
+[746/866] [mobile] › e2e/policies-screenshots.spec.js:51:1 › screenshots of the policy pages
+[747/866] [mobile] › e2e/policies.spec.js:56:1 › AC-01 AC-02 FR-01 FR-02 FR-03 FR-04 FR-07 a policy is written, approved, acknowledged with a quiz, revised and compared
+[748/866] [mobile] › e2e/policies.spec.js:146:1 › AC-01 AC-02 FR-05 BR-02 a requirement becomes a draft control point that stays inactive; the administrator sees it on the worklist
+[749/866] [mobile] › e2e/portal-p2501.spec.js:21:1 › external portal sign-in, account workflows and supplier transactions fit the viewport
+[750/866] [mobile] › e2e/posting-p2302.spec.js:49:1 › AC-01 FR-03 FR-04 FR-05 FR-01 history replayed after a dry run and its approval; the failed posting closed; the sub-ledgers agree; a rule tested
+[751/866] [mobile] › e2e/proc-ana.spec.js:45:1 › Procurement dashboard: tiles, drill-down to records, work queues and charts; spend, cycle time and compliance reports
+[752/866] [mobile] › e2e/proc-ana.spec.js:65:1 › Procurement dashboard: a project manager reads it; a storekeeper has no access
+[753/866] [mobile] › e2e/proc-cs.spec.js:50:1 › Comparative statement: generated from the quotations, L1 marked, non-L1 needs a reason, approved by value, hidden from site roles
+[754/866] [mobile] › e2e/proc-mrp.spec.js:53:1 › MRP: run for a project, drill to the activities, change and accept proposals into a draft requisition, the heat-map and long-lead items, parameters by maker and checker
+[755/866] [mobile] › e2e/proc-po.spec.js:52:1 › Purchase order: from an approved statement, approved and sent; the vendor acknowledges and tells the dispatch; amended with a comparison; the tracker; masked for the storekeeper
+[756/866] [mobile] › e2e/proc-rc.spec.js:42:1 › Rate contract: made and approved, call-off at the contract rate, the ceiling, price variation; service order and service entry sheet
+[757/866] [mobile] › e2e/proc-requests.spec.js:41:1 › material request to purchase requisition: stock shown on the phone, approval by the construction manager, consolidation, the stock check, approval by value, rates hidden from the site engineer
+[758/866] [mobile] › e2e/proc-rfq.spec.js:45:1 › RFQ: made from an approved requisition, vendors picked, issued; a vendor quotes on its own link which then stops working; a second quotation is keyed in; the comparison marks the lowest; rates are hidden from the project manager
+[759/866] [mobile] › e2e/proc-rti.spec.js:42:1 › Rate intelligence: benchmark and trend, a survey with an outlier, a correction, index upload and the project exposure
+[760/866] [mobile] › e2e/proc-rti.spec.js:63:1 › Rate intelligence: the direction reads without entry rights; a storekeeper has no access
+[761/866] [mobile] › e2e/proc-vnd.spec.js:41:1 › Vendor list: prequalified and approved, scored with evidence, ranked, then suspended by approval
+[762/866] [mobile] › e2e/proc-vnd.spec.js:69:1 › Vendor list: a storekeeper has no access; a project manager reads the list and the scorecards only
+[763/866] [mobile] › e2e/proc-xpd.spec.js:46:1 › Expediting: a plan is approved, the vendor moves a milestone, the risk shows; the inspection release note clears the dispatch; shipment tracked and delivered
+[764/866] [mobile] › e2e/proc-xpd.spec.js:75:1 › Expediting: a storekeeper reads the shipments and cannot call an inspection or change a plan
+[765/866] [mobile] › e2e/project.spec.js:57:1 › AC-01 a project set up with the wizard, activated with approval, and moved through its lifecycle with checklists, in the browser
+[766/866] [mobile] › e2e/project360.spec.js:58:1 › AC-01 Project 360 with live widgets and empty slots, tabs, period, and the portfolio overview, in the browser
+[767/866] [mobile] › e2e/punches.spec.js:68:1 › AC-01 punch in and out, the fence decides, crew punch, kiosk, anomalies and the report, in the browser
+[768/866] [mobile] › e2e/punches.spec.js:148:1 › AC-03 a worker has no report, no anomalies and no kiosk; the pages show no console errors
+[769/866] [mobile] › e2e/pwa.spec.js:20:1 › T-01 FR-03 the manifest, icons and service worker meet the browser's installability criteria
+[770/866] [mobile] › e2e/pwa.spec.js:56:1 › T-01 FR-03 the app shell opens with no connection, from the first load on
+[771/866] [mobile] › e2e/pwa.spec.js:72:1 › FR-03 a copy kept for offline use is never shown to another person on the same device
+[772/866] [mobile] › e2e/pwa.spec.js:89:1 › FR-03 a newer version waits for the person, who reloads into it from the notice
+[773/866] [mobile] › e2e/pwa.spec.js:117:1 › FR-03 the install notice appears when the browser offers installation, installs on a click, and stays away for a while when dismissed
+[774/866] [mobile] › e2e/pwa.spec.js:141:1 › FR-03 on an iPhone the install notice gives the steps of Safari, since it has no prompt
+[775/866] [mobile] › e2e/pwa.spec.js:151:1 › FR-06 low-bandwidth mode is a setting of this device in the account menu, on by itself for a data saver
+[776/866] [mobile] › e2e/qa-dash.spec.js:50:1 › Quality: dashboard KPIs and exceptions, control charts with limits and a flagged sample, ratings
+[777/866] [mobile] › e2e/qa-inspect.spec.js:43:1 › Quality: template designer with preview, ITP applied to an activity, an inspection performed with a failing reading and approved
+[778/866] [mobile] › e2e/qa-ir.spec.js:42:1 › Quality: an inspection request releases a hold point; a rejection keeps its reason and asks for a re-inspection
+[779/866] [mobile] › e2e/qa-ncr.spec.js:39:1 › Quality: raise an NCR, action, rectification, re-inspection and closure by severity
+[780/866] [mobile] › e2e/qa-pour.spec.js:45:1 › Quality: pour card with approved inspections, pour and cubes, a failing result raised as an NCR, acceptance and traceability
+[781/866] [mobile] › e2e/qa-snags.spec.js:38:1 › Quality: snag walk with plan pins, rectification with an after-photograph, closure by another person, status and the unit report
+[782/866] [mobile] › e2e/qa-tests.spec.js:43:1 › Quality: receiving inspection, a failed and a passed test, calibration, compliance and the catalogue
+[783/866] [mobile] › e2e/rate-analysis-screenshots.spec.js:73:1 › screenshots of the rate analysis pages
+[784/866] [mobile] › e2e/rate-analysis.spec.js:69:1 › FR-01 FR-02 the rate library and a schedule of rates: filters, a new rate, items pasted and the edition put in use
+[785/866] [mobile] › e2e/rate-analysis.spec.js:97:1 › FR-03 FR-04 BR-01 T-03 an M25 analysis from the template, priced from the library, released by the director, locked and amended
+[786/866] [mobile] › e2e/rate-analysis.spec.js:136:1 › FR-05 T-02 the impact of a cement price rise on the analyses, read by the quantity surveyor
+[787/866] [mobile] › e2e/recruitment.spec.js:59:1 › AC-01 requisition, candidate, interview, offer, acceptance by link, joining, employee and checklist, in the browser
+[788/866] [mobile] › e2e/register.spec.js:68:1 › AC-01 the register, a regularisation from the employee to the supervisor, the overtime request and the lock of the period, in the browser
+[789/866] [mobile] › e2e/responsive.spec.js:28:1 › T-03 AC-02 every page of the application renders at 360 px without a horizontal page scroll and without console errors
+[790/866] [mobile] › e2e/responsive.spec.js:51:1 › FR-02 the key pages fit at 768, 1280 and 1920 px as well
+[791/866] [mobile] › e2e/review.spec.js:57:1 › AC-01 an estimate reviewed and approved with its bid summary; the priced BOQ exported in the client format, in the browser
+[792/866] [mobile] › e2e/rfi.spec.js:57:1 › AC-01 RFI raised with a photo markup, routed, answered, verified and closed with impacts recorded, in the browser
+[793/866] [mobile] › e2e/rfi.spec.js:144:1 › AC-03 a person without the right sees the no-permission state
+[794/866] [mobile] › e2e/risk.spec.js:60:1 › AC-01 risk dashboard, register, risk page, trigger, contingency, closure, issue log and monthly review, in the browser
+[795/866] [mobile] › e2e/rmc-costing.spec.js:10:1 › Plant costing: collect, enter, transfer rate by approval, close, cost per m3, charges and profit
+[796/866] [mobile] › e2e/rmc-plants.spec.js:8:1 › Batching plant and mix design: plant with silo and scale, approval, mix proportions checked live, two-level quality approval
+[797/866] [mobile] › e2e/rmc-production.spec.js:9:1 › Production and dispatch: requisition, schedule board, batch, ticket, receipt at site, approval, consumption
+[798/866] [mobile] › e2e/roles.spec.js:34:1 › Roles: system templates are locked, a clone is edited in the matrix, approved, activated and compared
+[799/866] [mobile] › e2e/roles.spec.js:124:1 › Assignments, effective permissions and the legacy comparison
+[800/866] [mobile] › e2e/roles.spec.js:191:1 › Roles: a role that may only read is shown the pages without the buttons
+[801/866] [mobile] › e2e/search.spec.js:57:1 › FR-02 FR-03 AC-01 the palette opens with Ctrl+K anywhere, groups records, pages and actions, and works from the keyboard
+[802/866] [mobile] › e2e/search.spec.js:116:1 › FR-05 Advanced Search: filters by kind, project and status, paging, saved filters, export, empty and no-result states
+[803/866] [mobile] › e2e/search.spec.js:173:1 › BR-02 FR-06 Search Administration: index status, a rebuild with a reason, and the searches that found nothing
+[804/866] [mobile] › e2e/secure-messaging.spec.js:62:1 › AC-01 AC-05 FR-01 FR-07 the licence register and the policy: the gate is closed until the review is approved by the IT administrator and the director, then the policy is switched on by an approved change
+[805/866] [mobile] › e2e/secure-messaging.spec.js:120:1 › AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation across two devices: encrypted text and file, safety numbers that match, a warning when a device is added, only ciphertext in the database
+[806/866] [mobile] › e2e/secure-screenshots.spec.js:57:1 › screenshots of the secure messaging pages
+[807/866] [mobile] › e2e/security.spec.js:28:1 › T-03 the content security policy blocks an injected inline script, and the application still works under it
+[808/866] [mobile] › e2e/security.spec.js:58:1 › Route Registry: every route with its protection, filters, and a self-test that records the result
+[809/866] [mobile] › e2e/security.spec.js:98:1 › Security Settings: a change is a request, approved by someone else; the history, the secrets and the limits of each role
+[810/866] [mobile] › e2e/shell.spec.js:64:1 › T-01 FR-01 FR-02 three roles see exactly the entries they may open; the technical console is apart from the business groups
+[811/866] [mobile] › e2e/shell.spec.js:100:1 › T-02 FR-08 a page the role may not open shows the no-permission state, and the API behind it answers 403
+[812/866] [mobile] › e2e/shell.spec.js:116:1 › T-03 FR-03 the working context filters the list, fills the form, is remembered per person, and asks before it costs unsaved work
+[813/866] [mobile] › e2e/shell.spec.js:170:1 › FR-06 the launchpad: what is waiting, tiles for the role, favourites in the person's order, recent records, and the bell for the approver
+[814/866] [mobile] › e2e/shell.spec.js:215:1 › FR-04 FR-07 header and keyboard: search or go to, quick create, g-shortcuts, the shortcut list, language and the collapsible menu
+[815/866] [mobile] › e2e/shell.spec.js:280:1 › AC-05 FR-01 FR-08 FR-09 the registry is changed by request and approval: a page may need a project; history, export and import follow
+[816/866] [mobile] › e2e/signatures.spec.js:47:1 › AC-01 AC-02 FR-02 FR-03 BR-01 the QR page opens without signing in: a genuine signed purchase order, its signer, and the file compared with the stored hash; one byte changed is detected
+[817/866] [mobile] › e2e/signatures.spec.js:82:1 › AC-01 AC-02 AC-03 FR-01 FR-04 BR-02 the register, signing and cancelling from the document page, revoking by the administrator; the public check follows; a person without the right
+[818/866] [mobile] › e2e/signin.spec.js:49:1 › Sign-in: the same message for every failure, a question after repeated failures, a lock, and English or Hindi
+[819/866] [mobile] › e2e/signin.spec.js:88:1 › A privileged role must set up an authenticator before it gets in; later sign-ins ask for the second step
+[820/866] [mobile] › e2e/signin.spec.js:133:1 › My Sessions & Devices: remember a device, set a PIN, unlock with it; an administrator's forced sign-out ends the session at once
+[821/866] [mobile] › e2e/signin.spec.js:178:1 › Authentication Policy and Login History: a change is a request the other administrator approves; history, forced sign-out and unlock
+[822/866] [mobile] › e2e/signin.spec.js:244:1 › Forgotten password gives the same answer for any name; a project manager has no security administration; a signed-out visitor sees only the sign-in
+[823/866] [mobile] › e2e/site-conditions.spec.js:51:1 › weather, hindrance, diary and visitors work end to end
+[824/866] [mobile] › e2e/site-control.spec.js:51:1 › project cost control: the dashboard drills to the source documents, the variance is analysed and exported, an unallocated cost is allocated by QS and approved by the PM
+[825/866] [mobile] › e2e/site-dpr.spec.js:72:1 › AC-01 a DPR is made on the phone from the day's work and attendance, sent with a photo, approved, reported on; a report made offline waits and goes when the signal returns
+[826/866] [mobile] › e2e/site-instructions.spec.js:42:1 › instructions are registered, issued, acknowledged, complied with and closed
+[827/866] [mobile] › e2e/site-productivity.spec.js:48:1 › a norm is entered and approved, the records are scored, and the dashboard and the report explain the losses
+[828/866] [mobile] › e2e/site-progress.spec.js:54:1 › a progress period is prepared, closed and shown on the dashboard, the report and the client report
+[829/866] [mobile] › e2e/site-wa.spec.js:63:1 › AC-01 a daily plan raises a WA, approved on the phone; stores and DPR book against it; it is closed and reconciled
+[830/866] [mobile] › e2e/sod.spec.js:29:1 › SoD rules: the ten standard rules, filtering, a rule opened, a new rule proposed and approved by the auditor
+[831/866] [mobile] › e2e/sod.spec.js:78:1 › SoD violations: the report, a scan, the dormant tab and the person without the right
+[832/866] [mobile] › e2e/sod.spec.js:103:1 › Elevated access and access reviews: the pages, their empty states and the refusals they show
+[833/866] [mobile] › e2e/statutory-p16608.spec.js:49:1 › T-01 T-02 FR-03 FR-04 the Statutory Changes page: cement 28 % then 18 %, section 393(1) with Form 131, the calendar and a draft invoice to review
+[834/866] [mobile] › e2e/statutory-p16608.spec.js:74:1 › T-03 S-04 the Salary tab: basic 40 % and allowances 60 % make wages 50 %; S-05 the wage rates page names the Code on Wages
+[835/866] [mobile] › e2e/structure.spec.js:56:1 › AC-01 WBS from a template, edited and baselined; work packages, locations and the matrix; a change after the baseline, in the browser
+[836/866] [mobile] › e2e/submittal.spec.js:57:1 › AC-01 a material approval reviewed through two cycles, approved make visible to procurement, in the browser
+[837/866] [mobile] › e2e/submittal.spec.js:139:1 › AC-03 a person without the right sees the no-permission state
+[838/866] [mobile] › e2e/tasks.spec.js:42:1 › AC-01 FR-04 a task from the form to closing: evidence is asked for, the checklist and discussion work, the views show it as list, board and calendar
+[839/866] [mobile] › e2e/tasks.spec.js:104:1 › FR-06 FR-05 Team Tasks shows the workload and what is late; an instruction with nobody to go to is refused with what to do
+[840/866] [mobile] › e2e/tasks.spec.js:133:1 › AC-04 the Department Responsibility Matrix: a change is sent for approval, the matrix in force stays until the system administrator approves, then the topic routes
+[841/866] [mobile] › e2e/templates.spec.js:41:1 › AC-01 AC-02 FR-01 FR-03 BR-01 the library, a new version of the tax invoice format: refused with an unknown variable, previewed, sent for approval, approved by the CFO and then the active one
+[842/866] [mobile] › e2e/templates.spec.js:93:1 › AC-01 AC-02 AC-03 FR-04 FR-05 FR-06 generate a tax invoice from approved data, open it, send it, make a new version with a reason; a person without the right sees nothing
+[843/866] [mobile] › e2e/tender.spec.js:59:1 › AC-01 a tender is registered, evaluated, worked on (eligibility, addenda, queries, tasks, documents) and made ready, with the calendar, the dashboard and Hindi, in the browser
+[844/866] [mobile] › e2e/training.spec.js:64:1 › AC-01 course set-up, a session with QR sign-in, attendance, completion, calendar move, certificates, skill matrix, compliance and Hindi, in the browser
+[845/866] [mobile] › e2e/tst-a11y-sweep.spec.js:37:1 › T-01 FR-02 FR-03 every page at 360 px: axe, overflow, touch targets
+[846/866] [mobile] › e2e/tst-device-matrix.spec.js:40:1 › T-01 FR-01 FR-03 the device matrix: field, language, offline, approvals, keyboard and screen-reader journeys on every emulated device
+[847/866] [mobile] › e2e/tst-golive-docs.spec.js:30:1 › Accessibility validation, operations runbooks and the documentation library
+[848/866] [mobile] › e2e/tst-golive-readiness.spec.js:23:1 › Go-live readiness board, UAT, dry run and the go/no-go decision
+[849/866] [mobile] › e2e/tst-golive.spec.js:27:1 › Go-live consoles: integration matrix green with a latency probe, reconciliation health, page completion audit
+[850/866] [mobile] › e2e/tst-manual-screens.spec.js:38:1 › FR-01 FR-03 the screens of the build: signature and image of every page, compared with the baseline
+[851/866] [mobile] › e2e/tst-page-crawl.spec.js:25:1 › T-01 the crawler opens every registered route and the audit reports 100 % coverage
+[852/866] [mobile] › e2e/tst-qa.spec.js:32:1 › Test programme, security findings and performance consoles
+[853/866] [mobile] › e2e/ui-v3.spec.js:50:1 › T-01 T-02 T-03 T-04 every registered page has the page header, no key figure in a form grid, and fits the screen
+[854/866] [mobile] › e2e/users.spec.js:32:1 › Users: invite, find, filter, save a view, import with row errors, hand over and deactivate
+[855/866] [mobile] › e2e/users.spec.js:172:1 › Users: a role that only reads is not offered management, and a person without a role sees no users
+[856/866] [mobile] › e2e/users.spec.js:214:3 › Invitation to access › invite, accept, wait in onboarding, get a role by approval, and use the profile
+[857/866] [mobile] › e2e/workflow.spec.js:41:1 › AC-01 AC-03 the sample document: submit, two approvers decide in the browser, it is locked, and an amendment starts a linked approval
+[858/866] [mobile] › e2e/workflow.spec.js:90:1 › FR-03 FR-04 return, resubmit and the question: a returned document keeps its history; a question is answered by the originator
+[859/866] [mobile] › e2e/workflow.spec.js:128:1 › FR-01 FR-08 AC-04 a new version of a definition: edit the steps, see the diagram, request activation; only a maker may; the chain runs
+[860/866] [mobile] › e2e/workflow.spec.js:188:1 › BR-02 FR-08 nobody to approve: the task waits in the administrators' queue, shows on the monitor, and an administrator assigns it
+[861/866] [mobile] › e2e/workflow.spec.js:221:1 › FR-05 AC-03 on a phone: an approver sees the tasks waiting, decides one, and nothing scrolls sideways
+[862/866] [mobile] › e2e/workflow.spec.js:247:1 › AC-04 who sees what: an employee without a part in an approval cannot open it, and the pages say so
+[863/866] [mobile] › e2e/zz-appearance.spec.js:20:1 › T-02 appearance chosen in My Profile applies at once and follows the person to another device
+[864/866] [mobile] › e2e/zz-format.spec.js:10:1 › FR-03 AC-01 number grouping and hour format: examples, saved per person, back to the company setting
+[865/866] [mobile] › e2e/zz-scope-isolation.spec.js:29:1 › a person assigned to one project sees that project only, and the pages say what they may do
+[866/866] [mobile] › e2e/zz-sod-elevation.spec.js:28:1 › a project manager asks for the auditor role, the IT administrator approves, and the access appears and is logged
+  Slow test file: [desktop] › e2e/pages.spec.js (1.4h)
+  Slow test file: [desktop] › e2e/tst-manual-screens.spec.js (41.7m)
+  Slow test file: [mobile] › e2e/tst-a11y-sweep.spec.js (30.6m)
+  Slow test file: [mobile] › e2e/ui-v3.spec.js (25.4m)
+  Slow test file: [mobile] › e2e/tst-page-crawl.spec.js (25.1m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  8 failed
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, light theme, at 360, 768 and 1280 px 
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, dark theme, at 360, 768 and 1280 px 
+    [desktop] › e2e/a0-visual.spec.js:28:3 › T-01 FR-05 visual baseline of every page, high-contrast theme, at 360, 768 and 1280 px 
+    [desktop] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so 
+    [desktop] › e2e/ui-v3.spec.js:50:1 › T-01 T-02 T-03 T-04 every registered page has the page header, no key figure in a form grid, and fits the screen 
+    [mobile] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so 
+    [mobile] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID 
+    [mobile] › e2e/plant-hire.spec.js:52:1 › Plant hire: the agreement approved, the bill computed from verified logs and certified, the comparison with owned cost 
+  67 skipped
+  791 passed (5.3h)
+exit=1 seconds=19201

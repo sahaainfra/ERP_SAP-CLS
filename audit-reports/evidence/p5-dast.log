@@ -1,0 +1,3 @@
+$ node scripts/dast_scan.mjs --out <scratch>/audit-dast.json   (node v24.22.3, in-memory database)
+DAST of http://127.0.0.1:42363: 5670 requests, 1091 lists probed, 0 findings {}
+exit=0 duration=14s

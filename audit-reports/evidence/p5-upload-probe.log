@@ -1,0 +1,8 @@
+422  HTML page renamed .pdf -> FILE_REJECTED The content of this file is not a real .pdf file.
+422  SVG with script renamed .png -> FILE_REJECTED The content of this file is not a real .png file.
+422  ZIP archive renamed .jpg -> FILE_REJECTED The content of this file is not a real .jpg file.
+422  Windows executable renamed .xlsx -> FILE_REJECTED The content of this file is not a real .xlsx file.
+422  ELF binary renamed .docx -> FILE_REJECTED This file is a Linux program renamed to .docx. Programs are never accepted.
+201  PDF with a JavaScript action (real PDF header) -> PENDING 
+422  Double extension .pdf.exe -> FILE_REJECTED Files of type .exe are not allowed.
+201  Plain valid PDF (control) -> PENDING 

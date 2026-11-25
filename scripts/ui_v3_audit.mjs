@@ -23,6 +23,8 @@ function importsOf(module) {
       map.set((alias ?? orig).trim(), { file: resolve(dir, m[2]), name: orig.trim() });
     }
   }
+  // part 30.03: pages loaded on demand (`const X = lazyPage(() => import('./F.jsx'), 'Name')`) are read like the static imports
+  for (const m of src.matchAll(/const\s+(\w+)\s*=\s*lazyPage\(\(\)\s*=>\s*import\('([^']+)'\)(?:,\s*'(\w+)')?\)/g)) map.set(m[1], { file: resolve(dir, m[2]), name: m[3] ?? 'default' });
   const pageOf = new Map();
   for (const m of src.matchAll(/\{ path: '([^']+)',[^}]*?Page: (\w+)/g)) pageOf.set(m[1], m[2]);
   return { map, pageOf };
@@ -66,7 +68,8 @@ function classify(route, label, src) {
   if (dash || /dashboard|overview|control tower|cockpit|tower|scorecard|summary|health|360/.test(words)) pattern = 'Overview page';
   else if (op) pattern = 'Object page';
   else if (lr) pattern = 'List report';
-  else if (has(src, /<Pager\b/)) pattern = 'List report'; // a hand-made list with its own pager
+  else if (has(src, /<Pager\b/) && !chart) pattern = 'List report'; // a hand-made list with its own pager (with a chart and parameters it is an analytical report, 30.03)
+  else if (chart && table && !/new|record |prepare|request|register vendor|wizard|editor|settings|create|form|entry|punch/.test(words)) pattern = 'Report'; // chart, parameters and a table: an analytical report (30.03)
   else if (/new|record |prepare|request|register vendor|wizard|editor|settings|create|form|entry|punch/.test(words) && form) pattern = 'Form';
   else if (table && /register|list|queue|\blog\b|worklist|inbox|approvals|tasks|drafts|exports|history|violations|events|ledger|watch/.test(words)) pattern = 'List report';
   else if (form) pattern = 'Form';

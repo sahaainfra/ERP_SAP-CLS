@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { assertOutboundAllowed } from '../../platform/sandbox/index.js';
 import { createApprovalEngine } from '../../platform/approvals/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
 import { hasPermissionAnywhere } from '../../platform/auth/index.js';
@@ -388,6 +389,7 @@ export function createApiPlatform(context, { jobs, scheduler, bus } = {}) {
     const body = d.payload_json; const ts = String(Math.floor(Date.now() / 1000)); const started = performance.now();
     let code = null; let error = null;
     try {
+      assertOutboundAllowed(db, 'webhooks', w.url); // part 30.04: nothing is delivered from the sandbox
       const secret = vault().decrypt(w.secret_enc, `webhook/${w.company_id}/${w.id}`);
       const r = await fetch(w.url, { method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(10_000), headers: { 'content-type': 'application/json', 'user-agent': 'erp-webhooks/1', 'x-erp-event': d.event_type, 'x-delivery-id': d.event_id, 'x-timestamp': ts, 'x-signature': `sha256=${signWebhook(secret, ts, body)}` }, body });
       code = r.status; if (r.status < 200 || r.status >= 300) error = `The endpoint answered ${r.status}.`;

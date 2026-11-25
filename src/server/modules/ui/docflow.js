@@ -4,9 +4,9 @@ import { forbidden, notFound } from '../../platform/http/errors.js';
 // Part 166.7, FR-03: the document flow. From one document, the documents it came from and those that followed it, read from the link columns the
 // modules already store (no table of its own). Each node: its type, number, status, amount, date and the page that opens it; a document the person
 // may not see is shown as "a document you may not open" without its number. Steps that later parts own (payment, receipt) are listed as "not yet
-// available", never invented. Three chains: procurement (MR → PR → RFQ → CS → PO → gate entry → GRN → test → issue, vendor invoice → payment),
-// billing (client bill → certification → tax invoice → receipt; the measurement book reaches a bill through BOQ lines, not a document: D-695),
-// subcontract (measurement → sub bill).
+// available", never invented. Three chains: procurement (MR → PR → RFQ → CS → PO → gate entry → GRN → test → issue, vendor invoice → AP bill → payment),
+// billing (client bill → certification → tax invoice → receivable → receipt; the measurement book reaches a bill through BOQ lines, not a document: D-695),
+// subcontract (measurement → sub bill → AP bill → payment). Part 30.01 added the finance steps (23.03-23.05) that were listed as not yet available.
 
 const rs = (p) => (p === null || p === undefined ? null : Math.round(Number(p)) / 100); // amounts are kept in paise
 
@@ -27,6 +27,11 @@ export const TYPES = {
   TINV: { label: 'Tax invoice', table: 'bill_tax_invoices', permission: 'bill.tax_invoice.view', route: (id) => `/bill/tax-invoices?id=${id}`, facts: (r) => ({ ref: r.invoice_no ?? r.doc_no, status: r.status, date: r.invoice_date, amount: rs(r.total_paise) }) },
   SMEAS: { label: 'Subcontract measurement', table: 'bill_sub_measurements', permission: 'bill.sub_measure.view', route: (id) => `/bill/sub-measure?id=${id}`, facts: (r) => ({ ref: r.doc_no, status: r.verified_on ? 'VERIFIED' : r.sub_signed_on ? 'SIGNED' : 'RECORDED', date: r.measured_on, amount: null }) },
   SBILL: { label: 'Subcontractor bill', table: 'bill_sub_bills', permission: 'bill.sub_bill.view', route: (id) => `/bill/sub-bills?id=${id}`, facts: (r) => ({ ref: r.bill_no ?? r.doc_no, status: r.status, date: r.period_to, amount: rs(r.net_paise) }) },
+  // part 30.01 / 30.02 FR-01: the finance steps that close the chains (AP bill and payment of 23.03-23.04, receivable and receipt of 23.05)
+  APBILL: { label: 'AP bill', table: 'ap_bills', permission: 'fin.bill.view', route: (id) => `/finance/ap-bills?id=${id}`, facts: (r) => ({ ref: r.doc_no, status: r.status, date: r.bill_date, amount: rs(r.net_payable_paise ?? r.total_paise), party: r.payee_name ?? null }) },
+  PAY: { label: 'Payment', table: 'pmt_payments', permission: 'fin.payment.view', route: (id) => `/finance/payments?id=${id}`, facts: (r) => ({ ref: r.doc_no, status: r.pay_status, date: r.paid_on ?? r.released_on, amount: rs(r.amount_paise), party: r.payee_name ?? null }) },
+  ARINV: { label: 'Receivable', table: 'ar_invoices', permission: 'fin.invoice.view', route: (id) => `/finance/receivables?id=${id}`, facts: (r) => ({ ref: r.doc_no, status: r.status, date: r.invoice_date, amount: rs(r.amount_paise) }) },
+  RCPT: { label: 'Receipt', table: 'ar_receipts', permission: 'fin.invoice.view', route: (id) => `/finance/receivables?receipt=${id}`, facts: (r) => ({ ref: r.doc_no, status: r.status, date: r.receipt_date, amount: rs(r.amount_paise) }) },
 };
 
 /** The links: [from, to, SQL giving the ids of `to` for one `from` id, SQL giving the ids of `from` for one `to` id]. Both directions, so the flow is the same from any document of it. */
@@ -46,15 +51,17 @@ const LINKS = [
   ['CBILL', 'TINV', 'SELECT id FROM bill_tax_invoices WHERE bill_id = ?', 'SELECT bill_id AS id FROM bill_tax_invoices WHERE id = ?'],
   ['CERT', 'TINV', 'SELECT id FROM bill_tax_invoices WHERE certification_id = ?', 'SELECT certification_id AS id FROM bill_tax_invoices WHERE id = ?'],
   ['SMEAS', 'SBILL', 'SELECT bill_id AS id FROM bill_sub_measurements WHERE id = ? AND bill_id IS NOT NULL', 'SELECT id FROM bill_sub_measurements WHERE bill_id = ?'],
+  ['VINV', 'APBILL', "SELECT id FROM ap_bills WHERE bill_source = 'VENDOR_INVOICE' AND source_ref = CAST(CAST(? AS INTEGER) AS TEXT) AND deleted_at IS NULL", "SELECT CAST(source_ref AS INTEGER) AS id FROM ap_bills WHERE id = ? AND bill_source = 'VENDOR_INVOICE'"],
+  ['SBILL', 'APBILL', "SELECT id FROM ap_bills WHERE bill_source = 'SUB_BILL' AND source_ref = CAST(CAST(? AS INTEGER) AS TEXT) AND deleted_at IS NULL", "SELECT CAST(source_ref AS INTEGER) AS id FROM ap_bills WHERE id = ? AND bill_source = 'SUB_BILL'"],
+  ['APBILL', 'PAY', 'SELECT p.id FROM pmt_payments p JOIN pmt_proposal_lines l ON l.id = p.line_id WHERE l.ap_bill_id = ? AND p.deleted_at IS NULL', 'SELECT l.ap_bill_id AS id FROM pmt_payments p JOIN pmt_proposal_lines l ON l.id = p.line_id WHERE p.id = ?'],
+  ['TINV', 'ARINV', "SELECT id FROM ar_invoices WHERE inv_source = 'TAX_INVOICE' AND source_ref = CAST(CAST(? AS INTEGER) AS TEXT) AND deleted_at IS NULL", "SELECT CAST(source_ref AS INTEGER) AS id FROM ar_invoices WHERE id = ? AND inv_source = 'TAX_INVOICE'"],
+  ['ARINV', 'RCPT', 'SELECT receipt_id AS id FROM ar_allocations WHERE invoice_id = ? AND deleted_at IS NULL', 'SELECT invoice_id AS id FROM ar_allocations WHERE receipt_id = ? AND deleted_at IS NULL'],
 ];
 
 /** Steps that parts not built yet will add after a document (shown as "not yet available"). */
-const LATER = {
-  VINV: [{ label: 'Payment to the vendor', part: '23.x' }],
-  TINV: [{ label: 'Receipt from the client', part: '23.x' }],
-};
+const LATER = {};
 /** The order of the kinds in a chain (the flow is drawn in this order). */
-const ORDER = ['MR', 'PR', 'RFQ', 'CS', 'PO', 'GATE', 'GRN', 'QC', 'ISSUE', 'VINV', 'CBILL', 'CERT', 'TINV', 'SMEAS', 'SBILL'];
+const ORDER = ['MR', 'PR', 'RFQ', 'CS', 'PO', 'GATE', 'GRN', 'QC', 'ISSUE', 'VINV', 'CBILL', 'CERT', 'TINV', 'ARINV', 'RCPT', 'SMEAS', 'SBILL', 'APBILL', 'PAY'];
 const MAX = 60;
 
 export function createDocFlowService({ db }) {

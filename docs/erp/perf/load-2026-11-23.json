@@ -1,0 +1,586 @@
+{
+  "profile": "LOAD",
+  "tool": "NODE",
+  "environment": "perf-lab",
+  "machine": "linux 6.18.44-fc-v726 · 4 × Intel(R) Xeon(R) Processor @ 2.10GHz · 16 GB · Node v24.22.3 · SQLite file",
+  "startedAt": "2026-11-23T14:00:17.263Z",
+  "finishedAt": "2026-11-23T14:03:32.746Z",
+  "users": 1000,
+  "memory": {
+    "startMb": 366,
+    "endMb": 726,
+    "maxMb": 730,
+    "samples": [
+      {
+        "t": 2,
+        "rssMb": 401
+      },
+      {
+        "t": 4,
+        "rssMb": 422
+      },
+      {
+        "t": 6,
+        "rssMb": 446
+      },
+      {
+        "t": 8,
+        "rssMb": 464
+      },
+      {
+        "t": 10,
+        "rssMb": 481
+      },
+      {
+        "t": 12,
+        "rssMb": 491
+      },
+      {
+        "t": 14,
+        "rssMb": 505
+      },
+      {
+        "t": 16,
+        "rssMb": 520
+      },
+      {
+        "t": 18,
+        "rssMb": 534
+      },
+      {
+        "t": 20,
+        "rssMb": 549
+      },
+      {
+        "t": 22,
+        "rssMb": 550
+      },
+      {
+        "t": 24,
+        "rssMb": 551
+      },
+      {
+        "t": 26,
+        "rssMb": 553
+      },
+      {
+        "t": 28,
+        "rssMb": 554
+      },
+      {
+        "t": 30,
+        "rssMb": 552
+      },
+      {
+        "t": 32,
+        "rssMb": 554
+      },
+      {
+        "t": 34,
+        "rssMb": 554
+      },
+      {
+        "t": 36,
+        "rssMb": 552
+      },
+      {
+        "t": 38,
+        "rssMb": 553
+      },
+      {
+        "t": 40,
+        "rssMb": 552
+      },
+      {
+        "t": 42,
+        "rssMb": 551
+      },
+      {
+        "t": 44,
+        "rssMb": 551
+      },
+      {
+        "t": 46,
+        "rssMb": 553
+      },
+      {
+        "t": 48,
+        "rssMb": 552
+      },
+      {
+        "t": 50,
+        "rssMb": 553
+      },
+      {
+        "t": 52,
+        "rssMb": 554
+      },
+      {
+        "t": 54,
+        "rssMb": 552
+      },
+      {
+        "t": 56,
+        "rssMb": 553
+      },
+      {
+        "t": 58,
+        "rssMb": 567
+      },
+      {
+        "t": 60,
+        "rssMb": 583
+      },
+      {
+        "t": 62,
+        "rssMb": 600
+      },
+      {
+        "t": 64,
+        "rssMb": 607
+      },
+      {
+        "t": 66,
+        "rssMb": 619
+      },
+      {
+        "t": 68,
+        "rssMb": 629
+      },
+      {
+        "t": 70,
+        "rssMb": 640
+      },
+      {
+        "t": 72,
+        "rssMb": 649
+      },
+      {
+        "t": 74,
+        "rssMb": 650
+      },
+      {
+        "t": 76,
+        "rssMb": 649
+      },
+      {
+        "t": 78,
+        "rssMb": 650
+      },
+      {
+        "t": 80,
+        "rssMb": 648
+      },
+      {
+        "t": 82,
+        "rssMb": 650
+      },
+      {
+        "t": 84,
+        "rssMb": 652
+      },
+      {
+        "t": 86,
+        "rssMb": 649
+      },
+      {
+        "t": 88,
+        "rssMb": 651
+      },
+      {
+        "t": 90,
+        "rssMb": 651
+      },
+      {
+        "t": 92,
+        "rssMb": 652
+      },
+      {
+        "t": 94,
+        "rssMb": 650
+      },
+      {
+        "t": 96,
+        "rssMb": 651
+      },
+      {
+        "t": 98,
+        "rssMb": 651
+      },
+      {
+        "t": 100,
+        "rssMb": 653
+      },
+      {
+        "t": 102,
+        "rssMb": 650
+      },
+      {
+        "t": 104,
+        "rssMb": 652
+      },
+      {
+        "t": 106,
+        "rssMb": 649
+      },
+      {
+        "t": 108,
+        "rssMb": 652
+      },
+      {
+        "t": 110,
+        "rssMb": 649
+      },
+      {
+        "t": 112,
+        "rssMb": 650
+      },
+      {
+        "t": 114,
+        "rssMb": 650
+      },
+      {
+        "t": 116,
+        "rssMb": 651
+      },
+      {
+        "t": 118,
+        "rssMb": 651
+      },
+      {
+        "t": 120,
+        "rssMb": 660
+      },
+      {
+        "t": 122,
+        "rssMb": 658
+      },
+      {
+        "t": 124,
+        "rssMb": 658
+      },
+      {
+        "t": 126,
+        "rssMb": 665
+      },
+      {
+        "t": 128,
+        "rssMb": 658
+      },
+      {
+        "t": 130,
+        "rssMb": 663
+      },
+      {
+        "t": 132,
+        "rssMb": 653
+      },
+      {
+        "t": 134,
+        "rssMb": 656
+      },
+      {
+        "t": 136,
+        "rssMb": 660
+      },
+      {
+        "t": 138,
+        "rssMb": 661
+      },
+      {
+        "t": 140,
+        "rssMb": 669
+      },
+      {
+        "t": 142,
+        "rssMb": 687
+      },
+      {
+        "t": 144,
+        "rssMb": 705
+      },
+      {
+        "t": 146,
+        "rssMb": 717
+      },
+      {
+        "t": 148,
+        "rssMb": 724
+      },
+      {
+        "t": 150,
+        "rssMb": 717
+      },
+      {
+        "t": 152,
+        "rssMb": 725
+      },
+      {
+        "t": 154,
+        "rssMb": 719
+      },
+      {
+        "t": 156,
+        "rssMb": 725
+      },
+      {
+        "t": 158,
+        "rssMb": 724
+      },
+      {
+        "t": 160,
+        "rssMb": 727
+      },
+      {
+        "t": 162,
+        "rssMb": 722
+      },
+      {
+        "t": 164,
+        "rssMb": 726
+      },
+      {
+        "t": 166,
+        "rssMb": 720
+      },
+      {
+        "t": 168,
+        "rssMb": 722
+      },
+      {
+        "t": 170,
+        "rssMb": 724
+      },
+      {
+        "t": 172,
+        "rssMb": 724
+      },
+      {
+        "t": 174,
+        "rssMb": 730
+      },
+      {
+        "t": 176,
+        "rssMb": 726
+      },
+      {
+        "t": 178,
+        "rssMb": 729
+      },
+      {
+        "t": 180,
+        "rssMb": 726
+      },
+      {
+        "t": 182,
+        "rssMb": 726
+      },
+      {
+        "t": 184,
+        "rssMb": 726
+      },
+      {
+        "t": 186,
+        "rssMb": 726
+      },
+      {
+        "t": 188,
+        "rssMb": 726
+      },
+      {
+        "t": 190,
+        "rssMb": 726
+      },
+      {
+        "t": 192,
+        "rssMb": 726
+      },
+      {
+        "t": 194,
+        "rssMb": 726
+      }
+    ]
+  },
+  "results": [
+    {
+      "model": "PUNCH_BURST",
+      "journey": "Punch in (own phone)",
+      "sloKind": "BURST",
+      "requests": 2000,
+      "errors": 0,
+      "p50": 11.19,
+      "p95": 813.56,
+      "p99": 1392.22,
+      "max": 1567.25,
+      "throughputRps": 33.34
+    },
+    {
+      "model": "USERS",
+      "journey": "Sample documents list (20,000 rows)",
+      "sloKind": "LIST",
+      "requests": 2249,
+      "errors": 0,
+      "p50": 15.48,
+      "p95": 765.16,
+      "p99": 1304.19,
+      "max": 1592.49,
+      "throughputRps": 12.45
+    },
+    {
+      "model": "USERS",
+      "journey": "Session check (every page)",
+      "sloKind": "RECORD",
+      "requests": 2192,
+      "errors": 0,
+      "p50": 6.84,
+      "p95": 674.45,
+      "p99": 1277.11,
+      "max": 1534.56,
+      "throughputRps": 12.13
+    },
+    {
+      "model": "USERS",
+      "journey": "Navigation menu",
+      "sloKind": "RECORD",
+      "requests": 2264,
+      "errors": 0,
+      "p50": 21.75,
+      "p95": 708.99,
+      "p99": 1236.16,
+      "max": 1580.87,
+      "throughputRps": 12.53
+    },
+    {
+      "model": "USERS",
+      "journey": "My approvals inbox",
+      "sloKind": "LIST",
+      "requests": 2267,
+      "errors": 0,
+      "p50": 9.11,
+      "p95": 695.16,
+      "p99": 1225.36,
+      "max": 1532.98,
+      "throughputRps": 12.54
+    },
+    {
+      "model": "USERS",
+      "journey": "An employee record",
+      "sloKind": "RECORD",
+      "requests": 2262,
+      "errors": 0,
+      "p50": 9.5,
+      "p95": 674.92,
+      "p99": 1055.94,
+      "max": 1553.64,
+      "throughputRps": 12.52
+    },
+    {
+      "model": "USERS",
+      "journey": "Daily progress reports list",
+      "sloKind": "LIST",
+      "requests": 2224,
+      "errors": 0,
+      "p50": 8.03,
+      "p95": 700.48,
+      "p99": 1224.69,
+      "max": 1531.65,
+      "throughputRps": 12.3
+    },
+    {
+      "model": "USERS",
+      "journey": "Employees list",
+      "sloKind": "LIST",
+      "requests": 2244,
+      "errors": 0,
+      "p50": 8.88,
+      "p95": 693.85,
+      "p99": 1294.68,
+      "max": 1546.06,
+      "throughputRps": 12.42
+    },
+    {
+      "model": "USERS",
+      "journey": "Punches of the site today",
+      "sloKind": "LIST",
+      "requests": 2245,
+      "errors": 0,
+      "p50": 13.86,
+      "p95": 684.63,
+      "p99": 1092.94,
+      "max": 1469.83,
+      "throughputRps": 12.42
+    },
+    {
+      "model": "REALTIME",
+      "journey": "Event to screen and notification",
+      "sloKind": "REALTIME",
+      "requests": 60,
+      "errors": 0,
+      "p50": 852,
+      "p95": 984,
+      "p99": 1002,
+      "max": 1002,
+      "throughputRps": 0.34
+    },
+    {
+      "model": "DPR_BURST",
+      "journey": "Create a daily progress report",
+      "sloKind": "SAVE",
+      "requests": 200,
+      "errors": 0,
+      "p50": 9.03,
+      "p95": 29.3,
+      "p99": 52.99,
+      "max": 74.44,
+      "throughputRps": 3.35
+    },
+    {
+      "model": "MONTH_END",
+      "journey": "Attendance register of the month",
+      "sloKind": "REPORT",
+      "requests": 650,
+      "errors": 0,
+      "p50": 465.94,
+      "p95": 872.43,
+      "p99": 1206.59,
+      "max": 1340.52,
+      "throughputRps": 10.91
+    },
+    {
+      "model": "MONTH_END",
+      "journey": "Event log (last 100)",
+      "sloKind": "REPORT",
+      "requests": 630,
+      "errors": 0,
+      "p50": 358.31,
+      "p95": 759.9,
+      "p99": 852.65,
+      "max": 892.46,
+      "throughputRps": 10.78
+    },
+    {
+      "model": "MONTH_END",
+      "journey": "Trial balance",
+      "sloKind": "REPORT",
+      "requests": 600,
+      "errors": 0,
+      "p50": 3.48,
+      "p95": 45.31,
+      "p99": 142.53,
+      "max": 203.18,
+      "throughputRps": 11.06
+    },
+    {
+      "model": "MONTH_END",
+      "journey": "Post a bill (calculation engine, trace, audit, event)",
+      "sloKind": "SAVE",
+      "requests": 600,
+      "errors": 0,
+      "p50": 11.69,
+      "p95": 84.07,
+      "p99": 175.23,
+      "max": 191.04,
+      "throughputRps": 11.04
+    }
+  ]
+}

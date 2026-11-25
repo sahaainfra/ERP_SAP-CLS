@@ -1,0 +1,36 @@
+
+Running 32 tests using 1 worker
+
+[1/32] [desktop] › e2e/bill-vinv.spec.js:9:1 › Vendor invoice: register, match, exception, debit note, approval, hub
+[2/32] [desktop] › e2e/ctr-variations.spec.js:8:1 › Variation: change request, review, evaluation, approval, client answer, variation order, register
+[3/32] [desktop] › e2e/data-health.spec.js:18:1 › before any run the page lists every check as "not run yet" and offers to run them
+[4/32] [desktop] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so
+[5/32] [desktop] › e2e/data-health.spec.js:44:1 › drill-down: a check's history shows its earlier results
+[6/32] [desktop] › e2e/data-health.spec.js:57:1 › SYSADM can read the report but the run button is disabled with a reason
+[7/32] [desktop] › e2e/data-health.spec.js:65:1 › other roles get the no-permission state and no check data; the nav entry is hidden
+[8/32] [desktop] › e2e/data-health.spec.js:72:1 › the report exports a CSV
+[9/32] [desktop] › e2e/data-health.spec.js:80:1 › turning the feature flag OFF hides the entry and the page at once
+[10/32] [desktop] › e2e/data-health.spec.js:94:1 › a server failure shows the error state with the correlation id and a retry
+[11/32] [desktop] › e2e/data-health.spec.js:108:1 › a failing run is reported when the server cannot complete it
+[12/32] [desktop] › e2e/data-health.spec.js:118:1 › no horizontal scroll with wide fonts, in every theme
+[13/32] [desktop] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID
+[14/32] [desktop] › e2e/operations-health.spec.js:65:1 › Operations Health: an objective change is a request, approved by the System Administrator
+[15/32] [desktop] › e2e/operations-health.spec.js:84:1 › Operations Health: SYSADM views but cannot act; a project manager has no access; the browser reports its errors
+[16/32] [desktop] › e2e/plant-hire.spec.js:52:1 › Plant hire: the agreement approved, the bill computed from verified logs and certified, the comparison with owned cost
+[17/32] [mobile] › e2e/bill-vinv.spec.js:9:1 › Vendor invoice: register, match, exception, debit note, approval, hub
+[18/32] [mobile] › e2e/ctr-variations.spec.js:8:1 › Variation: change request, review, evaluation, approval, client answer, variation order, register
+[19/32] [mobile] › e2e/data-health.spec.js:18:1 › before any run the page lists every check as "not run yet" and offers to run them
+[20/32] [mobile] › e2e/data-health.spec.js:31:1 › ITADM runs the checks: the summary updates, nothing fails, tables with nothing to check say so
+[21/32] [mobile] › e2e/data-health.spec.js:44:1 › drill-down: a check's history shows its earlier results
+[22/32] [mobile] › e2e/data-health.spec.js:57:1 › SYSADM can read the report but the run button is disabled with a reason
+[23/32] [mobile] › e2e/data-health.spec.js:65:1 › other roles get the no-permission state and no check data; the nav entry is hidden
+[24/32] [mobile] › e2e/data-health.spec.js:72:1 › the report exports a CSV
+[25/32] [mobile] › e2e/data-health.spec.js:80:1 › turning the feature flag OFF hides the entry and the page at once
+[26/32] [mobile] › e2e/data-health.spec.js:94:1 › a server failure shows the error state with the correlation id and a retry
+[27/32] [mobile] › e2e/data-health.spec.js:108:1 › a failing run is reported when the server cannot complete it
+[28/32] [mobile] › e2e/data-health.spec.js:118:1 › no horizontal scroll with wide fonts, in every theme
+[29/32] [mobile] › e2e/operations-health.spec.js:24:1 › Operations Health: figures, objectives, alert rules, baseline; a forced error is followed end to end by its correlation ID
+[30/32] [mobile] › e2e/operations-health.spec.js:65:1 › Operations Health: an objective change is a request, approved by the System Administrator
+[31/32] [mobile] › e2e/operations-health.spec.js:84:1 › Operations Health: SYSADM views but cannot act; a project manager has no access; the browser reports its errors
+[32/32] [mobile] › e2e/plant-hire.spec.js:52:1 › Plant hire: the agreement approved, the bill computed from verified logs and certified, the comparison with owned cost
+  32 passed (1.4m)

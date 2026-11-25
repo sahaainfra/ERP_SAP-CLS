@@ -1,0 +1,55 @@
+
+> erp-sap-cls@0.1.0 erp:coverage-gate
+> node scripts/coverage_gate.mjs
+
+ok    98.7%  scripts/lib/bluegreen.mjs
+ok     100%  scripts/lib/proxy.mjs
+ok    95.2%  scripts/lib/zero_downtime.mjs
+ok     100%  src/server/app.js
+ok    99.6%  src/server/modules/admin/apiplatform.js
+ok    99.7%  src/server/modules/admin/control.js
+ok    98.5%  src/server/modules/bill/ledger.js
+ok     100%  src/server/modules/bill/mb.js
+ok     100%  src/server/modules/core/session/routes.js
+ok    96.5%  src/server/modules/eng/tpl-pdf.js
+ok     100%  src/server/modules/hr/att-calc.js
+ok    96.8%  src/server/modules/hr/att-register.js
+ok    98.1%  src/server/modules/inv/grn.js
+ok    98.2%  src/server/modules/inv/issue.js
+ok     100%  src/server/modules/plan/baselines.js
+ok     100%  src/server/modules/plan/validators.js
+ok     100%  src/server/modules/proc/ana.js
+ok     100%  src/server/modules/registry.js
+ok     100%  src/server/modules/tst/a11y.js
+ok     100%  src/server/modules/tst/catalogue.js
+ok    99.4%  src/server/modules/tst/docwriter.js
+ok     100%  src/server/modules/tst/envparity.js
+ok    97.7%  src/server/modules/tst/golive.js
+ok     100%  src/server/modules/tst/index.js
+ok    97.4%  src/server/modules/tst/integration.js
+ok    97.8%  src/server/modules/tst/manuals.js
+ok    97.5%  src/server/modules/tst/ops.js
+ok    97.6%  src/server/modules/tst/pageaudit.js
+ok     100%  src/server/modules/tst/perf.js
+ok    97.4%  src/server/modules/tst/recon.js
+ok    98.8%  src/server/modules/tst/sandbox.js
+ok    99.7%  src/server/modules/tst/security.js
+ok     100%  src/server/modules/tst/threads.js
+ok     100%  src/server/modules/ui/docflow.js
+ok    96.9%  src/server/modules/ui/lists.js
+ok    98.6%  src/server/modules/ui/shell.js
+ok     100%  src/server/platform/authz/templates.js
+ok    98.1%  src/server/platform/config/index.js
+ok    99.4%  src/server/platform/export/index.js
+ok     100%  src/server/platform/observability/dbstats.js
+ok     100%  src/server/platform/push/index.js
+ok     100%  src/server/platform/sandbox/index.js
+ok     100%  src/server/platform/security/route-policy.js
+ok     100%  src/shared/i18n/locales/en.js
+ok     100%  src/shared/i18n/locales/en/plan.js
+ok     100%  src/shared/i18n/locales/en/shell.js
+ok     100%  src/shared/i18n/locales/en/tst.js
+ok     100%  src/shared/i18n/locales/hi.js
+ok     100%  src/shared/i18n/locales/te.js
+Coverage gate OK: 49 file(s) at or above 60% (changed against origin/main).
+exit=0 seconds=0

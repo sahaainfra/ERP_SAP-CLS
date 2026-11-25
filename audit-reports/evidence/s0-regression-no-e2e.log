@@ -1,0 +1,45 @@
+PASS  ESLint (50518 ms)
+PASS  TypeScript check (incremental, non-strict) (7545 ms)
+FAIL  Unit, API and permission tests (with coverage) (1953039 ms)
+ℹ   search                       |        |          |         | 
+ℹ    text.js                     | 100.00 |    91.04 |  100.00 | 
+ℹ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ all files                      |  97.72 |    77.06 |   88.06 | 
+ℹ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ end of coverage report
+
+✖ failing tests:
+
+test at tests/ui-api.test.js:65:1
+✖ FR-07 AC-02 the style guide: everyone outside production, only ui.styleguide.view in production; the contrast report passes (4595.776947ms)
+  Error [ConfigError]: Invalid configuration:
+    - AUTH_MODE=dev-headers is not allowed when ERP_ENVIRONMENT=production (NODE_ENV=test, ERP_ENVIRONMENT=production): it trusts client-supplied identity headers. Set AUTH_MODE=iam.
+    - FILE_URL_SECRET is required when ERP_ENVIRONMENT=production: it signs the short-lived download links and must be the same on every instance (at least 32 characters).
+    - VAULT_KEY is required when ERP_ENVIRONMENT=production: it encrypts the credentials of external connectors and must be the same on every instance (at least 32 characters). Losing it makes the stored credentials unreadable.
+      at loadConfig (file:///home/user/ERP_SAP-CLS/src/server/platform/config/index.js:106:30)
+      at testConfig (file:///home/user/ERP_SAP-CLS/tests/helpers.js:8:10)
+      at startApi (file:///home/user/ERP_SAP-CLS/tests/helpers.js:21:35)
+      at TestContext.<anonymous> (file:///home/user/ERP_SAP-CLS/tests/ui-api.test.js:75:22)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    problems: [ 'AUTH_MODE=dev-headers is not allowed when ERP_ENVIRONMENT=production (NODE_ENV=test, ERP_ENVIRONMENT=production): it trusts client-supplied identity headers. Set AUTH_MODE=iam.', 'FILE_URL_SECRET is required when ERP_ENVIRONMENT=production: it signs the short-lived download links and must be the same on every instance (at least 32 characters).', 'VAULT_KEY is required when ERP_ENVIRONMENT=production: it encrypts the credentials of external connectors and must be the same on every instance (at least 32 characters). Losing it makes the stored credentials unreadable.' ]
+  }
+
+PASS  Coverage gate for changed files (271 ms)
+PASS  Migration up/down check on a schema copy (105284 ms)
+PASS  Schema lint (standard columns, FK indexes, integer money, registry, baseline) (3826 ms)
+PASS  Design tokens and icon map generated from their sources; contrast passes (part 03.01) (56 ms)
+PASS  Icon map generated from the icon registry (part 03.01) (120 ms)
+PASS  Navigation registry: every page has an entry, every entry a page (part 03.05) (2261 ms)
+PASS  Route registry: every route declared with its permission (part 02.07) (4690 ms)
+PASS  Permission audit: every holder of a sensitive permission is reviewed (part 166.1) (82 ms)
+PASS  Defect register: target part and gate on every open row; the by-part list is current (part 166.1) (106 ms)
+PASS  Data-integrity suite (Critical failures block) (3888 ms)
+PASS  Schema-diff against locked baseline (1864 ms)
+PASS  Golden-output comparison (3932 ms)
+PASS  Secret scan (688 ms)
+SKIP  Playwright E2E (--skip-e2e)
+
+Regression FAILED. Report: /home/user/ERP_SAP-CLS/reports/regression
+exit=1 seconds=2138

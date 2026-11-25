@@ -1,4 +1,33 @@
 {
+ "adm.api.manage": [
+  "ITADM"
+ ],
+ "adm.archive.manage": [
+  "SYSADM"
+ ],
+ "adm.connector.configure": [
+  "ITADM"
+ ],
+ "adm.migration.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "adm.pack.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "adm.snapshot.manage": [
+  "SYSADM"
+ ],
+ "ai.kill_switch.manage": [
+  "DIR",
+  "ITADM",
+  "SYSADM"
+ ],
+ "ai.provider.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
  "alr.alert.manage": [
   "CFO",
   "COMMGR",
@@ -33,11 +62,33 @@
   "DIR",
   "EST"
  ],
+ "bi.det_rule.configure": [
+  "CFO",
+  "PCMGR"
+ ],
+ "bi.exec_alert.configure": [
+  "CFO",
+  "DIR"
+ ],
+ "bi.exec_alert.manage": [
+  "CFO",
+  "DIR",
+  "PCMGR",
+  "PD"
+ ],
+ "bi.morning_report.configure": [
+  "CFO",
+  "DIR"
+ ],
  "bud.alloc.configure": [
   "ACCMGR"
  ],
  "bud.check.configure": [
   "PCMGR",
+  "PM"
+ ],
+ "cls.manage": [
+  "COMMGR",
   "PM"
  ],
  "core.calc.manage": [
@@ -135,6 +186,11 @@
   "COMMGR",
   "SUBCO"
  ],
+ "dlp.manage": [
+  "PM",
+  "QCE",
+  "QCMGR"
+ ],
  "doc.document.manage": [
   "DOC",
   "SUPADM"
@@ -155,11 +211,25 @@
  "fin.bank.manage": [
   "CFO"
  ],
+ "fin.cash_forecast.manage": [
+  "ACCMGR",
+  "CFO"
+ ],
  "fin.gst_recon.manage": [
   "ACCMGR"
  ],
+ "fin.ic.configure": [
+  "CFO"
+ ],
  "fin.imprest.manage": [
   "ACCMGR"
+ ],
+ "fin.jv.manage": [
+  "ACCMGR",
+  "CFO"
+ ],
+ "fin.period.configure": [
+  "CFO"
  ],
  "fin.pl.configure": [
   "ACCMGR",
@@ -168,6 +238,18 @@
  "fin.recurring.manage": [
   "ACCMGR",
   "FINEX"
+ ],
+ "golive.manage": [
+  "PCMGR"
+ ],
+ "hd.article.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "ho.manage": [
+  "DOC",
+  "PM",
+  "QCMGR"
  ],
  "hr.disciplinary.manage": [
   "HRMGR"
@@ -241,6 +323,12 @@
   "ITADM",
   "SYSADM"
  ],
+ "ops.oncall.manage": [
+  "ITADM"
+ ],
+ "ops.runbook.manage": [
+  "ITADM"
+ ],
  "org.company.manage": [
   "SUPADM",
   "SYSADM"
@@ -262,6 +350,29 @@
   "PCMGR",
   "PD",
   "PM"
+ ],
+ "pay.calendar.configure": [
+  "PAY"
+ ],
+ "pay.component.configure": [
+  "PAY"
+ ],
+ "pay.input.manage": [
+  "PAY"
+ ],
+ "pay.stat.bocw.manage": [
+  "PAY"
+ ],
+ "pay.stat.rule.configure": [
+  "CFO"
+ ],
+ "pay.structure.configure": [
+  "PAY"
+ ],
+ "pay.wage_check.manage": [
+  "PAY",
+  "SACC",
+  "SUBCO"
  ],
  "plan.calendar.manage": [
   "PLAN"
@@ -299,12 +410,12 @@
   "PROCMGR",
   "QCMGR"
  ],
+ "portal.account.manage": [
+  "SYSADM"
+ ],
  "proc.rfq.issue": [
   "PROCIC",
   "PROCMGR"
- ],
- "portal.account.manage": [
-  "SYSADM"
  ],
  "proj.handover.manage": [
   "COMMGR",
@@ -330,6 +441,12 @@
   "PCMGR",
   "PLAN"
  ],
+ "sct.finding.manage": [
+  "ITADM"
+ ],
+ "sct.review.manage": [
+  "ITADM"
+ ],
  "sec.device.manage": [
   "ITADM",
   "SYSADM"
@@ -347,6 +464,15 @@
   "PLAN",
   "SE"
  ],
+ "tnc.manage": [
+  "QCE",
+  "QCMGR"
+ ],
+ "tst.sandbox.manage": [
+  "HRMGR",
+  "ITADM",
+  "SYSADM"
+ ],
  "ui.dashboard.manage": [
   "PCMGR",
   "SUPADM",
@@ -359,100 +485,5 @@
  "ui.translation.manage": [
   "SUPADM",
   "SYSADM"
- ],
- "fin.cash_forecast.manage": [
-  "ACCMGR",
-  "CFO"
- ],
- "fin.period.configure": [
-  "CFO"
- ],
- "fin.ic.configure": [
-  "CFO"
- ],
- "fin.jv.manage": [
-  "ACCMGR",
-  "CFO"
- ],
- "pay.calendar.configure": [
-  "PAY"
- ],
- "pay.component.configure": [
-  "PAY"
- ],
- "pay.structure.configure": [
-  "PAY"
- ],
- "pay.input.manage": [
-  "PAY"
- ],
- "pay.wage_check.manage": [
-  "PAY",
-  "SACC",
-  "SUBCO"
- ],
- "pay.stat.rule.configure": [
-  "CFO"
- ],
- "pay.stat.bocw.manage": [
-  "PAY"
- ],
- "ai.kill_switch.manage": [
-  "DIR",
-  "ITADM",
-  "SYSADM"
- ],
- "ai.provider.manage": [
-  "ITADM",
-  "SYSADM"
- ],
- "adm.snapshot.manage": [
-  "SYSADM"
- ],
- "adm.connector.configure": [
-  "ITADM"
- ],
- "adm.api.manage": [
-  "ITADM"
- ],
- "adm.pack.manage": [
-  "ITADM",
-  "SYSADM"
- ],
- "adm.migration.manage": [
-  "ITADM",
-  "SYSADM"
- ],
- "adm.backup.restore": [
-  "ITADM",
-  "SYSADM"
- ],
- "adm.archive.manage": [
-  "SYSADM"
- ],
- "adm.archive.dispose": [
-  "AUD"
- ],
- "hd.article.manage": [
-  "ITADM",
-  "SYSADM"
- ],
- "bi.det_rule.configure": [
-  "CFO",
-  "PCMGR"
- ],
- "bi.exec_alert.configure": [
-  "CFO",
-  "DIR"
- ],
- "bi.exec_alert.manage": [
-  "CFO",
-  "DIR",
-  "PCMGR",
-  "PD"
- ],
- "bi.morning_report.configure": [
-  "CFO",
-  "DIR"
  ]
 }

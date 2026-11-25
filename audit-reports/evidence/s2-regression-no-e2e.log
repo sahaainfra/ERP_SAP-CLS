@@ -1,0 +1,20 @@
+PASS  ESLint (35638 ms)
+PASS  TypeScript check (incremental, non-strict) (4875 ms)
+PASS  Unit, API and permission tests (with coverage) (1543574 ms)
+PASS  Coverage gate for changed files (230 ms)
+PASS  Migration up/down check on a schema copy (79649 ms)
+PASS  Schema lint (standard columns, FK indexes, integer money, registry, baseline) (2791 ms)
+PASS  Design tokens and icon map generated from their sources; contrast passes (part 03.01) (32 ms)
+PASS  Icon map generated from the icon registry (part 03.01) (78 ms)
+PASS  Navigation registry: every page has an entry, every entry a page (part 03.05) (1455 ms)
+PASS  Route registry: every route declared with its permission (part 02.07) (3056 ms)
+PASS  Permission audit: every holder of a sensitive permission is reviewed (part 166.1) (97 ms)
+PASS  Defect register: target part and gate on every open row; the by-part list is current (part 166.1) (63 ms)
+PASS  Data-integrity suite (Critical failures block) (2660 ms)
+PASS  Schema-diff against locked baseline (1621 ms)
+PASS  Golden-output comparison (3100 ms)
+PASS  Secret scan (423 ms)
+SKIP  Playwright E2E (--skip-e2e)
+
+Regression PASSED. Report: /home/user/ERP_SAP-CLS/reports/regression
+exit=0 seconds=1679

@@ -181,6 +181,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
       </header>
       {device && <PwaBanners />}
       {identityBar}
+      {session?.sandbox && <div className="sh-sandbox" role="status" data-testid="sandbox-banner">{t('sandbox.banner')}</div>}
       <div className="sh-body">
         <Sidebar groups={groups} account={accountGroup(nav)} consoleGroup={consoleGroup(nav)} path={path.split('?')[0]} go={goTo} language={language} open={menuOpen} onClose={() => setMenuOpen(false)} collapsed={collapsed && !phone} drawOnOpen={perf && phone} />
         <main id="main" tabIndex={-1} ref={mainRef}>
