@@ -94,7 +94,7 @@ function PendingChanges({ session }) {
         <thead><tr><th>Request</th><th>Flag</th><th>Scope</th><th>New value</th><th>Area</th><th>Reason</th><th>Asked by</th><th>Status</th><th><span className="sr-only">Actions</span></th></tr></thead>
         <tbody>{rows.map((r) => (
           <tr key={r.id} data-testid="flag-change" data-status={r.status}>
-            <td data-label="Request">{r.docNo}</td><td data-label="Flag"><code>{r.key}</code></td><td data-label="Scope">{levelLabel(r.level)}{r.projectId ? ` ${r.projectId}` : ''}</td>
+            <td data-label="Request">{r.docNo}</td><td data-label="Flag"><code>{r.key}</code></td><td data-label="Scope">{levelLabel[r.level] ?? r.level}{r.projectId ? ` ${r.projectId}` : ''}</td>
             <td data-label="New value">{r.enabled ? 'ON' : 'OFF'}</td><td data-label="Area">{r.area.toLowerCase()}</td><td data-label="Reason">{r.reason}</td><td data-label="Asked by">{r.requestedBy}</td>
             <td data-label="Status">{r.status === 'PENDING' && r.firstApprovedBy ? `PENDING (approved by ${r.firstApprovedBy})` : r.status}</td>
             <td data-label="Actions">{r.status === 'PENDING' && (<span className="actions-row">
