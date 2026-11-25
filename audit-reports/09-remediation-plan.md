@@ -179,3 +179,20 @@ The E2E suite therefore has no known failure left from the audit.
 
 - shell, sign-in and the new focus test: 23 passed;
 - leakage: 2 passed.
+
+## Administrator controls (owner: "take your own decision as per requirements", 2026-11-25)
+
+Both decisions follow `07_APPROVAL_WORKFLOW_REFERENCE.md` and `06_ROLE_CATALOGUE.md`; the reasoning is in `DECISIONS.md`, "Audit remediation".
+
+| Item | Decision and fix | Commits |
+|---|---|---|
+| AUD-DEF-009, D-002 | In staging and production a flag change is a request, approved on the Feature Flags page:<br>• by an IT administrator, never the requester;<br>• for a financial or security flag, also by a different CFO or director.<br>Built in the flag module, because the workflow engine is itself behind a flag. Development and test still change at once. | `23f92361`, `505b60f2`, `aef770c6`, `f7c1b04b`, `5a19c2d1` |
+| AUD-DEF-008 | Each version of the permission baseline is recorded with its maker and checker (`PERMISSION_REVIEWS.json`). The audit fails on an unrecorded change. **The first version awaits its checker, an IT administrator or director:** `node scripts/permission_audit.mjs --record-check --checker <name> --checker-role ITADM\|DIR` | `23f92361` |
+
+**Found and fixed on the way:**
+
+- the waiting-changes list called a map as a function and blanked the page (found by the new E2E test);
+- the legacy access comparison now accepts the intended `core.flag.view` of CFO and DIR, and reports any other gain;
+- the statuses of the new table are registered with the integrity check.
+
+**Regression on `5a19c2d1`, without E2E: all 16 stages pass** (`evidence/s2-regression-no-e2e.log`). E2E flag specs: 18 passed.
