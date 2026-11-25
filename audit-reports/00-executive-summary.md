@@ -116,3 +116,5 @@ See README, "Not Executed".
 | Still red | The three visual-baseline tests (D-830), which need a reviewed re-baseline. |
 
 Details: `09-remediation-plan.md`, "Step 0 outcome". Status per finding: `08-defect-register.md`.
+
+**Visual baselines (D-830), 2026-11-25.** Re-recorded at the owner's request: 61 of 6,642 images changed, on 13 pages, each below a control row that grew to the 44 px touch target. A check run passes in all three themes, so no E2E failure from the audit remains. The reviewer of the pull request checks the 61 changed images (`evidence/d830-*`).

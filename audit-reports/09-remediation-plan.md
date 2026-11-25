@@ -151,4 +151,11 @@ Code at `48f3002f`, the same 4-vCPU machine and Node 24.22.3 as the audit. Logs 
 - `evidence/d830-notifications-light-768-before-after.png`: the largest change, before and after;
 - `evidence/d830-visual-update.log`: the recording run.
 
-**Before merging:** the reviewer of the pull request checks the 61 changed images. A check run without `--update-snapshots` confirms that the suite passes against the new baselines.
+**Check run** (without `--update-snapshots`): **the suite passes against the new baselines in all three themes.**
+
+- Light and dark passed in one run, which a container restart then stopped during the high-contrast theme: `evidence/d830-visual-check-light-dark.log`.
+- High contrast was re-run on its own and passed (1.4 h): `evidence/d830-visual-check-high-contrast.log`.
+
+The E2E suite therefore has no known failure left from the audit.
+
+**Before merging:** the reviewer of the pull request checks the 61 changed images.
