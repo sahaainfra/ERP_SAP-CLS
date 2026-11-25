@@ -200,6 +200,9 @@ const PERMISSIONS_30_07 = ['tst.a11y.view', 'tst.a11y.record', 'tst.a11y.signoff
 const PERMISSIONS_30_10 = ['golive.view', 'golive.manage', 'golive.export', 'uat.execute', 'uat.triage'];
 // Audit AUD-DEF-009: the checker of a feature-flag change in staging and production (07, part 29.01: ITADM; financial and security flags CFO or DIR too)
 const PERMISSIONS_AUD_009 = ['core.flag.approve'];
+/** Permissions that existed before the role engine and that a role was later given on purpose, with the decision (the legacy comparison
+ * reports any other gain). The CFO and directors approve financial and security flag changes, so they see the Feature Flags page. */
+export const INTENDED_LEGACY_GAINS = Object.freeze({ CFO: ['core.flag.view'], DIR: ['core.flag.view'] }); // DECISIONS.md, audit AUD-DEF-009
 const PERMISSIONS_30_09 = ['man.manual.view_all', 'man.manual.generate', 'man.manual.export'];
 const PERMISSIONS_30_08 = ['ops.runbook.view', 'ops.runbook.manage', 'ops.deploy.record', 'ops.oncall.manage', 'ops.page.ack'];
 const PERMISSIONS_29_08 = ['hd.ticket.raise', 'hd.ticket.work', 'hd.ticket.view_all', 'hd.article.manage', 'hd.correction.implement'];

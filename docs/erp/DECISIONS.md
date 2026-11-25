@@ -926,6 +926,7 @@ The owner left both decisions to the requirements of the ERP. The approval refer
 - **Why not the workflow engine.** It is itself switched on by a flag (`ff.eng.p0401`), and a flag change must never wait on a flag.
 - **In development and test,** flags still change at once (audited), so the test suites can set them. The rule is about the installations people use.
 - **The Enterprise Control Center rule of 29.01 is unchanged.** Once on, the company's flags change only through its change requests.
+- **Viewing the page.** The CFO and directors gain `core.flag.view` so they can open the Feature Flags page and approve. This is listed in `INTENDED_LEGACY_GAINS` (`platform/authz/templates.js`), so the legacy access comparison accepts exactly this gain and still reports any other.
 
 **Permission baseline (AUD-DEF-008).**
 

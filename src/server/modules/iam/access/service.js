@@ -1,5 +1,5 @@
 import { assertPermission } from '../../../platform/auth/index.js';
-import { authzOf, LEGACY_ROLE_PERMISSIONS, PERMISSIONS_SINCE_LEGACY, permissionRegistry, fieldRegistry, recordResolvers, isSensitiveKey } from '../../../platform/authz/index.js';
+import { authzOf, INTENDED_LEGACY_GAINS, LEGACY_ROLE_PERMISSIONS, PERMISSIONS_SINCE_LEGACY, permissionRegistry, fieldRegistry, recordResolvers, isSensitiveKey } from '../../../platform/authz/index.js';
 import { companyScope } from '../../../platform/db/scope.js';
 import { inTransaction, transaction } from '../../../platform/db/index.js';
 import { writeAudit } from '../../../platform/audit/index.js';
@@ -368,8 +368,9 @@ export function createAccessService({ db, identity, approvals }) {
         const after = authz.resolve({ companyId: c, userId: null, roles }).perms;
         const lost = before.filter((k) => !after.includes(k));
         const added = after.filter((k) => !before.includes(k));
-        const gained = added.filter((k) => !NEW_PERMISSIONS.has(k));
-        const newOnly = added.filter((k) => NEW_PERMISSIONS.has(k));
+        const intended = new Set(roles.flatMap((r) => INTENDED_LEGACY_GAINS[r] ?? [])); // a gain decided on purpose counts with the new permissions
+        const gained = added.filter((k) => !NEW_PERMISSIONS.has(k) && !intended.has(k));
+        const newOnly = added.filter((k) => NEW_PERMISSIONS.has(k) || intended.has(k));
         const unmapped = roles.filter((r) => !mapped.has(r) && !db.prepare('SELECT 1 FROM iam_roles WHERE company_id IS NULL AND code = ?').get(r));
         const result = lost.length ? 'LOST' : gained.length ? 'GAINED' : unmapped.length ? 'UNMAPPED' : newOnly.length ? 'NEW_ONLY' : 'SAME';
         return { userId: u.id, username: u.username, displayName: u.display_name, roles, before: before.length, after: after.length, lost, gained, newOnly, unmapped, result };
