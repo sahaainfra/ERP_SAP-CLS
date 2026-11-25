@@ -2,6 +2,7 @@ import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { publishEvent } from '../src/server/platform/events/index.js';
 import { dlpOf } from '../src/server/modules/close/dlp.js';
+import { todayIST } from '../src/shared/dates.js';
 import { U, attachFile, fill, key, partnerOf, ready } from './qa-helpers.js';
 
 // Part 26.03 (audit AUD-DEF-004): the period opened from an issued handover, complaints with their response time, assignment, rectification,
@@ -63,6 +64,12 @@ test('26.03 defects liability: period, complaints, verification and recovery, wa
   assert.equal(dlpOf(r.d).sweep(1).escalated, 1);
   assert.equal(r.d.prepare('SELECT escalation_level FROM dlp_complaints WHERE id = ?').get(c2.id).escalation_level, 1);
   assert.equal(dlpOf(r.d).sweep(1).escalated, 0, 'once a day at most');
+  // FR-01 a period ending within 30 days is told every morning, not only the first one
+  r.d.prepare("UPDATE dlp_periods SET ends_on = date(?, '+20 days'), expiry_notified_on = NULL WHERE id = ?").run(todayIST(), p2.id);
+  assert.equal(dlpOf(r.d).sweep(1).ending, 1);
+  assert.equal(dlpOf(r.d).sweep(1).ending, 0, 'once a day');
+  r.d.prepare("UPDATE dlp_periods SET expiry_notified_on = date(?, '-1 day') WHERE id = ?").run(todayIST(), p2.id);
+  assert.equal(dlpOf(r.d).sweep(1).ending, 1, 'again the next morning');
   assert.ok(okay(await call(U.pm, 'GET', '/complaints?overdue=1')).some((c) => c.id === c2.id));
 
   // BR-01 completion refused while a complaint is open; then COMMGR and CFO approve

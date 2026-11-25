@@ -49,6 +49,12 @@ test('26.02 handover: checklist evidence, readiness, certificate, client signatu
   // FR-03 client assets
   okay(await call(U.pm, 'POST', `/handovers/${h.id}/assets`, { tagNo: 'DG-01', description: 'Diesel generator 500 kVA', make: 'Acme', serialNo: 'SN-1', warrantyUntil: '2028-11-30' }), 201);
   assert.equal((await call(U.pm, 'POST', `/handovers/${h.id}/assets`, { tagNo: 'DG-01', description: 'Duplicate tag' })).status, 409);
+  // a removed asset can be listed again under the same tag
+  const wrong = okay(await call(U.pm, 'POST', `/handovers/${h.id}/assets`, { tagNo: 'AHU-09', description: 'Entered on the wrong handover' }), 201).assets.find((a) => a.tagNo === 'AHU-09');
+  okay(await call(U.pm, 'DELETE', `/client-assets/${wrong.id}`));
+  const again = okay(await call(U.pm, 'POST', `/handovers/${h.id}/assets`, { tagNo: 'AHU-09', description: 'Air handling unit 9' }), 201);
+  assert.equal(again.assets.filter((a) => a.tagNo === 'AHU-09').length, 1);
+  okay(await call(U.pm, 'DELETE', `/client-assets/${again.assets.find((a) => a.tagNo === 'AHU-09').id}`));
 
   // FR-05 the certificate: PM requests, PD approves, PM records the client's signature
   const sub = okay(await call(U.pm, 'POST', `/handovers/${h.id}/request`), 202);
@@ -78,4 +84,22 @@ test('26.02 handover: checklist evidence, readiness, certificate, client signatu
 test('26.02 the defects liability period ends the same day months later, or on the last day of a shorter month', async () => {
   const { addMonths } = await import('../src/server/modules/close/handover.js');
   assert.equal(addMonths('2026-01-31', 1), '2026-02-28'); assert.equal(addMonths('2026-11-24', 12), '2027-11-24'); assert.equal(addMonths('2024-02-29', 12), '2025-02-28');
+});
+
+test('26.02 a rejected whole-project handover still counts; an area handover waits for the commissioning systems of its site', async () => {
+  const r = await ready(opened);
+  const call = (who, method, path, body) => r.api.call(method, `${C}${path}`, { ...who, headers: key(), body });
+  const okay = (res, status = 200) => { assert.equal(res.status, status, JSON.stringify(res.json)); return res.json.data; };
+  r.d.prepare("UPDATE core_feature_flags SET default_enabled = 1, enabled = 1 WHERE key IN ('ff.close.p2601', 'ff.close.p2602') AND company_id IS NULL").run();
+
+  const whole = okay(await call(U.pm, 'POST', '/handovers', { projectId: r.A, title: 'Whole project', scopeType: 'PROJECT', dlpMonths: 12 }), 201);
+  r.d.prepare("UPDATE ho_handovers SET status = 'REJECTED' WHERE id = ?").run(whole.id);
+  assert.equal((await call(U.pm, 'POST', '/handovers', { projectId: r.A, title: 'Second whole project', scopeType: 'PROJECT' })).status, 409, 'the rejected one is edited and requested again');
+
+  const area = okay(await call(U.pm, 'POST', '/handovers', { projectId: r.A, siteId: r.site, title: 'Tower A', scopeType: 'AREA', areaLabel: 'Tower A', dlpMonths: 12 }), 201);
+  const sys = Number(r.d.prepare("INSERT INTO tnc_systems (company_id, org_project_id, org_site_id, code, name, stage) VALUES (1, ?, ?, 'SYS-AREA-1', 'Chilled water', 'MC')").run(r.A, r.site).lastInsertRowid);
+  const blocked = (b) => b.some((m) => /Commissioning system/.test(m) && /SYS-AREA-1/.test(m));
+  assert.ok(blocked(okay(await call(U.pm, 'GET', `/handovers/${area.id}`)).readiness.blockers), 'a system of the site not at RFSU blocks the area');
+  r.d.prepare("UPDATE tnc_systems SET stage = 'RFSU' WHERE id = ?").run(sys);
+  assert.ok(!blocked(okay(await call(U.pm, 'GET', `/handovers/${area.id}`)).readiness.blockers));
 });

@@ -132,7 +132,7 @@ export function createCommissioning({ db }) {
     sheets: {
       create(actor, tagId, b) {
         const t = tagRow(actor, tagId, 'tnc.manage');
-        const id = Number(db.prepare("INSERT INTO tnc_checksheets (company_id, tag_id, sheet_class, title, created_by, source_type) VALUES (?, ?, ?, ?, ?, 'api')").run(actor.companyId, t.id, b.sheetClass, b.title, actor.user).lastInsertRowid);
+        const id = Number(db.prepare("INSERT INTO tnc_checksheets (company_id, tag_id, sheet_class, title, project_id, site_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'api')").run(actor.companyId, t.id, b.sheetClass, b.title, t.project_id, t.site_id, actor.user).lastInsertRowid);
         audit(actor, 'tnc_checksheets', String(id), 'create', actor.companyId, { newValues: b });
         return sheetView(db.prepare('SELECT * FROM tnc_checksheets WHERE id = ?').get(id));
       },

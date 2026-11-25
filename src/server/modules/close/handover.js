@@ -64,10 +64,15 @@ export function createHandover({ db }) {
     if (h.location_id) { where.push('q.location_id = ?'); args.push(h.location_id); }
     const snags = hasTable('qa_snags') ? db.prepare(`SELECT q.doc_no FROM qa_snags q WHERE ${where.join(' AND ')} ORDER BY q.id LIMIT 20`).all(...args) : [];
     if (snags.length) blockers.push(`Open class A snag(s): ${snags.map((s) => s.doc_no).join(', ')}.`);
+    // The systems of the handover's scope: the whole project (narrowed to its site, if any); for an area, the systems of its site and the
+    // systems its client assets belong to (systems carry no location, so an area without a site is matched through its assets only).
     const sw = ["s.company_id = ? AND s.org_project_id = ? AND s.deleted_at IS NULL AND s.status = 'ACTIVE' AND s.parent_id IS NULL AND s.stage != 'RFSU'"]; const sa = [h.company_id, h.org_project_id];
-    if (h.org_site_id) { sw.push('(s.org_site_id = ? OR s.org_site_id IS NULL)'); sa.push(h.org_site_id); }
+    const ofAssets = "s.id IN (SELECT a.tnc_system_id FROM ho_client_assets a WHERE a.handover_id = ? AND a.deleted_at IS NULL AND a.status = 'ACTIVE')";
+    if (h.scope_type === 'PROJECT') { if (h.org_site_id) { sw.push('(s.org_site_id = ? OR s.org_site_id IS NULL)'); sa.push(h.org_site_id); } }
+    else if (h.org_site_id) { sw.push(`(s.org_site_id = ? OR ${ofAssets})`); sa.push(h.org_site_id, h.id); }
+    else { sw.push(ofAssets); sa.push(h.id); }
     const systems = hasTable('tnc_systems') ? db.prepare(`SELECT s.code FROM tnc_systems s WHERE ${sw.join(' AND ')} ORDER BY s.code LIMIT 20`).all(...sa) : [];
-    if (systems.length && h.scope_type === 'PROJECT') blockers.push(`Commissioning system(s) not ready for start-up: ${systems.map((s) => s.code).join(', ')}.`);
+    if (systems.length) blockers.push(`Commissioning system(s) not ready for start-up: ${systems.map((s) => s.code).join(', ')}.`);
     return { ready: blockers.length === 0, blockers };
   }
 
@@ -111,7 +116,7 @@ export function createHandover({ db }) {
       if (b.siteId && !base.siteOf(actor.companyId, p.id, b.siteId)) throw unprocessable('That site is not a site of the project.');
       if (b.locationId && !db.prepare('SELECT 1 FROM proj_locations WHERE id = ? AND company_id = ? AND project_id = ? AND deleted_at IS NULL').get(rid(b.locationId), actor.companyId, p.id)) throw unprocessable('That location is not a location of the project.');
       if (b.scopeType === 'AREA' && !b.locationId && !b.areaLabel) throw unprocessable('An area handover names its location or area.');
-      if (b.scopeType === 'PROJECT' && db.prepare("SELECT 1 FROM ho_handovers WHERE company_id = ? AND org_project_id = ? AND scope_type = 'PROJECT' AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'ISSUED') AND deleted_at IS NULL").get(actor.companyId, p.id)) throw conflict('The project already has a whole-project handover.');
+      if (b.scopeType === 'PROJECT' && db.prepare("SELECT 1 FROM ho_handovers WHERE company_id = ? AND org_project_id = ? AND scope_type = 'PROJECT' AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'ISSUED', 'REJECTED') AND deleted_at IS NULL").get(actor.companyId, p.id)) throw conflict('The project already has a whole-project handover.');
       return transaction(db, () => {
         const docNo = number(actor.companyId, actor.user, 'HO_HANDOVER', 'ho_handovers', 'HO');
         const id = Number(db.prepare("INSERT INTO ho_handovers (company_id, org_project_id, org_site_id, location_id, doc_no, title, scope_type, area_label, planned_on, dlp_months, project_id, site_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'api')")
