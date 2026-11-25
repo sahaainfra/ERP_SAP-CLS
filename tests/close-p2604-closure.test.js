@@ -29,6 +29,10 @@ test('26.04 closeout: checklist, final account, P&L, benchmarks, approvals, less
   // the owners' records satisfy the automatic checks
   const h = fill(r.d, 'ho_handovers', { company_id: 1, org_project_id: r.A, doc_no: 'HO/C/1', title: 'Whole project', scope_type: 'PROJECT', status: 'ISSUED', effective_on: '2025-06-30', dlp_months: 12 });
   fill(r.d, 'dlp_periods', { company_id: 1, org_project_id: r.A, handover_id: h, doc_no: 'DLP/C/1', starts_on: '2025-06-30', ends_on: '2026-06-30', status: 'COMPLETED' });
+  // an issued handover whose period was never opened still owes one
+  const h2 = fill(r.d, 'ho_handovers', { company_id: 1, org_project_id: r.A, doc_no: 'HO/C/2', title: 'Annexe', scope_type: 'AREA', area_label: 'Annexe', status: 'ISSUED', effective_on: '2025-07-31', dlp_months: 12 });
+  assert.equal(auto(okay(await call(U.pm, 'GET', `/closures/${c.id}`))).DLP, 'OPEN', 'the annexe has no period');
+  fill(r.d, 'dlp_periods', { company_id: 1, org_project_id: r.A, handover_id: h2, doc_no: 'DLP/C/2', starts_on: '2025-07-31', ends_on: '2026-07-31', status: 'COMPLETED' });
   const snap = fill(r.d, 'pl_snapshots', { company_id: 1, org_project_id: r.A, period: '2026-10', status: 'APPROVED', frozen_at: '2026-11-05T00:00:00.000Z', revenue_cum_paise: 100_000_000_00, operating_profit_cum_paise: 8_000_000_00 });
   const draft = fill(r.d, 'pl_snapshots', { company_id: 1, org_project_id: r.A, period: '2026-09', status: 'DRAFT' });
 

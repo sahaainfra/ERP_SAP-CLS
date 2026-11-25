@@ -236,7 +236,7 @@ export function createDlp({ db }) {
       const soon = db.prepare("SELECT * FROM dlp_periods WHERE company_id = ? AND status = 'ACTIVE' AND deleted_at IS NULL AND ends_on <= ? AND (expiry_notified_on IS NULL OR expiry_notified_on < ?)").all(companyId, addMonths(today(), 1), today());
       for (const p of soon) {
         db.prepare('UPDATE dlp_periods SET expiry_notified_on = ? WHERE id = ?').run(today(), p.id);
-        if (p.expiry_notified_on == null || p.ends_on <= today()) { notify(companyId, 'dlp.period.ending', ['role:PM', 'role:COMMGR'], p.doc_no, `ends on ${p.ends_on}`, p.area_label ?? '', `/close/dlp/period?id=${p.id}`, `${p.id}.${today()}`, { projectId: p.org_project_id }); ending += 1; }
+        notify(companyId, 'dlp.period.ending', ['role:PM', 'role:COMMGR'], p.doc_no, `ends on ${p.ends_on}`, p.area_label ?? '', `/close/dlp/period?id=${p.id}`, `${p.id}.${today()}`, { projectId: p.org_project_id }); ending += 1;
       }
       return { escalated, ending };
     },

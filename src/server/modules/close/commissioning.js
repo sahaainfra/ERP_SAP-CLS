@@ -132,7 +132,7 @@ export function createCommissioning({ db }) {
     sheets: {
       create(actor, tagId, b) {
         const t = tagRow(actor, tagId, 'tnc.manage');
-        const id = Number(db.prepare("INSERT INTO tnc_checksheets (company_id, tag_id, sheet_class, title, created_by, source_type) VALUES (?, ?, ?, ?, ?, 'api')").run(actor.companyId, t.id, b.sheetClass, b.title, actor.user).lastInsertRowid);
+        const id = Number(db.prepare("INSERT INTO tnc_checksheets (company_id, tag_id, sheet_class, title, project_id, site_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'api')").run(actor.companyId, t.id, b.sheetClass, b.title, t.project_id, t.site_id, actor.user).lastInsertRowid);
         audit(actor, 'tnc_checksheets', String(id), 'create', actor.companyId, { newValues: b });
         return sheetView(db.prepare('SELECT * FROM tnc_checksheets WHERE id = ?').get(id));
       },
@@ -249,7 +249,7 @@ workflowTypes.register({
   docType: CERT_DOC, label: 'Commissioning certificate', processOwner: 'QCMGR', route: (id) => `/close/certificates?id=${id}`,
   describe(db, companyId, id) { const c = db.prepare('SELECT c.*, s.code FROM tnc_certificates c JOIN tnc_systems s ON s.id = c.system_id WHERE c.id = ?').get(rid(id)); return c && c.company_id === companyId ? { ref: c.doc_no, title: `${KINDS[c.kind].label}: system ${c.code}`, originator: c.requested_by, projectId: c.project_id ?? undefined, siteId: c.site_id ?? undefined } : null; },
   summarise(db, _actor, id) { const c = db.prepare('SELECT c.*, s.code, s.name FROM tnc_certificates c JOIN tnc_systems s ON s.id = c.system_id WHERE c.id = ?').get(rid(id)); if (!c) return null; const r = JSON.parse(c.readiness_json || '{}'); return { fields: [{ label: 'Certificate', value: `${c.kind} (${KINDS[c.kind].label})` }, { label: 'System', value: `${c.code} ${c.name}` }, { label: 'Ready when requested', value: r.ready ? 'Yes: every check passed' : 'No' }] }; },
-  defaultDefinition: { name: 'Commissioning certificate: the QA/QC manager and the project manager approve what the commissioning lead requested; the client signs after', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('QCMGR', 'QA/QC manager', 'QCMGR'), step('PM', 'Project manager', 'PM')] },
+  defaultDefinition: { name: 'Commissioning certificate: QA/QC manager and project manager approve the lead\'s request; the client signs after', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('QCMGR', 'QA/QC manager', 'QCMGR'), step('PM', 'Project manager', 'PM')] },
   hooks: {
     onApproved: (db, { instance, actor }) => commissioningOf(db).certificates.decide(instance, actor, 'APPROVED'),
     onRejected: (db, { instance, actor, comment }) => commissioningOf(db).certificates.decide(instance, actor, 'REJECTED', comment),

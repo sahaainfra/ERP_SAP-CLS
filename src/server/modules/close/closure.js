@@ -51,8 +51,10 @@ export function createClosure({ db }) {
     const pid = c.org_project_id; const out = {};
     const issued = has('ho_handovers') ? count("SELECT COUNT(*) AS n FROM ho_handovers WHERE org_project_id = ? AND status = 'ISSUED' AND deleted_at IS NULL", pid) : 0;
     out.HANDOVER = { ok: issued > 0, detail: `${issued} issued handover(s)` };
-    const periods = has('dlp_periods') ? db.prepare("SELECT COUNT(*) AS n, SUM(status = 'COMPLETED') AS done FROM dlp_periods WHERE org_project_id = ? AND status != 'CANCELLED' AND deleted_at IS NULL").get(pid) : { n: 0, done: 0 };
-    out.DLP = { ok: periods.n > 0 && periods.done === periods.n, detail: `${periods.done ?? 0} of ${periods.n} period(s) completed` };
+    // Every issued handover needs its period completed (or cancelled); a handover whose period was never opened (part 26.03 off when it was
+    // issued) is still owed one, which the project manager opens by hand.
+    const owed = has('dlp_periods') && has('ho_handovers') ? db.prepare("SELECT COUNT(*) AS n, SUM(EXISTS (SELECT 1 FROM dlp_periods p WHERE p.handover_id = h.id AND p.status IN ('COMPLETED', 'CANCELLED') AND p.deleted_at IS NULL)) AS done, SUM(NOT EXISTS (SELECT 1 FROM dlp_periods p WHERE p.handover_id = h.id AND p.deleted_at IS NULL)) AS missing FROM ho_handovers h WHERE h.org_project_id = ? AND h.status = 'ISSUED' AND h.deleted_at IS NULL").get(pid) : { n: 0, done: 0, missing: 0 };
+    out.DLP = { ok: owed.n > 0 && owed.done === owed.n, detail: `${owed.done ?? 0} of ${owed.n} issued handover(s) with the period completed${owed.missing ? `; ${owed.missing} without a period opened` : ''}` };
     const wos = has('ctr_work_orders') ? count("SELECT COUNT(*) AS n FROM ctr_work_orders WHERE org_project_id = ? AND deleted_at IS NULL AND (status IN ('DRAFT', 'SUBMITTED', 'RETURNED') OR (status = 'APPROVED' AND wo_state != 'CLOSED'))", pid) : 0;
     out.WORK_ORDERS = { ok: wos === 0, detail: `${wos} work order(s) open` };
     const snags = has('qa_snags') ? count("SELECT COUNT(*) AS n FROM qa_snags WHERE org_project_id = ? AND deleted_at IS NULL AND status IN ('OPEN', 'RECTIFIED')", pid) : 0;
@@ -105,7 +107,7 @@ export function createClosure({ db }) {
     },
     create(actor, { projectId }) {
       const p = base.project(actor, projectId, 'cls.view', 'cls.manage');
-      if (db.prepare("SELECT 1 FROM cls_closures WHERE org_project_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED') AND deleted_at IS NULL").get(p.id)) throw conflict('The project already has a closeout.');
+      if (db.prepare("SELECT 1 FROM cls_closures WHERE org_project_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED') AND deleted_at IS NULL").get(p.id)) throw conflict('The project already has a closeout.');
       return transaction(db, () => {
         const docNo = number(actor.companyId, actor.user, 'CLS_CLOSURE', 'cls_closures', 'CLS');
         const id = Number(db.prepare("INSERT INTO cls_closures (company_id, org_project_id, doc_no, project_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, 'api')").run(actor.companyId, p.id, docNo, p.id, actor.user).lastInsertRowid);

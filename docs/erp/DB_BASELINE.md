@@ -5881,12 +5881,12 @@ Indexes:
 Foreign keys: pl_snapshot_id -> pl_snapshots(id), final_account_file_id -> core_files(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
 
 Indexes:
+- ux_cls_closures_live (unique): org_project_id
 - ix_cls_closures_snapshot: pl_snapshot_id
 - ix_cls_closures_file: final_account_file_id
 - ix_cls_closures_status: company_id, status
 - ix_cls_closures_project: org_project_id
 - ix_cls_closures_company_id: company_id
-- ux_cls_closures_live (unique): org_project_id
 - ux_cls_closures_doc (unique): company_id, doc_no
 
 ## col_comments
@@ -14639,12 +14639,12 @@ Indexes:
 Foreign keys: tnc_system_id -> tnc_systems(id), org_project_id -> org_projects(id), handover_id -> ho_handovers(id), company_id -> org_companies(id)
 
 Indexes:
+- ux_ho_client_assets_tag (unique): handover_id, tag_no
 - ix_ho_client_assets_status: company_id, status
 - ix_ho_client_assets_system: tnc_system_id
 - ix_ho_client_assets_project: org_project_id
 - ix_ho_client_assets_handover: handover_id
 - ix_ho_client_assets_company_id: company_id
-- ux_ho_client_assets_tag (unique): handover_id, tag_no
 
 ## ho_handovers
 
