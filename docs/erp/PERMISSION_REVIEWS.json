@@ -1,0 +1,11 @@
+[
+ {
+  "sha256": "2bfa946b19e65223c150bb0d8656ef0083ac3b7b566fdab2cd6bf5d555a9fd22",
+  "date": "2026-11-25",
+  "maker": "Claude Code audit remediation session",
+  "note": "First recorded version (audit AUD-DEF-008): the 117 sensitive permissions and their holders as the role templates grant them on 2026-11-25. An IT administrator or a director checks it.",
+  "checker": null,
+  "checkerRole": null,
+  "checkedOn": null
+ }
+]

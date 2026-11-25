@@ -909,3 +909,29 @@ Architecture decision records. The reference text is `docs/erp/ARCHITECTURE.md`;
 ## Part 30.10 — UAT, production cut-over and hypercare
 - **ADR-771 The programme manager is PCMGR; readiness is computed from the records; go-live needs every mandatory criterion and the director.** The role catalogue has no programme manager: the project controls manager (PCMGR) runs the go-live (`golive.manage`): the checklist, the UAT scripts and sign-off requests, the cut-over runs and the go/no-go meeting. The decision is approved PCMGR → CFO → DIR through the approval engine, never by its author, and BR-01 is checked when it is submitted and again when the director approves (a criterion may have changed meanwhile). Nineteen of the twenty-one criteria are evaluated from the records of earlier parts (Programme Gates G1-G7, open critical/high security findings, the latest load test, backups and restore tests, runbooks, the on-call rota for 28 days, the accessibility sign-off, the approved documentation package, training ≥ 90 % of active users through the courses named in `golive.training.course_codes`, UAT signed for every module, no open S1/S2, data migration objects signed off, a dry run inside its window); a mandatory criterion cannot be waived. Every internal role holds `uat.execute` (business users run the scripts of their roles and raise defects; the reporter re-tests and closes); the module owners, ITADM and PCMGR triage. A module is signed by its owner (the 30.03 owner map) only when every script passed and no S1/S2 is open. The cut-over runbook's automatic steps call the services of 29.05 (migration objects), 29.06 (the verified backup that is the rollback point) and 30.08 (environment parity); a rollback is recorded here and executed as the approved production restore of 29.06. Hypercare (four weeks by default) opens when the production run completes, keeps a daily report at 18:00 IST, and is handed over to steady-state support with the director's approval when its period is over and no S1/S2 is open. Programme Gates records G1-G4 only, so in this build G5-G7 are not met and GO is refused — as it should be until those gates are recorded.
 
+
+## Audit remediation — how administrators change flags and the permission baseline (2026-11-25)
+
+The owner left both decisions to the requirements of the ERP. The approval reference (`07_APPROVAL_WORKFLOW_REFERENCE.md`) and the role catalogue (`06_ROLE_CATALOGUE.md`) govern them.
+
+**Feature flags (AUD-DEF-009, D-002).**
+
+- **The rule.** A flag change is a configuration change (05 §5; 07, part 29.01: "Any configuration change: SYSADM → ITADM (financial/security areas → CFO or DIR)"; 06, SYSADM: "Configuration changes (maker-checker with ITADM)").
+- **In staging and production:**
+  - a change made on the Feature Flags page is recorded in `core_flag_changes` and answered with 202;
+  - an IT administrator approves or rejects it (`core.flag.approve`; never the requester);
+  - a flag of a financial module (fin, pay, bud, bill, ctr, ap, ar, pmt, cash) or a security module (iam, sec, admin) needs a second, different approver who is the CFO or a director;
+  - the change applies on the last approval, and the reason, requester and approvers are written on the flag and in the audit trail;
+  - the requester may cancel; a rejection needs a reason.
+- **Why not the workflow engine.** It is itself switched on by a flag (`ff.eng.p0401`), and a flag change must never wait on a flag.
+- **In development and test,** flags still change at once (audited), so the test suites can set them. The rule is about the installations people use.
+- **The Enterprise Control Center rule of 29.01 is unchanged.** Once on, the company's flags change only through its change requests.
+
+**Permission baseline (AUD-DEF-008).**
+
+- **The rule.** A change of who holds a sensitive permission is a role/permission change (07: "SYSADM (maker) → ITADM or DIR (checker)").
+- **The review log.** `docs/erp/PERMISSION_REVIEWS.json` records each version of `PERMISSION_BASELINE.json` by its SHA-256, with its maker, note, checker and the checker's role:
+  - `--write-baseline` needs `--maker` and `--note`;
+  - `--record-check` needs a checker who is not the maker, as ITADM or DIR.
+- **The regression check** fails when the baseline differs from its latest recorded version. It warns while that version awaits its checker.
+- **The first version** (2026-11-25) was recorded by the audit remediation session. It awaits its checker: an IT administrator or a director signs it with `node scripts/permission_audit.mjs --record-check --checker <name> --checker-role ITADM|DIR`.

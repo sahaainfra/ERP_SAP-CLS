@@ -46,3 +46,9 @@ const patchBody = z
   });
 
 export const parsePatch = (body) => parse(patchBody, body);
+
+// Audit AUD-DEF-009: the checks of a requested flag change
+export const parseChangeId = (value) => parse(idPart, value);
+export const parseChangeList = (query) => parse(z.object({ status: z.enum(['PENDING', 'APPLIED', 'REJECTED', 'CANCELLED']).optional() }).strict(), query ?? {});
+export const parseDecision = (body) => parse(z.object({ decision: z.enum(['APPROVE', 'REJECT']), note: z.string().trim().min(5).max(500).optional() }).strict(), body ?? {});
+export const parseCancel = (body) => parse(z.object({ reason: z.string().trim().min(5).max(500) }).strict(), body ?? {});

@@ -6765,6 +6765,52 @@ Indexes:
 - ix_core_financial_years_company_status: company_id, status
 - ux_core_financial_years_code (unique): company_id, code
 
+## core_flag_changes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| flag_key | TEXT | yes |  |  |
+| scope_level | TEXT | yes |  |  |
+| scope_environment | TEXT |  |  |  |
+| scope_company_id | INTEGER |  |  |  |
+| scope_project_id | INTEGER |  |  |  |
+| enabled | INTEGER | yes |  |  |
+| area | TEXT | yes |  | 'GENERAL' |
+| reason | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| requested_by | TEXT | yes |  |  |
+| first_approved_by | TEXT |  |  |  |
+| first_approved_at | TEXT |  |  |  |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| decision_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: scope_project_id -> org_projects(id), scope_company_id -> org_companies(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_core_flag_changes_scope_project_id: scope_project_id
+- ix_core_flag_changes_scope_company_id: scope_company_id
+- ix_core_flag_changes_key: flag_key
+- ix_core_flag_changes_status: company_id, status
+- ix_core_flag_changes_company_id: company_id
+- ux_core_flag_changes_doc (unique): company_id, doc_no
+
 ## core_formulas
 
 | Column | Type | Not null | Key | Default |

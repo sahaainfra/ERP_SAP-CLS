@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
-import { fetchAllFlags, useFeatureFlag, useFlagKeys, useFlagList, useSetFlag } from '../api/index.js';
+import { fetchAllFlags, useFeatureFlag, useFlagChangeAction, useFlagChanges, useFlagKeys, useFlagList, useSetFlag } from '../api/index.js';
 import { formatDateTime, levelLabel, toCsv } from '../../../platform/format.js';
 import PageHeader from '../../../platform/design/PageHeader.jsx';
 
@@ -67,6 +67,48 @@ function dialogError(err) {
   };
 }
 
+
+/** Audit AUD-DEF-009: in staging and production a flag change waits for a second person (an IT administrator; for a financial or security flag
+ * the CFO or a director too). Shown only when there are changes; an approver approves or rejects, the requester may cancel. */
+function PendingChanges({ session }) {
+  const me = String(session?.user ?? session?.username ?? '').toLowerCase();
+  const canApprove = session?.permissions?.includes('core.flag.approve');
+  const changes = useFlagChanges();
+  const act = useFlagChangeAction();
+  const [error, setError] = useState(null);
+  const rows = changes.data ?? [];
+  if (!rows.length) return null;
+  const run = async (row, action, decision) => {
+    setError(null);
+    let note; let reason;
+    if (decision === 'REJECT') { note = window.prompt(`Why is ${row.docNo} rejected?`) ?? ''; if (note.trim().length < 5) { setError('Say in a few words why the change is rejected.'); return; } }
+    if (action === 'cancel') { reason = window.prompt(`Why is ${row.docNo} cancelled?`) ?? ''; if (reason.trim().length < 5) { setError('Say in a few words why the request is cancelled.'); return; } }
+    try { await act.mutateAsync({ id: row.id, action, decision, note, reason }); } catch (err) { setError(err?.message ?? 'The change could not be saved.'); }
+  };
+  return (
+    <section aria-labelledby="flag-changes-title" className="card" data-testid="flag-changes">
+      <h2 id="flag-changes-title">Changes waiting for approval</h2>
+      <p className="muted">In staging and production a flag changes only when a second person approves: an IT administrator, and for a financial or security flag also the CFO or a director.</p>
+      {error && <p className="field-error" role="alert">{error}</p>}
+      <div className="table-scroll"><table className="data-table">
+        <thead><tr><th>Request</th><th>Flag</th><th>Scope</th><th>New value</th><th>Area</th><th>Reason</th><th>Asked by</th><th>Status</th><th><span className="sr-only">Actions</span></th></tr></thead>
+        <tbody>{rows.map((r) => (
+          <tr key={r.id} data-testid="flag-change" data-status={r.status}>
+            <td data-label="Request">{r.docNo}</td><td data-label="Flag"><code>{r.key}</code></td><td data-label="Scope">{levelLabel(r.level)}{r.projectId ? ` ${r.projectId}` : ''}</td>
+            <td data-label="New value">{r.enabled ? 'ON' : 'OFF'}</td><td data-label="Area">{r.area.toLowerCase()}</td><td data-label="Reason">{r.reason}</td><td data-label="Asked by">{r.requestedBy}</td>
+            <td data-label="Status">{r.status === 'PENDING' && r.firstApprovedBy ? `PENDING (approved by ${r.firstApprovedBy})` : r.status}</td>
+            <td data-label="Actions">{r.status === 'PENDING' && (<span className="actions-row">
+              {canApprove && String(r.requestedBy).toLowerCase() !== me && <><button type="button" className="btn btn-primary btn-small" disabled={act.isPending} onClick={() => run(r, 'decide', 'APPROVE')} data-testid="flag-change-approve">Approve</button>
+                <button type="button" className="btn btn-small" disabled={act.isPending} onClick={() => run(r, 'decide', 'REJECT')} data-testid="flag-change-reject">Reject</button></>}
+              {String(r.requestedBy).toLowerCase() === me && <button type="button" className="btn btn-small" disabled={act.isPending} onClick={() => run(r, 'cancel')} data-testid="flag-change-cancel">Cancel</button>}
+            </span>)}</td>
+          </tr>))}
+        </tbody>
+      </table></div>
+    </section>
+  );
+}
+
 export default function FlagsPage({ session }) {
   const canConfigure = session?.permissions?.includes('core.flag.configure');
   const pageFlag = useFeatureFlag('ff.prog.p0002');
@@ -96,9 +138,11 @@ export default function FlagsPage({ session }) {
   const save = async (key, scope, enabled, form, version, dialog) => {
     setFormError(null);
     try {
-      await setFlag.mutateAsync({ key, scope, enabled, reason: String(form.get('reason') ?? ''), version });
+      const out = await setFlag.mutateAsync({ key, scope, enabled, reason: String(form.get('reason') ?? ''), version });
       dialog.current?.close();
-      setNotice(`Saved. ${key} is now ${enabled ? 'ON' : 'OFF'} for ${scopeText({ ...scope })}.`);
+      // staging and production: a second person approves the change first (audit AUD-DEF-009); it waits in their approvals
+      if (out?.data?.pending) setNotice(`Sent for approval as ${out.data.request.docNo}: ${key} becomes ${enabled ? 'ON' : 'OFF'} for ${scopeText({ ...scope })} once an IT administrator approves it (and the CFO or a director for a financial or security flag). You can follow it in My submissions.`);
+      else setNotice(`Saved. ${key} is now ${enabled ? 'ON' : 'OFF'} for ${scopeText({ ...scope })}.`);
     } catch (err) {
       setFormError(dialogError(err));
     }
@@ -164,6 +208,7 @@ export default function FlagsPage({ session }) {
         </button>
       </div>
       <p role="status" className="notice">{notice}</p>
+      <PendingChanges session={session} />
 
       {state.status === 'loading' && (
         <div className="skeleton" aria-busy="true" aria-label="Loading feature flags">
