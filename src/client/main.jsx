@@ -40,6 +40,7 @@ import './modules/bill/index.js';
 import './modules/fin/index.js';
 import './modules/pay/index.js';
 import './modules/portal/index.js';
+import './modules/close/index.js';
 import './modules/bi/index.js';
 import './modules/ai/index.js';
 import './modules/admin/index.js';

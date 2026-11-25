@@ -196,3 +196,28 @@ Both decisions follow `07_APPROVAL_WORKFLOW_REFERENCE.md` and `06_ROLE_CATALOGUE
 - the statuses of the new table are registered with the integrity check.
 
 **Regression on `5a19c2d1`, without E2E: all 16 stages pass** (`evidence/s2-regression-no-e2e.log`). E2E flag specs: 18 passed.
+
+## The large items (owner: "Complete the task 'The large items'", 2026-11-25)
+
+### AUD-DEF-005 — OpenAPI (done)
+
+Every declared route is in an OpenAPI file. `docs/erp/routes-openapi.yaml` is generated from the route policy for the routes no hand-written
+file documents; the `openapi-check` regression stage fails on an undocumented route, a documented operation without a route, or a stale
+generated file. Commit `76742719`.
+
+### AUD-DEF-004 — module M26 (done; the owner chose "Build all four now")
+
+| Part | Built | Approval chain | Test |
+|---|---|---|---|
+| 26.01 Commissioning | systems, tags, A/B/C check sheets, test packs, punch links to QA snags, MC/RFC/RFSU certificates with readiness, completion dashboard | commissioning lead (QCE) → QCMGR → PM → client signature recorded by PM | `close-p2601-commissioning` |
+| 26.02 Handover | project and area handovers, checklist with evidence, dossier index, client asset register, certificate | PM → PD → client signature recorded by PM | `close-p2602-handover` |
+| 26.03 Defects liability | periods from issued handovers, complaints with response times, verification, recoveries, escalation, warranty claims, completion | PM → COMMGR → CFO | `close-p2603-dlp` |
+| 26.04 Closeout | checklist read from the owners, final account, final P&L, performance, benchmarks, lessons, Project Setup closure check | PM → PD → CFO → DIR; lesson author → PCMGR | `close-p2604-closure` |
+
+The module `close` is registered; 4 migrations (430-433), 57 routes, 14 pages, 5 events, 5 workflow types, 24 permissions. Each part is behind
+its own flag (default off). The prerequisite rule was overridden for M26 on the owner's instruction (DECISIONS.md). D-762 to D-765 are closed;
+26.01-26.04 are Ready for review. The new `close` text area has English, with Hindi and Telugu drafts that need review.
+
+### AUD-DEF-016 — hard-coded UI strings
+
+Pending: the next item of the large items.

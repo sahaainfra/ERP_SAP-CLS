@@ -936,3 +936,23 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   - `--record-check` needs a checker who is not the maker, as ITADM or DIR.
 - **The regression check** fails when the baseline differs from its latest recorded version. It warns while that version awaits its checker.
 - **The first version** (2026-11-25) was recorded by the audit remediation session. It awaits its checker: an IT administrator or a director signs it with `node scripts/permission_audit.mjs --record-check --checker <name> --checker-role ITADM|DIR`.
+
+## Audit remediation — module M26 built now (owner: "Build all four now", 2026-11-25)
+
+- **Prerequisite rule overridden for M26.** The owner asked for parts 26.01-26.04 to be built in order although 18.06, 11.04, 22.07 and 23.12
+  await formal acceptance and the development company has no G1/G2 sign-off. The new business routes are gated by their part flag only
+  (`ff.close.p2601`-`p2604`, default off). The earlier evidence adapters keep their G1/G2 checks.
+- **The client's decisions are recorded by the project manager.** The approval reference names the client as the last step of the
+  commissioning certificate, the handover certificate and (implicitly) the final account. The client portal does not take decisions yet
+  (D-761), so the internal chain approves in the workflow engine and the project manager then records the client's signatory, date and
+  signed copy, as Billing does for certified bills. The readiness rules are checked again at that moment.
+- **Approval chains** follow `07_APPROVAL_WORKFLOW_REFERENCE.md`: certificate requested by the QA/QC engineer (the commissioning lead of a
+  site) → QCMGR → PM; handover PM → PD; DLP completion PM → COMMGR → CFO; closeout PM → PD → CFO → DIR; lesson author → PCMGR. Distinct
+  approvers are required throughout.
+- **Ownership.** M26 links to the records of QA (snags, inspections), Documents (issued revisions), Files, Contracts (work orders), Finance
+  (approved P&L snapshots) and Project Setup; it never writes into their tables. The closeout adds a blocking readiness check to Project
+  Setup's move to CLOSED through its provider hook; the move itself stays in Project Setup with its own approval.
+- **Recoveries** from defects liability complaints are announced (`dlp.defect.backcharge_raised`) for the subcontractor bill to deduct, as QA
+  does for snags; the retention release stays in Billing on the DLP end basis.
+- **Translations** of the new `close` text area: English is the source; Hindi and Telugu are drafts that need review by a business owner
+  who speaks the language before go-live.

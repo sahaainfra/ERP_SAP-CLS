@@ -87,6 +87,10 @@
   "PCMGR",
   "PM"
  ],
+ "cls.manage": [
+  "COMMGR",
+  "PM"
+ ],
  "core.calc.manage": [
   "SUPADM",
   "SYSADM"
@@ -182,6 +186,11 @@
   "COMMGR",
   "SUBCO"
  ],
+ "dlp.manage": [
+  "PM",
+  "QCE",
+  "QCMGR"
+ ],
  "doc.document.manage": [
   "DOC",
   "SUPADM"
@@ -236,6 +245,11 @@
  "hd.article.manage": [
   "ITADM",
   "SYSADM"
+ ],
+ "ho.manage": [
+  "DOC",
+  "PM",
+  "QCMGR"
  ],
  "hr.disciplinary.manage": [
   "HRMGR"
@@ -449,6 +463,10 @@
   "CM",
   "PLAN",
   "SE"
+ ],
+ "tnc.manage": [
+  "QCE",
+  "QCMGR"
  ],
  "tst.sandbox.manage": [
   "HRMGR",

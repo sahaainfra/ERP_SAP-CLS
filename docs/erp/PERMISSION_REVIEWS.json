@@ -7,5 +7,14 @@
   "checker": null,
   "checkerRole": null,
   "checkedOn": null
+ },
+ {
+  "sha256": "2852566ce499091e21c53cb55da37a4133b4c5f77458441caff1ab7bb39bc231",
+  "date": "2026-11-25",
+  "maker": "Claude Code audit remediation session",
+  "note": "Module M26 built on the owner's instruction (AUD-DEF-004): the .manage grants of commissioning (QCE, QCMGR), handover (PM, DOC, QCMGR), defects liability (PM, QCE, QCMGR) and closeout (PM, COMMGR), as DECISIONS.md 'module M26 built now' records. An IT administrator or a director checks it.",
+  "checker": null,
+  "checkerRole": null,
+  "checkedOn": null
  }
 ]

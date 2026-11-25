@@ -64,5 +64,6 @@ import bkp from './hi/bkp.js';
 import arc from './hi/arc.js';
 import hd from './hi/hd.js';
 import tst from './hi/tst.js';
+import close from './hi/close.js';
 
-export default { common, shell, palette, field, format, notify, trn, prf, exp, sep, bd, est, engg, bud, plan, proj, ess, site, proc, inv, plant, qa, hse, rmc, ctr, bill, fin, cash, gst, pa, fc, pl, cf, pc, ic, ps, pr, wr, st, fa, pp, ct, mr, ex, mc, why, lk, rd, scn, ai, aa, af, di, cv, adm, con, dev, bk, mig, bkp, arc, hd, tst };
+export default { common, shell, palette, field, format, notify, trn, prf, exp, sep, bd, est, engg, bud, plan, proj, ess, site, proc, inv, plant, qa, hse, rmc, ctr, bill, fin, cash, gst, pa, fc, pl, cf, pc, ic, ps, pr, wr, st, fa, pp, ct, mr, ex, mc, why, lk, rd, scn, ai, aa, af, di, cv, adm, con, dev, bk, mig, bkp, arc, hd, tst, close };
