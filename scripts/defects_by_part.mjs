@@ -41,6 +41,10 @@ if (check) {
   let by; try { by = read('DEFECTS_BY_PART.md'); } catch { by = ''; }
   if (by !== list) bad.push('DEFECTS_BY_PART.md is out of date (run node scripts/defects_by_part.mjs)');
   const open0 = items.filter((d) => !d.closed && !d.target); if (open0.length) bad.push(`${open0.length} open defect(s) have no target part (${open0.slice(0, 5).map((d) => d.id).join(', ')}...)`);
+  // audit AUD-DEF-002: one row per part in PROGRESS.csv (23.01-23.03 were once listed twice, once as "Not started")
+  const partIds = read('PROGRESS.csv').trim().split('\n').slice(1).map((r) => /^\d+,([\d.]+),/.exec(r)?.[1]).filter(Boolean);
+  const twice = [...new Set(partIds.filter((id, i) => partIds.indexOf(id) !== i))];
+  if (twice.length) bad.push(`PROGRESS.csv lists these parts more than once: ${twice.join(', ')}`);
   if (bad.length) { console.error(bad.join('\n')); process.exit(1); }
   console.log(`Defects OK: ${items.length} rows, ${open.length} open, every open row has a target part (${items.filter((d) => d.target === 'cross-module').length} cross-module).`);
 } else {

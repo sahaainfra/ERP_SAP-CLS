@@ -57,6 +57,19 @@ test('BR-02 no list endpoint can return an unbounded page', async () => {
   assert.equal(ok.json.meta.pageSize, 200);
 });
 
+test('BR-02 no request validator lets a page be larger than 200 rows (audit AUD-DEF-011)', () => {
+  const over = [];
+  const base = join(ROOT, 'src', 'server', 'modules');
+  for (const dir of readdirSync(base)) {
+    let files; try { files = readdirSync(join(base, dir)); } catch { continue; }
+    for (const f of files.filter((x) => /validators?\.js$/.test(x))) {
+      const text = readFileSync(join(base, dir, f), 'utf8');
+      for (const m of text.matchAll(/pageSize:\s*z[^,}]*?\.max\((\d+)\)/g)) if (Number(m[1]) > 200) over.push(`${dir}/${f}: pageSize max ${m[1]}`);
+    }
+  }
+  assert.deepEqual(over, []);
+});
+
 test('the list endpoint now also sorts and filters through the shared helper, and rejects unknown columns', async () => {
   const sorted = await api.call('GET', '/api/v1/core/feature-flags?sort=-key&pageSize=3', { roles: 'SYSADM' });
   const keys = sorted.json.data.map((r) => r.key);

@@ -19,7 +19,7 @@ export const parseMbCreate = (b) => parse(z.object({ projectId: id, siteId: oid,
 export const parseMbUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(mbBase).map(([k, v]) => [k, nd(v).optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
 export const parseMbCheck = (b) => parse(z.object({ checkedQty: z.number().min(0).max(1e10), checkPct: z.number().min(0).max(100).default(100), checkerName: text(120).min(2), checkerOrg: opt(160), checkedOn: day, signatureRef: opt(160), note: opt(500) }).strict(), b ?? {});
 export const parseSuggestQ = (q) => parse(z.object({ projectId: id, boqLineId: id.optional(), activityId: id.optional() }).passthrough(), q ?? {});
-export const parseAbstractQ = (q) => parse(z.object({ projectId: id, period: period.optional(), pageSize: z.coerce.number().int().min(1).max(500).optional() }).passthrough(), q ?? {});
+export const parseAbstractQ = (q) => parse(z.object({ projectId: id, period: period.optional(), pageSize: z.coerce.number().int().min(1).max(200).optional() }).passthrough(), q ?? {});
 export const parsePdfQ = (q) => parse(z.object({ projectId: id, book: id.optional(), from: day.optional(), to: day.optional() }).passthrough(), q ?? {});
 
 // ---- part 22.02: quantity reconciliation, deviation statements, extra items ----
