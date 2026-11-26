@@ -136,8 +136,12 @@ export function createTransferService({ db, base, invSvc, gate }) {
         for (const { l, q } of plan) {
           const item = stock.itemOf(t.company_id, l.item_id); const bq = stock.toBase(item, l.uom, q); const entries = stock.postOut(actor, { store: from, itemId: item.id, batchNo: l.batch_no ?? undefined, type: 'TRANSFER_OUT', qty: bq.qty, date, sourceType: 'inv_transfer_line', sourceId: String(l.id), reason: `Transfer ${t.doc_no} to ${to.code}` });
           const value = entries.reduce((n, e) => n + Math.abs(e.value), 0); total += value; const batches = [...new Set(entries.map((e) => e.batch_no).filter(Boolean))];
-          for (const e of entries) { const r = transitRow(to, item.id, e.batch_no ?? '', owner); db.prepare('UPDATE inv_balances SET qty_in_transit = qty_in_transit + ?, updated_at = ?, version = version + 1 WHERE id = ?').run(e.qty_out, now, r.id); }
-          db.prepare('UPDATE inv_transfer_lines SET qty_dispatched = ?, rate = ?, value = ?, batch_no = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(q, Math.round((value * 1000) / q), value, batches.length === 1 ? batches[0] : l.batch_no, actor.user, now, l.id); out.push({ lineId: l.id, itemId: item.id, qty: d3(q), value });
+          // the receipt (and a discrepancy) enters the destination under the one batch kept on the line, so a batch-kept item leaves from one batch a line
+          if (item.batch_tracked && batches.length > 1) fail([{ field: 'lines', message: `${item.code} would leave ${from.code} from ${batches.length} batches (${batches.join(', ')}): name the batch, one line a batch` }]);
+          const lineBatch = batches.length === 1 ? batches[0] : l.batch_no;
+          // the in-transit quantity is held on the row the receipt takes it off: the destination's row of the line's batch
+          db.prepare('UPDATE inv_balances SET qty_in_transit = qty_in_transit + ?, updated_at = ?, version = version + 1 WHERE id = ?').run(entries.reduce((n, e) => n + e.qty_out, 0), now, transitRow(to, item.id, lineBatch ?? '', owner).id);
+          db.prepare('UPDATE inv_transfer_lines SET qty_dispatched = ?, rate = ?, value = ?, batch_no = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(q, Math.round((value * 1000) / q), value, lineBatch, actor.user, now, l.id); out.push({ lineId: l.id, itemId: item.id, qty: d3(q), value });
         }
         for (const l of ls) if (!plan.some((p) => p.l.id === l.id)) db.prepare('UPDATE inv_transfer_lines SET deleted_at = ?, updated_at = ? WHERE id = ? AND qty_dispatched = 0').run(now, now, l.id);
         const threshold = Number(param(t.company_id, 'inv.transfer.eway_threshold') ?? 5_000_000); const interState = b.interState != null ? Boolean(b.interState) : Boolean(t.inter_state); const required = interState || total >= threshold;
