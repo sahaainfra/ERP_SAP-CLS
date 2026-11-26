@@ -32,10 +32,9 @@ export const useOffline = () => useSyncExternalStore(subscribeOffline, offlineSt
 
 /** Still to reach the server: a record not yet accepted, or an accepted one with a photo still to send (a refused photo is only shown). */
 export const isUnsent = (c) => c.status !== 'APPLIED' || (c.files ?? []).some((f) => !f.error);
-/** Waiting to be sent: unsent and not refused (a refused record waits for the person: Try again or Discard). */
-export const isWaiting = (c) => !['ERROR', 'REJECTED', 'DECLINED'].includes(c.status) && isUnsent(c);
-/** What the next sync sends by itself: new and deferred records, and the photos of accepted ones. */
-const sendsItself = (c) => c.status === 'PENDING' || c.status === 'DEFERRED' || (c.status === 'APPLIED' && isUnsent(c));
+/** Waiting to be sent: what the next sync sends by itself (new and deferred records, and the photos of accepted ones). A refused record, a
+ *  conflict or one waiting for a supervisor waits for a person instead. */
+export const isWaiting = (c) => c.status === 'PENDING' || c.status === 'DEFERRED' || (c.status === 'APPLIED' && isUnsent(c));
 // the device queue (Field home) shows what has not reached the server: not an accepted record whose only photo left was refused
 const mirror = (queue) => { const unsent = queue.filter(isUnsent); for (const q of syncQueue.list().filter((x) => x.source === 'offline')) if (!unsent.some((c) => c.id === q.id)) syncQueue.dequeue(q.id); for (const c of unsent) syncQueue.enqueue({ id: c.id, label: c.label ?? c.type, source: 'offline' }); };
 const persistQueue = async (queue) => { set({ queue }); mirror(queue); if (store) await store.put('meta', 'queue', queue); };
@@ -163,9 +162,10 @@ export async function discard(id) {
 export async function retry(id) {
   // a record the server already accepted (APPLIED) is never sent again; only its waiting photos are, by the sync itself
   await persistQueue(state.queue.map((c) => (c.id === id && c.status !== 'APPLIED' ? { ...c, status: 'PENDING', error: null } : c)));
-  // a run already under way took its copy before this tap: let it finish, then send again
+  // a run already under way took its copy before this tap: let it finish, then send again. The record is PENDING now, so a plain sync
+  // sends it (and not every other refused record on the device)
   if (running) await running.catch(() => {});
-  return sync({ force: true });
+  return sync();
 }
 
 // ---- sending (FR-03, FR-05, FR-07) ----
@@ -269,7 +269,7 @@ export async function startOffline(user) {
   await loadLocal();
   if (!wired) { window.addEventListener('online', onOnline); window.addEventListener('offline', onOffline); wired = true; }
   clearInterval(timer);
-  timer = setInterval(() => { if (state.online && state.queue.some(sendsItself)) sync().catch(() => {}); }, 30_000);
+  timer = setInterval(() => { if (state.online && state.queue.some(isWaiting)) sync().catch(() => {}); }, 30_000);
   if (state.online) { await registerDevice(); await refreshMasters(); await sync().catch(() => {}); }
 }
 /** Sign-out: the local copy goes with the session. Called by the sign-out action after the person has seen how much is unsent. */

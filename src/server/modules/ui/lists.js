@@ -185,7 +185,7 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
         } catch (err) { guard.release(actor, grant.approvalId, err?.message); throw err; }
         return { kind: 'file', ...out, contentType: FORMATS[format] };
       }
-      // a queued export that never gets going gives its approval back
+      // an export that cannot be queued gives its approval back (one cancelled while queued keeps it spent: the person asks again)
       try { return transaction(db, () => {
         const savedQuery = queryOf(req);
         for (const parameter of parameters) {
@@ -202,15 +202,18 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
     },
 
     /** The job: replay the screen's query as the person who asked (their scope and masks), write the file, keep it for 7 days. */
-    /** `final`: the job's last attempt; if it fails, the approval the export was let through on is given back (no file was made). */
+    /** `final`: the job's last attempt; if it fails, its file is removed and the approval the export was let through on is given back. An export
+     *  whose approval was given back does not run again (a retried job): the person exports again, on a fresh check of the approval. */
     /** @param {number} exportId @param {(message: string) => void} [log] @param {{ final?: boolean }} [options] */
     run(exportId, log = (_message) => {}, { final = false } = {}) {
       const r = db.prepare('SELECT * FROM ui_export_jobs WHERE id = ?').get(exportId);
       if (!r || r.status === 'DONE') return { skipped: true };
       db.prepare("UPDATE ui_export_jobs SET status = 'RUNNING', updated_at = ? WHERE id = ?").run(nowIso(), exportId);
+      let written = null;
       try {
         const check = downloadChecks.get(r.list_code);
         const savedActor = JSON.parse(r.actor_json);
+        if (savedActor.approvalReleased) throw unprocessable('The approval of this export was given back when it failed. Export again.');
         if (check && savedActor.userId != null) {
           const account = currentAccount(savedActor);
           if (!account) throw changed();
@@ -223,7 +226,7 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
         const out = build(actor, r.list_code, req, r.format);
         mkdirSync(dir, { recursive: true });
         const key = `${r.company_id}-${r.id}-${Date.now().toString(36)}.${r.format}`;
-        writeFileSync(fileOf(key), out.buffer);
+        writeFileSync(fileOf(key), out.buffer); written = key;
         const at = nowIso();
         db.prepare("UPDATE ui_export_jobs SET status = 'DONE', rows_written = ?, file_name = ?, storage_key = ?, bytes = ?, finished_at = ?, expires_at = ?, updated_at = ? WHERE id = ?")
           .run(out.rows, out.fileName, key, out.buffer.length, at, new Date(Date.now() + 7 * 86_400_000).toISOString(), at, exportId);
@@ -232,9 +235,13 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
         log(`Exported ${out.rows} rows of ${r.list_code} as ${r.format}`);
         return { rows: out.rows };
       } catch (err) {
-        db.prepare("UPDATE ui_export_jobs SET status = 'FAILED', error = ?, finished_at = ?, updated_at = ? WHERE id = ?").run(String(err.message).slice(0, 500), nowIso(), nowIso(), exportId);
+        if (written) rmSync(fileOf(written), { force: true });
+        db.prepare("UPDATE ui_export_jobs SET status = 'FAILED', error = ?, storage_key = NULL, file_name = NULL, bytes = 0, finished_at = ?, updated_at = ? WHERE id = ?").run(String(err.message).slice(0, 500), nowIso(), nowIso(), exportId);
         const saved = JSON.parse(r.actor_json);
-        if (final && saved.approvalId != null) guard.release({ user: saved.user, companyId: r.company_id }, saved.approvalId, err?.message);
+        if (final && saved.approvalId != null && !saved.approvalReleased) {
+          guard.release({ user: saved.user, companyId: r.company_id }, saved.approvalId, err?.message);
+          db.prepare('UPDATE ui_export_jobs SET actor_json = ? WHERE id = ?').run(JSON.stringify({ ...saved, approvalReleased: true }), exportId);
+        }
         throw err;
       }
     },

@@ -265,8 +265,14 @@ export function createIssueService({ db, base, invSvc }) {
       if (outcome === 'APPROVED') {
         const iss = db.prepare('SELECT * FROM inv_issues WHERE id = ?').get(r.issue_id); const posted = []; const lines = json(r.lines_json, []);
         // what each issue line has had back into each batch: the earlier approved returns of this slip, and the lines of this one posted so far
-        const backOf = (issueLineId) => { const m = new Map(); const add = (y) => { if (Number(y.issueLineId) === issueLineId) for (const b of y.batches ?? []) m.set(b.batch, (m.get(b.batch) ?? 0) + b.qty); };
-          for (const o of db.prepare("SELECT lines_json FROM inv_site_returns WHERE issue_id = ? AND status = 'APPROVED' AND id <> ?").all(r.issue_id, r.id)) json(o.lines_json, []).forEach(add); lines.forEach(add); return m; };
+        // (a return approved before the split was kept has none: what it put back is read from its ledger entries for the item)
+        const backOf = (issueLineId, itemId) => { const m = new Map(); const put = (batch, q) => m.set(batch, (m.get(batch) ?? 0) + q); const add = (y) => { if (Number(y.issueLineId) === issueLineId) for (const b of y.batches ?? []) put(b.batch, b.qty); };
+          for (const o of db.prepare("SELECT id, lines_json FROM inv_site_returns WHERE issue_id = ? AND status = 'APPROVED' AND id <> ?").all(r.issue_id, r.id)) {
+            const ys = json(o.lines_json, []);
+            if (ys.some((y) => Number(y.issueLineId) === issueLineId && !y.batches)) { for (const g of db.prepare("SELECT batch_no, SUM(qty_in) AS q FROM inv_stock_ledger WHERE source_type = 'inv_site_return' AND source_id = ? AND item_id = ? AND txn_type = 'RETURN' GROUP BY batch_no").all(String(o.id), itemId)) put(g.batch_no, g.q); }
+            else ys.forEach(add);
+          }
+          lines.forEach(add); return m; };
         for (const x of lines) {
           const l = db.prepare('SELECT * FROM inv_issue_lines WHERE id = ?').get(x.issueLineId); const item = stock.itemOf(r.company_id, l.item_id); let ledgerNo = null;
           if (r.condition !== 'SCRAP') {
@@ -274,7 +280,7 @@ export function createIssueService({ db, base, invSvc }) {
             if (!l.batch_no && item.batch_tracked) {
               // a slip that named no batch took the stock from the oldest batches: it comes back to them, the last drawn first, each up to what it gave and has not had back
               const gave = db.prepare("SELECT batch_no, SUM(qty_out) AS q, MAX(id) AS last FROM inv_stock_ledger WHERE source_type = 'inv_issue_line' AND source_id = ? AND txn_type = 'ISSUE' AND batch_no <> '' GROUP BY batch_no ORDER BY last DESC").all(String(l.id));
-              const back = backOf(l.id);
+              const back = backOf(l.id, item.id);
               parts = []; let left = bq.qty;
               for (const g of gave) { if (left <= 0) break; const take = Math.min(left, g.q - (back.get(g.batch_no) ?? 0)); if (take > 0) { parts.push({ batch: g.batch_no, qty: take }); left -= take; } }
               if (left > 0) parts.push({ batch: gave[0]?.batch_no ?? '', qty: left });
