@@ -32,7 +32,7 @@ const AREA_RETRY_MS = 10_000;
 /** The English text of one area: resolves once it is here (at once for an area of the first download or one without a file). */
 export function loadArea(ns) {
   if (BUILT_IN.en[ns] || !AREA_LOADERS[ns]) return Promise.resolve(true);
-  areaLoading[ns] ??= AREA_LOADERS[ns]().then((m) => { BUILT_IN.en = { ...BUILT_IN.en, [ns]: m.default }; emit(); return true; }).catch(() => { areaLoading[ns] = null; areaFailedAt[ns] = Date.now(); return false; });
+  areaLoading[ns] ??= AREA_LOADERS[ns]().then((m) => { BUILT_IN.en = { ...BUILT_IN.en, [ns]: m.default }; emit(); return true; }).catch(() => { areaLoading[ns] = null; areaFailedAt[ns] = Date.now(); setTimeout(() => emit(), AREA_RETRY_MS + 50); return false; }); // when the wait is over, the screens draw again and ask for it anew
   return areaLoading[ns];
 }
 /** Fetch every English area not yet here (after the first screen; a failure is fetched again when a screen asks). */

@@ -185,6 +185,8 @@ const sameUser = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toL
 
 function requestChange(db, repo, actor, key, { scope, enabled, reason }) {
   if (!repo.findScopeRow(key, {})) throw notFound(`Feature flag ${key} is not defined. Flags are created by a reference-seed migration.`);
+  // a flag's default holds for every company: one company's maker and checker do not change it (a reference-seed migration does)
+  if (scope.level === 'default') throw badRequest('A flag\'s default applies to every company, so it is changed by a reference-seed migration, not by a change request. Request a company or project override instead.');
   const open = db.prepare("SELECT doc_no FROM core_flag_changes WHERE company_id = ? AND flag_key = ? AND scope_level = ? AND COALESCE(scope_environment, '') = ? AND COALESCE(scope_company_id, 0) = ? AND COALESCE(scope_project_id, 0) = ? AND status = 'PENDING' AND deleted_at IS NULL")
     .get(actor.companyId, key, scope.level, scope.environment ?? '', scope.companyId ?? 0, scope.projectId ?? 0);
   if (open) throw unprocessable(`A change of ${key} at this scope is already waiting for approval (${open.doc_no}).`);

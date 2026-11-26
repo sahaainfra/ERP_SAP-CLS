@@ -158,6 +158,35 @@ test('a second request with a key whose first request is still running gets 409 
   await app.close();
 });
 
+test('a retry that takes over an abandoned claim keeps its answer when the original request ends late', async () => {
+  const db = memoryDb();
+  const clock = { now: Date.now() };
+  let release; const held = new Promise((r) => { release = r; });
+  let runs = 0;
+  const app = express();
+  applyPipeline(app, { logger: silentLogger });
+  app.use((req, _res, next) => { req.actor = { user: 'meera' }; next(); });
+  app.post('/post', idempotency(db, { required: true, now: () => clock.now }), async (req, res) => {
+    runs += 1; const mine = runs;
+    if (mine === 1) { await held; return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'late failure', details: [] } }); }
+    res.status(201).json({ data: { run: mine } });
+  });
+  app.use(errorHandler(silentLogger));
+  const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
+  const post = async () => { const res = await fetch(`http://127.0.0.1:${server.address().port}/post`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': 'slow-key-0001' }, body: '{}' }); return { status: res.status, json: await res.json() }; };
+  const first = post();
+  while (runs === 0) await new Promise((r) => setTimeout(r, 5));
+  clock.now += 16 * 60 * 1000; // the first claim looks abandoned
+  const retry = await post();
+  assert.deepEqual([retry.status, retry.json.data.run], [201, 2], 'the retry took over the claim and ran');
+  release(); assert.equal((await first).status, 500);
+  await new Promise((r) => setTimeout(r, 20));
+  const again = await post();
+  assert.deepEqual([again.status, again.json.data?.run], [201, 2], 'the late failure of the original did not remove the retry\'s answer: it is replayed');
+  assert.equal(runs, 2);
+  await new Promise((r) => server.close(r));
+});
+
 test('the real app: a flag change retried with the same Idempotency-Key is applied once', async () => {
   const api = await startApi();
   const body = { scope: { level: 'company', companyId: 1 }, enabled: false, reason: 'retry safe change' };

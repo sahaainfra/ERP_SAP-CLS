@@ -234,9 +234,12 @@ test('AC-03 / FR-05 / BR-03 replaying a date range rebuilds a projection identic
   assert.deepEqual(db.prepare('SELECT * FROM core_inbox ORDER BY id').all().map((r) => ({ ...r })), inboxBefore, 'the inbox is untouched');
 
   const part = bus.replay({ types: ['test.thing.*'], from: '2026-10-02', to: '2026-10-05', reset: true });
-  assert.equal(part.events, 3, 'only the events of the date range');
-  assert.equal(snapshot().reduce((n, r) => n + r.total, 0), 3);
-  const one = bus.replay({ types: ['test.thing.moved'], reset: true, companyId: 1 });
+  assert.equal(part.events, 5, 'a projection that was emptied is rebuilt from all of its events, whatever the range asked');
+  assert.deepEqual(snapshot(), before, 'never left holding only the range');
+  // without a reset the range, type and company narrow the replay
+  const range = bus.replay({ types: ['test.thing.*'], from: '2026-10-02', to: '2026-10-05' });
+  assert.equal(range.events, 3, 'only the events of the date range');
+  const one = bus.replay({ types: ['test.thing.moved'], companyId: 1 });
   assert.equal(one.events, 2, 'by type and company');
   assert.throws(() => bus.replay({ consumer: 'nope' }), /no consumer/);
 });

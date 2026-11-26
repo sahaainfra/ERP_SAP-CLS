@@ -33,6 +33,8 @@ test('BR-AUD-009 in production a flag change waits for an IT administrator: the 
   const req = r.json.data.request; assert.match(req.docNo, /^FLG\//); assert.equal(req.status, 'PENDING'); assert.equal(req.area, 'GENERAL');
   assert.equal(t.value(k), before, 'nothing changes until it is approved');
   assert.equal((await t.change(sys, k, true)).status, 422, 'one open request per flag and scope');
+  const dflt = await t.api.call('PATCH', `${F}/${k}`, { ...sys, headers: key(), body: { scope: { level: 'default' }, enabled: true, reason: 'Switch on for everyone' } });
+  assert.equal(dflt.status, 400, 'a default holds for every company: no one company changes it'); assert.match(dflt.json.error.message, /every company/);
   assert.equal((await t.decide(sys, req.id)).status, 403, 'the maker does not approve their own change (SYSADM has no core.flag.approve either)');
   const listed = await t.api.call('GET', `${F}/changes?status=PENDING`, it); assert.equal(listed.status, 200); assert.ok(listed.json.data.some((x) => x.docNo === req.docNo));
   assert.equal((await t.decide(it, req.id)).status, 200);
