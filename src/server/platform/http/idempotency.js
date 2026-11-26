@@ -5,6 +5,8 @@ import { HttpError, badRequest, conflict } from './errors.js';
 export const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
 const KEY_FORMAT = /^[\w.:-]{8,128}$/;
 const PURGE_BATCH = 100;
+/** No request runs this long; an unanswered claim older than this belongs to a process that died, so a retry may take it over. */
+const IN_PROGRESS_LIMIT_MS = 15 * 60 * 1000;
 
 /** Canonical JSON: object keys sorted, so the same body always hashes the same. */
 function canonical(value) {
@@ -52,12 +54,16 @@ export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, 
           if (row.request_hash !== hash) {
             throw new HttpError(422, 'IDEMPOTENCY_KEY_REUSED', 'This Idempotency-Key was already used for a different request. Use a new key for a new action, or repeat the original request exactly.');
           }
-          if (row.response_status == null) throw conflict('A request with this Idempotency-Key is still being processed. Wait a moment and check the result before retrying.');
-          replay = row;
-          return;
+          // a claim with no answer that is older than any request runs was left by a process that stopped mid-request: it is released, not "in progress" for a day
+          const abandoned = row.response_status == null && Date.parse(row.created_at) < stamp - IN_PROGRESS_LIMIT_MS;
+          if (row.response_status == null && !abandoned) throw conflict('A request with this Idempotency-Key is still being processed. Wait a moment and check the result before retrying.');
+          if (!abandoned) {
+            replay = row;
+            return;
+          }
         }
         if (row) db.prepare('DELETE FROM core_idempotency_keys WHERE id = ?').run(row.id);
-        db.prepare('INSERT INTO core_idempotency_keys (key, user_id, endpoint, request_hash, expires_at) VALUES (?, ?, ?, ?, ?)').run(key, user, endpoint, hash, new Date(stamp + ttlMs).toISOString());
+        db.prepare('INSERT INTO core_idempotency_keys (key, user_id, endpoint, request_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)').run(key, user, endpoint, hash, new Date(stamp).toISOString(), new Date(stamp + ttlMs).toISOString());
       });
     } catch (err) {
       return next(err instanceof HttpError && err.code === 'VERSION_CONFLICT' ? Object.assign(err, { code: 'REQUEST_IN_PROGRESS' }) : err);

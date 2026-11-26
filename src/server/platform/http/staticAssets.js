@@ -28,7 +28,8 @@ export function pickEncoding(acceptEncoding) {
 export function staticAssets(dist) {
   return (req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-    const path = decodeURIComponent(req.path);
+    let path;
+    try { path = decodeURIComponent(req.path); } catch { return next(); } // a malformed escape (%zz) is not one of our files
     if (!path.startsWith('/assets/')) return next();
     res.setHeader('Cache-Control', IMMUTABLE); // also for the files express.static sends after us (fonts, images)
     const type = TYPES[extname(path)];

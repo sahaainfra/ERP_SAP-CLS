@@ -3,7 +3,8 @@
 const DANGEROUS = /^[=+\-@\t\r]/;
 export const neutralise = (v) => (typeof v === 'string' && DANGEROUS.test(v) ? `'${v}` : v);
 export function csvCell(value) {
-  const s = value === null || value === undefined ? '' : String(neutralise(typeof value === 'string' ? value : String(value)));
+  // only text can be a formula: a number such as -1500 stays a number, not the text '-1500
+  const s = value === null || value === undefined ? '' : typeof value === 'string' ? neutralise(value) : String(value);
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 export const toCsv = (headers, rows) => `${[headers, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n')}\r\n`;
