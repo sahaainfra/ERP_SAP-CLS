@@ -85,6 +85,8 @@ export function createChangeService({ db, base }) {
       if (out.length < 2) p.push({ field: 'lines', message: 'A transfer takes from one line and gives to another' });
       if (net !== 0) issues.push({ code: 'NOT_NET_ZERO', text: `A transfer must net to zero: the lines add up to ₹ ${signed(net)} (BR-01).` });
     }
+    // a revision or transfer may name a risk too: it is one of this project's, as for a drawdown
+    if (type !== 'DRAWDOWN' && b.riskId && !riskOf(o.id, b.riskId)) p.push({ field: 'riskId', message: 'Choose a risk of this project' });
     if (type === 'DRAWDOWN') {
       const r = riskOf(o.id, b.riskId);
       if (!b.riskId) p.push({ field: 'riskId', message: 'Name the risk of the register (10.06) that the drawdown is for' });

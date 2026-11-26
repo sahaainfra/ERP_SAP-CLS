@@ -352,7 +352,8 @@ export function createMessageService({ db }) {
       const c = must(actor, id);
       let m = memberRow(c.id, actor.user);
       if (!m && c.conv_type === 'EXTERNAL') { db.prepare("INSERT INTO msg_members (company_id, conversation_id, user_ref, member_role, member_source, created_by, source_type) VALUES (?, ?, ?, 'MEMBER', 'AUTO', ?, 'msg_member')").run(c.company_id, c.id, actor.user, actor.user); m = memberRow(c.id, actor.user); }
-      const top = upTo ?? c.last_message_id ?? 0;
+      // never past the newest message: a marker ahead of it would hide the messages still to come from the unread count
+      const top = Math.min(upTo ?? c.last_message_id ?? 0, c.last_message_id ?? 0);
       if (top > m.last_read_message_id) {
         db.prepare('UPDATE msg_members SET last_read_message_id = ?, updated_at = ? WHERE id = ?').run(top, nowIso(), m.id);
         if (c.conv_type !== 'EXTERNAL') {
