@@ -154,7 +154,8 @@ export async function discard(id) {
   await persistQueue(state.queue.filter((x) => x.id !== id));
 }
 export async function retry(id) {
-  await persistQueue(state.queue.map((c) => (c.id === id ? { ...c, status: 'PENDING', error: null } : c)));
+  // a record the server already accepted (APPLIED) is never sent again; only its waiting photos are, by the sync itself
+  await persistQueue(state.queue.map((c) => (c.id === id && c.status !== 'APPLIED' ? { ...c, status: 'PENDING', error: null } : c)));
   return sync({ force: true });
 }
 
@@ -163,7 +164,8 @@ async function sendPhotos(cmd) {
   const left = [];
   for (const f of cmd.files ?? []) {
     const bytes = await store.getBytes('media', `${cmd.id}:${f.index}`);
-    if (!bytes) continue;
+    // a photo the server refused has no bytes left: it stays on the record with its error until the person dismisses it
+    if (!bytes) { if (f.error) left.push(f); continue; }
     try {
       let up = (await api.post('/off/uploads', { deviceId: deviceId(), commandId: cmd.id, fileName: f.name, totalSize: bytes.length, chunkSize: CHUNK }, { headers: { 'idempotency-key': uid() } })).data;
       if (up.status !== 'COMPLETE') {

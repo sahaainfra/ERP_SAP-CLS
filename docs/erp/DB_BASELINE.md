@@ -16848,6 +16848,17 @@ Indexes:
 Indexes:
 - ux_iam_auth_policy_company (unique): company_id
 
+## iam_captcha_uses
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| token_hash | TEXT |  | PK |  |
+| expires_at | TEXT | yes |  |  |
+
+Indexes:
+- ix_iam_captcha_uses_expires: expires_at
+- sqlite_autoindex_iam_captcha_uses_1 (unique): token_hash
+
 ## iam_credentials
 
 | Column | Type | Not null | Key | Default |

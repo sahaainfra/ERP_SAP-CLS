@@ -57,7 +57,8 @@ const has = (parts, ...names) => parts.some((p) => names.includes(p.token));
 
 /**
  * Validate a format against its series rules. Returns a list of problems (empty means valid).
- * - a series that resets every financial year needs {FY}, {FYS} or {YYYY} in the number, or the numbers repeat;
+ * - a series that resets every financial year needs {FY} or {FYS} in the number, or a year with {MM}: a calendar year alone repeats,
+ *   since January to March of one financial year share their year with the start of the next;
  * - a monthly series needs the year and the month;
  * - a statutory series may only use letters, digits, "/" and "-" and must not exceed 16 characters.
  */
@@ -65,7 +66,7 @@ export function formatProblems(format, { resetRule = 'never', statutory = false,
   const { parts, problems } = parseFormat(format);
   if (problems.length) return problems;
   const out = [];
-  if (resetRule === 'financial_year' && !has(parts, 'FY', 'FYS', 'YYYY')) out.push('A series that restarts every financial year needs {FY}, {FYS} or {YYYY} in its format, or numbers would repeat');
+  if (resetRule === 'financial_year' && !(has(parts, 'FY', 'FYS') || (has(parts, 'YYYY', 'YY') && has(parts, 'MM')))) out.push('A series that restarts every financial year needs {FY} or {FYS} (or the year with {MM}) in its format, or numbers would repeat: January to March share their calendar year with the next financial year');
   if (resetRule === 'monthly' && !(has(parts, 'YYYY', 'YY', 'FY', 'FYS') && has(parts, 'MM'))) out.push('A monthly series needs the year ({YYYY} or {YY}) and {MM} in its format, or numbers would repeat');
   if (statutory) {
     let widest = null;

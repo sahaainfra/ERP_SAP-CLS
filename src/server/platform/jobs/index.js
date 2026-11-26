@@ -11,6 +11,8 @@ import { notFound, unprocessable } from '../http/errors.js';
 const DEFAULT_BACKOFF = (attempt) => Math.min(60_000 * 2 ** (attempt - 1), 3_600_000);
 const iso = (ms) => new Date(ms).toISOString();
 const MAX_LOG_LINES = 200;
+/** The progress message of a job whose handler finished its work although a cancellation was asked for meanwhile. */
+const WORK_DONE = 'Cancelled after its work was done';
 /** The correlation ID and trace of the request that queued a job travel in its parameters under these keys. */
 const stripTrace = ({ _cid, _tp, ...rest }) => rest;
 
@@ -139,7 +141,8 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
       try {
         if (!def) throw new Error(`No handler is registered for job type ${row.type}`);
         const result = await runWithContext({ correlationId: raw._cid ?? undefined, companyId: row.company_id ?? undefined }, () => tracer.withSpan(`job ${row.type}`, { kind: 'consumer', parent: parseTraceparent(raw._tp), attributes: { 'job.id': row.job_id, 'job.attempt': row.attempts } }, () => def.handler(ctx)));
-        outcome = isCancelled() ? { status: 'CANCELLED' } : { status: 'SUCCEEDED', result };
+        // a cancel that came after the handler's last check: the job counts as cancelled, but its work is done and is kept (and not retried)
+        outcome = isCancelled() ? { status: 'CANCELLED', workDone: true, result } : { status: 'SUCCEEDED', result };
       } catch (err) {
         if (err instanceof JobCancelled) outcome = { status: 'CANCELLED' };
         else outcome = { status: 'FAILED', error: String(err?.message ?? err).slice(0, 1000) };
@@ -164,7 +167,8 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
           });
         }
       } else if (outcome.status === 'CANCELLED') {
-        db.prepare("UPDATE core_jobs SET status = 'CANCELLED', finished_at = ?, progress_message = 'Cancelled', log_json = ?, updated_at = ? WHERE id = ?").run(stamp, JSON.stringify(lines.slice(-MAX_LOG_LINES)), stamp, row.id);
+        if (outcome.workDone) db.prepare("UPDATE core_jobs SET status = 'CANCELLED', progress = 100, finished_at = ?, progress_message = ?, result_json = ?, log_json = ?, updated_at = ? WHERE id = ?").run(stamp, WORK_DONE, outcome.result === undefined ? null : JSON.stringify(outcome.result), JSON.stringify(lines.slice(-MAX_LOG_LINES)), stamp, row.id);
+        else db.prepare("UPDATE core_jobs SET status = 'CANCELLED', finished_at = ?, progress_message = 'Cancelled', log_json = ?, updated_at = ? WHERE id = ?").run(stamp, JSON.stringify(lines.slice(-MAX_LOG_LINES)), stamp, row.id);
       } else {
         transaction(db, () => {
           db.prepare("UPDATE core_jobs SET status = 'SUCCEEDED', progress = 100, finished_at = ?, error = NULL, result_json = ?, log_json = ?, updated_at = ? WHERE id = ?").run(stamp, outcome.result === undefined ? null : JSON.stringify(outcome.result), JSON.stringify(lines.slice(-MAX_LOG_LINES)), stamp, row.id);
@@ -194,6 +198,7 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
         const row = db.prepare('SELECT * FROM core_jobs WHERE id = ?').get(id);
         if (!row) throw notFound('That job does not exist.');
         if (!['FAILED', 'CANCELLED'].includes(row.status)) throw unprocessable(`This job is ${row.status.toLowerCase()}; only failed or cancelled jobs can be retried.`);
+        if (row.status === 'CANCELLED' && row.progress_message === WORK_DONE) throw unprocessable('This job finished its work before the cancellation took effect; running it again would repeat that work.');
         const fresh = runner.enqueue(row.type, JSON.parse(row.params_json), { createdBy: actor, companyId: row.company_id });
         writeAudit(db, { entity: 'core_jobs', entityId: id, action: 'retry', newValues: { newJobId: fresh.jobId }, reason, actor, correlationId });
         return fresh;

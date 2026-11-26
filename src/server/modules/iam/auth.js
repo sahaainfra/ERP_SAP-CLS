@@ -65,9 +65,14 @@ export function createAuthService({ db, identity, users, mfa, notifier }) {
       const b = randomInt(10, 60);
       return { token: signJwt({ t: 'captcha', h: captchaMark(a + b) }, secret, { expiresInSec: 300, nowMs: now() }), question: `What is ${a} + ${b}?` };
     },
+    /** A right answer is accepted once: the token is spent, so one solved question does not carry every guess for five minutes. */
     check: (token, answer) => {
       const claims = verifyJwt(token, secret, { type: 'captcha', nowMs: now() });
-      return Boolean(claims) && claims.h === captchaMark(Number(String(answer ?? '').trim()));
+      if (!claims || claims.h !== captchaMark(Number(String(answer ?? '').trim()))) return false;
+      const at = new Date(now()).toISOString();
+      const expires = new Date(typeof claims.exp === 'number' ? claims.exp * 1000 : now() + 300_000).toISOString();
+      db.prepare('DELETE FROM iam_captcha_uses WHERE expires_at < ?').run(at);
+      return db.prepare('INSERT OR IGNORE INTO iam_captcha_uses (token_hash, expires_at) VALUES (?, ?)').run(sha(String(token)), expires).changes === 1;
     },
   };
 

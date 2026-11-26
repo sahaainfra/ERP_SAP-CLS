@@ -42,7 +42,9 @@ test('a format must contain exactly one {SEQ:n} and only known tokens and safe c
 test('reset rules need the year or month in the number, or numbers would repeat', () => {
   assert.match(formatProblems('{PREFIX}/{SEQ:6}', { resetRule: 'financial_year' }).join(), /needs \{FY\}/);
   assert.deepEqual(formatProblems('{PREFIX}/{FY}/{SEQ:6}', { resetRule: 'financial_year' }), []);
-  assert.deepEqual(formatProblems('{PREFIX}/{YYYY}/{SEQ:6}', { resetRule: 'financial_year' }), []);
+  // a calendar year alone repeats: Feb 2027 (FY 2026-27) and Apr 2027 (FY 2027-28) both read 2027
+  assert.match(formatProblems('{PREFIX}/{YYYY}/{SEQ:6}', { resetRule: 'financial_year' }).join(), /needs \{FY\}/);
+  assert.deepEqual(formatProblems('{PREFIX}/{YYYY}{MM}/{SEQ:6}', { resetRule: 'financial_year' }), []);
   assert.match(formatProblems('{PREFIX}/{YYYY}/{SEQ:6}', { resetRule: 'monthly' }).join(), /needs the year .* and \{MM\}/);
   assert.deepEqual(formatProblems('{PREFIX}/{YY}{MM}/{SEQ:4}', { resetRule: 'monthly' }), []);
   assert.deepEqual(formatProblems('{PREFIX}/{SEQ:6}', { resetRule: 'never' }), []);

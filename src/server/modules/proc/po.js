@@ -119,7 +119,7 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
   }
   /** Builds the calculated lines from the body. A statement line brings its quoted rate, discount, GST and charges; a direct line brings what the buyer typed. */
   function buildLines(actor, ctx, inputs) {
-    const problems = []; const out = []; const tol = Number(param(actor.companyId, 'proc.po.qty_tolerance_pct') ?? 5); const vpct = Number(param(actor.companyId, 'proc.po.variance_pct') ?? 10); let variance = false;
+    const problems = []; const out = []; const tol = Number(param(actor.companyId, 'proc.po.qty_tolerance_pct') ?? 5); const vpct = Number(param(actor.companyId, 'proc.po.variance_pct') ?? 10); let variance = false; const takenHere = new Map(); // requisition quantity taken by the earlier lines of this order
     inputs.forEach((x, i) => {
       let item = x.itemId ? itemOf(actor.companyId, x.itemId) : null; if (x.itemId && !item) problems.push({ field: `lines.${i}.itemId`, message: 'Not an item of this company' });
       const rl = x.rcLineId ? ctx.rc?.lines.find((c) => c.id === x.rcLineId) : null; if (x.rcLineId && !rl) problems.push({ field: `lines.${i}.rcLineId`, message: 'Not a line of this rate contract' }); if (rl && !x.itemId && rl.item_id) item = itemOf(actor.companyId, rl.item_id);
@@ -129,7 +129,9 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
       if (prLineId && (!pl || pl.org_project_id !== ctx.projectId)) problems.push({ field: `lines.${i}.prLineId`, message: 'Not a requisition line of this project' });
       else if (pl && pl.pr_status !== 'APPROVED') problems.push({ field: `lines.${i}.prLineId`, message: 'The requisition is not approved' });
       else if (pl) { const others = db.prepare("SELECT COALESCE(SUM(l.qty), 0) AS n FROM proc_po_lines l JOIN proc_purchase_orders p ON p.id = l.po_id WHERE l.pr_line_id = ? AND l.deleted_at IS NULL AND p.status IN ('DRAFT', 'SUBMITTED', 'RETURNED') AND p.id <> ?").get(prLineId, ctx.poId ?? 0).n; const allowed = pl.balance_qty + Math.round((pl.qty * tol) / 100);
-        if (qty > allowed) problems.push({ field: `lines.${i}.qty`, message: `More than the balance to order of the requisition line (${d3(pl.balance_qty)}, tolerance ${tol}%)` }); void others; }
+        // other open orders on the line (draft, submitted, returned) and earlier lines of this one hold part of the balance
+        const held = others + (takenHere.get(prLineId) ?? 0); takenHere.set(prLineId, (takenHere.get(prLineId) ?? 0) + qty);
+        if (qty + held > allowed) problems.push({ field: `lines.${i}.qty`, message: held ? `More than the balance to order of the requisition line (${d3(pl.balance_qty)}, tolerance ${tol}%): ${d3(held)} is already on other open orders or lines` : `More than the balance to order of the requisition line (${d3(pl.balance_qty)}, tolerance ${tol}%)` }); }
       if (cl) { const avail = csAvailable(cl.id, ctx.poId ?? 0); if (qty > avail) problems.push({ field: `lines.${i}.qty`, message: `Only ${d3(avail)} of this line is left to order from the statement` }); }
       let rate = x.rate != null ? Math.round(x.rate * 100) : null; let discount = x.discountPct != null ? Math.round(x.discountPct * 10000) : null; let gst = null; let freight = 0; let csRate = null; const description = x.description ?? rl?.description ?? (item ? item.name : cl?.service_desc);
       if (rl) { rate = rl.rate; discount = 0; csRate = rl.rate; }

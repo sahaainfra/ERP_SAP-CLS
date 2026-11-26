@@ -118,6 +118,24 @@ test('FR-06 cancellation: a queued job stops at once, a running job stops at its
   assert.deepEqual(audit, ['cancel', 'cancel', 'retry']);
 });
 
+test('FR-06 a cancellation that comes after the job did its work keeps the result, and the job is not run again', async () => {
+  const db = memoryDb();
+  const { jobs } = clocked(db);
+  let release;
+  const gate = new Promise((r) => (release = r));
+  jobs.register('test.posts', async () => { await gate; return { posted: 3 }; }, { maxAttempts: 1 }); // no check after its work
+  const job = jobs.enqueue('test.posts', {});
+  const pending = jobs.runNext();
+  await new Promise((r) => setTimeout(r, 10));
+  jobs.cancel(job.id, { actor: 'itadm', reason: 'too late' });
+  release();
+  const done = await pending;
+  assert.equal(done.status, 'CANCELLED');
+  assert.equal(row(db, job.id).progress_message, 'Cancelled after its work was done');
+  assert.deepEqual(JSON.parse(row(db, job.id).result_json), { posted: 3 });
+  assert.throws(() => jobs.retry(job.id, { actor: 'itadm' }), /repeat that work/);
+});
+
 test('a job claimed by two runners on the same queue runs once', async () => {
   const db = memoryDb();
   const a = clocked(db).jobs;

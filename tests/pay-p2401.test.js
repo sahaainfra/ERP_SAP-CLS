@@ -19,6 +19,10 @@ test('T-01 PF on min(wages, ceiling); wages under the Code add back the excess o
   const pf = (basic, hra, wageRule = true) => computeBreakup({ components: comps, values: { BASIC: basic, HRA: hra }, params: { PF }, employee: { pf: true }, month: '2026-10', wageRule });
   let b = pf(30000, 12000); assert.equal(b.lines.find((l) => l.code === 'PF_EE').amount, 1800, '12 % of the 15,000 ceiling'); assert.equal(b.lines.find((l) => l.code === 'EPS_ER').amount, 1250); assert.equal(b.lines.find((l) => l.code === 'PF_ER').amount, 550);
   b = pf(10000, 2000); assert.equal(b.lines.find((l) => l.code === 'PF_EE').amount, 1200, 'below the ceiling: 12 % of the wages');
+  const withParams = (params) => computeBreakup({ components: comps, values: { BASIC: 30000, HRA: 12000 }, params: { PF: params }, employee: { pf: true }, month: '2026-10', wageRule: true }).lines.find((l) => l.code === 'PF_EE').amount;
+  const unset = { ...PF }; delete unset.restrictToCeiling;
+  assert.equal(withParams(unset), 1800, 'the ceiling applies when the parameters do not say otherwise (as in wage runs)');
+  assert.equal(withParams({ ...PF, restrictToCeiling: false }), 3600, 'contributions on the full wage only when chosen');
   b = pf(5000, 15000); assert.equal(b.wages.addedBack, 5000, 'exclusions 15,000 of 20,000: the excess over half (10,000) is wages'); assert.equal(b.wages.codeWages, 10000); assert.equal(b.lines.find((l) => l.code === 'PF_EE').amount, 1200);
   b = pf(5000, 15000, false); assert.equal(b.wages.addedBack, 0, 'before the Code: no add-back'); assert.equal(monthFactor('2026-08', '2026-08-17'), 0.4839);
 });
