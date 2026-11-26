@@ -75,7 +75,7 @@ async function apiStaleWhileRevalidate(event, request, url) {
     const forCache = response.clone();
     const forCompare = response.clone();
     const [fresh, old] = await Promise.all([forCompare.text(), before]);
-    await keep(key, forCache);
+    await keep(key, forCache).catch(() => null); // a full or unavailable cache does not fail the answer the server gave
     if (hit && fresh !== old) {
       for (const client of await self.clients.matchAll({ type: 'window' })) client.postMessage({ type: 'API_UPDATED', path: url.pathname });
     }

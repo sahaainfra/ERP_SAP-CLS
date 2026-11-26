@@ -408,8 +408,13 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
       for (const m of TEMPLATE_FIELD_MASKS) {
         for (const code of m.roles) {
           const role = db.prepare('SELECT id FROM iam_roles WHERE company_id IS NULL AND code = ?').get(code);
-          if (role && !db.prepare('SELECT 1 FROM iam_field_masks WHERE role_id = ? AND entity = ? AND field = ?').get(role.id, m.entity, m.field)) {
+          const mask = role ? db.prepare('SELECT id, rule, source_type FROM iam_field_masks WHERE role_id = ? AND entity = ? AND field = ?').get(role.id, m.entity, m.field) : null;
+          if (role && !mask) {
             insert("INSERT INTO iam_field_masks (role_id, entity, field, rule, created_by, source_type) VALUES (?, ?, ?, ?, 'system', 'role_template')", role.id, m.entity, m.field, m.rule);
+          } else if (mask && mask.source_type === 'role_template' && mask.rule !== m.rule) {
+            // a rule the template changed follows the template; a mask someone set by hand is left alone
+            insert("UPDATE iam_field_masks SET rule = ?, updated_by = 'system', updated_at = ? WHERE id = ?", m.rule, stamp, mask.id);
+            changed += 1;
           }
         }
       }

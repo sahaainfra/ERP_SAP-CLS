@@ -10,7 +10,8 @@ export { formatINR } from '../../shared/money.js';
 /** Neutralise spreadsheet formula injection (standards section 13) and quote for CSV. */
 export function csvCell(value) {
   let s = value == null ? '' : String(value);
-  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  // a number is never a formula (a negative amount stays a number); text that starts like one is neutralised
+  if (typeof value !== 'number' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

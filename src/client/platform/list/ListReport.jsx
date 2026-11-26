@@ -117,15 +117,16 @@ function ColumnChooser({ all, order, hidden, onChange, onReset }) {
     <details className="lr-menu" data-testid="column-chooser">
       <summary className="btn"><Icon name="erp.action.settings" size={16} />Columns</summary>
       <div className="lr-pop" role="group" aria-label="Choose and order columns">
+        {/* the first column is always shown: one moved there is shown, and a saved view whose first column is hidden can show it again */}
         <ul className="lr-cols">
           {keys.map((k, i) => {
             const c = all.find((x) => x.key === k);
             return (
               <li key={k}>
-                <label className="ff-check"><input type="checkbox" checked={!hidden.includes(k)} disabled={i === 0} onChange={(e) => onChange({ order: keys, hidden: e.target.checked ? hidden.filter((h) => h !== k) : [...hidden, k] })} /> {c.label}</label>
+                <label className="ff-check"><input type="checkbox" checked={!hidden.includes(k)} disabled={i === 0 && !hidden.includes(k)} onChange={(e) => onChange({ order: keys, hidden: e.target.checked ? hidden.filter((h) => h !== k) : [...hidden, k] })} /> {c.label}</label>
                 <span className="lr-move">
-                  <button type="button" className="btn btn-small" aria-label={`Move ${c.label} left`} disabled={i === 0} onClick={() => onChange({ order: moveColumn(keys, k, -1), hidden })}>↑</button>
-                  <button type="button" className="btn btn-small" aria-label={`Move ${c.label} right`} disabled={i === keys.length - 1} onClick={() => onChange({ order: moveColumn(keys, k, 1), hidden })}>↓</button>
+                  <button type="button" className="btn btn-small" aria-label={`Move ${c.label} left`} disabled={i === 0} onClick={() => onChange({ order: moveColumn(keys, k, -1), hidden: i === 1 ? hidden.filter((h) => h !== k) : hidden })}>↑</button>
+                  <button type="button" className="btn btn-small" aria-label={`Move ${c.label} right`} disabled={i === keys.length - 1} onClick={() => onChange({ order: moveColumn(keys, k, 1), hidden: i === 0 ? hidden.filter((h) => h !== keys[1]) : hidden })}>↓</button>
                 </span>
               </li>
             );
