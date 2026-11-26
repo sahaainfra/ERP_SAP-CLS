@@ -7,6 +7,7 @@ import { useActivateMatrix, useDefinitionOptions, useDeleteMatrix, useMatrix, us
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { DEF_STATUS, useSearch } from './common.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Matrix Rule Editor (part 04.02, section 7.2): the decision table of one version. Rules in priority order, each with its conditions on the facts of the document
 // and the steps to take; checks for gaps (a document no rule fits) and for rules that can never be reached; a comparison with another version; the request to
@@ -74,7 +75,7 @@ export default function MatrixEditorPage({ session }) {
   const [notice, setNotice] = useState('');
   const [checks, setChecks] = useState(null);
   const [confirm, setConfirm] = useState(null);
-  const [from, setFrom] = useState(new Date(Date.now() + 86_400_000).toISOString().slice(0, 10));
+  const [from, setFrom] = useState(todayIst(Date.now() + 86_400_000));
   const [dirty, setDirty] = useState(false);
   const [compareWith, setCompareWith] = useState('');
   useUnsavedGuard(dirty);
@@ -128,7 +129,7 @@ export default function MatrixEditorPage({ session }) {
             {editable && <div className="actions"><button type="button" className="btn" onClick={() => change({ rules: [...form.rules, blankRule((form.rules.reduce((n, r) => Math.max(n, r.priority), 0) || 0) + 10)] })}>Add a rule</button></div>}
             {editable && (
               <div className="actions">
-                <label className="field"><span>Takes effect from</span><input type="date" value={from} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setFrom(e.target.value)} /></label>
+                <label className="field"><span>Takes effect from</span><input type="date" value={from} min={todayIst()} onChange={(e) => setFrom(e.target.value)} /></label>
                 <button type="submit" className="btn" disabled={save.isPending}>Save draft</button>
                 <button type="button" className="btn" onClick={check}>Check for gaps</button>
                 <button type="button" className="btn btn-primary" onClick={() => setConfirm('activate')}>Request activation</button>

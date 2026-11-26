@@ -7,6 +7,7 @@ import { browserTransport, uploadFile } from '../../platform/files/upload.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { REQ_STATUS, SKILL_LABELS, lab } from './api.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Worker (HR, part 07.08): the profile of a contract worker: details (the ID and bank account masked), clearance (induction and medical, the PPE issued), deployments, attendance, the wage that applies, approvals and history, with
 // the actions the person may take: send, withdraw, cancel, amend, add the photo, record clearance and PPE (safety and HR), blacklist and lift it, print the card. Incidents come from the HSE module (19.01) when it is installed.
@@ -74,7 +75,7 @@ function Details({ w, refresh }) {
 
 function Clearance({ w, refresh }) {
   const [f, setF] = useState({ inductionStatus: w.inductionStatus, inductionDate: w.inductionDate ?? '', medicalStatus: w.medicalStatus, medicalValidUntil: w.medicalValidUntil ?? '' });
-  const [ppe, setPpe] = useState({ item: '', issuedOn: new Date().toISOString().slice(0, 10) });
+  const [ppe, setPpe] = useState({ item: '', issuedOn: todayIst() });
   const [error, setError] = useState(null); const [note, setNote] = useState(null);
   const run = async (fn, done) => { setError(null); setNote(null); try { await fn(); setNote(done); refresh(); } catch (e) { setError(errorInfo(e)); } };
   return (

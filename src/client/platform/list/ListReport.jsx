@@ -2,7 +2,7 @@ import { useSwipe, usePullToRefresh } from '../device/gestures.js';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useFlagOn } from '../shell/api.js';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, authHeaders } from '../api/index.js';
+import { api, authHeaders, authMode, refreshSession } from '../api/index.js';
 import Icon from '../design/Icon.jsx';
 import StatusBadge from '../design/StatusBadge.jsx';
 import { formatNumberInput } from '../../../shared/forms/numbers.js';
@@ -252,7 +252,10 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
     setExporting(format);
     setNotice('');
     try {
-      const res = await fetch(`/api/v1${endpoint}/export?${toQuery({ ...withContext(state), page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
+      const send = () => fetch(`/api/v1${endpoint}/export?${toQuery({ ...withContext(state), page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
+      let res = await send();
+      // this call does not go through the API client: an access token that has just expired is renewed here the same way, and the export asked again once
+      if (res.status === 401 && authMode() === 'iam' && await refreshSession()) res = await send();
       if (res.status === 202) {
         const job = (await res.json()).data;
         setNotice(`The export has ${job.rows} rows, so it is being prepared in the background. It will appear under My Exports when ready.`);

@@ -3,6 +3,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { useApplyTemplate, useGaps, useProposeRaci, useRaci, useRaciScopes } from '../../platform/accountability/api.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // RACI Matrix (part 04.05, section 7.1): the processes of the company against the people and roles who are Responsible, Accountable, Consulted or Informed in one scope (the company,
 // a department, a project or a site). Exactly one person is Accountable for a process in a scope; many may be Responsible. A change of a live project is approved by its project
@@ -164,7 +165,7 @@ export default function RaciMatrixPage() {
           {g.canMaintain && !g.pending && changed.length > 0 && (
             <form className="form-grid card" aria-label="Save the changes" onSubmit={(e) => { e.preventDefault(); save(); }}>
               <p data-testid="raci-changed"><strong>{changed.length}</strong> process(es) changed.</p>
-              <Field label="Takes effect from (today if empty)" name="effectiveFrom" error={error}><input type="date" value={from} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setFrom(e.target.value)} /></Field>
+              <Field label="Takes effect from (today if empty)" name="effectiveFrom" error={error}><input type="date" value={from} min={todayIst()} onChange={(e) => setFrom(e.target.value)} /></Field>
               <Field label="Reason" name="reason" error={error}><input value={reason} required minLength={5} maxLength={500} onChange={(e) => setReason(e.target.value)} /></Field>
               {error && <div role="alert" className="error" data-testid="raci-error"><p>{error.form}</p>{Object.entries(error.fields ?? {}).map(([k, m]) => <p key={k} className="small">{m}</p>)}{error.correlationId && <p className="small">Correlation ID: <code>{error.correlationId}</code></p>}</div>}
               <div className="actions"><button type="submit" className="btn btn-primary" disabled={propose.isPending || reason.trim().length < 5}>{g.scope.live ? 'Send for approval' : 'Save'}</button><button type="button" className="btn" onClick={() => { setCells(base.cells); setCols(base.cols); setError(null); }}>Discard the changes</button></div>

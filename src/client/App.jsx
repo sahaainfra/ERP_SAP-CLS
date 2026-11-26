@@ -139,6 +139,14 @@ function Shell({ iam, user }) {
     }
   }, [s, mode, landing, shown, path]);
 
+  // Signing out ends with nothing of this person left in the tab: the worker's kept copies, the offline store and the query cache go even when
+  // the server's logout call fails (signOut has already cleared the session locally by then).
+  const signOutHere = () => {
+    if (unsentCount() > 0 && !window.confirm(`${unsentCount()} change(s) on this device have not been sent yet and will be deleted if you sign out. Sign out anyway?`)) return Promise.resolve();
+    pwa.clearApiCache();
+    return signOut().finally(() => wipeOnSignOut().catch(() => {}).then(() => qc.clear()));
+  };
+
   const identityBar = devIdentity ? (
     <div className="devbar" role="group" aria-label="Development identity">
       <span>Development identity (replaced by sign-in when AUTH_MODE=iam):</span>
@@ -174,7 +182,7 @@ function Shell({ iam, user }) {
         <AppShell
           path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
           theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
-          onSignOut={iam && user ? () => { if (unsentCount() > 0 && !window.confirm(`${unsentCount()} change(s) on this device have not been sent yet and will be deleted if you sign out. Sign out anyway?`)) return Promise.resolve(); pwa.clearApiCache(); return signOut().then(() => wipeOnSignOut()).then(() => qc.clear()); } : null} identityBar={identityBar}
+          onSignOut={iam && user ? signOutHere : null} identityBar={identityBar}
           extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <WhenIdle on={perfFlag.on}><Suspense fallback={null}><ChatDock session={s} /></Suspense></WhenIdle>}{aiFlag.on && !onboarding && <Suspense fallback={null}><AiDock /></Suspense>}</>}
         />
       </FeedbackProvider>
@@ -208,7 +216,7 @@ function Shell({ iam, user }) {
         {iam && user && (
           <span className="shell-user">
             <span data-testid="signed-in-as">{user.displayName}</span>
-            <button type="button" className="btn btn-small" onClick={() => signOut().then(() => qc.clear())}>Sign out</button>
+            <button type="button" className="btn btn-small" onClick={() => { signOutHere().catch(() => {}); }}>Sign out</button>
           </span>
         )}
       </header>

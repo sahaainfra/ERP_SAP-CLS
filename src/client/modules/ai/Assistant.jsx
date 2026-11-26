@@ -6,6 +6,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { useT } from '../../platform/i18n/index.js';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Part 28.02 (FR-01): the assistant panel — in the shell on every page (a dock that knows the page and its project) and as a full page.
 // Every answer comes from the 28.01 gateway with its label, the query it ran and the records it cites; drafts become DRAFT records of their
@@ -67,7 +68,7 @@ function Drafts({ me }) {
   const t = useT('aa');
   const cache = useQueryClient();
   const [form, setForm] = useState({ kind: 'RFI', brief: '' });
-  const [save, setSave] = useState({ subject: '', discipline: 'STRUCTURAL', requiredBy: '', party: '', letterDate: new Date().toISOString().slice(0, 10) });
+  const [save, setSave] = useState({ subject: '', discipline: 'STRUCTURAL', requiredBy: '', party: '', letterDate: todayIst() });
   const list = useQuery({ queryKey: ['ai', 'drafts'], queryFn: async () => (await api.get('/ai/drafts')).data, retry: false, enabled: me.draft });
   const make = useMutation({ mutationFn: () => post('/ai/drafts', { ...form, ...(pageProject() ? { projectId: pageProject() } : {}) }), onSuccess: () => cache.invalidateQueries({ queryKey: ['ai', 'drafts'] }) });
   const keep = useMutation({ mutationFn: ({ id, kind }) => post(`/ai/drafts/${id}/save`, kind === 'RFI' ? { subject: save.subject, discipline: save.discipline, requiredBy: save.requiredBy } : { subject: save.subject, party: save.party, letterDate: save.letterDate }, true),

@@ -29,7 +29,11 @@ export const setSwStrategy = (on) => { swStrategy = Boolean(on); };
 
 export function authHeaders() {
   const sw = swStrategy ? { 'x-erp-sw': 'p16604' } : {};
-  if (authMode() === 'iam') return accessToken() ? { authorization: `Bearer ${accessToken()}`, 'x-erp-cache-scope': encodeURIComponent(signedInUser() ?? ''), ...sw } : {};
+  if (authMode() === 'iam') {
+    // the signed-in user is an object ({ id, username, ... }): the scope is its id, never the object itself (that would be one scope for everybody)
+    const who = signedInUser();
+    return accessToken() ? { authorization: `Bearer ${accessToken()}`, 'x-erp-cache-scope': encodeURIComponent(String(who?.id ?? who?.username ?? '')), ...sw } : {};
+  }
   const id = loadIdentity();
   return { 'x-erp-user': id.user, 'x-erp-roles': id.roles, 'x-erp-company': id.company, 'x-erp-cache-scope': encodeURIComponent(`${id.user}|${id.roles}|${id.company}`), ...sw };
 }

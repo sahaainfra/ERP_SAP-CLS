@@ -5,6 +5,7 @@ import { useMe } from '../../platform/accountability/api.js';
 import { Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow } from '../../platform/design/Kpi.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // My Accountability (part 04.05, section 7.2): what I answer for, what of mine is past its time, what I did lately, and my own figures. It needs no permission: it is only
 // about the person who opens it. The figures are an input to a review by a person, never a penalty on their own.
@@ -14,7 +15,7 @@ const RACI = { R: 'Responsible', A: 'Accountable', C: 'Consulted', I: 'Informed'
 export default function MyAccountabilityPage() {
   usePageTitle('My Accountability');
   const [filters, setFilters] = useState({ projectId: '', days: '90' });
-  const from = new Date(Date.now() - Number(filters.days) * 86_400_000).toISOString().slice(0, 10);
+  const from = todayIst(Date.now() - Number(filters.days) * 86_400_000);
   const q = useMe({ projectId: filters.projectId, from });
   const d = q.data;
   return (
