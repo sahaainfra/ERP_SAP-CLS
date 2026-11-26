@@ -63,7 +63,7 @@ export function wageOf(o) {
   const topup = piece && min != null ? Math.max(0, Math.round(days * min) - pieceAmt) : 0;
   const ordinary = piece ? (min ?? 0) : rate; const otRate = Math.round((ordinary / o.dayHours) * o.otMultiplier); const ot = Math.round((o.otHours ?? 0) * otRate);
   const allowances = o.allowances ?? 0; const gross = basic + pieceAmt + topup + ot + allowances; const wages = basic + pieceAmt + topup;
-  let pf = 0; let pfEr = 0; if (o.pf) { const ceil = o.pf.restrictToCeiling === false ? Infinity : Math.round((o.pf.wageCeiling * 100 * o.periodDays) / 30); const b = Math.min(wages, ceil); pf = Math.round((b * o.pf.employeeRate) / 100); pfEr = Math.round((b * ((o.pf.employerEpfRate ?? 0) + (o.pf.epsRate ?? 0) + (o.pf.edliRate ?? 0) + (o.pf.adminRate ?? 0))) / 100); }
+  let pf = 0; let pfEr = 0; if (o.pf) { const ceil = o.pf.restrictToCeiling === false ? Infinity : Math.round((o.pf.wageCeiling * 100 * o.periodDays) / 30); const b = Math.min(wages, ceil); pf = Math.round((b * o.pf.employeeRate) / 100); pfEr = Math.round((b * ((o.pf.employerEpfRate ?? Math.max(0, (o.pf.employeeRate ?? 0) - (o.pf.epsRate ?? 0))) + (o.pf.epsRate ?? 0) + (o.pf.edliRate ?? 0) + (o.pf.adminRate ?? 0))) / 100); }
   let esi = 0; let esiEr = 0; const esiCovered = Boolean(o.esi) && (piece ? (min ?? 0) : rate) * 26 <= o.esi.wageCeiling * 100;
   if (esiCovered) { esi = Math.ceil((gross * o.esi.employeeRate) / 10000) * 100; esiEr = Math.ceil((gross * o.esi.employerRate) / 10000) * 100; }
   const own = (o.advance ?? 0) + (o.canteen ?? 0) + (o.other ?? 0); const deductions = own + pf + esi; const net = gross - deductions;
