@@ -5,7 +5,7 @@ import { formatCompact, formatDate } from '../src/shared/i18n/format.js';
 
 // Fixes from the shared-code review (2026-11-26).
 test('allocating a negative total loses no paise', () => {
-  const parts = allocate('-1', [1, 1, 1]);
+  const parts = allocate('-1', [1, 1, 1]).map(String);
   assert.deepEqual(parts, ['-0.34', '-0.33', '-0.33']);
 });
 
