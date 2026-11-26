@@ -16,6 +16,8 @@ Everything below runs from the repository root. Commands marked (GitHub) need th
 
 `verify` stays the required check. `security` (dependency audit, secret scan) and `codeql` (static analysis) run beside it.
 
+To save Actions minutes (the repository is private and every runner minute is billed), a pull request runs only `unit`, `client`, `security`, `dependency-review` and `verify`; `verify` then accepts a skipped `e2e`. The long jobs (`e2e`, `clock`, `dast`, `perf-smoke`, `container-scan`, `deploy-rehearsal`, `codeql`) run on every push to `main`, on a manual run, and on a pull request labelled `full-ci`, where `verify` again requires `e2e` to pass. The nightly load and Sunday soak in `.github/workflows/perf.yml` are manual-only for the same reason.
+
 A failing stage exits 1 and the report (`reports/regression/report.html`) names it. A migration without a working down-migration fails the migration check; a leaked credential fails the secret scan.
 
 ## 2. Make the gates mandatory (GitHub, once, by a repository admin)

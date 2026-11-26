@@ -4,6 +4,8 @@ name: CI
 # jobs "verify" and "security" required checks (add "codeql" once code scanning is enabled), so a pull request cannot merge unless they pass.
 on:
   pull_request:
+    # "labeled" so that adding the full-ci label to a pull request starts the full run straight away
+    types: [opened, synchronize, reopened, labeled]
   push:
     branches: [main]
   workflow_dispatch:
@@ -14,6 +16,10 @@ permissions:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
+
+# Actions minutes: the repository is private, so every runner minute is billed against the plan. A pull request runs the quick
+# gates (unit, client, security, dependency-review) and verify. The long jobs (E2E shards, clock, dast, perf-smoke, container-scan,
+# deploy-rehearsal, codeql) run on every push to main, on a manual run, and on a pull request that carries the label "full-ci".
 
 jobs:
   # Audit AUD-DEF-020: the whole regression (about 35 minutes of unit tests with coverage, then hours of E2E) cannot finish inside one
@@ -59,6 +65,7 @@ jobs:
 
   e2e:
     name: E2E shard ${{ matrix.shard }} of 8
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -94,13 +101,18 @@ jobs:
     needs: [unit, client, e2e]
     timeout-minutes: 5
     steps:
+      # E2E may be "skipped" only on a pull request without the full-ci label; on main, a manual run or a full-ci pull request it must pass.
       - name: every part of the regression passed
+        env:
+          E2E_REQUIRED: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci') }}
         run: |
-          echo "unit: ${{ needs.unit.result }}, client: ${{ needs.client.result }}, e2e: ${{ needs.e2e.result }}"
-          test "${{ needs.unit.result }}" = success && test "${{ needs.client.result }}" = success && test "${{ needs.e2e.result }}" = success
+          echo "unit: ${{ needs.unit.result }}, client: ${{ needs.client.result }}, e2e: ${{ needs.e2e.result }} (required: $E2E_REQUIRED)"
+          test "${{ needs.unit.result }}" = success && test "${{ needs.client.result }}" = success
+          if [ "$E2E_REQUIRED" = true ]; then test "${{ needs.e2e.result }}" = success; else test "${{ needs.e2e.result }}" = success -o "${{ needs.e2e.result }}" = skipped; fi
 
   clock:
     name: unit suite on a Sunday and on the last day of the year (part 166.1 F-09)
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -140,6 +152,7 @@ jobs:
   # every guarded list, traversal, signed-out access). A Critical or High finding fails the job.
   dast:
     name: dast
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -158,9 +171,10 @@ jobs:
           if-no-files-found: ignore
 
   # Part 30.06 FR-02: the performance smoke on every change (the load models at small scale against the real server, judged against the
-  # SLOs by the report); the full load and the soak run on a schedule (.github/workflows/perf.yml).
+  # SLOs by the report); the full load and the soak run by hand for now (.github/workflows/perf.yml).
   perf-smoke:
     name: perf-smoke
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -196,6 +210,7 @@ jobs:
   # Container image scan (part 30.08 added the Dockerfile, closing D-110): build the image, check the compose file, scan with Trivy.
   container-scan:
     name: container-scan
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -210,6 +225,7 @@ jobs:
   # and rollback rehearsal under traffic, with its two failure drills. Production changes go only through this pipeline (BR-01).
   deploy-rehearsal:
     name: deploy-rehearsal
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -226,6 +242,7 @@ jobs:
   # fails at upload with "Code scanning is not enabled". Remove continue-on-error once it is enabled.
   codeql:
     name: codeql
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     continue-on-error: true
