@@ -198,6 +198,33 @@ export function createFileService({ db, storage, scanners, jobs, signer, approva
   };
   const presentSession = (s) => ({ uploadId: s.upload_id, fileName: s.file_name, size: s.declared_size, received: s.received, status: s.status, chunkSize: CHUNK_SIZE, expiresAt: s.expires_at, fileId: s.file_id });
   const tempOf = (uploadId) => join(tmpRoot, uploadId);
+  const chunksInFlight = new Set(); // upload ids with a chunk being received now
+  async function writeChunk(s, uploadId, stream) {
+    const path = tempOf(uploadId);
+    await truncate(path, s.received); // drop bytes of an earlier chunk that did not finish
+    const room = Math.min(MAX_CHUNK, s.declared_size - s.received);
+    let got = 0;
+    const out = createWriteStream(path, { flags: 'a' });
+    try {
+      await pipeline(
+        stream,
+        async function* limit(source) {
+          for await (const chunk of source) {
+            got += chunk.length;
+            if (got > room) throw rejected(`This chunk is larger than the ${room} bytes the upload can still take.`, 'offset');
+            yield chunk;
+          }
+        },
+        out,
+      );
+    } catch (err) {
+      await truncate(path, s.received).catch(() => {});
+      throw err;
+    }
+    const moved = db.prepare("UPDATE core_file_uploads SET received = ?, updated_at = ? WHERE upload_id = ? AND received = ? AND status = 'OPEN'").run(s.received + got, iso(now()), uploadId, s.received);
+    if (moved.changes !== 1) throw conflict('Another request changed this upload at the same time. Ask where to resume.');
+    return presentSession(db.prepare('SELECT * FROM core_file_uploads WHERE upload_id = ?').get(uploadId));
+  }
 
   return {
     tmpRoot,
@@ -231,30 +258,14 @@ export function createFileService({ db, storage, scanners, jobs, signer, approva
       if (s.status !== 'OPEN') throw unprocessable(`This upload is ${s.status.toLowerCase()}.`);
       if (Date.parse(s.expires_at) < now()) throw unprocessable('This upload has expired. Start again.');
       if (offset !== s.received) throw new HttpError(409, 'VERSION_CONFLICT', `The server has ${s.received} bytes of this upload, not ${offset}. Resume from ${s.received}.`, [{ field: 'offset', message: `Resume from ${s.received}` }]);
-      const path = tempOf(uploadId);
-      await truncate(path, s.received); // drop bytes of an earlier chunk that did not finish
-      const room = Math.min(MAX_CHUNK, s.declared_size - s.received);
-      let got = 0;
-      const out = createWriteStream(path, { flags: 'a' });
+      // two chunks written at once would interleave in the same temp file: a second one is refused while the first is received
+      if (chunksInFlight.has(uploadId)) throw conflict('Another chunk of this upload is still being received. Ask where to resume.');
+      chunksInFlight.add(uploadId);
       try {
-        await pipeline(
-          stream,
-          async function* limit(source) {
-            for await (const chunk of source) {
-              got += chunk.length;
-              if (got > room) throw rejected(`This chunk is larger than the ${room} bytes the upload can still take.`, 'offset');
-              yield chunk;
-            }
-          },
-          out,
-        );
-      } catch (err) {
-        await truncate(path, s.received).catch(() => {});
-        throw err;
+        return await writeChunk(s, uploadId, stream);
+      } finally {
+        chunksInFlight.delete(uploadId);
       }
-      const moved = db.prepare("UPDATE core_file_uploads SET received = ?, updated_at = ? WHERE upload_id = ? AND received = ? AND status = 'OPEN'").run(s.received + got, iso(now()), uploadId, s.received);
-      if (moved.changes !== 1) throw conflict('Another request changed this upload at the same time. Ask where to resume.');
-      return presentSession(db.prepare('SELECT * FROM core_file_uploads WHERE upload_id = ?').get(uploadId));
     },
 
     /** Finish a resumable upload: runs the same checks as a one-request upload. Completing twice returns the same file. */

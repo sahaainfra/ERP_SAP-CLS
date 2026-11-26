@@ -417,11 +417,17 @@ export function createAuthService({ db, identity, users, mfa, notifier }) {
         await hasher.decoy(String(body.pin ?? ''));
         throw failed();
       }
+      // the try is counted before the (slow) check, in one statement, so tries sent at the same time cannot all read the same count
+      const counted = db.prepare('UPDATE iam_devices SET pin_failed = pin_failed + 1 WHERE id = ? AND pin_hash IS NOT NULL AND pin_failed < 5').run(dev.id);
+      if (counted.changes !== 1) {
+        await hasher.decoy(String(body.pin ?? ''));
+        throw failed();
+      }
       const ok = (await hasher.verify(dev.pin_hash, String(body.pin))).ok;
       if (!ok) {
-        const failures = dev.pin_failed + 1;
+        const failures = db.prepare('SELECT pin_failed FROM iam_devices WHERE id = ?').get(dev.id).pin_failed;
         // five wrong PINs remove the PIN: the person has to sign in with the password again
-        db.prepare('UPDATE iam_devices SET pin_failed = ?, pin_hash = CASE WHEN ? >= 5 THEN NULL ELSE pin_hash END WHERE id = ?').run(failures, failures, dev.id);
+        db.prepare('UPDATE iam_devices SET pin_hash = CASE WHEN ? >= 5 THEN NULL ELSE pin_hash END WHERE id = ?').run(failures, dev.id);
         record({ user, result: 'pin_failed', ctx, device: { name: dev.name, fingerprint: dev.device_fingerprint }, reason: failures >= 5 ? 'PIN removed after 5 wrong tries' : 'wrong PIN' });
         throw failed();
       }
