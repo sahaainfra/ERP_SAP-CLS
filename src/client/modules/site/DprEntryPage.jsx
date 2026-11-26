@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { authHeaders } from '../../platform/api/index.js';
-import { enqueue, useOffline } from '../../platform/offline/engine.js';
+import { enqueue, isWaiting, useOffline } from '../../platform/offline/engine.js';
 import { browserTransport, uploadFile } from '../../platform/files/upload.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { NOTE_TYPES, WEATHER_CODES, fmtQty, st, today } from './api.js';
@@ -144,7 +144,7 @@ export default function DprEntryPage() {
   return (
     <section aria-labelledby="dpr-h" data-testid="site-dpr-entry" style={{ maxWidth: 720 }}>
       <PageHeader id="dpr-h" title={t('dpr.entry')} />
-      <p className={`att-net${online ? '' : ' is-off'}`} role="status" data-testid="dpr-net">{online ? t('dpr.online') : t('dpr.offline')}{offline.queue?.length ? ` · ${t('dpr.waiting', { n: offline.queue.length })}` : ''} · <Link to="/field/sync">{t('dpr.syncStatus')}</Link></p>
+      <p className={`att-net${online ? '' : ' is-off'}`} role="status" data-testid="dpr-net">{online ? t('dpr.online') : t('dpr.offline')}{offline.queue?.filter(isWaiting).length ? ` · ${t('dpr.waiting', { n: offline.queue.filter(isWaiting).length })}` : ''} · <Link to="/field/sync">{t('dpr.syncStatus')}</Link></p>
       <ol className="steps" style={{ display: 'flex', gap: 4, flexWrap: 'wrap', listStyle: 'none', padding: 0 }} aria-label={t('dpr.steps')}>{STEPS.map((k, i) => <li key={k}><button type="button" className={`btn${i === step ? ' btn-primary' : ''}`} style={{ minHeight: 40 }} onClick={() => form && setStep(i)} disabled={!form && i > 0} aria-current={i === step ? 'step' : undefined} data-testid={`dpr-step-${k}`}>{i + 1}. {t(`dpr.s.${k}`)}</button></li>)}</ol>
       {error?.form && <p className="field-error" role="alert" data-testid="dpr-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="dpr-note">{note}</p>}

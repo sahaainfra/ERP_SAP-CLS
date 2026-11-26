@@ -30,7 +30,13 @@ export const offlineState = () => state;
 export const subscribeOffline = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 export const useOffline = () => useSyncExternalStore(subscribeOffline, offlineState);
 
-const mirror = (queue) => { for (const q of syncQueue.list().filter((x) => x.source === 'offline')) if (!queue.some((c) => c.id === q.id)) syncQueue.dequeue(q.id); for (const c of queue) syncQueue.enqueue({ id: c.id, label: c.label ?? c.type, source: 'offline' }); };
+/** Still to reach the server: a record not yet accepted, or an accepted one with a photo still to send (a refused photo is only shown). */
+export const isUnsent = (c) => c.status !== 'APPLIED' || (c.files ?? []).some((f) => !f.error);
+/** Waiting to be sent: what the next sync sends by itself (new and deferred records, and the photos of accepted ones). A refused record, a
+ *  conflict or one waiting for a supervisor waits for a person instead. */
+export const isWaiting = (c) => c.status === 'PENDING' || c.status === 'DEFERRED' || (c.status === 'APPLIED' && isUnsent(c));
+// the device queue (Field home) shows what has not reached the server: not an accepted record whose only photo left was refused
+const mirror = (queue) => { const unsent = queue.filter(isUnsent); for (const q of syncQueue.list().filter((x) => x.source === 'offline')) if (!unsent.some((c) => c.id === q.id)) syncQueue.dequeue(q.id); for (const c of unsent) syncQueue.enqueue({ id: c.id, label: c.label ?? c.type, source: 'offline' }); };
 const persistQueue = async (queue) => { set({ queue }); mirror(queue); if (store) await store.put('meta', 'queue', queue); };
 const errorOf = (e) => ({ status: e?.status ?? 0, code: e?.code ?? (e?.status ? 'ERROR' : 'NETWORK'), message: e?.message ?? 'The server could not be reached.' });
 
@@ -156,7 +162,10 @@ export async function discard(id) {
 export async function retry(id) {
   // a record the server already accepted (APPLIED) is never sent again; only its waiting photos are, by the sync itself
   await persistQueue(state.queue.map((c) => (c.id === id && c.status !== 'APPLIED' ? { ...c, status: 'PENDING', error: null } : c)));
-  return sync({ force: true });
+  // a run already under way took its copy before this tap: let it finish, then send again. The record is PENDING now, so a plain sync
+  // sends it (and not every other refused record on the device)
+  if (running) await running.catch(() => {});
+  return sync();
 }
 
 // ---- sending (FR-03, FR-05, FR-07) ----
@@ -197,8 +206,9 @@ export function sync({ force = false } = {}) {
       await registerDevice();
       if (state.revoked || !store) return { sent: 0 };
       let queue = [...state.queue];
-      const taken = new Set(queue.map((c) => c.id)); // the commands this run works on; anything queued or discarded meanwhile is left as it is
+      const taken = new Map(queue.map((c) => [c.id, c])); // the commands this run works on; anything queued or discarded meanwhile is left as it is
       const waiting = queue.filter((c) => c.status === 'PENDING' || c.status === 'DEFERRED' || (force && c.status === 'ERROR'));
+      const tried = new Set(waiting.map((c) => c.id));
       const photosTried = new Set(); // commands whose photos this run has already sent (or tried to)
       let sent = 0;
       let failed = false;
@@ -228,9 +238,11 @@ export function sync({ force = false } = {}) {
         if (left === null) return { sent };
         queue = left.length ? queue.map((x) => (x.id === c.id ? { ...c, files: left } : x)) : queue.filter((x) => x.id !== c.id);
       }
-      // merge into the queue as it is now: a command queued while this run was sending stays, one discarded meanwhile does not come back
+      // merge into the queue as it is now: a command queued while this run was sending stays, one discarded meanwhile does not come back,
+      // and one this run did not send but that changed meanwhile (a Try again) keeps its new state
       const outcome = new Map(queue.map((c) => [c.id, c]));
-      await persistQueue(state.queue.filter((c) => !taken.has(c.id) || outcome.has(c.id)).map((c) => outcome.get(c.id) ?? c));
+      const changedMeanwhile = (c) => taken.get(c.id) !== c && !tried.has(c.id);
+      await persistQueue(state.queue.filter((c) => !taken.has(c.id) || outcome.has(c.id) || changedMeanwhile(c)).map((c) => (changedMeanwhile(c) ? c : (outcome.get(c.id) ?? c))));
       // a failed send is not a sync: the error handleFailure recorded stays on screen
       if (!failed) set({ lastSync: new Date().toISOString(), lastError: null });
       await saveMeta();
@@ -257,12 +269,12 @@ export async function startOffline(user) {
   await loadLocal();
   if (!wired) { window.addEventListener('online', onOnline); window.addEventListener('offline', onOffline); wired = true; }
   clearInterval(timer);
-  timer = setInterval(() => { if (state.online && state.queue.some((c) => c.status === 'PENDING' || c.status === 'DEFERRED')) sync().catch(() => {}); }, 30_000);
+  timer = setInterval(() => { if (state.online && state.queue.some(isWaiting)) sync().catch(() => {}); }, 30_000);
   if (state.online) { await registerDevice(); await refreshMasters(); await sync().catch(() => {}); }
 }
 /** Sign-out: the local copy goes with the session. Called by the sign-out action after the person has seen how much is unsent. */
 export const wipeOnSignOut = () => wipe('sign-out');
-export const unsentCount = () => state.queue.length;
+export const unsentCount = () => state.queue.filter(isUnsent).length;
 export const deviceKey = deviceId;
 
 /** A command that was settled on the server (a conflict resolved, an old command confirmed) leaves the local queue. */

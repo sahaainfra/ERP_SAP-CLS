@@ -201,6 +201,37 @@ test('FR-06 an export larger than a direct download runs as a job; the file is f
   await api.close();
 });
 
+test('a background export that fails on its last attempt keeps no file, gives its approval back once, and does not run again on a retry', async () => {
+  const api = await startApi();
+  seed(api, 30);
+  api.db.prepare("INSERT INTO core_parameters (company_id, key, value, data_type, scope_type, scope_id, effective_from, created_by, source_type) VALUES (1, 'core.export.max_rows', '10', 'integer', 'company', 1, '2020-01-01', 't', 'test')").run();
+  const r = await api.call('GET', `${U}/sample-requests/export?format=csv`, pm);
+  assert.equal(r.status, 202, JSON.stringify(r.json));
+  const row = api.db.prepare('SELECT * FROM ui_export_jobs WHERE id = ?').get(r.json.data.id);
+  // as if it had been let through on approval 77, and its list can no longer be built
+  api.db.prepare("UPDATE ui_export_jobs SET list_code = 'no-such-list', actor_json = ? WHERE id = ?").run(JSON.stringify({ ...JSON.parse(row.actor_json), approvalId: 77 }), row.id);
+  const rt = runtimeOf(api.db);
+  const job = () => api.db.prepare('SELECT * FROM core_jobs WHERE id = ?').get(row.job_id);
+  await rt.jobs.runNext();
+  const released = () => api.db.prepare("SELECT COUNT(*) AS n FROM core_audit_log WHERE entity = 'export_grant' AND entity_id = '77' AND action = 'released'").get().n;
+  assert.equal(released(), 0, 'a first failed attempt keeps the approval: the job tries again');
+  api.db.prepare("UPDATE core_jobs SET run_after = '2000-01-01T00:00:00.000Z' WHERE id = ?").run(row.job_id);
+  await rt.jobs.runNext();
+  assert.equal(job().status, 'FAILED');
+  assert.equal(released(), 1, 'the last attempt failed: the approval is given back');
+  const after = api.db.prepare('SELECT * FROM ui_export_jobs WHERE id = ?').get(row.id);
+  assert.deepEqual([after.status, after.storage_key, JSON.parse(after.actor_json).approvalReleased], ['FAILED', null, true]);
+  // a retried job does not make a file on the approval it gave back
+  api.db.prepare("UPDATE ui_export_jobs SET list_code = 'sample-requests' WHERE id = ?").run(row.id);
+  const fresh = rt.jobs.retry(row.job_id, { actor: 'it1', reason: 'try again' });
+  await rt.jobs.runNext();
+  const rerun = api.db.prepare('SELECT * FROM core_jobs WHERE job_id = ?').get(fresh.jobId);
+  assert.notEqual(rerun.status, 'SUCCEEDED');
+  assert.match(api.db.prepare('SELECT error FROM ui_export_jobs WHERE id = ?').get(row.id).error, /given back/);
+  assert.equal(released(), 1, 'given back once');
+  await api.close();
+});
+
 test('FR-03 T-02 saved views: personal ones stay with their owner; a shared view reaches its target role only; one default; 409 on a stale change', async () => {
   const api = await startApi();
   seed(api, 10);

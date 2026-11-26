@@ -111,4 +111,12 @@ test('26.02 a rejected whole-project handover still counts; an area handover wai
   assert.ok(!sysBlocked(okay(await call(U.pm, 'GET', `/handovers/${annexe.id}`)).readiness.blockers), 'no asset yet: no system of the area');
   okay(await call(U.pm, 'POST', `/handovers/${annexe.id}/assets`, { tagNo: 'AHU-09', description: 'Air handling unit 9', systemId: subsystem }), 201);
   assert.ok(sysBlocked(okay(await call(U.pm, 'GET', `/handovers/${annexe.id}`)).readiness.blockers), 'the subsystem\'s system is not at RFSU');
+  // two levels down: the asset still waits for the top-level system
+  const wing = okay(await call(U.pm, 'POST', '/handovers', { projectId: r.A, title: 'Wing', scopeType: 'AREA', areaLabel: 'Wing', dlpMonths: 12 }), 201);
+  const nest = (code, parent) => Number(r.d.prepare("INSERT INTO tnc_systems (company_id, org_project_id, parent_id, code, name, stage) VALUES (1, ?, ?, ?, ?, 'MC')").run(r.A, parent, code, code).lastInsertRowid);
+  const deep = nest('SYS-HVAC-1A', nest('SYS-HVAC-1', nest('SYS-HVAC', null)));
+  okay(await call(U.pm, 'POST', `/handovers/${wing.id}/assets`, { tagNo: 'FCU-01', description: 'Fan coil unit 1', systemId: deep }), 201);
+  assert.ok(okay(await call(U.pm, 'GET', `/handovers/${wing.id}`)).readiness.blockers.some((m) => /Commissioning system/.test(m) && /SYS-HVAC\b(?!-)/.test(m)), 'the top system two levels up is not at RFSU');
+  r.d.prepare("UPDATE tnc_systems SET deleted_at = '2026-01-01T00:00:00Z' WHERE id = ?").run(deep);
+  assert.ok(okay(await call(U.pm, 'GET', `/handovers/${wing.id}`)).readiness.blockers.some((m) => /SYS-HVAC\b(?!-)/.test(m)), 'a deleted subsystem still leads to its live top-level system');
 });

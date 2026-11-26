@@ -513,9 +513,12 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
       const decision = exportGuard.authorize(actor, { report: 'users.csv', permission: 'iam.user.export', rows: total, personal: true, filters: { q, ...filters }, approvalId });
       if (decision.status === 'APPROVAL_REQUIRED') return { status: 'APPROVAL_REQUIRED', rows: total, threshold: exportGuard.threshold(), request: decision.request };
       const rows = [];
-      for (let offset = 0; offset < total; offset += 200) rows.push(...service.list(actor, { ...list, limit: 200, offset }).data);
-      const csv = toCsv(['Username', 'Name', 'Employee code', 'Department', 'Status', 'Type', 'Roles', 'Last sign-in'], rows.map((u) => [u.username, u.displayName, u.employeeCode ?? '', u.departmentName ?? '', u.status, u.userType, u.roles.join(' '), u.lastLoginAt ?? '']));
-      transaction(db, () => exportGuard.complete(actor, { report: 'users.csv', format: 'csv', rows: total, filters: { q, ...filters }, personal: true, approvalId: decision.approvalId ?? null }));
+      let csv;
+      try {
+        for (let offset = 0; offset < total; offset += 200) rows.push(...service.list(actor, { ...list, limit: 200, offset }).data);
+        csv = toCsv(['Username', 'Name', 'Employee code', 'Department', 'Status', 'Type', 'Roles', 'Last sign-in'], rows.map((u) => [u.username, u.displayName, u.employeeCode ?? '', u.departmentName ?? '', u.status, u.userType, u.roles.join(' '), u.lastLoginAt ?? '']));
+        transaction(db, () => exportGuard.complete(actor, { report: 'users.csv', format: 'csv', rows: total, filters: { q, ...filters }, personal: true, approvalId: decision.approvalId ?? null }));
+      } catch (err) { exportGuard.release(actor, decision.approvalId, err?.message); throw err; }
       return { status: 'OK', rows: total, csv };
     },
 

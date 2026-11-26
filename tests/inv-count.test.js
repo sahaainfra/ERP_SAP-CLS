@@ -107,3 +107,22 @@ test('AC-03 AC-04 who sees and does what: the keeper counts blind, the manager r
   invOf(r.d).countDecide({ docId: String(p.id), status: 'APPROVED' }, mgr2, 'APPROVED'); assert.equal((await r.call(mgr, 'GET', `/count-plans/${p.id}`)).json.data.status, 'APPROVED'); await r.call(mgr, 'POST', `/count-plans/${p.id}/start`); assert.equal((await r.call(sk, 'GET', '/count-plans/queue')).json.data.length, 1); assert.equal((await r.call(sk3, 'GET', '/count-plans/queue')).json.data.length, 0, 'only the stores they keep');
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.inv.p1606'").run(); assert.equal((await r.call(sk, 'GET', '/count-plans')).status, 404, 'the flag is off'); assert.equal((await r.call(sk, 'GET', '/stores')).status, 200, '16.01 is not affected');
 });
+
+test('a count without the freeze reads the live book of each serial-numbered unit, and its adjustment posts to that serial', async () => {
+  const r = await ready(); r.d.prepare('UPDATE mdm_items SET serial_tracked = 1 WHERE id = ?').run(r.pump); const st = await r.store('CN-SR');
+  for (const serialNo of ['SN1', 'SN2']) { const m = await r.call(mgr, 'POST', '/movements', { storeId: st.id, itemId: r.pump, type: 'RECEIPT', qty: 1, rate: 5000, serialNo, date: TODAY, reason: 'Opening for the test' }); assert.equal(m.status, 201, JSON.stringify(m.json)); }
+  const p = await r.plan(sk, st, { freeze: false }); await r.approvePlan(p); assert.equal((await r.call(mgr, 'POST', `/count-plans/${p.id}/start`)).status, 200);
+  const lines = (await r.call(sk, 'GET', `/count-plans/${p.id}/sheet`)).json.data.lines; assert.deepEqual(lines.map((l) => l.serialNo).sort(), ['SN1', 'SN2'], 'one line per unit, naming its serial');
+  const out = await r.call(mgr, 'POST', '/movements', { storeId: st.id, itemId: r.pump, type: 'ISSUE', qty: 1, serialNo: 'SN1', date: TODAY, reason: 'Sent to site during the count' }); assert.equal(out.status, 201, JSON.stringify(out.json));
+  const l1 = lines.find((l) => l.serialNo === 'SN1'); const l2 = lines.find((l) => l.serialNo === 'SN2');
+  const c = await r.call(sk, 'POST', `/count-plans/${p.id}/counts`, { lines: [{ lineId: l1.id, qty: 0 }, { lineId: l2.id, qty: 0 }] }); assert.equal(c.status, 200, JSON.stringify(c.json));
+  assert.equal(c.json.data.recount, 1, 'SN1 left on an issue (its book is now 0); SN2 is missing');
+  const book = (l) => r.d.prepare('SELECT book_qty FROM inv_count_lines WHERE id = ?').get(l.id).book_qty; assert.deepEqual([book(l1), book(l2)], [0, 1000]);
+  assert.equal((await r.call(sk2, 'POST', `/count-plans/${p.id}/counts`, { recount: true, lines: [{ lineId: l2.id, qty: 0 }] })).status, 200);
+  assert.equal((await r.call(sk2, 'POST', `/count-plans/${p.id}/close`)).status, 200);
+  const rv = await r.call(mgr, 'POST', `/count-plans/${p.id}/review`, { reasons: [{ lineId: l2.id, reason: 'Pump not found in the store' }] }); assert.equal(rv.status, 200, JSON.stringify(rv.json));
+  const adj = await r.call(mgr, 'POST', `/count-plans/${p.id}/adjustment`); assert.equal(adj.status, 201, JSON.stringify(adj.json));
+  const sub = await r.call(mgr, 'POST', `/adjustments/${adj.json.data.adjustment.id}/submit`); assert.equal(sub.status, 202, JSON.stringify(sub.json)); assert.equal((await r.act(mgr2, sub.json.data.workflowInstanceId)).status, 200);
+  assert.equal((await r.call(mgr, 'GET', `/adjustments/${adj.json.data.adjustment.id}`)).json.data.status, 'APPROVED', 'the loss posts to serial SN2');
+  assert.equal(r.d.prepare("SELECT COALESCE(SUM(qty_on_hand), 0) AS q FROM inv_balances WHERE store_id = ? AND item_id = ?").get(st.id, r.pump).q, 0);
+});

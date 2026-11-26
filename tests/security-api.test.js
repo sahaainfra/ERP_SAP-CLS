@@ -12,7 +12,7 @@ import { silentLogger } from '../src/server/platform/http/logger.js';
 import { identityOf } from '../src/server/platform/identity/index.js';
 import { authzOf, ROLE_TEMPLATES, permissionRegistry } from '../src/server/platform/authz/index.js';
 import { ROUTE_POLICY } from '../src/server/platform/security/route-policy.js';
-import { DEFAULT_SETTINGS, assertDeclared, buildRegistry, checkKeys, createPolicy, neutralise, runRouteTests, securityOf, securitySettingsOf, toCsv } from '../src/server/platform/security/index.js';
+import { DEFAULT_SETTINGS, assertDeclared, buildRegistry, checkKeys, createExportGuard, createPolicy, neutralise, runRouteTests, securityOf, securitySettingsOf, toCsv } from '../src/server/platform/security/index.js';
 import express from 'express';
 import { z } from 'zod';
 import { audit, authorise, validate } from '../src/server/platform/security/index.js';
@@ -344,9 +344,13 @@ test('FR-08 AC-06 an export needs its permission, neutralises formulas, is logge
   const released = await api.raw('POST', `${I}/users/export`, { ...HR, headers: key(), body: JSON.stringify({ filters: { status: 'ACTIVE' }, approvalId: reqId }) });
   assert.equal(released.status, 200, released.buffer.toString());
   assert.equal((await exp(HR, { filters: { status: 'ACTIVE' }, approvalId: reqId })).status, 422, 'an approval is used once');
+  // an export that failed before its file left gives the approval back, once
+  createExportGuard({ db: api.db, approvals: null }).release({ user: 'hr1', companyId: 1 }, reqId, 'the file could not be built');
+  assert.equal((await api.raw('POST', `${I}/users/export`, { ...HR, headers: key(), body: JSON.stringify({ filters: { status: 'ACTIVE' }, approvalId: reqId }) })).status, 200, 'given back: usable again');
+  assert.equal((await exp(HR, { filters: { status: 'ACTIVE' }, approvalId: reqId })).status, 422, 'and spent again');
   const grants = api.db.prepare("SELECT action FROM core_audit_log WHERE entity = 'export_grant' ORDER BY id").all().map((r) => r.action);
-  assert.deepEqual(grants, ['approved', 'used']);
-  assert.equal((await api.call('GET', `${C}/security-events?type=export.sensitive&severity=HIGH`, SYS)).json.data.length, 1, 'a bulk export of people is a high event');
+  assert.deepEqual(grants, ['approved', 'used', 'released', 'used']);
+  assert.equal((await api.call('GET', `${C}/security-events?type=export.sensitive&severity=HIGH`, SYS)).json.data.length, 2, 'each bulk export of people (here two, on the given-back approval) is a high event');
   await api.close();
 });
 

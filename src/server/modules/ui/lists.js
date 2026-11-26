@@ -178,34 +178,42 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
       const grant = guard.authorize(actor, { report: code, permission: src.permission, rows: count, personal: Boolean(src.personal), filters: filtersOf(req), anywhere: true, background, approvalId });
       if (grant.status === 'APPROVAL_REQUIRED') throw unprocessable(`This export holds ${count} people's records: it needs the approval of the HR manager or a director. Request ${grant.request.id} is waiting; export again with approvalId=${grant.request.id} once it is approved.`, [{ field: 'approvalId', message: String(grant.request.id) }]);
       if (!background) {
-        const out = build(actor, code, req, format);
-        guard.complete(actor, { report: code, format, rows: out.rows, filters: filtersOf(req), personal: Boolean(src.personal), approvalId: grant.approvalId ?? null });
+        let out;
+        try {
+          out = build(actor, code, req, format);
+          guard.complete(actor, { report: code, format, rows: out.rows, filters: filtersOf(req), personal: Boolean(src.personal), approvalId: grant.approvalId ?? null });
+        } catch (err) { guard.release(actor, grant.approvalId, err?.message); throw err; }
         return { kind: 'file', ...out, contentType: FORMATS[format] };
       }
-      return transaction(db, () => {
+      // an export that cannot be queued gives its approval back (one cancelled while queued keeps it spent: the person asks again)
+      try { return transaction(db, () => {
         const savedQuery = queryOf(req);
         for (const parameter of parameters) {
           if (req[parameter] !== undefined) savedQuery[parameter] = req[parameter];
         }
         const scope = downloadChecks.get(code)?.(actor, savedQuery);
         const id = Number(db.prepare("INSERT INTO ui_export_jobs (company_id, user_id, user_ref, list_code, format, query_json, actor_json, status, rows_planned, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'QUEUED', ?, ?, 'list_export')")
-          .run(actor.companyId, actor.userId ?? null, actor.user, code, format, JSON.stringify(savedQuery), JSON.stringify({ user: actor.user, userId: actor.userId ?? null, roles: actor.roles ?? [], companyId: actor.companyId, scope }), count, actor.user).lastInsertRowid);
+          .run(actor.companyId, actor.userId ?? null, actor.user, code, format, JSON.stringify(savedQuery), JSON.stringify({ user: actor.user, userId: actor.userId ?? null, roles: actor.roles ?? [], companyId: actor.companyId, scope, approvalId: grant.approvalId ?? null }), count, actor.user).lastInsertRowid);
         const job = jobs.enqueue('ui.export', { exportId: id }, { createdBy: actor.user, companyId: actor.companyId });
         db.prepare('UPDATE ui_export_jobs SET job_id = ? WHERE id = ?').run(job.id, id);
         writeAudit(db, { entity: 'ui_export_jobs', entityId: id, action: 'queue', newValues: { list: code, format, rows: count, filters: filtersOf(req) }, actor: actor.user, companyId: actor.companyId });
         return { kind: 'job', ...present(db.prepare('SELECT * FROM ui_export_jobs WHERE id = ?').get(id)) };
-      });
+      }); } catch (err) { guard.release(actor, grant.approvalId, err?.message); throw err; }
     },
 
     /** The job: replay the screen's query as the person who asked (their scope and masks), write the file, keep it for 7 days. */
-    /** @param {number} exportId @param {(message: string) => void} [log] */
-    run(exportId, log = (_message) => {}) {
+    /** `final`: the job's last attempt; if it fails, its file is removed and the approval the export was let through on is given back. An export
+     *  whose approval was given back does not run again (a retried job): the person exports again, on a fresh check of the approval. */
+    /** @param {number} exportId @param {(message: string) => void} [log] @param {{ final?: boolean }} [options] */
+    run(exportId, log = (_message) => {}, { final = false } = {}) {
       const r = db.prepare('SELECT * FROM ui_export_jobs WHERE id = ?').get(exportId);
       if (!r || r.status === 'DONE') return { skipped: true };
       db.prepare("UPDATE ui_export_jobs SET status = 'RUNNING', updated_at = ? WHERE id = ?").run(nowIso(), exportId);
+      let written = null;
       try {
         const check = downloadChecks.get(r.list_code);
         const savedActor = JSON.parse(r.actor_json);
+        if (savedActor.approvalReleased) throw unprocessable('The approval of this export was given back when it failed. Export again.');
         if (check && savedActor.userId != null) {
           const account = currentAccount(savedActor);
           if (!account) throw changed();
@@ -218,16 +226,22 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
         const out = build(actor, r.list_code, req, r.format);
         mkdirSync(dir, { recursive: true });
         const key = `${r.company_id}-${r.id}-${Date.now().toString(36)}.${r.format}`;
-        writeFileSync(fileOf(key), out.buffer);
+        writeFileSync(fileOf(key), out.buffer); written = key;
         const at = nowIso();
         db.prepare("UPDATE ui_export_jobs SET status = 'DONE', rows_written = ?, file_name = ?, storage_key = ?, bytes = ?, finished_at = ?, expires_at = ?, updated_at = ? WHERE id = ?")
           .run(out.rows, out.fileName, key, out.buffer.length, at, new Date(Date.now() + 7 * 86_400_000).toISOString(), at, exportId);
-        guard.complete(actor, { report: r.list_code, format: r.format, rows: out.rows, filters: JSON.parse(r.query_json), personal: Boolean(out.src.personal) });
+        guard.complete(actor, { report: r.list_code, format: r.format, rows: out.rows, filters: JSON.parse(r.query_json), personal: Boolean(out.src.personal), approvalId: JSON.parse(r.actor_json).approvalId ?? null });
         publishEvent(db, { type: 'ui.export.completed', entity: 'export_job', entityId: exportId, actorId: actor.user, companyId: r.company_id, data: { list: r.list_code, format: r.format, rows: out.rows } });
         log(`Exported ${out.rows} rows of ${r.list_code} as ${r.format}`);
         return { rows: out.rows };
       } catch (err) {
-        db.prepare("UPDATE ui_export_jobs SET status = 'FAILED', error = ?, finished_at = ?, updated_at = ? WHERE id = ?").run(String(err.message).slice(0, 500), nowIso(), nowIso(), exportId);
+        if (written) rmSync(fileOf(written), { force: true });
+        db.prepare("UPDATE ui_export_jobs SET status = 'FAILED', error = ?, storage_key = NULL, file_name = NULL, bytes = 0, finished_at = ?, updated_at = ? WHERE id = ?").run(String(err.message).slice(0, 500), nowIso(), nowIso(), exportId);
+        const saved = JSON.parse(r.actor_json);
+        if (final && saved.approvalId != null && !saved.approvalReleased) {
+          guard.release({ user: saved.user, companyId: r.company_id }, saved.approvalId, err?.message);
+          db.prepare('UPDATE ui_export_jobs SET actor_json = ? WHERE id = ?').run(JSON.stringify({ ...saved, approvalReleased: true }), exportId);
+        }
         throw err;
       }
     },

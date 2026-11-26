@@ -4,7 +4,7 @@ import Icon from '../../platform/design/Icon.jsx';
 import { EmptyState } from '../../platform/feedback/states.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { useLang, labelIn } from '../../platform/i18n/index.js';
-import { enqueue, sync, useOffline } from '../../platform/offline/engine.js';
+import { enqueue, isWaiting, sync, useOffline } from '../../platform/offline/engine.js';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CMD_STATUS } from './offline-common.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
@@ -66,7 +66,7 @@ export default function FieldFormsPage() {
       <PageHeader id="ff-title" title={"Field Forms"} />
       <ul className="field-status" aria-label="Connection">
         <li data-testid="ff-online" data-online={off.online}><Icon name={off.online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {off.online ? 'Online' : 'Offline: forms are saved on this phone'}</li>
-        <li data-testid="ff-queue" data-count={off.queue.length}><Icon name="erp.action.inbox" size={18} /> {off.queue.length === 0 ? 'Nothing is waiting to be sent' : `${off.queue.length} waiting to be sent`} · <Link to="/field/sync">Sync status</Link></li>
+        <li data-testid="ff-queue" data-count={off.queue.filter(isWaiting).length}><Icon name="erp.action.inbox" size={18} /> {off.queue.filter(isWaiting).length === 0 ? 'Nothing is waiting to be sent' : `${off.queue.filter(isWaiting).length} waiting to be sent`} · <Link to="/field/sync">Sync status</Link></li>
       </ul>
       {!off.supported && <p role="alert" className="error">This browser cannot keep an encrypted offline copy (IndexedDB and WebCrypto are needed).</p>}
       {off.supported && !off.ready && !off.revoked && <p className="muted" role="status">Preparing the offline copy...</p>}

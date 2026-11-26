@@ -122,6 +122,7 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
         jobId: row.job_id,
         params: stripTrace(raw),
         attempt: row.attempts,
+        maxAttempts: row.max_attempts,
         db,
         setProgress(percent, message = null) {
           db.prepare('UPDATE core_jobs SET progress = ?, progress_message = ?, heartbeat_at = ?, updated_at = ? WHERE id = ?').run(Math.max(0, Math.min(100, Math.round(percent))), message, iso(now().getTime()), iso(now().getTime()), row.id);

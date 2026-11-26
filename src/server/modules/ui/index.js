@@ -140,7 +140,7 @@ export const ui = {
     exports.register('ui.sample_requests', (actor, req) => requests.exportSource(actor, req));
     bindListExports(db, exports);
     if (migrated) {
-      runtime.jobs.register('ui.export', (ctx) => exports.run(ctx.params.exportId, (m) => ctx.log(m)), { maxAttempts: 2, description: 'Writes a large list export in the background; the file appears under My Exports.' });
+      runtime.jobs.register('ui.export', (ctx) => exports.run(ctx.params.exportId, (m) => ctx.log(m), { final: ctx.attempt >= ctx.maxAttempts }), { maxAttempts: 2, description: 'Writes a large list export in the background; the file appears under My Exports.' });
       runtime.jobs.register('ui.export_purge', (ctx) => { const r = exports.purge(); ctx.log(`Removed ${r.expired} expired export file(s)`); return r; }, { maxAttempts: 1, description: 'Removes list exports older than 7 days.' });
       runtime.scheduler.define({ code: 'ui.export_purge_daily', cron: '15 1 * * *', jobType: 'ui.export_purge', description: 'Daily removal of expired list exports (01:15 IST)' });
     }

@@ -226,11 +226,13 @@ export function createEventBus({ db, now = () => new Date(), maxAttempts = 5, ba
           const event = envelopeOf(row);
           if (lower && (event.occurredAt ?? row.created_at) < lower) continue;
           if (upper && (event.occurredAt ?? row.created_at) > upper) continue;
-          // a reset empties a consumer's whole projection (every company's rows), so a reset replay rebuilds it from every company's events
-          if (!reset && companyId !== null && event.companyId !== null && event.companyId !== companyId) continue;
+          // a reset empties a consumer's whole projection (every company's rows), so that consumer is rebuilt from every company's events;
+          // a consumer without a reset hook kept its rows, and gets the asked company's events only
+          const outside = companyId !== null && event.companyId !== null && event.companyId !== companyId;
+          const takers = targets.filter((t) => t.patterns.some((p) => matches(p, row.event_type)) && (!outside || (reset && t.reset)));
+          if (outside && takers.length === 0) continue;
           events += 1;
-          for (const t of targets) {
-            if (!t.patterns.some((p) => matches(p, row.event_type))) continue;
+          for (const t of takers) {
             transaction(db, () => t.handler(event, { db, replay: true, attempt: 1, consumer: t.name }));
             deliveries += 1;
           }

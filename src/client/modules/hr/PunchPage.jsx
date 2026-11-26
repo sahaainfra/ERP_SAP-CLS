@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { testPoint } from '../../../shared/geo.js';
-import { useOffline, enqueue } from '../../platform/offline/engine.js';
+import { useOffline, enqueue, isWaiting } from '../../platform/offline/engine.js';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
@@ -89,7 +89,7 @@ export default function PunchPage() {
     <section aria-labelledby="pu-title" data-testid="punch-page" className="att-punch">
       <PageHeader id="pu-title" title={"Punch In/Out"} />
       <p className="mdm-banner" role="note" data-testid="pu-notice">{c.notice}</p>
-      <p className={`att-net${offline.online === false || !navigator.onLine ? ' is-off' : ''}`} role="status" data-testid="pu-net">{navigator.onLine ? 'Online' : 'Offline'}{offline.queue?.length ? ` · ${offline.queue.length} waiting to be sent` : ''}</p>
+      <p className={`att-net${offline.online === false || !navigator.onLine ? ' is-off' : ''}`} role="status" data-testid="pu-net">{navigator.onLine ? 'Online' : 'Offline'}{offline.queue?.filter(isWaiting).length ? ` · ${offline.queue.filter(isWaiting).length} waiting to be sent` : ''}</p>
       {c.sites.length === 0 && !visit && <p className="mdm-banner is-warning" data-testid="pu-nosite">You are not deployed at a site today. Ask your manager, or punch at another site as a visit.</p>}
       <div className="mdm-fields">
         {c.sites.length > 0 && !visit && <Field label="Site" name="siteId" error={error}><select value={siteId} onChange={(e) => { setSiteId(e.target.value); setPos(null); }} data-testid="pu-site">{c.sites.map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></Field>}

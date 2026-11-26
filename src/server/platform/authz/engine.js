@@ -324,6 +324,8 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
     if (cols.branch && d.branches.size) denies.push(denyIn(cols.branch, d.branches));
     if (cols.department && d.departments.size) denies.push(denyIn(cols.department, d.departments));
     if (cols.owner && d.own && actor.userId) denies.push(`(${cols.owner} IS NOT NULL AND ${cols.owner} = ${Number(actor.userId)})`);
+    // an OWN deny covers the reportees too when the entity's hierarchy is on, as check()'s covers() does
+    if (cols.owner && d.own && entity && e.reportees.size && hierarchyOn(entity, e.companyId)) denies.push(`(${cols.owner} IS NOT NULL AND ${cols.owner} IN (${ids(e.reportees).join(',')}))`);
     if (denies.length) sql = `(${sql} AND NOT (${denies.join(' OR ')}))`;
     return { sql, unrestricted };
   }

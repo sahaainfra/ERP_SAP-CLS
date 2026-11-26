@@ -263,18 +263,38 @@ export function createIssueService({ db, base, invSvc }) {
     decide(instance, actor, outcome, comment) {
       const r = db.prepare('SELECT * FROM inv_site_returns WHERE id = ?').get(rid(instance.docId)); if (!r || r.status !== 'SUBMITTED') return; const now = nowIso(); const store = db.prepare('SELECT * FROM inv_stores WHERE id = ?').get(r.store_id);
       if (outcome === 'APPROVED') {
-        const iss = db.prepare('SELECT * FROM inv_issues WHERE id = ?').get(r.issue_id); const posted = [];
-        for (const x of json(r.lines_json, [])) {
+        const iss = db.prepare('SELECT * FROM inv_issues WHERE id = ?').get(r.issue_id); const posted = []; const lines = json(r.lines_json, []);
+        // what each issue line has had back into each batch: the earlier approved returns of this slip, and the lines of this one posted so far
+        // (a return approved before the split was kept has none: what it put back is read from its ledger entries for the item)
+        const backOf = (issueLineId, itemId) => { const m = new Map(); const put = (batch, q) => m.set(batch, (m.get(batch) ?? 0) + q); const add = (y) => { if (Number(y.issueLineId) === issueLineId) for (const b of y.batches ?? []) put(b.batch, b.qty); };
+          for (const o of db.prepare("SELECT id, lines_json FROM inv_site_returns WHERE issue_id = ? AND status = 'APPROVED' AND id <> ?").all(r.issue_id, r.id)) {
+            const ys = json(o.lines_json, []);
+            if (ys.some((y) => Number(y.issueLineId) === issueLineId && !y.batches)) { for (const g of db.prepare("SELECT batch_no, SUM(qty_in) AS q FROM inv_stock_ledger WHERE source_type = 'inv_site_return' AND source_id = ? AND item_id = ? AND txn_type = 'RETURN' GROUP BY batch_no").all(String(o.id), itemId)) put(g.batch_no, g.q); }
+            else ys.forEach(add);
+          }
+          lines.forEach(add); return m; };
+        for (const x of lines) {
           const l = db.prepare('SELECT * FROM inv_issue_lines WHERE id = ?').get(x.issueLineId); const item = stock.itemOf(r.company_id, l.item_id); let ledgerNo = null;
           if (r.condition !== 'SCRAP') {
-            // a slip that named no batch took the stock from whichever batches were oldest: a batch-kept item comes back into the batch it first left from
-            const batch = l.batch_no ?? (item.batch_tracked ? db.prepare("SELECT batch_no FROM inv_stock_ledger WHERE source_type = 'inv_issue_line' AND source_id = ? AND txn_type = 'ISSUE' AND batch_no <> '' ORDER BY id LIMIT 1").get(String(l.id))?.batch_no ?? '' : '');
-            const bq = stock.toBase(item, l.uom, x.qty, l.rate); const e = stock.postOne(actor, { store, itemId: item.id, batchNo: batch, type: 'RETURN', qty: bq.qty, rate: bq.rate, date: todayIST(), wbsId: iss.wbs_id ?? undefined, sourceType: 'inv_site_return', sourceId: String(r.id), reason: `Site return ${r.doc_no}` }); ledgerNo = e.doc_no;
-            if (r.condition === 'DAMAGED') { const bal = stock.balRow(r.company_id, store, e.bin_id, item.id, e.batch_no ?? '', '', e.project_id ?? null); db.prepare('UPDATE inv_balances SET qty_inspection = qty_inspection + ?, updated_at = ?, version = version + 1 WHERE id = ?').run(bq.qty, now, bal.id); }
+            const bq = stock.toBase(item, l.uom, x.qty, l.rate); let parts = [{ batch: l.batch_no ?? '', qty: bq.qty }];
+            if (!l.batch_no && item.batch_tracked) {
+              // a slip that named no batch took the stock from the oldest batches: it comes back to them, the last drawn first, each up to what it gave and has not had back
+              const gave = db.prepare("SELECT batch_no, SUM(qty_out) AS q, MAX(id) AS last FROM inv_stock_ledger WHERE source_type = 'inv_issue_line' AND source_id = ? AND txn_type = 'ISSUE' AND batch_no <> '' GROUP BY batch_no ORDER BY last DESC").all(String(l.id));
+              const back = backOf(l.id, item.id);
+              parts = []; let left = bq.qty;
+              for (const g of gave) { if (left <= 0) break; const take = Math.min(left, g.q - (back.get(g.batch_no) ?? 0)); if (take > 0) { parts.push({ batch: g.batch_no, qty: take }); left -= take; } }
+              if (left > 0) parts.push({ batch: gave[0]?.batch_no ?? '', qty: left });
+            }
+            const nos = [];
+            for (const part of parts) {
+              const e = stock.postOne(actor, { store, itemId: item.id, batchNo: part.batch, type: 'RETURN', qty: part.qty, rate: bq.rate, date: todayIST(), wbsId: iss.wbs_id ?? undefined, sourceType: 'inv_site_return', sourceId: String(r.id), reason: `Site return ${r.doc_no}` }); nos.push(e.doc_no);
+              if (r.condition === 'DAMAGED') { const bal = stock.balRow(r.company_id, store, e.bin_id, item.id, e.batch_no ?? '', '', e.project_id ?? null); db.prepare('UPDATE inv_balances SET qty_inspection = qty_inspection + ?, updated_at = ?, version = version + 1 WHERE id = ?').run(part.qty, now, bal.id); }
+            }
+            ledgerNo = nos.join(', '); x.batches = parts;
           }
           db.prepare('UPDATE inv_issue_lines SET returned_qty = returned_qty + ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(x.qty, actor.user, now, l.id); posted.push({ issueLineId: l.id, itemId: l.item_id, qty: d3(x.qty), rate: x.rate, value: x.value, ledgerNo });
         }
-        db.prepare("UPDATE inv_site_returns SET status = 'APPROVED', approved_by = ?, approved_at = ?, posted_at = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, now, now, actor.user, now, r.id); audit(actor, 'inv_site_returns', r.id, 'approve', r.company_id);
+        db.prepare("UPDATE inv_site_returns SET status = 'APPROVED', lines_json = ?, approved_by = ?, approved_at = ?, posted_at = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(JSON.stringify(lines), actor.user, now, now, actor.user, now, r.id); audit(actor, 'inv_site_returns', r.id, 'approve', r.company_id);
         evt('inv.site_return.posted', actor, r.company_id, 'inv_site_returns', r.id, { returnId: r.id, docNo: r.doc_no, issueId: iss.id, issueNo: iss.doc_no, condition: r.condition, storeId: store.id, projectId: r.org_project_id, wbsId: iss.wbs_id, costCodeId: iss.cost_code_id, subcontractorId: iss.issued_to_type === 'SUBCONTRACTOR' ? iss.issued_to_id : null, freeIssue: iss.issue_type === 'SUBCO_FREE', totalValue: r.total_value, backToStock: r.condition !== 'SCRAP', lines: posted }, r.org_project_id);
         notify(r.company_id, 'inv.return.decided', [`user:${r.requested_by}`], r.doc_no, 'approved', `${r.doc_no} is approved and ${r.condition === 'SCRAP' ? 'recorded as scrap' : 'back in the stock at the issue rate'}.`, `/inv/site-returns?id=${r.id}`, r.id, { projectId: r.org_project_id }); return;
       }
