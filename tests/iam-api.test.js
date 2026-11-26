@@ -109,6 +109,7 @@ test('T-01 lockout after repeated failures with a growing delay, CAPTCHA first, 
   for (let i = 0; i < 2; i += 1) {
     const c = (await app.http('POST', `${C}/auth/captcha`, { body: { username: 'pooja' } })).json.data.challenge;
     await wrong({ captchaToken: c.token, captchaAnswer: answer(c) });
+    if (i === 0) { const again = await app.login('pooja', PW, { captchaToken: c.token, captchaAnswer: answer(c) }); assert.equal(again.status, 401, 'a solved CAPTCHA is spent'); assert.equal(again.json.error.details[0].field, 'captcha'); }
   }
   const c1 = (await app.http('POST', `${C}/auth/captcha`, { body: { username: 'pooja' } })).json.data.challenge;
   const locked = await app.login('pooja', PW, { captchaToken: c1.token, captchaAnswer: answer(c1) });

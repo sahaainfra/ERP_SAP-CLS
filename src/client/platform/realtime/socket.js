@@ -31,6 +31,8 @@ function open(key) {
   loadIo().then((io) => {
     if (identityKey !== key || socket) return; // signed out or switched while the client was on its way
     socket = io({ transports: ['polling', 'websocket'], extraHeaders: authHeaders(), reconnectionAttempts: 8, reconnectionDelay: 1000, reconnectionDelayMax: 10_000 });
+    // the access token is replaced every few minutes: a reconnection after a lost connection carries the current one, not the one of the first handshake
+    socket.io.on('reconnect_attempt', () => { socket.io.opts.extraHeaders = authHeaders(); });
     socket.on('connect', () => { setState('online'); for (const room of rooms.keys()) join(room); });
     socket.on('disconnect', () => setState('offline'));
     socket.on('connect_error', () => setState('offline'));
@@ -43,8 +45,11 @@ function open(key) {
 }
 
 /** Connect once the person is known; a different identity (a switch of the development user, a sign-out) makes a new connection. */
+// who the connection is for: the headers without the access token (renewed every few minutes for the same person) and the caching mark
+const identityOf = () => { const who = { ...authHeaders() }; const signedIn = Boolean(who.authorization); delete who.authorization; delete who['x-erp-sw']; return JSON.stringify({ ...who, signedIn }); };
+
 export function ensureSocket() {
-  const key = JSON.stringify(authHeaders());
+  const key = identityOf();
   if (key === identityKey) return;
   if (socket) { socket.close(); socket = null; }
   identityKey = key;

@@ -66,6 +66,12 @@ test('AC-01 the 23 owner roles and the supporting roles are seeded, locked and m
     assert.deepEqual(stored, [...t.permissions].sort(), t.code);
   }
   assert.equal(authzOf(api.db).seed().changed, 0, 'seeding is repeatable');
+  // a template mask whose stored rule drifted follows the template again; a mask set by hand is left alone
+  const tm = api.db.prepare("SELECT m.id, m.rule FROM iam_field_masks m JOIN iam_roles r ON r.id = m.role_id WHERE r.code = 'SYSADM' AND m.entity = 'iam_user' AND m.field = 'mobile' AND m.source_type = 'role_template'").get();
+  assert.ok(tm, 'the template mask is stored');
+  api.db.prepare("UPDATE iam_field_masks SET rule = 'hide' WHERE id = ?").run(tm.id);
+  assert.equal(authzOf(api.db).seed().changed, 1);
+  assert.equal(api.db.prepare('SELECT rule FROM iam_field_masks WHERE id = ?').get(tm.id).rule, tm.rule);
   const keys = new Set(api.db.prepare('SELECT perm_key FROM iam_permissions').all().map((p) => p.perm_key));
   for (const k of Object.values(TEMPLATE_PERMISSIONS).flat()) assert.ok(keys.has(k), `${k} is in the registry`);
   assert.equal(api.db.prepare("SELECT sensitive FROM iam_permissions WHERE perm_key = 'iam.user.manage'").get().sensitive, 1);

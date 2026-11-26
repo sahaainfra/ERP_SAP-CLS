@@ -127,6 +127,8 @@ export function createGlService({ db, base }) {
 
   /** Post an approved journal: its number, period and financial year, the projection and the events (in the caller's transaction). */
   function post(j, actor) {
+    // a reversal posts only while the journal it reverses is not reversed already (an accrual's own reversal and a manual one may both be waiting)
+    if (j.reversal_of_id) { const o = db.prepare('SELECT reversed_by_id, voucher_no FROM fin_journals WHERE id = ?').get(j.reversal_of_id); if (o?.reversed_by_id && o.reversed_by_id !== j.id) throw conflict(`${o.voucher_no ?? 'The journal'} is already reversed; this reversal is not posted.`); }
     const per = periodOf(j.company_id, j.voucher_date, actor?.roles ? actor : null); const fy = findFinancialYear(db, j.company_id, j.voucher_date);
     const no = j.voucher_no ?? voucherNo(j.company_id, j.voucher_type, j.voucher_date); const now = nowIso();
     db.prepare("UPDATE fin_journals SET voucher_no = ?, period_id = ?, fy_id = ?, posted_at = ?, posted_by = ?, status = 'APPROVED', updated_at = ?, version = version + 1 WHERE id = ?").run(no, per.id, fy?.id ?? null, now, actor?.user ?? 'system', now, j.id);

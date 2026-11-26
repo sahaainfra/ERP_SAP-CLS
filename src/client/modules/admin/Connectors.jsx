@@ -9,6 +9,7 @@ import { useFormat, useT } from '../../platform/i18n/index.js';
 import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../eng/common.js';
 import { downloadReport } from '../bi/api.js';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Part 29.02: business connectors (operations console, UI v3 §3.6). The connectors with their health and their syncs, the field mappings
 // (used only once the data owner approves them), the sync runs with their errors, and the Tally export. Every sync goes through the owning
@@ -25,7 +26,7 @@ const HEALTH = { HEALTHY: 'APPROVED', DEGRADED: 'IN_REVIEW', DOWN: 'REJECTED', U
 const RUN = { SUCCEEDED: 'APPROVED', PARTIAL: 'IN_REVIEW', FAILED: 'REJECTED', RUNNING: 'DRAFT' };
 const MAP = { PENDING: 'IN_REVIEW', ACTIVE: 'APPROVED', REJECTED: 'REJECTED', RETIRED: 'CANCELLED' };
 const ENTITIES = ['gl_account', 'gst_rate', 'tds_section', 'biometric_user', 'equipment'];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => todayIst();
 const monthStart = () => `${today().slice(0, 8)}01`;
 
 function RunResult({ run }) {

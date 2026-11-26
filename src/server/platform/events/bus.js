@@ -226,7 +226,8 @@ export function createEventBus({ db, now = () => new Date(), maxAttempts = 5, ba
           const event = envelopeOf(row);
           if (lower && (event.occurredAt ?? row.created_at) < lower) continue;
           if (upper && (event.occurredAt ?? row.created_at) > upper) continue;
-          if (companyId !== null && event.companyId !== null && event.companyId !== companyId) continue;
+          // a reset empties a consumer's whole projection (every company's rows), so a reset replay rebuilds it from every company's events
+          if (!reset && companyId !== null && event.companyId !== null && event.companyId !== companyId) continue;
           events += 1;
           for (const t of targets) {
             if (!t.patterns.some((p) => matches(p, row.event_type))) continue;

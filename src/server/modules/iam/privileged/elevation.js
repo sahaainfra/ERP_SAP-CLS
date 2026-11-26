@@ -224,8 +224,11 @@ export function createElevationService({ db, identity, approvals }) {
       // requests nobody decided within a day lapse
       const stale = db.prepare("SELECT e.id, e.request_id FROM iam_elevations e WHERE e.status = 'REQUESTED' AND e.created_at < ?").all(iso(now() - 86_400_000));
       for (const e of stale) {
-        db.prepare("UPDATE iam_elevations SET status = 'CANCELLED', updated_by = 'system', updated_at = ?, version = version + 1 WHERE id = ?").run(at, e.id);
-        closeRequest(e.request_id, 'system');
+        transaction(db, () => {
+          db.prepare("UPDATE iam_elevations SET status = 'CANCELLED', updated_by = 'system', updated_at = ?, version = version + 1 WHERE id = ?").run(at, e.id);
+          closeRequest(e.request_id, 'system');
+          writeAudit(db, { entity: 'iam_elevations', entityId: e.id, action: 'lapse', reason: 'Not decided within a day', actor: 'system' });
+        });
       }
       if (due.length) authz.invalidate();
       return { expired: due.length, lapsed: stale.length };

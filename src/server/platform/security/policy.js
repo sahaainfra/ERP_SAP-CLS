@@ -33,7 +33,8 @@ const list = (k) => (Array.isArray(k) ? k : k ? [k] : []);
 /** The Authorise stage in front of every route: a route declared with a permission is closed to anyone who holds none of them. */
 export function enforcePolicy({ policy, isFlagOn }) {
   return (req, _res, next) => {
-    const rule = policy.find(req.method, req.baseUrl + req.path);
+    // Express answers HEAD with the GET handler, so a HEAD request is held to the GET route's rule
+    const rule = policy.find(req.method === 'HEAD' ? 'GET' : req.method, req.baseUrl + req.path);
     req.routePolicy = rule;
     if (!rule || rule.g !== 'permission' || !req.actor) return next();
     if (!isFlagOn(req.actor, 'ff.iam.p0207')) return next();

@@ -125,7 +125,8 @@ export function createApprovalEngine({ db, handlers }) {
           if (role.startsWith('@') ? actor.user !== role.slice(1) : !role.split('|').some((x) => actor.roles.includes(x))) throw forbidden(role.startsWith('@') ? `Step ${r.current_step} of this request is for ${role.slice(1)} (the requester's manager). You are not that person.` : `Step ${r.current_step} of this request needs the ${role.replace('|', ' or ')} role. Your roles do not include it.`);
           if (action === 'approve') sodOf(db).guardAction({ companyId: r.company_id, actor, action: 'change_request.approve', subject: { type: 'change_request', id } });
           if (actor.user === r.requested_by) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You raised this request, so someone else must approve it.');
-          const decided = db.prepare('SELECT decided_by FROM core_change_request_steps WHERE request_id = ? AND decision = ?').all(id, 'APPROVED').map((s) => s.decided_by);
+          // only the approvals of this round count: a return sends the request back to step 1, and the earlier round's decisions no longer stand
+          const decided = db.prepare("SELECT decided_by FROM core_change_request_steps WHERE request_id = ? AND decision = 'APPROVED' AND id > COALESCE((SELECT MAX(id) FROM core_change_request_steps WHERE request_id = ? AND decision = 'RETURNED'), 0)").all(id, id).map((s) => s.decided_by);
           if (decided.includes(actor.user)) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You already approved an earlier step of this request; a different person must approve this step.');
           if (action !== 'approve' && (!comment || comment.trim().length < 5)) throw badRequest('Give a comment of at least 5 characters when you reject or return a request.', [{ field: 'comment', message: 'is required' }]);
         }

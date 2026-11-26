@@ -13,6 +13,7 @@ export const DIV_SCALE = 12; // an unrounded division keeps 12 places; results a
 export const MAX_SOURCE = 4000;
 export const MAX_STEPS = 100;
 const MAX_DEPTH = 40;
+const MAX_DIGITS = 200; // no business value needs more; a cap keeps a formula from squaring itself into a huge number
 
 /** Decimal places each kind of value may carry (standards section 4.3). */
 export const TYPE_SCALE = Object.freeze({ money: 2, rate: 4, quantity: 3, percent: 4 });
@@ -215,6 +216,28 @@ const floorDec = (x) => {
   const r = x.round(0, ROUND.DOWN);
   return x.isNegative() && !r.eq(x) ? r.sub(1) : r;
 };
+/** floor(l / r) computed exactly on integers (no rounded division in between). */
+const floorDiv = (l, r) => {
+  const s = Math.max(l.scale, r.scale);
+  const a = l.units * 10n ** BigInt(s - l.scale);
+  const b = r.units * 10n ** BigInt(s - r.scale);
+  let q = a / b;
+  if (a % b !== 0n && (a < 0n) !== (b < 0n)) q -= 1n;
+  return new Decimal(q, 0);
+};
+/** A result too large to be a business value (more than MAX_DIGITS digits) stops the formula. */
+const bounded = (v) => {
+  if ((v.units < 0n ? -v.units : v.units).toString().length > MAX_DIGITS || v.scale > MAX_DIGITS) throw new CalcError(`A value has more than ${MAX_DIGITS} digits`);
+  return v;
+};
+/** A bound (min or max) of an input declaration as a Decimal, or a CalcError naming it. */
+const boundOf = (def, key) => {
+  try {
+    return dec(typeof def[key] === 'number' && !Number.isSafeInteger(def[key]) ? String(def[key]) : def[key]);
+  } catch {
+    throw new CalcError(`The ${key} of ${def.name} (${def[key]}) is not a number`);
+  }
+};
 
 function evaluateNode(node, env, policy) {
   switch (node.kind) {
@@ -256,13 +279,13 @@ function evaluateNode(node, env, policy) {
       }
       numeric(l, node.op);
       numeric(r, node.op);
-      if (node.op === '+') return l.add(r);
-      if (node.op === '-') return l.sub(r);
-      if (node.op === '*') return l.mul(r);
+      if (node.op === '+') return bounded(l.add(r));
+      if (node.op === '-') return bounded(l.sub(r));
+      if (node.op === '*') return bounded(l.mul(r));
       if (r.isZero()) throw new CalcError('Division by zero');
-      if (node.op === '/') return l.div(r, DIV_SCALE);
-      // remainder: l - r * floor(l / r)
-      return l.sub(r.mul(floorDec(l.div(r, DIV_SCALE + 6, ROUND.DOWN))));
+      if (node.op === '/') return bounded(l.div(r, DIV_SCALE));
+      // remainder: l - r * floor(l / r), with the floor taken exactly
+      return bounded(l.sub(r.mul(floorDiv(l, r))));
     }
     case 'call': {
       if (node.name === 'if') {
@@ -287,8 +310,8 @@ function evaluateNode(node, env, policy) {
         case 'abs': return numeric(args[0], 'abs()').abs();
         case 'floor': return floorDec(numeric(args[0], 'floor()'));
         case 'ceil': return floorDec(numeric(args[0], 'ceil()').neg()).neg();
-        case 'percent': return numeric(args[0], 'percent()').mul(numeric(args[1], 'percent()')).div(100, DIV_SCALE);
-        case 'sum': return args.map((a) => numeric(a, 'sum()')).reduce((a, b) => a.add(b), Decimal.zero());
+        case 'percent': return bounded(numeric(args[0], 'percent()').mul(numeric(args[1], 'percent()')).div(100, DIV_SCALE));
+        case 'sum': return bounded(args.map((a) => numeric(a, 'sum()')).reduce((a, b) => a.add(b), Decimal.zero()));
         default: throw new CalcError(`There is no function "${node.name}"`);
       }
     }
@@ -326,8 +349,8 @@ export function coerceInput(def, raw) {
   const scale = def.type === 'integer' ? 0 : TYPE_SCALE[def.type];
   const significant = (value.toString().split('.')[1] ?? '').replace(/0+$/, '').length;
   if (scale !== undefined && significant > scale) throw new CalcError(`${def.name} may have at most ${scale} decimal place${scale === 1 ? '' : 's'}`);
-  if (def.min !== undefined && value.lt(def.min)) throw new CalcError(`${def.name} must be at least ${def.min}`);
-  if (def.max !== undefined && value.gt(def.max)) throw new CalcError(`${def.name} must be at most ${def.max}`);
+  if (def.min !== undefined && value.lt(boundOf(def, 'min'))) throw new CalcError(`${def.name} must be at least ${def.min}`);
+  if (def.max !== undefined && value.gt(boundOf(def, 'max'))) throw new CalcError(`${def.name} must be at most ${def.max}`);
   return value;
 }
 
@@ -365,13 +388,17 @@ export function runDefinition(definition, rawInputs = {}) {
   for (const out of definition.outputs ?? []) {
     if (!env.has(out.name)) throw new CalcError(`The output "${out.name}" is not a step of the formula`, { step: out.name });
     const v = env.get(out.name);
-    if (!isDec(v) || !TYPE_SCALE[out.type]) {
+    const wanted = out.type === 'string' ? 'string' : out.type === 'boolean' ? 'boolean' : out.type === undefined ? null : 'number';
+    const actual = isDec(v) ? 'number' : typeof v;
+    if (wanted !== null && wanted !== actual) throw new CalcError(`The output "${out.name}" is declared ${out.type} but the formula gives ${kindOf(v)}`, { step: out.name });
+    const places = out.type === 'integer' ? 0 : TYPE_SCALE[out.type];
+    if (!isDec(v) || places === undefined) {
       outputs[out.name] = show(v);
       continue;
     }
-    const rounded = v.round(TYPE_SCALE[out.type], policy.mode);
-    outputs[out.name] = rounded.toFixed(TYPE_SCALE[out.type]);
-    if (!rounded.eq(v)) rounding.push({ name: out.name, from: trimZeros(v.toString()), to: outputs[out.name], mode: policy.mode, places: TYPE_SCALE[out.type] });
+    const rounded = v.round(places, policy.mode);
+    outputs[out.name] = rounded.toFixed(places);
+    if (!rounded.eq(v)) rounding.push({ name: out.name, from: trimZeros(v.toString()), to: outputs[out.name], mode: policy.mode, places });
   }
   return { outputs, trace: { inputs: inputsUsed, steps, rounding, policy: definition.rounding_policy ?? 'half_up', mode: policy.mode } };
 }
@@ -385,6 +412,14 @@ export function definitionProblems(def) {
     else if (names.has(i.name)) problems.push(`Input "${i.name}" is declared twice`);
     names.add(i.name);
     if (!INPUT_TYPES.includes(i.type)) problems.push(`Input "${i.name}" has an unknown type "${i.type}"`);
+    for (const key of ['min', 'max']) {
+      if (i[key] === undefined) continue;
+      try {
+        boundOf(i, key);
+      } catch (err) {
+        problems.push(err.message);
+      }
+    }
   }
   if (!ROUNDING_POLICIES[def.rounding_policy ?? 'half_up']) problems.push(`Unknown rounding policy "${def.rounding_policy}"`);
   let statements = null;

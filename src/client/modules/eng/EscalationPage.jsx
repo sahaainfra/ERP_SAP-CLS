@@ -5,10 +5,11 @@ import { useUnsavedGuard } from '../../platform/forms/guard.js';
 import { useDefinitionOptions, usePaths, usePolicies, useProposePath, useProposePolicies, useProposeSla, useSla } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Escalation Paths & SLA settings (part 04.02, section 7.6): the management hierarchy a late task climbs (Site, Project, Regional, Head office, Director) and the time
 // each kind of document has, in working hours, with the points of reminder and escalation. A change is asked for from a date and applies to new tasks once approved.
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => todayIst();
 
 function Paths({ canManage, options }) {
   const paths = usePaths();

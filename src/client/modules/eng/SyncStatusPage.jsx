@@ -42,14 +42,17 @@ export default function SyncStatusPage({ session }) {
         <ul className="op-comments" aria-label="The queue">
           {off.queue.map((c) => {
             const [tone, text] = CMD_STATUS[c.status] ?? CMD_STATUS.PENDING;
+            const waitingPhotos = (c.files ?? []).filter((f) => !f.error); const refusedPhotos = (c.files ?? []).filter((f) => f.error);
             return (
               <li key={c.id} data-testid="ss-item" data-status={c.status}>
                 <strong>{c.label}</strong> <StatusBadge status={tone} label={text} />
-                <p className="muted small">Captured {formatDateTime(c.createdAt)}{c.files?.length ? ` · ${c.files.length} photo(s) waiting` : ''}{c.attempts ? ` · tried ${c.attempts} time(s)` : ''}</p>
+                <p className="muted small">Captured {formatDateTime(c.createdAt)}{waitingPhotos.length ? ` · ${waitingPhotos.length} photo(s) waiting` : ''}{c.attempts ? ` · tried ${c.attempts} time(s)` : ''}</p>
                 {c.error && <p className="field-error" role="alert">{c.error}</p>}
+                {refusedPhotos.map((f) => <p key={f.index} className="field-error" role="alert" data-testid="ss-photo-refused">Photo {f.name} was not accepted: {f.error}</p>)}
                 <div className="actions">
                   {['ERROR', 'DEFERRED', 'PENDING'].includes(c.status) && <button type="button" className="btn btn-small" disabled={!off.online} onClick={() => retry(c.id)}>Try again</button>}
                   {c.status === 'CONFLICT' && <Link to="/field/sync/conflicts">Decide</Link>}
+                  {c.status === 'APPLIED' && refusedPhotos.length > 0 && waitingPhotos.length === 0 && <button type="button" className="btn btn-small" onClick={() => discard(c.id)} data-testid="ss-dismiss">Dismiss</button>}
                   {['ERROR', 'PENDING', 'DEFERRED'].includes(c.status) && <button type="button" className="btn btn-small" onClick={() => { if (window.confirm('Delete this change from the phone? It will not be sent.')) discard(c.id); }}>Delete</button>}
                 </div>
               </li>

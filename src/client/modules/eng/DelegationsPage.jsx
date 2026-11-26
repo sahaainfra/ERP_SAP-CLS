@@ -6,6 +6,7 @@ import { formatINR } from '../../platform/format.js';
 import { useCreateDelegation, useDelegations, useMatrixList, useRevokeDelegation } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Delegations (part 04.02, section 7.5): My delegations, and for administrators everyone's. A person hands their approvals to another for a period, all kinds of
 // document or selected ones, up to an amount no higher than their own authority. The delegate decides on their behalf and it shows on the record. A delegation of
@@ -17,7 +18,7 @@ function NewForm({ types, onDone, onCancel }) {
   const create = useCreateDelegation();
   const [error, setError] = useState(null);
   const [chosen, setChosen] = useState([]);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIst();
   const submit = (e) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);

@@ -218,7 +218,7 @@ export function createPostingService({ db, base, gl, flags }) {
     }
     try {
       return transaction(db, () => {
-        if (p.reverse) { const rv = gl.reverseEngine(companyId, p.reverse, { date: p.date, reason: p.narration, user }); return write(rv?.id ?? null, null, null); }
+        if (p.reverse) { const rv = gl.reverseEngine(companyId, p.reverse, { date: p.date, reason: p.narration, user }); return write(rv?.id ?? null, rv ? null : 'ALREADY_REVERSED', rv ? null : 'The journal to reverse is already reversed or not posted; nothing more was posted.'); }
         const r = gl.postEngine(companyId, { ...p.journal, user });
         const row = write(r.journal.id, r.duplicate ? 'DUPLICATE_SOURCE' : null, r.duplicate ? 'The document was already posted by another event; nothing more was posted.' : null);
         // the posting status back to the source document (23.02 outputs): its module, the document flow and the trace show the journal

@@ -106,7 +106,7 @@ parameterRegistry.define({ key: 'iam.elevation.max_hours', dataType: 'integer', 
 for (const [type, description, schema] of IAM_EVENTS) eventTypes.define({ type, version: 1, schema, owner: 'iam', description });
 
 integrityRegistry.register({
-  technicalTables: ['iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'iam_sod_actions', 'iam_elevation_log'],
+  technicalTables: ['iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'iam_sod_actions', 'iam_elevation_log', 'iam_captcha_uses'],
   companyOptional: ['org_companies', 'iam_permissions', 'iam_roles', 'iam_role_permissions', 'iam_field_masks', 'iam_role_mapping'],
   statuses: {
     iam_users: ['ACTIVE', 'DISABLED'], iam_invitations: ['PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED', 'SUPERSEDED'], iam_roles: ['DRAFT', 'ACTIVE', 'RETIRED'], iam_assignments: ['ACTIVE', 'ENDED'], iam_sod_violations: ['OPEN', 'RESOLVED', 'ACCEPTED', 'BLOCKED'], iam_elevations: ['REQUESTED', 'ACTIVE', 'REJECTED', 'CANCELLED', 'EXPIRED', 'REVOKED'], iam_access_campaigns: ['OPEN', 'CLOSED', 'CANCELLED'], iam_access_reviews: ['OPEN', 'COMPLETED', 'CANCELLED'], org_companies: ['ACTIVE', 'INACTIVE'], org_branches: ['ACTIVE', 'INACTIVE'], org_departments: ['ACTIVE', 'INACTIVE'], org_designations: ['ACTIVE', 'INACTIVE'],

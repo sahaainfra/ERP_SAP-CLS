@@ -76,6 +76,8 @@ export function errorHandler(logger = createLogger()) {
   return (err, req, res, _next) => {
     const d = describe(err);
     if (!d.known) logger.error({ msg: 'unhandled error', correlationId: req.correlationId, traceId: req.span?.traceId ?? null, route: req.route?.path ?? null, error: String(err?.message ?? err), stack: err?.stack });
+    // a streamed answer (an export, a download) that fails part-way has already sent its headers: end it, as Express's own handler does
+    if (res.headersSent) { req.socket?.destroy?.(); return; }
     if (err?.retryAfterSec) res.set('retry-after', String(err.retryAfterSec));
     res.status(d.status).json({ error: { code: d.code, message: d.message, details: d.details, correlationId: req.correlationId } });
   };

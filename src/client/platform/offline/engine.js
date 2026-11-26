@@ -154,7 +154,8 @@ export async function discard(id) {
   await persistQueue(state.queue.filter((x) => x.id !== id));
 }
 export async function retry(id) {
-  await persistQueue(state.queue.map((c) => (c.id === id ? { ...c, status: 'PENDING', error: null } : c)));
+  // a record the server already accepted (APPLIED) is never sent again; only its waiting photos are, by the sync itself
+  await persistQueue(state.queue.map((c) => (c.id === id && c.status !== 'APPLIED' ? { ...c, status: 'PENDING', error: null } : c)));
   return sync({ force: true });
 }
 
@@ -163,7 +164,8 @@ async function sendPhotos(cmd) {
   const left = [];
   for (const f of cmd.files ?? []) {
     const bytes = await store.getBytes('media', `${cmd.id}:${f.index}`);
-    if (!bytes) continue;
+    // a photo the server refused has no bytes left: it stays on the record with its error until the person dismisses it
+    if (!bytes) { if (f.error) left.push(f); continue; }
     try {
       let up = (await api.post('/off/uploads', { deviceId: deviceId(), commandId: cmd.id, fileName: f.name, totalSize: bytes.length, chunkSize: CHUNK }, { headers: { 'idempotency-key': uid() } })).data;
       if (up.status !== 'COMPLETE') {
@@ -195,19 +197,23 @@ export function sync({ force = false } = {}) {
       await registerDevice();
       if (state.revoked || !store) return { sent: 0 };
       let queue = [...state.queue];
+      const taken = new Set(queue.map((c) => c.id)); // the commands this run works on; anything queued or discarded meanwhile is left as it is
       const waiting = queue.filter((c) => c.status === 'PENDING' || c.status === 'DEFERRED' || (force && c.status === 'ERROR'));
+      const photosTried = new Set(); // commands whose photos this run has already sent (or tried to)
       let sent = 0;
+      let failed = false;
       for (let i = 0; i < waiting.length; i += BATCH) {
         const batch = waiting.slice(i, i + BATCH);
         const body = { deviceId: deviceId(), deviceTime: new Date().toISOString(), commands: batch.map(({ id, seq, type, op, ref, clientRef, entityId, values, baseVersion, baseValues, createdAt, gps, label }) => ({ id, seq, type, op, ref, clientRef, entityId, values, baseVersion, baseValues, createdAt, gps, label })) };
         let res;
-        try { res = (await api.post('/off/sync', body)).data; } catch (e) { await handleFailure(e); if (!store) return { sent }; queue = queue.map((c) => (batch.some((b) => b.id === c.id) ? { ...c, attempts: c.attempts + 1 } : c)); break; }
+        try { res = (await api.post('/off/sync', body)).data; } catch (e) { await handleFailure(e); if (!store) return { sent }; failed = true; queue = queue.map((c) => (batch.some((b) => b.id === c.id) ? { ...c, attempts: c.attempts + 1 } : c)); break; }
         for (const r of res.results) {
           const c = queue.find((x) => x.id === r.commandId);
           if (!c) continue;
           const next = { ...c, attempts: c.attempts + 1, logId: r.logId, entityId: r.entityId ?? c.entityId, error: r.error ?? null };
           if (r.status === 'APPLIED' || r.status === 'RESOLVED') {
             sent += 1;
+            photosTried.add(c.id);
             const left = await sendPhotos(next);
             if (left === null) return { sent };
             queue = left.length ? queue.map((x) => (x.id === c.id ? { ...next, status: 'APPLIED', files: left } : x)) : queue.filter((x) => x.id !== c.id);
@@ -216,13 +222,17 @@ export function sync({ force = false } = {}) {
         set({ driftMs: res.driftMs, driftWarning: res.driftWarning });
       }
       // photos of records that were saved earlier but whose photos did not all get through
-      for (const c of queue.filter((x) => x.status === 'APPLIED' && x.files?.length)) {
+      // (not those this run has just tried: a second try at once would drop the error a refused photo carries)
+      for (const c of queue.filter((x) => x.status === 'APPLIED' && x.files?.length && !photosTried.has(x.id))) {
         const left = await sendPhotos(c);
         if (left === null) return { sent };
         queue = left.length ? queue.map((x) => (x.id === c.id ? { ...c, files: left } : x)) : queue.filter((x) => x.id !== c.id);
       }
-      await persistQueue(queue);
-      set({ lastSync: new Date().toISOString(), lastError: null });
+      // merge into the queue as it is now: a command queued while this run was sending stays, one discarded meanwhile does not come back
+      const outcome = new Map(queue.map((c) => [c.id, c]));
+      await persistQueue(state.queue.filter((c) => !taken.has(c.id) || outcome.has(c.id)).map((c) => outcome.get(c.id) ?? c));
+      // a failed send is not a sync: the error handleFailure recorded stays on screen
+      if (!failed) set({ lastSync: new Date().toISOString(), lastError: null });
       await saveMeta();
       return { sent };
     } finally {

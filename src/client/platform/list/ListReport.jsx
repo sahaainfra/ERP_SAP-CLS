@@ -2,7 +2,7 @@ import { useSwipe, usePullToRefresh } from '../device/gestures.js';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useFlagOn } from '../shell/api.js';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, authHeaders } from '../api/index.js';
+import { api, authHeaders, authMode, refreshSession } from '../api/index.js';
 import Icon from '../design/Icon.jsx';
 import StatusBadge from '../design/StatusBadge.jsx';
 import { formatNumberInput } from '../../../shared/forms/numbers.js';
@@ -117,15 +117,16 @@ function ColumnChooser({ all, order, hidden, onChange, onReset }) {
     <details className="lr-menu" data-testid="column-chooser">
       <summary className="btn"><Icon name="erp.action.settings" size={16} />Columns</summary>
       <div className="lr-pop" role="group" aria-label="Choose and order columns">
+        {/* the first column is always shown: one moved there is shown, and a saved view whose first column is hidden can show it again */}
         <ul className="lr-cols">
           {keys.map((k, i) => {
             const c = all.find((x) => x.key === k);
             return (
               <li key={k}>
-                <label className="ff-check"><input type="checkbox" checked={!hidden.includes(k)} disabled={i === 0} onChange={(e) => onChange({ order: keys, hidden: e.target.checked ? hidden.filter((h) => h !== k) : [...hidden, k] })} /> {c.label}</label>
+                <label className="ff-check"><input type="checkbox" checked={!hidden.includes(k)} disabled={i === 0 && !hidden.includes(k)} onChange={(e) => onChange({ order: keys, hidden: e.target.checked ? hidden.filter((h) => h !== k) : [...hidden, k] })} /> {c.label}</label>
                 <span className="lr-move">
-                  <button type="button" className="btn btn-small" aria-label={`Move ${c.label} left`} disabled={i === 0} onClick={() => onChange({ order: moveColumn(keys, k, -1), hidden })}>↑</button>
-                  <button type="button" className="btn btn-small" aria-label={`Move ${c.label} right`} disabled={i === keys.length - 1} onClick={() => onChange({ order: moveColumn(keys, k, 1), hidden })}>↓</button>
+                  <button type="button" className="btn btn-small" aria-label={`Move ${c.label} left`} disabled={i === 0} onClick={() => onChange({ order: moveColumn(keys, k, -1), hidden: i === 1 ? hidden.filter((h) => h !== k) : hidden })}>↑</button>
+                  <button type="button" className="btn btn-small" aria-label={`Move ${c.label} right`} disabled={i === keys.length - 1} onClick={() => onChange({ order: moveColumn(keys, k, 1), hidden: i === 0 ? hidden.filter((h) => h !== keys[1]) : hidden })}>↓</button>
                 </span>
               </li>
             );
@@ -252,7 +253,10 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
     setExporting(format);
     setNotice('');
     try {
-      const res = await fetch(`/api/v1${endpoint}/export?${toQuery({ ...withContext(state), page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
+      const send = () => fetch(`/api/v1${endpoint}/export?${toQuery({ ...withContext(state), page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
+      let res = await send();
+      // this call does not go through the API client: an access token that has just expired is renewed here the same way, and the export asked again once
+      if (res.status === 401 && authMode() === 'iam' && await refreshSession()) res = await send();
       if (res.status === 202) {
         const job = (await res.json()).data;
         setNotice(`The export has ${job.rows} rows, so it is being prepared in the background. It will appear under My Exports when ready.`);

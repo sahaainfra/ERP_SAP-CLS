@@ -75,7 +75,7 @@ export function computeBreakup(o) {
     const wagesClassed = sum((c) => isE(c) && c.wage_class === 'WAGES'); const excluded = sum((c) => isE(c) && c.wage_class === 'EXCLUDED'); const rem = wagesClassed + excluded;
     const addBack = o.wageRule && excluded > rem / 2 ? r2(excluded - Math.floor(rem / 2)) : 0; const codeWages = r2(wagesClassed + addBack);
     const pfBase = o.wageRule ? codeWages : sum((c) => isE(c) && c.pf_applicable); const out = {}; const has = (code) => comps.some((c) => c.statutory_code === code);
-    if (emp.pf && P.PF) { const pf = P.PF; const w = pf.restrictToCeiling ? Math.min(pfBase, pf.wageCeiling) : pfBase; const eps = r0(Math.min(pfBase, pf.epsCeiling ?? pf.wageCeiling) * pf.epsRate / 100);
+    if (emp.pf && P.PF) { const pf = P.PF; const w = pf.restrictToCeiling === false ? pfBase : Math.min(pfBase, pf.wageCeiling); /* the ceiling applies unless contributions on the full wage are chosen, as in wage runs */ const eps = r0(Math.min(pfBase, pf.epsCeiling ?? pf.wageCeiling) * pf.epsRate / 100);
       if (has('PF_EE')) out.PF_EE = r0(w * pf.employeeRate / 100); if (has('EPS_ER')) out.EPS_ER = eps; if (has('PF_ER')) out.PF_ER = Math.max(0, r0(w * pf.employeeRate / 100) - eps);
       if (has('EDLI_ER')) out.EDLI_ER = r0(Math.min(pfBase, pf.edliCeiling ?? pf.wageCeiling) * pf.edliRate / 100); if (has('PF_ADMIN')) out.PF_ADMIN = r0(w * pf.adminRate / 100); out.pfWage = r2(w); }
     const esiBase = sum((c) => isE(c) && c.esi_applicable);

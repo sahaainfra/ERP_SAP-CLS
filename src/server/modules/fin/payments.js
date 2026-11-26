@@ -153,6 +153,8 @@ export function createPaymentService({ db, base, gl, ap, vaultKey }) {
       if (v.accountNo && !ACCOUNT.test(v.accountNo)) problems.push({ field: 'accountNo', message: 'An account number is 9 to 18 digits.' });
       if (!FORMATS[v.fileFormat]) problems.push({ field: 'fileFormat', message: 'Choose a bank file format.' });
       if ((v.chequeFrom == null) !== (v.chequeTo == null) || (v.chequeFrom != null && v.chequeTo < v.chequeFrom)) problems.push({ field: 'chequeTo', message: 'Give the first and the last cheque number of the book, the last not before the first.' });
+      // a cheque book is not set back over cheques already issued from this account (they would be numbered again)
+      if (old && v.chequeFrom != null && v.chequeTo != null && v.chequeFrom !== old.cheque_next_no) { const used = db.prepare('SELECT cheque_no FROM pmt_payments WHERE company_id = ? AND bank_account_id = ? AND cheque_no IS NOT NULL AND CAST(cheque_no AS INTEGER) BETWEEN ? AND ? LIMIT 1').get(c, old.id, v.chequeFrom, v.chequeTo); if (used) problems.push({ field: 'chequeFrom', message: `Cheque ${used.cheque_no} of this range is issued already: start the book after the cheques already used.` }); }
       if (db.prepare('SELECT 1 FROM fin_bank_accounts WHERE company_id = ? AND code = ? AND id != ? AND deleted_at IS NULL').get(c, v.code, id ?? 0)) problems.push({ field: 'code', message: 'Another bank account has this code.' });
       if (problems.length) throw badRequest('Correct the highlighted fields', problems);
       try { templateOf({ name: v.name, file_format: v.fileFormat, file_template_json: JSON.stringify(v.template ?? {}) }); } catch (x) { throw badRequest('Correct the highlighted fields', [{ field: 'template', message: x.message }]); }

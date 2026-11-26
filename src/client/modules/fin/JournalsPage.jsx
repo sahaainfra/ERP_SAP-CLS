@@ -10,6 +10,7 @@ import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { JN_TONE, gl, money } from './api.js';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Part 23.01: the journals of the book (List Report) and one journal (its lines with their dimensions, its source document, its reversal, its approval).
 const big = { minHeight: 48, fontSize: '1rem' };
@@ -50,7 +51,7 @@ function Actions({ x }) {
   const hq = useQuery({ queryKey: ['gl', 'history', x.id, x.status], queryFn: () => gl.history(x.id), retry: false });
   const why = (action, done) => { const r = globalThis.prompt(t('act.why')); if (r) run(() => gl.act(x.id, action, { reason: r }), done); };
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('act.sayWhy') }); return; } run(() => gl.decide(x.taskId, action, comment.trim() || null), t(`done.${action}`)); };
-  const reverse = () => { const r = globalThis.prompt(t('jn.reverseWhy')); if (!r) return; const d = globalThis.prompt(t('jn.reverseDate'), x.voucherDate > new Date().toISOString().slice(0, 10) ? x.voucherDate : new Date().toISOString().slice(0, 10)); if (!d) return; run(async () => { const rv = await gl.act(x.id, 'reverse', { reason: r, date: d }); navigateTo(`/finance/journals?id=${rv.id}`); return rv; }, t('jn.reversed')); };
+  const reverse = () => { const r = globalThis.prompt(t('jn.reverseWhy')); if (!r) return; const d = globalThis.prompt(t('jn.reverseDate'), x.voucherDate > todayIst() ? x.voucherDate : todayIst()); if (!d) return; run(async () => { const rv = await gl.act(x.id, 'reverse', { reason: r, date: d }); navigateTo(`/finance/journals?id=${rv.id}`); return rv; }, t('jn.reversed')); };
   return (
     <>
       <GlError error={error} />{note && <p className="mdm-banner" role="status" data-testid="gl-note">{note}</p>}

@@ -25,10 +25,14 @@ const BUILT_IN = { en: { common, ess, field, format, notify, palette, shell }, h
 // D-743: outside Vite (Node's test runner) there is no import.meta.glob; the areas are then not lazily loadable and only the bundled ones exist
 const AREA_LOADERS = Object.fromEntries(Object.entries(import.meta.env ? import.meta.glob('../../../shared/i18n/locales/en/*.js') : {}).map(([path, load]) => [path.replace(/^.*\/|\.js$/g, ''), load]));
 const areaLoading = {};
+// when an area last failed to arrive: a screen does not suspend for it again at once (a chunk that cannot load, offline or after a release, would
+// otherwise make the page suspend, fail and suspend again without end); it draws with the keys and the area is asked for again a little later
+const areaFailedAt = {};
+const AREA_RETRY_MS = 10_000;
 /** The English text of one area: resolves once it is here (at once for an area of the first download or one without a file). */
 export function loadArea(ns) {
   if (BUILT_IN.en[ns] || !AREA_LOADERS[ns]) return Promise.resolve(true);
-  areaLoading[ns] ??= AREA_LOADERS[ns]().then((m) => { BUILT_IN.en = { ...BUILT_IN.en, [ns]: m.default }; emit(); return true; }).catch(() => { areaLoading[ns] = null; return false; });
+  areaLoading[ns] ??= AREA_LOADERS[ns]().then((m) => { BUILT_IN.en = { ...BUILT_IN.en, [ns]: m.default }; emit(); return true; }).catch(() => { areaLoading[ns] = null; areaFailedAt[ns] = Date.now(); return false; });
   return areaLoading[ns];
 }
 /** Fetch every English area not yet here (after the first screen; a failure is fetched again when a screen asks). */
@@ -109,7 +113,8 @@ export function useLang() {
 export function useT(ns) {
   useSyncExternalStore(subscribe, snapshot);
   // Reuse the settled promise when React retries a suspended render.
-  const area = areaLoading[ns] ?? (!BUILT_IN.en[ns] && AREA_LOADERS[ns] ? loadArea(ns) : null);
+  const failedLately = Date.now() - (areaFailedAt[ns] ?? 0) < AREA_RETRY_MS;
+  const area = areaLoading[ns] ?? (!BUILT_IN.en[ns] && AREA_LOADERS[ns] && !failedLately ? loadArea(ns) : null);
   if (area) use(area);
   const lang = active();
   return useMemo(() => {

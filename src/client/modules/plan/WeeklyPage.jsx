@@ -10,10 +10,11 @@ import { useSession } from '../core/api/index.js';
 import { VARIANCE_CODES, WEEKLY_TONE, download, fmtDate, mondayOf, openPrint, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Weekly Work Plan (part 13.04, FR-04, FR-05, BR-01): the commitments of a week by activity and crew, sent to the construction manager and the project manager, then what was done and why not, and PPC.
 // The page is the list, one plan (draft, approval, record, daily breakdown) and the report of PPC by week with the reasons for what was not done.
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => todayIst();
 const num = (v) => (v === '' || v == null ? 0 : Number(v));
 const fmtN = (n) => Number(n ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 3 });
 

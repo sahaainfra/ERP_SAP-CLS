@@ -24,6 +24,8 @@ export const percentOf = (amount, pct) => money(dec(amount).mul(pct).div(100, 8)
  */
 export function allocate(total, weights, scale = SCALE.money) {
   const t = dec(total).round(scale);
+  // a negative total (a credit or a reversal) is split as its positive amount and negated, so the remainder is handed out too
+  if (t.isNegative()) return allocate(t.neg(), weights, scale).map((p) => p.neg());
   const w = weights.map((x) => dec(x));
   const totalWeight = sum(w);
   if (totalWeight.isZero()) throw new RangeError('Weights add up to zero');

@@ -344,6 +344,7 @@ export function createExpenseService({ db, dep }) {
     paid(actor, id, { reference }) {
       need(actor, 'hr.claim.pass', 'record payment of claims'); const c = rowOf(actor, 'claim', id);
       if (c.status !== 'PASSED') throw unprocessable('Only a claim passed for payment is marked paid.');
+      if (myEmployee(actor) === c.employee_id) throw forbidden('You cannot record the payment of your own claim.');
       db.prepare("UPDATE exp_claims SET status = 'PAID', paid_at = ?, paid_ref = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(nowIso(), reference, actor.user, nowIso(), id);
       writeAudit(db, { entity: 'exp_claims', entityId: id, action: 'paid', newValues: { reference }, actor: actor.user, companyId: actor.companyId });
       event('exp.claim.paid', actor, 'exp_claim', id, c.company_id, { docNo: c.doc_no, employeeId: c.employee_id, reference, netPayable: money(c.net_payable_minor) }, c.project_id, c.site_id);

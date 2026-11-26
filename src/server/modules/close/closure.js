@@ -107,8 +107,8 @@ export function createClosure({ db }) {
     },
     create(actor, { projectId }) {
       const p = base.project(actor, projectId, 'cls.view', 'cls.manage');
-      if (db.prepare("SELECT 1 FROM cls_closures WHERE org_project_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED') AND deleted_at IS NULL").get(p.id)) throw conflict('The project already has a closeout.');
       return transaction(db, () => {
+        if (db.prepare("SELECT 1 FROM cls_closures WHERE org_project_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED') AND deleted_at IS NULL").get(p.id)) throw conflict('The project already has a closeout.');
         const docNo = number(actor.companyId, actor.user, 'CLS_CLOSURE', 'cls_closures', 'CLS');
         const id = Number(db.prepare("INSERT INTO cls_closures (company_id, org_project_id, doc_no, project_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, 'api')").run(actor.companyId, p.id, docNo, p.id, actor.user).lastInsertRowid);
         for (const [code, title, mandatory] of MANUAL) db.prepare("INSERT INTO cls_checklist_items (company_id, closure_id, code, title, kind, mandatory, project_id, created_by, source_type) VALUES (?, ?, ?, ?, 'MANUAL', ?, ?, ?, 'api')").run(actor.companyId, id, code, title, mandatory, p.id, actor.user);

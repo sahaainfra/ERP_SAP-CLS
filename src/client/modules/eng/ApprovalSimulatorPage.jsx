@@ -5,6 +5,7 @@ import { simulate, useMatrixHistory, useMatrixList } from '../../platform/workfl
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from './common.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Approval Simulator (part 04.02, section 7.4): enter the facts of a document that does not exist and see the chain it would get: the rule that fits, the steps after
 // the authority limits, who would be asked. A version that is not yet active can be tried first. The routing of a real document comes from the same function.
@@ -18,7 +19,7 @@ export default function ApprovalSimulatorPage() {
   const [docType, setDocType] = useState(q.get('docType') ?? '');
   const [matrixId, setMatrixId] = useState(q.get('matrixId') ?? '');
   const [projectId, setProjectId] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayIst());
   const [rows, setRows] = useState([{ key: 'amount', value: '' }]);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);

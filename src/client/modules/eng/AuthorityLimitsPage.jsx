@@ -6,6 +6,7 @@ import { formatINR } from '../../platform/format.js';
 import { useLimitHistory, useLimits, useProposeLimits } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 // Authority Limits (part 04.02, section 7.3): what each role may finally approve, by document type, in rupees. A change is asked for as a set, takes effect from a date
 // and only after its approval chain (the system administrator, the chief financial officer, and the director when a limit passes ₹1 Cr) has approved it.
@@ -18,7 +19,7 @@ export default function AuthorityLimitsPage({ session }) {
   const propose = useProposeLimits();
   const [edits, setEdits] = useState({}); // "ROLE|DOC" -> text ('' = no limit)
   const [filter, setFilter] = useState('');
-  const [when, setWhen] = useState(new Date().toISOString().slice(0, 10));
+  const [when, setWhen] = useState(todayIst());
   const [reason, setReason] = useState('');
   const [error, setError] = useState(null);
   const [confirm, setConfirm] = useState(false);
@@ -85,7 +86,7 @@ export default function AuthorityLimitsPage({ session }) {
               <h2>Ask for the changes</h2>
               <p className="muted small">{changes.length === 0 ? 'Change a box above to ask for a new limit.' : `${changes.length} change(s) to ask for.`}</p>
               <div className="form-grid">
-                <Field label="Takes effect from" name="effectiveFrom" error={error}><input type="date" value={when} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setWhen(e.target.value)} /></Field>
+                <Field label="Takes effect from" name="effectiveFrom" error={error}><input type="date" value={when} min={todayIst()} onChange={(e) => setWhen(e.target.value)} /></Field>
                 <Field label="Reason" name="reason" error={error}><input value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} /></Field>
               </div>
               {error && <p role="alert" className="error">{error.form}{error.correlationId && <> (<code>{error.correlationId}</code>)</>}{Object.entries(error.fields ?? {}).map(([k, v]) => <span key={k} className="small"> {k}: {v}</span>)}</p>}

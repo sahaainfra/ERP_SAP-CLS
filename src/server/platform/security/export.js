@@ -46,13 +46,15 @@ export function createExportGuard({ db, approvals }) {
       if (r.status !== 'APPROVED') throw unprocessable(`That approval is ${r.status.toLowerCase()}, so the export cannot run yet.`);
       if (stable(p.filters) !== stable(filters)) throw unprocessable('The filters changed since the export was approved. Ask for approval of this export.');
       if (db.prepare("SELECT 1 FROM core_audit_log WHERE entity = 'export_grant' AND action = 'used' AND entity_id = ?").get(String(approvalId))) throw unprocessable('That approval was already used for an export. Ask again.');
+      // the approval is spent here, when the export is let through, so a queued (background) export or a second request sent before
+      // the first one completes cannot run on the same approval again
+      writeAudit(db, { entity: 'export_grant', entityId: approvalId, action: 'used', newValues: { report, rows }, actor: actor.user, companyId: actor.companyId });
       return { status: 'OK', approvalId };
     },
     maxRows: (companyId) => maxRows(companyId),
     /** Record a finished export: the audit trail, the security log (personal data) and the event. */
     complete(actor, { report, format = 'csv', rows, filters = {}, personal = false, approvalId = null }) {
       writeAudit(db, { entity: 'report', entityId: report, action: 'export', newValues: { format, rows, filters, personal, approval: approvalId }, actor: actor.user, companyId: actor.companyId });
-      if (approvalId) writeAudit(db, { entity: 'export_grant', entityId: approvalId, action: 'used', newValues: { report, rows }, actor: actor.user, companyId: actor.companyId });
       if (personal) recordSecurityEvent(db, { companyId: actor.companyId, userId: actor.userId ?? null, username: actor.user, type: 'export.sensitive', severity: rows > settings.get().settings.exports.personalApprovalThreshold ? 'HIGH' : 'WARNING', details: { report, format, rows, filters, approval: approvalId } });
       publishEvent(db, { type: 'core.export.completed', entity: 'export', entityId: report, actorId: actor.user, companyId: actor.companyId, data: { report, format, rows, personal } });
     },

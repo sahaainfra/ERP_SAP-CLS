@@ -46,8 +46,13 @@ export function formatCompact(value, prefs) {
   const steps = grouping === 'international'
     ? [[dec('1000000000'), 'B', 'अरब', 'బిలియన్'], [dec('1000000'), 'M', 'मिलियन', 'మిలియన్'], [dec('1000'), 'K', 'हज़ार', 'వేలు']]
     : [[dec('10000000'), 'Cr', 'करोड़', 'కోట్లు'], [dec('100000'), 'L', 'लाख', 'లక్షలు']];
-  for (const [size, en, hi, te] of steps) {
-    if (abs.cmp(size) >= 0) return `${negative ? '-' : ''}₹ ${abs.div(size, 6).round(2).toFixed(2)} ${lang === 'hi' ? hi : lang === 'te' ? te : en}`;
+  const word = ([, en, hi, te]) => (lang === 'hi' ? hi : lang === 'te' ? te : en);
+  for (let i = 0; i < steps.length; i += 1) {
+    const size = steps[i][0];
+    const shown = abs.div(size, 6).round(2);
+    // a value at the top of a place may round up to the next one (99,99,999.99 is 1.00 Cr, not 100.00 L)
+    if (i > 0 && shown.cmp(steps[i - 1][0].div(size, 0)) >= 0) return `${negative ? '-' : ''}₹ ${abs.div(steps[i - 1][0], 6).round(2).toFixed(2)} ${word(steps[i - 1])}`;
+    if (abs.cmp(size) >= 0) return `${negative ? '-' : ''}₹ ${shown.toFixed(2)} ${word(steps[i])}`;
   }
   return formatMoney(value, prefs, { decimals: 0 });
 }
@@ -65,7 +70,12 @@ export const formatPercent = (value, prefs, { decimals = 2 } = {}) => (value ===
 export function formatDate(value, prefs) {
   if (!value) return '-';
   const { lang } = prefsOf(prefs);
-  const text = /^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? formatBusinessDate(value) : formatStamp(value);
+  let text;
+  try {
+    text = /^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? formatBusinessDate(value) : formatStamp(value);
+  } catch {
+    return '-'; // a "date" such as 2026-02-30 is not one: show nothing rather than break the page
+  }
   if ((lang !== 'hi' && lang !== 'te') || text === '-') return text;
   const [d, m, y] = text.split('-');
   return `${d}-${(lang === 'te' ? TE_MONTHS : HI_MONTHS)[EN_MONTHS.indexOf(m)]}-${y}`;

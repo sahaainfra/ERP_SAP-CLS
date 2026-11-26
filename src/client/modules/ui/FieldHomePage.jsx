@@ -12,6 +12,7 @@ import { QueryState } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { confirmLeave } from '../../platform/forms/guard.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { todayIst } from '../../platform/forms/dates.js';
 
 const go = (to) => (e) => {
   e.preventDefault();
@@ -62,7 +63,7 @@ export default function FieldHomePage({ session }) {
   return (
     <section aria-labelledby="page-title" className={`field-home${v3 ? ' field-home-v3' : ''}`}>
       {v3 ? (
-        <PageHeader className="fh-band" testid="field-band" id="page-title" title={greeting(t, name)} meta={<span className="fh-eyebrow" data-testid="field-title">{t('title')}</span>} subtitle={t('greet.date', { date: f.date(today.data?.date ?? new Date().toISOString().slice(0, 10)) })}>
+        <PageHeader className="fh-band" testid="field-band" id="page-title" title={greeting(t, name)} meta={<span className="fh-eyebrow" data-testid="field-title">{t('title')}</span>} subtitle={t('greet.date', { date: f.date(today.data?.date ?? todayIst()) })}>
           <ul className="fh-status" aria-label={t('status.aria')}>
             <li data-testid="field-online" data-online={online}><Icon name={online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {online ? t('online') : t('offline')}</li>
             <li data-testid="sync-count" data-count={queue.length}><Icon name="erp.action.inbox" size={18} /> <a href="/field/sync" title={t('sync.open')} onClick={go('/field/sync')}>{queue.length === 0 ? t('sync.none') : t('sync.notSent', { count: queue.length })}</a></li>

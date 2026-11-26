@@ -183,6 +183,8 @@ export function createIssueService({ db, base, invSvc }) {
     /** The receiver acknowledges (code, or signature) and the stock goes out, BR-01: at the average rate, charged to the WBS and cost code. */
     acknowledge(actor, id, b) {
       const r = issueRow(actor, id, 'inv.issue.acknowledge'); if (r.status !== 'APPROVED') throw unprocessable(r.status === 'POSTED' ? 'This slip is already issued.' : 'This slip is not ready to hand over.'); const store = db.prepare('SELECT * FROM inv_stores WHERE id = ?').get(r.store_id); invSvc.storeFor(actor, r.store_id, 'inv.store.view');
+      // the stock leaves (and the cost is charged) on the slip's date: that month may have been closed since the slip was sent (27.07)
+      assertProjectPeriodOpen(db, { companyId: r.company_id, projectId: r.org_project_id, date: r.issue_date > todayIST() ? todayIST() : r.issue_date, what: 'material issue' });
       if (b.method === 'OTP') {
         if (!r.ack_hash || r.ack_method !== 'OTP') throw unprocessable('Make the receiver code first.'); if (r.ack_attempts >= 5) throw unprocessable('Too many wrong codes: make a new code.'); if (r.ack_expires < nowIso()) throw unprocessable('The code has expired: make a new one.');
         if (hash(`${r.id}:${b.otp}`) !== r.ack_hash) { db.prepare('UPDATE inv_issues SET ack_attempts = ack_attempts + 1 WHERE id = ?').run(r.id); throw unprocessable('That is not the receiver code.'); }
@@ -265,7 +267,9 @@ export function createIssueService({ db, base, invSvc }) {
         for (const x of json(r.lines_json, [])) {
           const l = db.prepare('SELECT * FROM inv_issue_lines WHERE id = ?').get(x.issueLineId); const item = stock.itemOf(r.company_id, l.item_id); let ledgerNo = null;
           if (r.condition !== 'SCRAP') {
-            const bq = stock.toBase(item, l.uom, x.qty, l.rate); const e = stock.postOne(actor, { store, itemId: item.id, batchNo: l.batch_no ?? '', type: 'RETURN', qty: bq.qty, rate: bq.rate, date: todayIST(), wbsId: iss.wbs_id ?? undefined, sourceType: 'inv_site_return', sourceId: String(r.id), reason: `Site return ${r.doc_no}` }); ledgerNo = e.doc_no;
+            // a slip that named no batch took the stock from whichever batches were oldest: a batch-kept item comes back into the batch it first left from
+            const batch = l.batch_no ?? (item.batch_tracked ? db.prepare("SELECT batch_no FROM inv_stock_ledger WHERE source_type = 'inv_issue_line' AND source_id = ? AND txn_type = 'ISSUE' AND batch_no <> '' ORDER BY id LIMIT 1").get(String(l.id))?.batch_no ?? '' : '');
+            const bq = stock.toBase(item, l.uom, x.qty, l.rate); const e = stock.postOne(actor, { store, itemId: item.id, batchNo: batch, type: 'RETURN', qty: bq.qty, rate: bq.rate, date: todayIST(), wbsId: iss.wbs_id ?? undefined, sourceType: 'inv_site_return', sourceId: String(r.id), reason: `Site return ${r.doc_no}` }); ledgerNo = e.doc_no;
             if (r.condition === 'DAMAGED') { const bal = stock.balRow(r.company_id, store, e.bin_id, item.id, e.batch_no ?? '', '', e.project_id ?? null); db.prepare('UPDATE inv_balances SET qty_inspection = qty_inspection + ?, updated_at = ?, version = version + 1 WHERE id = ?').run(bq.qty, now, bal.id); }
           }
           db.prepare('UPDATE inv_issue_lines SET returned_qty = returned_qty + ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(x.qty, actor.user, now, l.id); posted.push({ issueLineId: l.id, itemId: l.item_id, qty: d3(x.qty), rate: x.rate, value: x.value, ledgerNo });

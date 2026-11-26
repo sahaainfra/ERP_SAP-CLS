@@ -83,8 +83,15 @@ export function createFlagService({ db, environment }) {
     },
 
     /** Set a flag at a scope. Audit entry and outbox event are written in the same transaction. */
-    set(actor, key, { scope, enabled, reason, version }, correlationId) {
+    set(actor, key, { scope: given, enabled, reason, version }, correlationId) {
       assertPermission(actor, 'core.flag.configure');
+      // Only the fields of the chosen level count: a stray companyId on an environment or default change must never reach another company's row.
+      const scope = {
+        level: given.level,
+        environment: given.level === 'environment' ? given.environment : undefined,
+        companyId: given.level === 'company' || given.level === 'project' ? given.companyId : undefined,
+        projectId: given.level === 'project' ? given.projectId : undefined,
+      };
       // part 29.01, BR-01: once the control center is on for the company, its flags change only through an approved change request
       if (['company', 'project'].includes(scope.level) && resolveWith(repo, 'ff.admin.p2901', { environment, companyId: actor.companyId }).enabled) {
         throw unprocessable('Feature flags of this company are changed through the Enterprise Control Center: raise a change request there for a checker to approve.');
@@ -97,12 +104,7 @@ export function createFlagService({ db, environment }) {
       if (MAKER_CHECKER_ENVIRONMENTS.includes(environment)) return { pending: true, request: requestChange(db, repo, actor, key, { scope, enabled, reason }) };
       return setFlagRow(db, repo, {
         key,
-        scope: {
-          level: scope.level,
-          environment: scope.level === 'environment' ? scope.environment : undefined,
-          companyId: scope.companyId,
-          projectId: scope.projectId,
-        },
+        scope,
         enabled,
         reason,
         version,
@@ -183,7 +185,6 @@ const sameUser = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toL
 
 function requestChange(db, repo, actor, key, { scope, enabled, reason }) {
   if (!repo.findScopeRow(key, {})) throw notFound(`Feature flag ${key} is not defined. Flags are created by a reference-seed migration.`);
-  if (scope.level === 'default') throw badRequest('The default row of a flag always exists and cannot be created.');
   const open = db.prepare("SELECT doc_no FROM core_flag_changes WHERE company_id = ? AND flag_key = ? AND scope_level = ? AND COALESCE(scope_environment, '') = ? AND COALESCE(scope_company_id, 0) = ? AND COALESCE(scope_project_id, 0) = ? AND status = 'PENDING' AND deleted_at IS NULL")
     .get(actor.companyId, key, scope.level, scope.environment ?? '', scope.companyId ?? 0, scope.projectId ?? 0);
   if (open) throw unprocessable(`A change of ${key} at this scope is already waiting for approval (${open.doc_no}).`);
@@ -220,6 +221,8 @@ export function createFlagChanges({ db }) {
         if (r.first_approved_by && sameUser(r.first_approved_by, actor.user)) throw forbidden('You approved this change already: a different person gives the second approval.');
         if (decision === 'REJECT') { if (!note) throw badRequest('Say why the change is rejected.'); close(r, actor, 'REJECTED', note); return changeView(rowOf(actor, id)); }
         const roles = rolesOf(actor); const twoStep = r.area !== 'GENERAL';
+        // the first (or only) approval is the IT administrator's (part 29.01: SYSADM -> ITADM); the CFO and directors give only the second
+        if (!r.first_approved_by && !roles.includes('ITADM')) throw forbidden('An IT administrator approves a flag change first.');
         // the second approval of a financial or security flag is the CFO's or a director's; the first is the IT administrator's
         if (twoStep && r.first_approved_by && !roles.some((x) => ['CFO', 'DIR'].includes(x))) throw forbidden(`A ${r.area.toLowerCase()} flag is approved a second time by the CFO or a director.`);
         if (twoStep && !r.first_approved_by) {

@@ -302,21 +302,28 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
     const a = g.allow;
     const parts = [];
     let unrestricted = false;
-    if (a.company) { parts.push('1 = 1'); unrestricted = !(g.deny.projects.size || g.deny.sites.size); }
+    const d = g.deny;
+    if (a.company) { parts.push('1 = 1'); unrestricted = !(d.projects.size || d.sites.size || d.branches.size || d.departments.size || d.own); }
     else {
       if (cols.project && a.projects.size) parts.push(`${cols.project} IN (${ids(a.projects).join(',')})`);
       if (cols.site && a.sites.size) parts.push(`${cols.site} IN (${ids(a.sites).join(',')})`);
       if (cols.branch && a.branches.size) parts.push(`${cols.branch} IN (${ids(a.branches).join(',')})`);
       if (cols.department && a.departments.size) parts.push(`${cols.department} IN (${ids(a.departments).join(',')})`);
       if (cols.owner && a.own && actor.userId) parts.push(`${cols.owner} = ${Number(actor.userId)}`);
-      if (cols.owner && entity && e.reportees.size && hierarchyOn(entity, e.companyId)) parts.push(`${cols.owner} IN (${ids(e.reportees).join(',')})`);
+      // a manager's reportees count only under an OWN-scoped grant, as in check()
+      if (cols.owner && a.own && entity && e.reportees.size && hierarchyOn(entity, e.companyId)) parts.push(`${cols.owner} IN (${ids(e.reportees).join(',')})`);
     }
     if (parts.length === 0) return { sql: '1 = 0', unrestricted: false };
     let sql = parts.length === 1 ? parts[0] : `(${parts.join(' OR ')})`;
-    const d = g.deny;
+    // every deny check() honours is taken out of the list too
     const denies = [];
-    if (cols.project && d.projects.size) denies.push(`${cols.project} IN (${ids(d.projects).join(',')})`);
-    if (cols.site && d.sites.size) denies.push(`${cols.site} IN (${ids(d.sites).join(',')})`);
+    // NULL-safe: a record without the attribute is not denied by it (check() asks for the attribute too), and NOT (NULL) would drop it
+    const denyIn = (col, set) => `(${col} IS NOT NULL AND ${col} IN (${ids(set).join(',')}))`;
+    if (cols.project && d.projects.size) denies.push(denyIn(cols.project, d.projects));
+    if (cols.site && d.sites.size) denies.push(denyIn(cols.site, d.sites));
+    if (cols.branch && d.branches.size) denies.push(denyIn(cols.branch, d.branches));
+    if (cols.department && d.departments.size) denies.push(denyIn(cols.department, d.departments));
+    if (cols.owner && d.own && actor.userId) denies.push(`(${cols.owner} IS NOT NULL AND ${cols.owner} = ${Number(actor.userId)})`);
     if (denies.length) sql = `(${sql} AND NOT (${denies.join(' OR ')}))`;
     return { sql, unrestricted };
   }
@@ -401,8 +408,13 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
       for (const m of TEMPLATE_FIELD_MASKS) {
         for (const code of m.roles) {
           const role = db.prepare('SELECT id FROM iam_roles WHERE company_id IS NULL AND code = ?').get(code);
-          if (role && !db.prepare('SELECT 1 FROM iam_field_masks WHERE role_id = ? AND entity = ? AND field = ?').get(role.id, m.entity, m.field)) {
+          const mask = role ? db.prepare('SELECT id, rule, source_type FROM iam_field_masks WHERE role_id = ? AND entity = ? AND field = ?').get(role.id, m.entity, m.field) : null;
+          if (role && !mask) {
             insert("INSERT INTO iam_field_masks (role_id, entity, field, rule, created_by, source_type) VALUES (?, ?, ?, ?, 'system', 'role_template')", role.id, m.entity, m.field, m.rule);
+          } else if (mask && mask.source_type === 'role_template' && mask.rule !== m.rule) {
+            // a rule the template changed follows the template; a mask someone set by hand is left alone
+            insert("UPDATE iam_field_masks SET rule = ?, updated_by = 'system', updated_at = ? WHERE id = ?", m.rule, stamp, mask.id);
+            changed += 1;
           }
         }
       }
