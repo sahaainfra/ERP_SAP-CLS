@@ -33,7 +33,8 @@ export function rowsFromPaste(table, columns) {
   let body = table;
   let skippedHeader = false;
   const labels = columns.map((c) => String(c.label ?? '').toLowerCase());
-  if (body.length && body[0].some((cell, i) => labels[i] && cell.toLowerCase() === labels[i])) {
+  const labelled = body.length ? body[0].map((cell, i) => [cell, labels[i]]).filter(([cell, label]) => label && cell !== '') : [];
+  if (labelled.length && labelled.every(([cell, label]) => cell.toLowerCase() === label)) {
     body = body.slice(1);
     skippedHeader = true;
   }
