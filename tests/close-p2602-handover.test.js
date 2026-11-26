@@ -102,4 +102,13 @@ test('26.02 a rejected whole-project handover still counts; an area handover wai
   assert.ok(blocked(okay(await call(U.pm, 'GET', `/handovers/${area.id}`)).readiness.blockers), 'a system of the site not at RFSU blocks the area');
   r.d.prepare("UPDATE tnc_systems SET stage = 'RFSU' WHERE id = ?").run(sys);
   assert.ok(!blocked(okay(await call(U.pm, 'GET', `/handovers/${area.id}`)).readiness.blockers));
+
+  // an area without a site is matched through its assets; an asset on a subsystem waits for the top-level system
+  const annexe = okay(await call(U.pm, 'POST', '/handovers', { projectId: r.A, title: 'Annexe', scopeType: 'AREA', areaLabel: 'Annexe', dlpMonths: 12 }), 201);
+  const top = Number(r.d.prepare("INSERT INTO tnc_systems (company_id, org_project_id, code, name, stage) VALUES (1, ?, 'SYS-CHW', 'Chilled water', 'MC')").run(r.A).lastInsertRowid);
+  const subsystem = Number(r.d.prepare("INSERT INTO tnc_systems (company_id, org_project_id, parent_id, code, name, stage) VALUES (1, ?, ?, 'SYS-CHW-1A', 'Chilled water loop 1A', 'MC')").run(r.A, top).lastInsertRowid);
+  const sysBlocked = (b) => b.some((m) => /Commissioning system/.test(m) && /SYS-CHW\b/.test(m));
+  assert.ok(!sysBlocked(okay(await call(U.pm, 'GET', `/handovers/${annexe.id}`)).readiness.blockers), 'no asset yet: no system of the area');
+  okay(await call(U.pm, 'POST', `/handovers/${annexe.id}/assets`, { tagNo: 'AHU-09', description: 'Air handling unit 9', systemId: subsystem }), 201);
+  assert.ok(sysBlocked(okay(await call(U.pm, 'GET', `/handovers/${annexe.id}`)).readiness.blockers), 'the subsystem\'s system is not at RFSU');
 });

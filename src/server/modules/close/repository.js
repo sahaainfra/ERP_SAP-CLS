@@ -25,7 +25,7 @@ export const complaintScope = (db, id, companyId) => db.prepare('SELECT c.status
 export const closureScope = (db, id, companyId) => db.prepare('SELECT status, company_id, org_project_id FROM cls_closures WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), companyId);
 
 /** The company of a handover (for the event consumer). */
-export const handoverCompany = (db, id) => db.prepare('SELECT company_id FROM ho_handovers WHERE id = ?').get(Number(id))?.company_id ?? null;
+export const handoverCompany = (db, id) => db.prepare('SELECT company_id FROM ho_handovers WHERE id = ? AND deleted_at IS NULL').get(Number(id))?.company_id ?? null;
 
 /** Every company (for the sweep job). */
 export const companyIds = (db) => db.prepare('SELECT id FROM org_companies').all().map((c) => c.id);

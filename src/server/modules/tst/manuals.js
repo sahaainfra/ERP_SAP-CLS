@@ -70,7 +70,7 @@ export const MODULE_NAMES = {
   mdm: ['Master data', 'मास्टर डेटा'], fin: ['Finance', 'वित्त'], hr: ['People', 'कर्मचारी'], bd: ['Business development', 'व्यवसाय विकास'], est: ['Estimation and tenders', 'अनुमान और निविदा'], proj: ['Projects', 'परियोजनाएँ'],
   engg: ['Engineering', 'इंजीनियरिंग'], bud: ['Budgets', 'बजट'], plan: ['Planning', 'योजना'], site: ['Site execution', 'साइट कार्य'], proc: ['Procurement', 'खरीद'], inv: ['Stores and inventory', 'भंडार और इन्वेंटरी'],
   plant: ['Plant and machinery', 'प्लांट और मशीनरी'], qa: ['Quality', 'गुणवत्ता'], hse: ['Health, safety and environment', 'स्वास्थ्य, सुरक्षा और पर्यावरण'], rmc: ['Ready-mix concrete', 'रेडी-मिक्स कंक्रीट'], ctr: ['Contracts and subcontracts', 'अनुबंध और उप-अनुबंध'],
-  bill: ['Billing', 'बिलिंग'], pay: ['Payroll', 'पेरोल'], portal: ['Partner portal', 'भागीदार पोर्टल'], bi: ['Reports and analytics', 'रिपोर्ट और विश्लेषण'], ai: ['Intelligence', 'इंटेलिजेंस'], admin: ['Administration', 'प्रशासन'], tst: ['Quality assurance and go-live', 'गुणवत्ता आश्वासन और गो-लाइव'],
+  bill: ['Billing', 'बिलिंग'], pay: ['Payroll', 'पेरोल'], portal: ['Partner portal', 'भागीदार पोर्टल'], bi: ['Reports and analytics', 'रिपोर्ट और विश्लेषण'], ai: ['Intelligence', 'इंटेलिजेंस'], admin: ['Administration', 'प्रशासन'], close: ['Project closeout', 'परियोजना समापन'], tst: ['Quality assurance and go-live', 'गुणवत्ता आश्वासन और गो-लाइव'],
 };
 const GUIDE_TITLES = {
   admin: 'Administrator guide', install: 'Installation and start-up guide', api: 'API guide', import: 'Data import guide', reports: 'Reports and exports guide', security: 'Security guide', recovery: 'Backup, restore and recovery guide',
