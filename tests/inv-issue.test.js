@@ -128,3 +128,15 @@ test('AC-03 AC-04 who sees and does what: the keeper issues, the store manager a
   const imp = await r.call(mgr, 'POST', '/issues/import', { rows: [{ storeCode: 'IS-ST', waNo: r.d.prepare('SELECT wa_no FROM site_work_authorisations WHERE id = ?').get(wa).wa_no, crewName: 'Gang B', itemCode: 'IS-CEM', qty: 3 }] }); assert.equal(imp.status, 201, JSON.stringify(imp.json)); assert.equal((await r.call(mgr, 'POST', '/issues/import', { rows: [{ storeCode: 'NOPE', waNo: 'x', crewName: 'Gang', itemCode: 'y', qty: 1 }] })).status, 400, 'all or nothing');
   assert.equal((await r.call(sk, 'GET', '/issues/summary')).json.data.readyToHandOver, 1); assert.equal((await r.call(sk, 'GET', '/issues?pageSize=10')).json.data.length >= 2, true); r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.inv.p1604'").run(); assert.equal((await r.call(sk, 'GET', '/issues')).status, 404, 'the flag is off'); assert.equal((await r.call(sk, 'GET', '/stores')).status, 200, '16.01 is not affected');
 });
+
+test('a site return of a batch-kept item from a slip that named no batch goes back to the batches the issue drew from, each up to what it gave', async () => {
+  const r = await ready(); r.d.prepare('UPDATE mdm_items SET batch_tracked = 1 WHERE id = ?').run(r.cement); const st = await r.store('IS-BT'); const wa = r.wa(100_000);
+  for (const [batchNo, qty] of [['B1', 4], ['B2', 6]]) { const m = await r.call(mgr, 'POST', '/movements', { storeId: st.id, itemId: r.cement, type: 'RECEIPT', qty, rate: 40, batchNo, date: TODAY, reason: 'Opening for the test' }); assert.equal(m.status, 201, JSON.stringify(m.json)); }
+  const g = (await r.call(sk, 'POST', '/issues', r.issue({ storeId: st.id, waId: wa, lines: [{ itemId: r.cement, qty: 10 }] }))).json.data; await r.call(sk, 'POST', `/issues/${g.id}/submit`); assert.equal((await r.post(g.id)).status, 200);
+  const batch = (b) => r.d.prepare('SELECT COALESCE(SUM(qty_on_hand), 0) AS q FROM inv_balances WHERE store_id = ? AND item_id = ? AND batch_no = ?').get(st.id, r.cement, b).q;
+  assert.deepEqual([batch('B1'), batch('B2')], [0, 0], 'the slip drew 4 from B1 and 6 from B2');
+  const line = (await r.call(mgr, 'GET', `/issues/${g.id}`)).json.data.lines[0];
+  const back = async (qty) => { const c = await r.call(sk, 'POST', '/site-returns', { issueId: g.id, condition: 'GOOD', reason: 'Not needed any more', lines: [{ issueLineId: line.id, qty }] }); assert.equal(c.status, 201, JSON.stringify(c.json)); const s = await r.call(sk, 'POST', `/site-returns/${c.json.data.id}/submit`); assert.equal((await r.act2(mgr, s.json.data.workflowInstanceId)).status, 200); };
+  await back(8); assert.deepEqual([batch('B1'), batch('B2')], [2, 6].map((n) => n * 1000), 'B2 (drawn last) gets its 6 back, B1 the other 2');
+  await back(2); assert.deepEqual([batch('B1'), batch('B2')], [4, 6].map((n) => n * 1000), 'a later return fills what each batch has not had back');
+});

@@ -515,6 +515,33 @@ test('FR-08 a manager sees the records of the people in the departments they hea
   await api.close();
 });
 
+test('an OWN-scoped deny takes the reportees out of a list as check() refuses them, when the hierarchy is on', async () => {
+  const api = await startApi();
+  const authz = authzOf(api.db);
+  hierarchyRegistry.register('test_doc');
+  const org = createOrgService({ db: api.db, approvals: null, clock: () => Date.now() });
+  const user = (name) => Number(api.db.prepare("INSERT INTO iam_users (company_id, username, display_name, roles_json) VALUES (1, ?, ?, '[]')").run(name, name).lastInsertRowid);
+  const head = user('dhead'); const staff = user('dstaff'); const other = user('dother');
+  const dept = org.create({ user: 'h', roles: ['HRMGR'], companyId: 1 }, 'departments', { code: 'DNY', name: 'Denied', kind: 'DEPARTMENT', headUserId: head }, {});
+  for (const [u, d] of [[head, dept.id], [staff, dept.id], [other, null]]) api.db.prepare("INSERT INTO iam_user_profiles (company_id, user_id, lifecycle, department_id) VALUES (1, ?, 'ACTIVE', ?)").run(u, d);
+  const role = (code, effect, scope) => {
+    const id = Number(api.db.prepare("INSERT INTO iam_roles (company_id, code, name, kind, category, is_system, status, created_by) VALUES (1, ?, ?, 'CUSTOM', 'CUSTOM', 0, 'ACTIVE', 't')").run(code, code).lastInsertRowid);
+    api.db.prepare('INSERT INTO iam_role_permissions (role_id, perm_key, effect) VALUES (?, ?, ?)').run(id, 'core.sample.use', effect);
+    api.db.prepare("INSERT INTO iam_assignments (company_id, user_id, role_id, scope_type, scope_ids_json, status, created_by) VALUES (1, ?, ?, ?, '[]', 'ACTIVE', 't')").run(head, id, scope);
+  };
+  role('ALLREAD', 'allow', 'COMPANY'); role('NOTOWN', 'deny', 'OWN');
+  authz.invalidate();
+  const actor = { user: 'dhead', userId: head, roles: [], companyId: 1 };
+  api.db.exec('CREATE TEMP TABLE t_docs (owner_id INTEGER)');
+  for (const u of [head, staff, other]) api.db.prepare('INSERT INTO t_docs (owner_id) VALUES (?)').run(u);
+  const { sql } = authz.scopeFilter(actor, 'core.sample.use', { owner: 't.owner_id' }, 'test_doc');
+  const listed = api.db.prepare(`SELECT owner_id FROM t_docs t WHERE ${sql}`).all().map((r) => r.owner_id);
+  const allowed = [head, staff, other].filter((u) => authz.check(actor, 'core.sample.use', { companyId: 1, ownerUserId: u, entity: 'test_doc' }).allowed);
+  assert.deepEqual(allowed, [other], 'check() refuses the actor\'s own and the reportee\'s records');
+  assert.deepEqual(listed, allowed, 'the list shows what check() allows');
+  await api.close();
+});
+
 test('the permission list, the maskable fields and the onboarding gate still hold for a person with only a scoped assignment', async () => {
   const app = await boot();
   const sys = await app.as('sysadmin', ['SYSADM']);

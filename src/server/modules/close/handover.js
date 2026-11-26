@@ -67,8 +67,9 @@ export function createHandover({ db }) {
     // The systems of the handover's scope: the whole project (narrowed to its site, if any); for an area, the systems of its site and the
     // systems its client assets belong to (systems carry no location, so an area without a site is matched through its assets only).
     const sw = ["s.company_id = ? AND s.org_project_id = ? AND s.deleted_at IS NULL AND s.status = 'ACTIVE' AND s.parent_id IS NULL AND s.stage != 'RFSU'"]; const sa = [h.company_id, h.org_project_id];
-    // an asset may name a subsystem: its top-level system is the one that reaches ready for start-up
-    const ofAssets = "s.id IN (SELECT COALESCE(x.parent_id, x.id) FROM ho_client_assets a JOIN tnc_systems x ON x.id = a.tnc_system_id WHERE a.handover_id = ? AND a.deleted_at IS NULL AND a.status = 'ACTIVE')";
+    // an asset may name a subsystem at any depth, even one since deleted: its top-level system is the one that reaches ready for start-up
+    // (a deleted top-level system is left out by the outer query; UNION stops on a loop)
+    const ofAssets = "s.id IN (WITH RECURSIVE up(id, parent_id) AS (SELECT x.id, x.parent_id FROM ho_client_assets a JOIN tnc_systems x ON x.id = a.tnc_system_id WHERE a.handover_id = ? AND a.deleted_at IS NULL AND a.status = 'ACTIVE' UNION SELECT y.id, y.parent_id FROM up JOIN tnc_systems y ON y.id = up.parent_id) SELECT id FROM up WHERE parent_id IS NULL)";
     if (h.scope_type === 'PROJECT') { if (h.org_site_id) { sw.push('(s.org_site_id = ? OR s.org_site_id IS NULL)'); sa.push(h.org_site_id); } }
     else if (h.org_site_id) { sw.push(`(s.org_site_id = ? OR ${ofAssets})`); sa.push(h.org_site_id, h.id); }
     else { sw.push(ofAssets); sa.push(h.id); }

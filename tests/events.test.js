@@ -241,6 +241,21 @@ test('AC-03 / FR-05 / BR-03 replaying a date range rebuilds a projection identic
   assert.throws(() => bus.replay({ consumer: 'nope' }), /no consumer/);
 });
 
+test('a reset replay for one company rebuilds a reset consumer from every company, and gives a consumer without a reset only that company', () => {
+  const db = memoryDb();
+  const { bus } = clocked(db);
+  const rebuilt = []; const kept = [];
+  bus.subscribe('test.thing.*', (e) => rebuilt.push(e.companyId), { consumer: 'test.rebuilt', reset: () => { rebuilt.length = 0; } });
+  bus.subscribe('test.thing.*', (e) => kept.push(e.companyId), { consumer: 'test.kept' });
+  [1, 2, 1, 2].forEach((companyId) => evt(db, { companyId }));
+  bus.drain();
+  kept.length = 0;
+  const r = bus.replay({ reset: true, companyId: 1 });
+  assert.deepEqual(rebuilt.sort(), [1, 1, 2, 2], 'the emptied projection gets every company back');
+  assert.deepEqual(kept, [1, 1], 'the consumer that kept its rows sees no other company again');
+  assert.deepEqual([r.events, r.deliveries], [4, 6]);
+});
+
 test('replay stops when cancelled and reports progress', () => {
   const db = memoryDb();
   const { bus } = clocked(db);

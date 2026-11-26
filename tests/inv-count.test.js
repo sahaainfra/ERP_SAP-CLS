@@ -107,3 +107,12 @@ test('AC-03 AC-04 who sees and does what: the keeper counts blind, the manager r
   invOf(r.d).countDecide({ docId: String(p.id), status: 'APPROVED' }, mgr2, 'APPROVED'); assert.equal((await r.call(mgr, 'GET', `/count-plans/${p.id}`)).json.data.status, 'APPROVED'); await r.call(mgr, 'POST', `/count-plans/${p.id}/start`); assert.equal((await r.call(sk, 'GET', '/count-plans/queue')).json.data.length, 1); assert.equal((await r.call(sk3, 'GET', '/count-plans/queue')).json.data.length, 0, 'only the stores they keep');
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.inv.p1606'").run(); assert.equal((await r.call(sk, 'GET', '/count-plans')).status, 404, 'the flag is off'); assert.equal((await r.call(sk, 'GET', '/stores')).status, 200, '16.01 is not affected');
 });
+
+test('a count without the freeze keeps the snapshot book of a serial-numbered unit (its balance row carries the serial the count line has not)', async () => {
+  const r = await ready(); r.d.prepare('UPDATE mdm_items SET serial_tracked = 1 WHERE id = ?').run(r.pump); const st = await r.store('CN-SR');
+  const inn = await r.call(mgr, 'POST', '/movements', { storeId: st.id, itemId: r.pump, type: 'RECEIPT', qty: 1, rate: 5000, serialNo: 'SN1', date: TODAY, reason: 'Opening for the test' }); assert.equal(inn.status, 201, JSON.stringify(inn.json));
+  const p = await r.plan(sk, st, { freeze: false }); await r.approvePlan(p); assert.equal((await r.call(mgr, 'POST', `/count-plans/${p.id}/start`)).status, 200);
+  const line = (await r.call(sk, 'GET', `/count-plans/${p.id}/sheet`)).json.data.lines.find((l) => l.itemCode === 'CN-PMP');
+  const c = await r.call(sk, 'POST', `/count-plans/${p.id}/counts`, { lines: [{ lineId: line.id, qty: 1 }] }); assert.equal(c.status, 200, JSON.stringify(c.json));
+  assert.equal(c.json.data.recount, 0, 'the unit counted is the unit on the book'); assert.equal(r.lineOf(p, r.pump).book_qty, 1000, 'the book stays one piece');
+});

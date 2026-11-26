@@ -45,13 +45,20 @@ export function createExportGuard({ db, approvals }) {
       if (!r || r.requested_by !== actor.user || p.report !== report) throw unprocessable('That approval is not for this export, or it is not yours.');
       if (r.status !== 'APPROVED') throw unprocessable(`That approval is ${r.status.toLowerCase()}, so the export cannot run yet.`);
       if (stable(p.filters) !== stable(filters)) throw unprocessable('The filters changed since the export was approved. Ask for approval of this export.');
-      if (db.prepare("SELECT 1 FROM core_audit_log WHERE entity = 'export_grant' AND action = 'used' AND entity_id = ?").get(String(approvalId))) throw unprocessable('That approval was already used for an export. Ask again.');
+      // spent unless its last use was given back (an export that failed before any file left)
+      const last = db.prepare("SELECT action FROM core_audit_log WHERE entity = 'export_grant' AND action IN ('used', 'released') AND entity_id = ? ORDER BY id DESC LIMIT 1").get(String(approvalId));
+      if (last?.action === 'used') throw unprocessable('That approval was already used for an export. Ask again.');
       // the approval is spent here, when the export is let through, so a queued (background) export or a second request sent before
       // the first one completes cannot run on the same approval again
       writeAudit(db, { entity: 'export_grant', entityId: approvalId, action: 'used', newValues: { report, rows }, actor: actor.user, companyId: actor.companyId });
       return { status: 'OK', approvalId };
     },
     maxRows: (companyId) => maxRows(companyId),
+    /** Give an approval back when the export it let through failed before producing a file, so the person can try again on it. */
+    release(actor, approvalId, reason) {
+      if (approvalId == null) return;
+      writeAudit(db, { entity: 'export_grant', entityId: approvalId, action: 'released', newValues: { reason: String(reason ?? '').slice(0, 300) }, actor: actor.user, companyId: actor.companyId });
+    },
     /** Record a finished export: the audit trail, the security log (personal data) and the event. */
     complete(actor, { report, format = 'csv', rows, filters = {}, personal = false, approvalId = null }) {
       writeAudit(db, { entity: 'report', entityId: report, action: 'export', newValues: { format, rows, filters, personal, approval: approvalId }, actor: actor.user, companyId: actor.companyId });
