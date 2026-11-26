@@ -197,7 +197,8 @@ export function createEventBus({ db, now = () => new Date(), maxAttempts = 5, ba
 
     /**
      * Re-run history through consumers (FR-05). `types` are patterns; `from` and `to` are dates or timestamps (UTC) on the
-     * event's occurredAt. With `reset`, each consumer's own reset hook empties its projection first. Handlers see
+     * event's occurredAt. With `reset`, each consumer's own reset hook empties its projection first, and that consumer is then rebuilt
+     * from all of its events (the filters narrow the replay for the other consumers only). Handlers see
      * `ctx.replay === true` and must not send notifications or call outside systems (BR-03). The inbox is untouched.
      */
     /** @param {{ types?: string | string[], from?: string | null, to?: string | null, consumer?: string | null, reset?: boolean, companyId?: number | null, onProgress?: (percent: number, message: string) => void, isCancelled?: () => boolean }} options */
@@ -222,15 +223,14 @@ export function createEventBus({ db, now = () => new Date(), maxAttempts = 5, ba
         for (const row of page) {
           lastId = row.id;
           if (isCancelled()) return { events, deliveries, cancelled: true };
-          if (!patterns.some((p) => matches(p, row.event_type))) continue;
           const event = envelopeOf(row);
-          if (lower && (event.occurredAt ?? row.created_at) < lower) continue;
-          if (upper && (event.occurredAt ?? row.created_at) > upper) continue;
-          // a reset empties a consumer's whole projection (every company's rows), so that consumer is rebuilt from every company's events;
-          // a consumer without a reset hook kept its rows, and gets the asked company's events only
-          const outside = companyId !== null && event.companyId !== null && event.companyId !== companyId;
-          const takers = targets.filter((t) => t.patterns.some((p) => matches(p, row.event_type)) && (!outside || (reset && t.reset)));
-          if (outside && takers.length === 0) continue;
+          // a reset empties a consumer's whole projection (every company's rows, every type, every date), so that consumer is rebuilt from all
+          // of its events: the types, dates and company asked for narrow the replay only for consumers that kept their rows
+          const at = event.occurredAt ?? row.created_at;
+          const asked = patterns.some((p) => matches(p, row.event_type)) && !(lower && at < lower) && !(upper && at > upper)
+            && !(companyId !== null && event.companyId !== null && event.companyId !== companyId);
+          const takers = targets.filter((t) => t.patterns.some((p) => matches(p, row.event_type)) && (asked || (reset && t.reset)));
+          if (!asked && takers.length === 0) continue;
           events += 1;
           for (const t of takers) {
             transaction(db, () => t.handler(event, { db, replay: true, attempt: 1, consumer: t.name }));

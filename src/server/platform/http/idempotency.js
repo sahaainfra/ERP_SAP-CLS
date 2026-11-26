@@ -46,6 +46,7 @@ export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, 
     const stamp = now();
 
     let replay = null;
+    let claim = null; // the row this request inserted: a retry that took over an abandoned claim has its own, which this request never touches
     try {
       transaction(db, () => {
         db.prepare('DELETE FROM core_idempotency_keys WHERE id IN (SELECT id FROM core_idempotency_keys WHERE expires_at < ? ORDER BY expires_at LIMIT ?)').run(new Date(stamp).toISOString(), PURGE_BATCH);
@@ -63,7 +64,7 @@ export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, 
           }
         }
         if (row) db.prepare('DELETE FROM core_idempotency_keys WHERE id = ?').run(row.id);
-        db.prepare('INSERT INTO core_idempotency_keys (key, user_id, endpoint, request_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)').run(key, user, endpoint, hash, new Date(stamp).toISOString(), new Date(stamp + ttlMs).toISOString());
+        claim = Number(db.prepare('INSERT INTO core_idempotency_keys (key, user_id, endpoint, request_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)').run(key, user, endpoint, hash, new Date(stamp).toISOString(), new Date(stamp + ttlMs).toISOString()).lastInsertRowid);
       });
     } catch (err) {
       return next(err instanceof HttpError && err.code === 'VERSION_CONFLICT' ? Object.assign(err, { code: 'REQUEST_IN_PROGRESS' }) : err);
@@ -85,9 +86,9 @@ export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, 
     res.on('finish', () => {
       try {
         if (res.statusCode >= 200 && res.statusCode < 300 && typeof body === 'string') {
-          db.prepare('UPDATE core_idempotency_keys SET response_status = ?, response_body = ? WHERE user_id = ? AND endpoint = ? AND key = ?').run(res.statusCode, body, user, endpoint, key);
+          db.prepare('UPDATE core_idempotency_keys SET response_status = ?, response_body = ? WHERE id = ?').run(res.statusCode, body, claim);
         } else {
-          db.prepare('DELETE FROM core_idempotency_keys WHERE user_id = ? AND endpoint = ? AND key = ?').run(user, endpoint, key);
+          db.prepare('DELETE FROM core_idempotency_keys WHERE id = ?').run(claim);
         }
       } catch {
         /* the database is going away: nothing more can be recorded */
@@ -96,7 +97,7 @@ export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, 
     res.on('close', () => {
       if (!res.writableFinished) {
         try {
-          db.prepare('DELETE FROM core_idempotency_keys WHERE user_id = ? AND endpoint = ? AND key = ? AND response_status IS NULL').run(user, endpoint, key);
+          db.prepare('DELETE FROM core_idempotency_keys WHERE id = ? AND response_status IS NULL').run(claim);
         } catch {
           /* ignore */
         }

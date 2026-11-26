@@ -140,3 +140,19 @@ test('a site return of a batch-kept item from a slip that named no batch goes ba
   await back(8); assert.deepEqual([batch('B1'), batch('B2')], [2, 6].map((n) => n * 1000), 'B2 (drawn last) gets its 6 back, B1 the other 2');
   await back(2); assert.deepEqual([batch('B1'), batch('B2')], [4, 6].map((n) => n * 1000), 'a later return fills what each batch has not had back');
 });
+
+test('a return approved before the batch split was kept counts each of its lines against its own slip line, not every line of the item', async () => {
+  const r = await ready(); r.d.prepare('UPDATE mdm_items SET batch_tracked = 1 WHERE id = ?').run(r.cement); const st = await r.store('IS-BL'); const wa = r.wa(100_000);
+  for (const [batchNo, qty] of [['B1', 15], ['B2', 10]]) { const m = await r.call(mgr, 'POST', '/movements', { storeId: st.id, itemId: r.cement, type: 'RECEIPT', qty, rate: 40, batchNo, date: TODAY, reason: 'Opening for the test' }); assert.equal(m.status, 201, JSON.stringify(m.json)); }
+  const c = await r.call(sk, 'POST', '/issues', r.issue({ storeId: st.id, waId: wa, lines: [{ itemId: r.cement, qty: 10 }, { itemId: r.cement, qty: 10 }] })); assert.equal(c.status, 201, JSON.stringify(c.json));
+  const g = c.json.data; await r.call(sk, 'POST', `/issues/${g.id}/submit`); assert.equal((await r.post(g.id)).status, 200);
+  const [l1, l2] = (await r.call(mgr, 'GET', `/issues/${g.id}`)).json.data.lines; // l1 drew B1:10, l2 drew B1:5 then B2:5
+  const back = async (lines) => { const x = await r.call(sk, 'POST', '/site-returns', { issueId: g.id, condition: 'GOOD', reason: 'Not needed any more', lines }); assert.equal(x.status, 201, JSON.stringify(x.json)); const s = await r.call(sk, 'POST', `/site-returns/${x.json.data.id}/submit`); assert.equal((await r.act2(mgr, s.json.data.workflowInstanceId)).status, 200); return x.json.data.id; };
+  const first = await back([{ issueLineId: l1.id, qty: 10 }, { issueLineId: l2.id, qty: 2 }]);
+  // as a return approved before the split was kept: no batches on its lines (it put line 2's 2 into the batch that line first drew from, B1)
+  const old = JSON.parse(r.d.prepare('SELECT lines_json FROM inv_site_returns WHERE id = ?').get(first).lines_json).map(({ batches: _b, ...y }) => y);
+  r.d.prepare('UPDATE inv_site_returns SET lines_json = ? WHERE id = ?').run(JSON.stringify(old), first);
+  const second = await back([{ issueLineId: l2.id, qty: 8 }]);
+  const put = Object.fromEntries(r.d.prepare("SELECT batch_no, SUM(qty_in) AS q FROM inv_stock_ledger WHERE source_type = 'inv_site_return' AND source_id = ? GROUP BY batch_no").all(String(second)).map((x) => [x.batch_no, x.q]));
+  assert.deepEqual(put, { B1: 3000, B2: 5000 }, 'line 2 had 2 back in B1: B2 takes its 5, B1 the 3 it still has room for; line 1\'s 10 does not count against line 2');
+});
