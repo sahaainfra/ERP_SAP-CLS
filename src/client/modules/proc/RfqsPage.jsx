@@ -120,7 +120,7 @@ export default function RfqsPage() {
     <section aria-labelledby="rfqs-h" data-testid="proc-rfqs">
       <PageHeader id="rfqs-h" title={t('q.title')} subtitle={t('q.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.rfq.create') && <Link to="/proc/rfq-new">{t('q.new')}</Link>} {perms.includes('proc.quotation.create') && <Link to="/proc/quotation-entry">{t('q.entry')}</Link>}</div>
-      <ListReport listCode="proc.rfqs" endpoint="/proc/rfqs" title={t('q.title')} session={session.data} rowHref={(r) => `/proc/rfqs?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/rfqs?id=${r.id}`)}
+      <ListReport listCode="proc.rfqs" endpoint="/proc/rfqs" exportEndpoint="/ui/lists/proc.rfqs/export" title={t('q.title')} session={session.data} rowHref={(r) => `/proc/rfqs?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/rfqs?id=${r.id}`)}
         cardFields={['docNo', 'project', 'title', 'dueDate', 'vendors']} statusKey="status" empty={{ title: t('q.emptyTitle'), text: t('q.emptyBody') }} />
     </section>
   );

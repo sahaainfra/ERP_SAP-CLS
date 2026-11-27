@@ -93,7 +93,7 @@ export default function EquipmentPage() {
   return (
     <section aria-labelledby="eql-h" data-testid="plant-eq-list"><PageHeader id="eql-h" title={t('registerTitle')} subtitle={t('registerIntro')} />
       <div className="actions-row no-print"><Link to="/plant/equipment/new">{t('newTitle')}</Link><Link to="/plant/dashboard">{t('dashTitle')}</Link></div>
-      <ListReport listCode="plant.equipment" endpoint="/plant/equipment" title={t('registerTitle')} session={session.data} rowHref={(r) => `/plant/equipment?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/equipment?id=${r.id}`)} cardFields={['assetCode', 'class', 'regNo', 'state']} statusKey="status" dateKey="created" empty={{ title: t('emptyTitle'), text: t('emptyBody') }} />
+      <ListReport listCode="plant.equipment" endpoint="/plant/equipment" exportEndpoint="/ui/lists/plant.equipment/export" title={t('registerTitle')} session={session.data} rowHref={(r) => `/plant/equipment?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/equipment?id=${r.id}`)} cardFields={['assetCode', 'class', 'regNo', 'state']} statusKey="status" dateKey="created" empty={{ title: t('emptyTitle'), text: t('emptyBody') }} />
     </section>
   );
 }

@@ -86,7 +86,7 @@ export default function ReconciliationsPage() {
   return (
     <section aria-labelledby="mr-h" data-testid="reconciliations"><PageHeader id="mr-h" title={t('mc.title')} subtitle={t('mc.intro')} />
       <div className="actions-row no-print">{[['status', 'mc.tabStatus'], ['list', 'mc.tabList'], ['materials', 'mc.materials']].map(([k, l]) => <Link key={k} to={`/inv/reconciliations?tab=${k}`} aria-current={tab === k ? 'page' : undefined} data-testid={`mrc-tab-${k}`}>{t(l)}</Link>)} <Link to="/inv/wastage-trend">{t('mc.trendTitle')}</Link></div>
-      {tab === 'status' ? <Status t={t} /> : tab === 'materials' ? <Materials t={t} perms={perms} /> : <ListReport listCode="inv.reconciliations" endpoint="/inv/reconciliations" title={t('mc.title')} session={session.data} rowHref={(r) => `/inv/reconciliations?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/reconciliations?id=${r.id}`)} cardFields={['docNo', 'period', 'site', 'status']} statusKey="status" dateKey="period" empty={{ title: t('mc.listEmptyTitle'), text: t('mc.listEmptyBody') }} />}
+      {tab === 'status' ? <Status t={t} /> : tab === 'materials' ? <Materials t={t} perms={perms} /> : <ListReport listCode="inv.reconciliations" endpoint="/inv/reconciliations" exportEndpoint="/ui/lists/inv.reconciliations/export" title={t('mc.title')} session={session.data} rowHref={(r) => `/inv/reconciliations?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/reconciliations?id=${r.id}`)} cardFields={['docNo', 'period', 'site', 'status']} statusKey="status" dateKey="period" empty={{ title: t('mc.listEmptyTitle'), text: t('mc.listEmptyBody') }} />}
     </section>
   );
 }

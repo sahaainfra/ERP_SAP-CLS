@@ -44,7 +44,7 @@ export default function TestCataloguePage() {
   return (
     <section aria-labelledby="catl-h" data-testid="qa-catalogue"><PageHeader id="catl-h" title={t('cat.title')} subtitle={t('cat.intro')} />
       <div className="actions-row no-print"><Link to="/qa/test-catalogue?new=1">{t('cat.new')}</Link></div>
-      <ListReport listCode="qa.test_catalogue" endpoint="/qa/test-catalogue" title={t('cat.title')} session={session.data} rowHref={(r) => `/qa/test-catalogue?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/test-catalogue?id=${r.id}`)} cardFields={['code', 'name', 'standard', 'status']} statusKey="status" empty={{ title: t('cat.emptyTitle'), text: t('cat.emptyBody') }} />
+      <ListReport listCode="qa.test_catalogue" endpoint="/qa/test-catalogue" exportEndpoint="/ui/lists/qa.test_catalogue/export" title={t('cat.title')} session={session.data} rowHref={(r) => `/qa/test-catalogue?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/test-catalogue?id=${r.id}`)} cardFields={['code', 'name', 'standard', 'status']} statusKey="status" empty={{ title: t('cat.emptyTitle'), text: t('cat.emptyBody') }} />
     </section>
   );
 }

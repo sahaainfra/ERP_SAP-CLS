@@ -42,7 +42,7 @@ function Suspension({ t, id }) {
 }
 
 function SuspensionList({ t, session }) {
-  return <ListReport listCode="proc.avl_suspensions" endpoint="/proc/avl-suspensions" title={t('v.suspTitle')} session={session.data} rowHref={(r) => `/proc/avl?suspension=${r.id}`} onOpen={(r) => navigateTo(`/proc/avl?suspension=${r.id}`)} cardFields={['docNo', 'vendor', 'date', 'auto']} statusKey="status" empty={{ title: t('v.suspEmptyTitle'), text: t('v.suspEmptyBody') }} />;
+  return <ListReport listCode="proc.avl_suspensions" endpoint="/proc/avl-suspensions" exportEndpoint="/ui/lists/proc.avl_suspensions/export" title={t('v.suspTitle')} session={session.data} rowHref={(r) => `/proc/avl?suspension=${r.id}`} onOpen={(r) => navigateTo(`/proc/avl?suspension=${r.id}`)} cardFields={['docNo', 'vendor', 'date', 'auto']} statusKey="status" empty={{ title: t('v.suspEmptyTitle'), text: t('v.suspEmptyBody') }} />;
 }
 
 export default function AvlPage() {
@@ -53,7 +53,7 @@ export default function AvlPage() {
       <div className="actions-row no-print"><button type="button" className={tab === 'list' ? 'btn btn-primary' : 'btn'} aria-pressed={tab === 'list'} onClick={() => setTab('list')} data-testid="avl-tab-list">{t('v.avlTitle')}</button><button type="button" className={tab === 'susp' ? 'btn btn-primary' : 'btn'} aria-pressed={tab === 'susp'} onClick={() => setTab('susp')} data-testid="avl-tab-susp">{t('v.suspTitle')}</button>
         <Link to="/proc/prequalifications">{t('v.preqTitle')}</Link> <Link to="/proc/vendor-scorecards">{t('v.scoreTitle')}</Link></div>
       {tab === 'list'
-        ? <ListReport listCode="proc.avl" endpoint="/proc/avl" title={t('v.avlTitle')} session={session.data} rowHref={(r) => `/proc/vendor-scorecards?partner=${r.partnerId}`} onOpen={(r) => navigateTo(`/proc/vendor-scorecards?partner=${r.partnerId}`)} cardFields={['vendor', 'category', 'region', 'validUntil']} statusKey="status" empty={{ title: t('v.avlEmptyTitle'), text: t('v.avlEmptyBody') }} />
+        ? <ListReport listCode="proc.avl" endpoint="/proc/avl" exportEndpoint="/ui/lists/proc.avl/export" title={t('v.avlTitle')} session={session.data} rowHref={(r) => `/proc/vendor-scorecards?partner=${r.partnerId}`} onOpen={(r) => navigateTo(`/proc/vendor-scorecards?partner=${r.partnerId}`)} cardFields={['vendor', 'category', 'region', 'validUntil']} statusKey="status" empty={{ title: t('v.avlEmptyTitle'), text: t('v.avlEmptyBody') }} />
         : <SuspensionList t={t} session={session} />}
     </section>
   );

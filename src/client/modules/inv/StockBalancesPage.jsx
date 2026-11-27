@@ -18,7 +18,7 @@ export default function StockBalancesPage() {
   return (
     <section aria-labelledby="sb-h" data-testid="inv-sb"><PageHeader id="sb-h" title={t('balancesTitle')} subtitle={t('balancesIntro')} />
       <div className="actions-row no-print"><Link to="/inv/ledger">{t('ledgerTitle')}</Link> <Link to="/inv/dashboard">{t('dashTitle')}</Link> {perms.includes('inv.stock.post') && <Link to="/inv/posting">{t('postingTitle')}</Link>}</div>
-      <ListReport listCode="inv.balances" endpoint="/inv/balances" title={t('balancesTitle')} session={session.data} rowHref={(x) => `/inv/ledger?itemId=${x.itemId ?? ''}`} onOpen={(x) => navigateTo(`/inv/ledger?itemId=${x.itemId ?? ''}`)} cardFields={['itemCode', 'item', 'store', 'onHand', 'available']} empty={{ title: t('balancesEmptyTitle'), text: t('balancesEmptyBody') }} />
+      <ListReport listCode="inv.balances" endpoint="/inv/balances" exportEndpoint="/ui/lists/inv.balances/export" title={t('balancesTitle')} session={session.data} rowHref={(x) => `/inv/ledger?itemId=${x.itemId ?? ''}`} onOpen={(x) => navigateTo(`/inv/ledger?itemId=${x.itemId ?? ''}`)} cardFields={['itemCode', 'item', 'store', 'onHand', 'available']} empty={{ title: t('balancesEmptyTitle'), text: t('balancesEmptyBody') }} />
       <h2>{t('reservations')}</h2>
       {rq.isPending ? <Skeleton label={t('reservations')} rows={2} /> : rq.isError ? <ErrorState error={rq.error} onRetry={rq.refetch} /> : (
         <div className="table-scroll"><table className="data-table" data-testid="sb-reservations"><caption>{t('reservations')}</caption><thead><tr><th>{t('reservation')}</th><th>{t('item')}</th><th>{t('store')}</th><th className="num">{t('qty')}</th><th>{t('source')}</th><th>{t('neededBy')}</th><th /></tr></thead>

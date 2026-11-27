@@ -9,190 +9,193 @@ seq,part_id,title,module,existence,decision,evidence
 8,01.05,File Storage & Secure Attachment Service,M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.05.md (not yet reviewed)
 9,01.06,Central Calculation Engine & Formula Registry,M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.06.md (not yet reviewed)
 10,01.07,"Observability, Logging, Health Checks & Performance Baseline",M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.07.md (not yet reviewed)
-11,01.08,Integration Hub & External Connector Framework,M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-12,02.01,"Authentication, Sessions, MFA & Password Policy",M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-13,02.02,"Organisation Hierarchy — Company, Branch, Department, Project & Site Master",M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-14,02.03,"User Management, Employee Linking & Onboarding State",M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-15,02.04,"Role & Permission Engine (RBAC + ABAC, Scopes, Field Masking) and Role Templates",M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-16,02.05,"Segregation of Duties, Privileged Access & Access Reviews",M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-17,02.06,Audit Trail Engine & Security Event Log,M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-18,02.07,"Secure Request Pipeline, Route Registry, Secrets & Security Headers",M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-19,03.01,"Design Tokens, Themes, Typography & Iconography",M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-20,03.02,Form Components & Data-Entry Framework,M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-21,03.03,Data Table & List Report Component,M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-22,03.04,"Object Page, Approval Panel, Attachments, Timeline & Feedback States",M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-23,03.05,"Application Shell, Navigation Registry & Context Switcher",M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-24,03.06,"Responsive Layouts, PWA & Device Capabilities",M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-25,03.07,Dashboard & Widget Framework and My Workspace,M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-26,03.08,Global Search & Command Palette,M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-27,03.09,"Localisation (English/Hindi), Indian Number Formats & Accessibility",M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-28,03.10,Existing Screen Migration onto the Design System,M03,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-29,04.01,"Workflow Engine Core — Definitions, Instances, States & Tasks",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-30,04.02,"Approval Matrix, Authority Limits, Rules, Delegation, Escalation & SLA",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-31,04.03,"Approval Inbox, Approval Actions UI & Decision Evidence Panel",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-32,04.04,"Protocol & Control Engine — Control Points, Exceptions & Reason Codes",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-33,04.05,Accountability Matrix (RACI) & Action Ledger,M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-34,04.06,"Notification Engine, Notification Centre & Real-Time Socket Layer",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-35,04.07,"Communication Gateway — Email, SMS, WhatsApp, Push & OTP",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-36,04.08,Task Management & Senior-Initiated Task Routing,M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-37,04.09,Automation & Alert Rules Engine,M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-38,04.10,"Document Management Service — Register, Versions, Access & Lifecycle",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-39,04.11,"Document Templates, PDF Generation, Print & Delivery",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-40,04.12,Digital Signature & QR Verification,M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-41,04.13,Excel Import/Export Engine,M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-42,04.14,"Comments, Mentions, Activity Timeline & Record Trace Links",M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-43,04.15,Offline-First Field Engine & Sync,M04,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-44,05.01,"Unified Messages App — Direct, Group, Project & Site Conversations",M05,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-45,05.02,"Messaging Features — Presence, Receipts, Attachments, Search, Edit/Delete & Calls",M05,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-46,05.03,Secure End-to-End Messaging Service & Open-Source Licence Compliance,M05,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-47,05.04,"Communication Center — Auto Groups, Instructions, Acknowledgements & Message-to-Action",M05,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-48,05.05,Company Policy Management & Policy-to-Protocol,M05,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-49,06.01,Master Data Governance Framework,M06,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-50,06.02,"Common Masters — UOM, Taxes (GST/HSN/SAC), Payment Terms, Banks, Calendars & Reason Codes",M06,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-51,06.03,"Item Master, Resource Catalogue & Item Selector",M06,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-52,06.04,"Business Partner Master — Vendors, Subcontractors, Clients & Consultants",M06,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-53,06.05,"Chart of Accounts, Cost Codes & Financial Dimensions",M06,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-54,06.06,Rate Analysis Engine & Schedule of Rates Library,M06,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-55,07.01,Employee Master & Employment Records,M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-56,07.02,"Recruitment, Manpower Requisition & Onboarding",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-57,07.03,"Deployment, Transfers & Project/Site Assignment",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-58,07.04,"Shifts, Work Calendars & Attendance Policies",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-59,07.05,Geo-Fenced Mobile Attendance & Geofence Configuration,M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-60,07.06,"Attendance Register, Regularisation, Overtime & Device Import",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-61,07.07,Leave Management,M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-62,07.08,"Contract Labour, Labour Contractors & Gang Management",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-63,07.09,Employee & Manager Self-Service,M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-64,07.10,"Training, Certifications, Skills & Competency Matrix",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-65,07.11,"Performance Management, Role KPIs & Appraisals",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-66,07.12,"Employee Advances, Expense Claims & Travel",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-67,07.13,"Exit, Full-and-Final Inputs, Grievance & Disciplinary Records",M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-68,07.14,HR & Workforce Dashboards and Workforce-First Gate,M07,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-69,08.01,"CRM — Leads, Clients, Contacts, Interactions & Opportunity Pipeline",M08,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-70,08.02,"Tender Register, Bid/No-Bid, Documents, Addenda & Clarifications",M08,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-71,08.03,"Prequalification, EMD/Tender Fee, Bid Submission, Competitor Analysis & Award",M08,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-72,09.01,"Estimate Workspace — Versions, Item Build-up, Overheads, Profit & Contingency",M09,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-73,09.02,"Quantity Take-off, Material Take-off & Bar Bending Schedules",M09,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-74,09.03,"Estimate Review, Approval, Bid Price Summary & Priced BOQ Output",M09,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-75,10.01,"Project Master, Lifecycle & Setup Wizard",M10,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-76,10.02,Project Creation from Awarded Tender & Commercial Baseline Handover,M10,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-77,10.03,"WBS, Work Packages & Location Breakdown Structure",M10,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-78,10.04,"BOQ Management — Versions, Import, WBS Mapping & Resource Norms",M10,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-79,10.05,"Project Team, Stakeholders, Meetings & Minutes",M10,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-80,10.06,"Project Risks, Issues & Opportunities Register",M10,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-81,10.07,"GIS, Site Maps & Location Intelligence",M10,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-82,10.08,Project 360 & Project Dashboard,M10,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-83,11.01,"Drawing Register, Revisions, Transmittals & Distribution",M11,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-84,11.02,RFI Management,M11,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-85,11.03,"Submittals — Material Approvals, Method Statements & Shop Drawings",M11,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-86,11.04,EPC Engineering Deliverables & Vendor Document Review,M11,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-87,11.05,Correspondence Register — Inward/Outward Letters & Notices,M11,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-88,12.01,Project Budget Preparation & Approval,M12,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-89,12.02,"Budget Revisions, Transfers & Contingency Drawdown",M12,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-90,12.03,Budget Check Service & Commitment Ledger,M12,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-91,12.04,Head-Office & Department Overhead Budgets,M12,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-92,13.01,"Schedule Core — Activities, Dependencies, Calendars & CPM",M13,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-93,13.02,"Interactive Gantt, Schedule Editing & Resource Loading",M13,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-94,13.03,"Baselines, Programme Revisions & MS Project/Primavera Exchange",M13,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-95,13.04,"Look-Ahead Planning, Constraints & Weekly Work Plans",M13,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-96,13.05,Delay Register & Time-Impact Records,M13,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-97,14.01,"Work Fronts, Daily Work Plans & Work Authorisation",M14,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-98,14.02,Daily Progress Report (DPR),M14,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-99,14.03,"Site Diary, Weather, Hindrances & Site Conditions",M14,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-100,14.04,Site Instructions & Site Memos,M14,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-101,14.05,"Progress Measurement, Earned Value & S-Curves",M14,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-102,14.06,Productivity Tracking & Analysis,M14,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-103,14.07,"Project Control Engine — Planned, Budgeted, Committed, Actual, Earned & Forecast",M14,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-104,15.01,Material Requests (Site Indents) & Purchase Requisitions,M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-105,15.02,Material Demand Planning & MRP,M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-106,15.03,RFQ & Vendor Quotations,M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-107,15.04,Comparative Statement & Vendor Selection,M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-108,15.05,"Purchase Orders, Amendments & Short-Close",M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-109,15.06,"Rate Contracts, Framework Agreements & Service Orders",M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-110,15.07,"Expediting, Vendor Inspection & Long-Lead Logistics",M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-111,15.08,"Vendor Prequalification, Approved Vendor List & Scorecards",M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-112,15.09,Material Rate Intelligence & Price Benchmarking,M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-113,15.10,Procurement Dashboard & Analytics,M15,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-114,16.01,"Stores & Warehouses, Bin Locations, Stock Ledger & Valuation",M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-115,16.02,"Gate Entry, Weighbridge, Vehicle & Delivery Control",M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-116,16.03,"Goods Receipt (GRN), Inspection Hold & Returns to Vendor",M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-117,16.04,"Material Issue, Site Returns & Consumption",M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-118,16.05,Inter-Store Transfers & In-Transit Stock,M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-119,16.06,"Physical Verification, Adjustments, Scrap & Disposal",M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-120,16.07,"Reorder Control, Stock Ageing & Barcode/QR Labels",M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-121,16.08,"Returnable Site Assets — Formwork, Shuttering & Scaffolding",M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-122,16.09,Tools & Small-Asset Custody Tracking,M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-123,16.10,Monthly Material Reconciliation — Theoretical vs Actual,M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-124,16.11,Materials Management Dashboard,M16,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-125,17.01,"Equipment Register, Documents & Statutory Certificates",M17,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-126,17.02,"Mobilisation, Allocation, Transfer & Demobilisation",M17,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-127,17.03,"Log Books, Meter Readings, Utilisation & Breakdowns",M17,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-128,17.04,Fuel Management & Anti-Leakage Control,M17,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-129,17.05,"Preventive Maintenance, Job Cards & Spares",M17,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-130,17.06,"Equipment Hire-In, Hire-Out & Internal Hire Charges",M17,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-131,17.07,"Fleet Control Tower, Owning & Operating Cost and Telematics",M17,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-132,17.08,Cross-Project Resource & Capacity Planning (Manpower and Plant),M17,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-133,18.01,"Quality Plans, ITPs & Inspection Checklist Engine",M18,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-134,18.02,Inspection Requests & Hold-Point Approvals,M18,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-135,18.03,"Material Testing, Laboratory Register & Calibration",M18,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-136,18.04,Non-Conformance Reports (NCR) & CAPA,M18,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-137,18.05,"Concrete Pour Cards, Cube Register & Traceability",M18,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-138,18.06,Snag & Punch Lists,M18,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-139,18.07,Quality Dashboard & Statistical Quality Control,M18,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-140,19.01,"HSE Plans, HIRA/JSA, Inductions & Toolbox Talks",M19,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-141,19.02,Permit-to-Work,M19,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-142,19.03,"Incidents, Near Misses & Investigations",M19,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-143,19.04,"HSE Inspections, Observations, PPE & Contractor Safety",M19,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-144,19.05,"Environment, Waste & ESG Metrics",M19,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-145,19.06,"Security Guard, Gate, Visitor & Patrol Management",M19,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-146,19.07,Labour Camp & Welfare Facilities,M19,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-147,19.08,HSE Dashboard & Safety KPIs,M19,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-148,20.01,Batching Plant Master & Mix Designs,M20,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-149,20.02,"Production, Dispatch & Delivery Tickets",M20,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-150,20.03,Batching Plant Costing & Cost per m³,M20,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-151,21.01,"Client Contract Register, Clauses, Obligations & Milestones",M21,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-152,21.02,"Securities — Bank Guarantees, Insurance, Retention & Deposits Tracking",M21,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-153,21.03,Subcontract & Work Order Management (Item-Rate and Labour-Rate),M21,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-154,21.04,"Subcontractor Workspace — Compliance, Labour Strength & Performance",M21,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-155,21.05,Change & Variation Management,M21,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-156,21.06,"Claims, Notices, EOT & Disputes",M21,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-157,21.07,Price Escalation (PVC) & Liquidated Damages Computation,M21,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-158,22.01,Measurement Book & Check Measurement,M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-159,22.02,"Quantity Reconciliation, Deviation Statements & Extra Items",M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-160,22.03,Client RA Bill Preparation,M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-161,22.04,"Client Certification, Tax Invoice & Receivable Handoff",M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-162,22.05,Subcontractor Measurement & Bills,M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-163,22.06,"Vendor Invoices, Three-Way/Multi-Way Matching & Invoice Hub",M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-164,22.07,"Retention, Security Deposit & Advance Recovery Ledgers",M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-165,22.08,QS Management Dashboard,M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-166,22.09,"Commercial Control — CVR, Margin Tracking & Contract Control Tower",M22,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-167,23.01,"General Ledger Core — Journals, Vouchers, Periods & Financial Years",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-168,23.02,Posting Engine & Cross-Module Posting Rules,M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-169,23.03,"Accounts Payable — Vendor Ledger, Bills, Debit Notes, Advances & TDS",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-170,23.04,"Payments — Proposals, Payment Runs, Bank Files & Cheques",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-171,23.05,"Accounts Receivable — Client Ledger, Receipts, Credit Notes & Collections",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-172,23.06,"Cash, Bank, Bank Reconciliation, Petty Cash & Site Imprest",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-173,23.07,"GST Tax Engine, e-Invoice (IRN) & e-Way Bill",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-174,23.08,"GST Reconciliation, ITC Review & TDS/TCS Compliance",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-175,23.09,Fixed Assets & Depreciation,M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-176,23.10,"Project Accounting — WIP, Revenue Recognition & Overhead Allocation",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-177,23.11,Cost Forecast — ETC & EAC Engine,M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-178,23.12,Project P&L & Profitability,M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-179,23.13,Cash Flow Forecast & Treasury,M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-180,23.14,"Period Close, Financial Statements & Finance Dashboard",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-181,23.15,"Multi-Company, Inter-Company & Consolidation",M23,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-182,24.01,"Salary Structures, Pay Components & Payroll Setup",M24,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-183,24.02,Monthly Staff Payroll Processing,M24,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-184,24.03,Labour Wages & Contract Labour Payroll,M24,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-185,24.04,"Statutory Compliance — PF, ESI, PT, LWF, TDS, Form 16 & Labour Registers",M24,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-186,24.05,"Payroll Posting, Payslips, Bank Transfers & Full-and-Final Settlement",M24,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+11,01.08,Integration Hub & External Connector Framework,M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.08.md (not yet reviewed)
+12,02.01,"Authentication, Sessions, MFA & Password Policy",M02,Partial,Reuse,Built; see docs/erp/COMPLETION/02.01.md (not yet reviewed)
+13,02.02,"Organisation Hierarchy — Company, Branch, Department, Project & Site Master",M02,Partial,Reuse,Built; see docs/erp/COMPLETION/02.02.md (not yet reviewed)
+14,02.03,"User Management, Employee Linking & Onboarding State",M02,Partial,Reuse,Built; see docs/erp/COMPLETION/02.03.md (not yet reviewed)
+15,02.04,"Role & Permission Engine (RBAC + ABAC, Scopes, Field Masking) and Role Templates",M02,Partial,Reuse,Built; see docs/erp/COMPLETION/02.04.md (not yet reviewed)
+16,02.05,"Segregation of Duties, Privileged Access & Access Reviews",M02,Partial,Reuse,Built; see docs/erp/COMPLETION/02.05.md (not yet reviewed)
+17,02.06,Audit Trail Engine & Security Event Log,M02,Partial,Reuse,Built; see docs/erp/COMPLETION/02.06.md (not yet reviewed)
+18,02.07,"Secure Request Pipeline, Route Registry, Secrets & Security Headers",M02,Partial,Reuse,Built; see docs/erp/COMPLETION/02.07.md (not yet reviewed)
+19,03.01,"Design Tokens, Themes, Typography & Iconography",M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.01.md (not yet reviewed)
+20,03.02,Form Components & Data-Entry Framework,M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.02.md (not yet reviewed)
+21,03.03,Data Table & List Report Component,M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.03.md (not yet reviewed)
+22,03.04,"Object Page, Approval Panel, Attachments, Timeline & Feedback States",M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.04.md (not yet reviewed)
+23,03.05,"Application Shell, Navigation Registry & Context Switcher",M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.05.md (not yet reviewed)
+24,03.06,"Responsive Layouts, PWA & Device Capabilities",M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.06.md (not yet reviewed)
+25,03.07,Dashboard & Widget Framework and My Workspace,M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.07.md (not yet reviewed)
+26,03.08,Global Search & Command Palette,M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.08.md (not yet reviewed)
+27,03.09,"Localisation (English/Hindi), Indian Number Formats & Accessibility",M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.09.md (not yet reviewed)
+28,03.10,Existing Screen Migration onto the Design System,M03,Partial,Reuse,Built; see docs/erp/COMPLETION/03.10.md (not yet reviewed)
+29,04.01,"Workflow Engine Core — Definitions, Instances, States & Tasks",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.01.md (not yet reviewed)
+30,04.02,"Approval Matrix, Authority Limits, Rules, Delegation, Escalation & SLA",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.02.md (not yet reviewed)
+31,04.03,"Approval Inbox, Approval Actions UI & Decision Evidence Panel",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.03.md (not yet reviewed)
+32,04.04,"Protocol & Control Engine — Control Points, Exceptions & Reason Codes",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.04.md (not yet reviewed)
+33,04.05,Accountability Matrix (RACI) & Action Ledger,M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.05.md (not yet reviewed)
+34,04.06,"Notification Engine, Notification Centre & Real-Time Socket Layer",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.06.md (not yet reviewed)
+35,04.07,"Communication Gateway — Email, SMS, WhatsApp, Push & OTP",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.07.md (not yet reviewed)
+36,04.08,Task Management & Senior-Initiated Task Routing,M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.08.md (not yet reviewed)
+37,04.09,Automation & Alert Rules Engine,M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.09.md (not yet reviewed)
+38,04.10,"Document Management Service — Register, Versions, Access & Lifecycle",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.10.md (not yet reviewed)
+39,04.11,"Document Templates, PDF Generation, Print & Delivery",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.11.md (not yet reviewed)
+40,04.12,Digital Signature & QR Verification,M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.12.md (not yet reviewed)
+41,04.13,Excel Import/Export Engine,M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.13.md (not yet reviewed)
+42,04.14,"Comments, Mentions, Activity Timeline & Record Trace Links",M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.14.md (not yet reviewed)
+43,04.15,Offline-First Field Engine & Sync,M04,Partial,Reuse,Built; see docs/erp/COMPLETION/04.15.md (not yet reviewed)
+44,05.01,"Unified Messages App — Direct, Group, Project & Site Conversations",M05,Partial,Reuse,Built; see docs/erp/COMPLETION/05.01.md (not yet reviewed)
+45,05.02,"Messaging Features — Presence, Receipts, Attachments, Search, Edit/Delete & Calls",M05,Partial,Reuse,Built; see docs/erp/COMPLETION/05.02.md (not yet reviewed)
+46,05.03,Secure End-to-End Messaging Service & Open-Source Licence Compliance,M05,Partial,Reuse,Built; see docs/erp/COMPLETION/05.03.md (not yet reviewed)
+47,05.04,"Communication Center — Auto Groups, Instructions, Acknowledgements & Message-to-Action",M05,Partial,Reuse,Built; see docs/erp/COMPLETION/05.04.md (not yet reviewed)
+48,05.05,Company Policy Management & Policy-to-Protocol,M05,Partial,Reuse,Built; see docs/erp/COMPLETION/05.05.md (not yet reviewed)
+49,06.01,Master Data Governance Framework,M06,Partial,Reuse,Built; see docs/erp/COMPLETION/06.01.md (not yet reviewed)
+50,06.02,"Common Masters — UOM, Taxes (GST/HSN/SAC), Payment Terms, Banks, Calendars & Reason Codes",M06,Partial,Reuse,Built; see docs/erp/COMPLETION/06.02.md (not yet reviewed)
+51,06.03,"Item Master, Resource Catalogue & Item Selector",M06,Partial,Reuse,Built; see docs/erp/COMPLETION/06.03.md (not yet reviewed)
+52,06.04,"Business Partner Master — Vendors, Subcontractors, Clients & Consultants",M06,Partial,Reuse,Built; see docs/erp/COMPLETION/06.04.md (not yet reviewed)
+53,06.05,"Chart of Accounts, Cost Codes & Financial Dimensions",M06,Partial,Reuse,Built; see docs/erp/COMPLETION/06.05.md (not yet reviewed)
+54,06.06,Rate Analysis Engine & Schedule of Rates Library,M06,Partial,Reuse,Built; see docs/erp/COMPLETION/06.06.md (not yet reviewed)
+55,07.01,Employee Master & Employment Records,M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.01.md (not yet reviewed)
+56,07.02,"Recruitment, Manpower Requisition & Onboarding",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.02.md (not yet reviewed)
+57,07.03,"Deployment, Transfers & Project/Site Assignment",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.03.md (not yet reviewed)
+58,07.04,"Shifts, Work Calendars & Attendance Policies",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.04.md (not yet reviewed)
+59,07.05,Geo-Fenced Mobile Attendance & Geofence Configuration,M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.05.md (not yet reviewed)
+60,07.06,"Attendance Register, Regularisation, Overtime & Device Import",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.06.md (not yet reviewed)
+61,07.07,Leave Management,M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.07.md (not yet reviewed)
+62,07.08,"Contract Labour, Labour Contractors & Gang Management",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.08.md (not yet reviewed)
+63,07.09,Employee & Manager Self-Service,M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.09.md (not yet reviewed)
+64,07.10,"Training, Certifications, Skills & Competency Matrix",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.10.md (not yet reviewed)
+65,07.11,"Performance Management, Role KPIs & Appraisals",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.11.md (not yet reviewed)
+66,07.12,"Employee Advances, Expense Claims & Travel",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.12.md (not yet reviewed)
+67,07.13,"Exit, Full-and-Final Inputs, Grievance & Disciplinary Records",M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.13.md (not yet reviewed)
+68,07.14,HR & Workforce Dashboards and Workforce-First Gate,M07,Partial,Reuse,Built; see docs/erp/COMPLETION/07.14.md (not yet reviewed)
+69,08.01,"CRM — Leads, Clients, Contacts, Interactions & Opportunity Pipeline",M08,Partial,Reuse,Built; see docs/erp/COMPLETION/08.01.md (not yet reviewed)
+70,08.02,"Tender Register, Bid/No-Bid, Documents, Addenda & Clarifications",M08,Partial,Reuse,Built; see docs/erp/COMPLETION/08.02.md (not yet reviewed)
+71,08.03,"Prequalification, EMD/Tender Fee, Bid Submission, Competitor Analysis & Award",M08,Partial,Reuse,Built; see docs/erp/COMPLETION/08.03.md (not yet reviewed)
+72,09.01,"Estimate Workspace — Versions, Item Build-up, Overheads, Profit & Contingency",M09,Partial,Reuse,Built; see docs/erp/COMPLETION/09.01.md (not yet reviewed)
+73,09.02,"Quantity Take-off, Material Take-off & Bar Bending Schedules",M09,Partial,Reuse,Built; see docs/erp/COMPLETION/09.02.md (not yet reviewed)
+74,09.03,"Estimate Review, Approval, Bid Price Summary & Priced BOQ Output",M09,Partial,Reuse,Built; see docs/erp/COMPLETION/09.03.md (not yet reviewed)
+75,10.01,"Project Master, Lifecycle & Setup Wizard",M10,Partial,Reuse,Built; see docs/erp/COMPLETION/10.01.md (not yet reviewed)
+76,10.02,Project Creation from Awarded Tender & Commercial Baseline Handover,M10,Partial,Reuse,Built; see docs/erp/COMPLETION/10.02.md (not yet reviewed)
+77,10.03,"WBS, Work Packages & Location Breakdown Structure",M10,Partial,Reuse,Built; see docs/erp/COMPLETION/10.03.md (not yet reviewed)
+78,10.04,"BOQ Management — Versions, Import, WBS Mapping & Resource Norms",M10,Partial,Reuse,Built; see docs/erp/COMPLETION/10.04.md (not yet reviewed)
+79,10.05,"Project Team, Stakeholders, Meetings & Minutes",M10,Partial,Reuse,Built; see docs/erp/COMPLETION/10.05.md (not yet reviewed)
+80,10.06,"Project Risks, Issues & Opportunities Register",M10,Partial,Reuse,Built; see docs/erp/COMPLETION/10.06.md (not yet reviewed)
+81,10.07,"GIS, Site Maps & Location Intelligence",M10,Partial,Reuse,Built; see docs/erp/COMPLETION/10.07.md (not yet reviewed)
+82,10.08,Project 360 & Project Dashboard,M10,Partial,Reuse,Built; see docs/erp/COMPLETION/10.08.md (not yet reviewed)
+83,11.01,"Drawing Register, Revisions, Transmittals & Distribution",M11,Partial,Reuse,Built; see docs/erp/COMPLETION/11.01.md (not yet reviewed)
+84,11.02,RFI Management,M11,Partial,Reuse,Built; see docs/erp/COMPLETION/11.02.md (not yet reviewed)
+85,11.03,"Submittals — Material Approvals, Method Statements & Shop Drawings",M11,Partial,Reuse,Built; see docs/erp/COMPLETION/11.03.md (not yet reviewed)
+86,11.04,EPC Engineering Deliverables & Vendor Document Review,M11,Partial,Reuse,Built; see docs/erp/COMPLETION/11.04.md (not yet reviewed)
+87,11.05,Correspondence Register — Inward/Outward Letters & Notices,M11,Partial,Reuse,Built; see docs/erp/COMPLETION/11.05.md (not yet reviewed)
+88,12.01,Project Budget Preparation & Approval,M12,Partial,Reuse,Built; see docs/erp/COMPLETION/12.01.md (not yet reviewed)
+89,12.02,"Budget Revisions, Transfers & Contingency Drawdown",M12,Partial,Reuse,Built; see docs/erp/COMPLETION/12.02.md (not yet reviewed)
+90,12.03,Budget Check Service & Commitment Ledger,M12,Partial,Reuse,Built; see docs/erp/COMPLETION/12.03.md (not yet reviewed)
+91,12.04,Head-Office & Department Overhead Budgets,M12,Partial,Reuse,Built; see docs/erp/COMPLETION/12.04.md (not yet reviewed)
+92,13.01,"Schedule Core — Activities, Dependencies, Calendars & CPM",M13,Partial,Reuse,Built; see docs/erp/COMPLETION/13.01.md (not yet reviewed)
+93,13.02,"Interactive Gantt, Schedule Editing & Resource Loading",M13,Partial,Reuse,Built; see docs/erp/COMPLETION/13.02.md (not yet reviewed)
+94,13.03,"Baselines, Programme Revisions & MS Project/Primavera Exchange",M13,Partial,Reuse,Built; see docs/erp/COMPLETION/13.03.md (not yet reviewed)
+95,13.04,"Look-Ahead Planning, Constraints & Weekly Work Plans",M13,Partial,Reuse,Built; see docs/erp/COMPLETION/13.04.md (not yet reviewed)
+96,13.05,Delay Register & Time-Impact Records,M13,Partial,Reuse,Built; see docs/erp/COMPLETION/13.05.md (not yet reviewed)
+97,14.01,"Work Fronts, Daily Work Plans & Work Authorisation",M14,Partial,Reuse,Built; see docs/erp/COMPLETION/14.01.md (not yet reviewed)
+98,14.02,Daily Progress Report (DPR),M14,Partial,Reuse,Built; see docs/erp/COMPLETION/14.02.md (not yet reviewed)
+99,14.03,"Site Diary, Weather, Hindrances & Site Conditions",M14,Partial,Reuse,Built; see docs/erp/COMPLETION/14.03.md (not yet reviewed)
+100,14.04,Site Instructions & Site Memos,M14,Partial,Reuse,Built; see docs/erp/COMPLETION/14.04.md (not yet reviewed)
+101,14.05,"Progress Measurement, Earned Value & S-Curves",M14,Partial,Reuse,Built; see docs/erp/COMPLETION/14.05.md (not yet reviewed)
+102,14.06,Productivity Tracking & Analysis,M14,Partial,Reuse,Built; see docs/erp/COMPLETION/14.06.md (not yet reviewed)
+103,14.07,"Project Control Engine — Planned, Budgeted, Committed, Actual, Earned & Forecast",M14,Partial,Reuse,Built; see docs/erp/COMPLETION/14.07.md (not yet reviewed)
+104,15.01,Material Requests (Site Indents) & Purchase Requisitions,M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.01.md (not yet reviewed)
+105,15.02,Material Demand Planning & MRP,M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.02.md (not yet reviewed)
+106,15.03,RFQ & Vendor Quotations,M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.03.md (not yet reviewed)
+107,15.04,Comparative Statement & Vendor Selection,M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.04.md (not yet reviewed)
+108,15.05,"Purchase Orders, Amendments & Short-Close",M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.05.md (not yet reviewed)
+109,15.06,"Rate Contracts, Framework Agreements & Service Orders",M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.06.md (not yet reviewed)
+110,15.07,"Expediting, Vendor Inspection & Long-Lead Logistics",M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.07.md (not yet reviewed)
+111,15.08,"Vendor Prequalification, Approved Vendor List & Scorecards",M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.08.md (not yet reviewed)
+112,15.09,Material Rate Intelligence & Price Benchmarking,M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.09.md (not yet reviewed)
+113,15.10,Procurement Dashboard & Analytics,M15,Partial,Reuse,Built; see docs/erp/COMPLETION/15.10.md (not yet reviewed)
+114,16.01,"Stores & Warehouses, Bin Locations, Stock Ledger & Valuation",M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.01.md (not yet reviewed)
+115,16.02,"Gate Entry, Weighbridge, Vehicle & Delivery Control",M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.02.md (not yet reviewed)
+116,16.03,"Goods Receipt (GRN), Inspection Hold & Returns to Vendor",M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.03.md (not yet reviewed)
+117,16.04,"Material Issue, Site Returns & Consumption",M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.04.md (not yet reviewed)
+118,16.05,Inter-Store Transfers & In-Transit Stock,M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.05.md (not yet reviewed)
+119,16.06,"Physical Verification, Adjustments, Scrap & Disposal",M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.06.md (not yet reviewed)
+120,16.07,"Reorder Control, Stock Ageing & Barcode/QR Labels",M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.07.md (not yet reviewed)
+121,16.08,"Returnable Site Assets — Formwork, Shuttering & Scaffolding",M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.08.md (not yet reviewed)
+122,16.09,Tools & Small-Asset Custody Tracking,M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.09.md (not yet reviewed)
+123,16.10,Monthly Material Reconciliation — Theoretical vs Actual,M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.10.md (not yet reviewed)
+124,16.11,Materials Management Dashboard,M16,Partial,Reuse,Built; see docs/erp/COMPLETION/16.11.md (not yet reviewed)
+125,17.01,"Equipment Register, Documents & Statutory Certificates",M17,Partial,Reuse,Built; see docs/erp/COMPLETION/17.01.md (not yet reviewed)
+126,17.02,"Mobilisation, Allocation, Transfer & Demobilisation",M17,Partial,Reuse,Built; see docs/erp/COMPLETION/17.02.md (not yet reviewed)
+127,17.03,"Log Books, Meter Readings, Utilisation & Breakdowns",M17,Partial,Reuse,Built; see docs/erp/COMPLETION/17.03.md (not yet reviewed)
+128,17.04,Fuel Management & Anti-Leakage Control,M17,Partial,Reuse,Built; see docs/erp/COMPLETION/17.04.md (not yet reviewed)
+129,17.05,"Preventive Maintenance, Job Cards & Spares",M17,Partial,Reuse,Built; see docs/erp/COMPLETION/17.05.md (not yet reviewed)
+130,17.06,"Equipment Hire-In, Hire-Out & Internal Hire Charges",M17,Partial,Reuse,Built; see docs/erp/COMPLETION/17.06.md (not yet reviewed)
+131,17.07,"Fleet Control Tower, Owning & Operating Cost and Telematics",M17,Partial,Reuse,Built; see docs/erp/COMPLETION/17.07.md (not yet reviewed)
+132,17.08,Cross-Project Resource & Capacity Planning (Manpower and Plant),M17,Partial,Reuse,Built; see docs/erp/COMPLETION/17.08.md (not yet reviewed)
+133,18.01,"Quality Plans, ITPs & Inspection Checklist Engine",M18,Partial,Reuse,Built; see docs/erp/COMPLETION/18.01.md (not yet reviewed)
+134,18.02,Inspection Requests & Hold-Point Approvals,M18,Partial,Reuse,Built; see docs/erp/COMPLETION/18.02.md (not yet reviewed)
+135,18.03,"Material Testing, Laboratory Register & Calibration",M18,Partial,Reuse,Built; see docs/erp/COMPLETION/18.03.md (not yet reviewed)
+136,18.04,Non-Conformance Reports (NCR) & CAPA,M18,Partial,Reuse,Built; see docs/erp/COMPLETION/18.04.md (not yet reviewed)
+137,18.05,"Concrete Pour Cards, Cube Register & Traceability",M18,Partial,Reuse,Built; see docs/erp/COMPLETION/18.05.md (not yet reviewed)
+138,18.06,Snag & Punch Lists,M18,Partial,Reuse,Built; see docs/erp/COMPLETION/18.06.md (not yet reviewed)
+139,18.07,Quality Dashboard & Statistical Quality Control,M18,Partial,Reuse,Built; see docs/erp/COMPLETION/18.07.md (not yet reviewed)
+140,19.01,"HSE Plans, HIRA/JSA, Inductions & Toolbox Talks",M19,Partial,Reuse,Built; see docs/erp/COMPLETION/19.01.md (not yet reviewed)
+141,19.02,Permit-to-Work,M19,Partial,Reuse,Built; see docs/erp/COMPLETION/19.02.md (not yet reviewed)
+142,19.03,"Incidents, Near Misses & Investigations",M19,Partial,Reuse,Built; see docs/erp/COMPLETION/19.03.md (not yet reviewed)
+143,19.04,"HSE Inspections, Observations, PPE & Contractor Safety",M19,Partial,Reuse,Built; see docs/erp/COMPLETION/19.04.md (not yet reviewed)
+144,19.05,"Environment, Waste & ESG Metrics",M19,Partial,Reuse,Built; see docs/erp/COMPLETION/19.05.md (not yet reviewed)
+145,19.06,"Security Guard, Gate, Visitor & Patrol Management",M19,Partial,Reuse,Built; see docs/erp/COMPLETION/19.06.md (not yet reviewed)
+146,19.07,Labour Camp & Welfare Facilities,M19,Partial,Reuse,Built; see docs/erp/COMPLETION/19.07.md (not yet reviewed)
+147,19.08,HSE Dashboard & Safety KPIs,M19,Partial,Reuse,Built; see docs/erp/COMPLETION/19.08.md (not yet reviewed)
+148,20.01,Batching Plant Master & Mix Designs,M20,Partial,Reuse,Built; see docs/erp/COMPLETION/20.01.md (not yet reviewed)
+149,20.02,"Production, Dispatch & Delivery Tickets",M20,Partial,Reuse,Built; see docs/erp/COMPLETION/20.02.md (not yet reviewed)
+150,20.03,Batching Plant Costing & Cost per m³,M20,Partial,Reuse,Built; see docs/erp/COMPLETION/20.03.md (not yet reviewed)
+151,21.01,"Client Contract Register, Clauses, Obligations & Milestones",M21,Partial,Reuse,Built; see docs/erp/COMPLETION/21.01.md (not yet reviewed)
+152,21.02,"Securities — Bank Guarantees, Insurance, Retention & Deposits Tracking",M21,Partial,Reuse,Built; see docs/erp/COMPLETION/21.02.md (not yet reviewed)
+153,21.03,Subcontract & Work Order Management (Item-Rate and Labour-Rate),M21,Partial,Reuse,Built; see docs/erp/COMPLETION/21.03.md (not yet reviewed)
+154,21.04,"Subcontractor Workspace — Compliance, Labour Strength & Performance",M21,Partial,Reuse,Built; see docs/erp/COMPLETION/21.04.md (not yet reviewed)
+155,21.05,Change & Variation Management,M21,Partial,Reuse,Built; see docs/erp/COMPLETION/21.05.md (not yet reviewed)
+156,21.06,"Claims, Notices, EOT & Disputes",M21,Partial,Reuse,Built; see docs/erp/COMPLETION/21.06.md (not yet reviewed)
+157,21.07,Price Escalation (PVC) & Liquidated Damages Computation,M21,Partial,Reuse,Built; see docs/erp/COMPLETION/21.07.md (not yet reviewed)
+158,22.01,Measurement Book & Check Measurement,M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.01.md (not yet reviewed)
+159,22.02,"Quantity Reconciliation, Deviation Statements & Extra Items",M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.02.md (not yet reviewed)
+160,22.03,Client RA Bill Preparation,M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.03.md (not yet reviewed)
+161,22.04,"Client Certification, Tax Invoice & Receivable Handoff",M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.04.md (not yet reviewed)
+162,22.05,Subcontractor Measurement & Bills,M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.05.md (not yet reviewed)
+163,22.06,"Vendor Invoices, Three-Way/Multi-Way Matching & Invoice Hub",M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.06.md (not yet reviewed)
+164,22.07,"Retention, Security Deposit & Advance Recovery Ledgers",M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.07.md (not yet reviewed)
+165,22.08,QS Management Dashboard,M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.08.md (not yet reviewed)
+166,22.09,"Commercial Control — CVR, Margin Tracking & Contract Control Tower",M22,Partial,Reuse,Built; see docs/erp/COMPLETION/22.09.md (not yet reviewed)
+166.1,166.1,Verification Fixes & Regression Debt of Parts 01-166,M00,Partial,Reuse,Built; see docs/erp/COMPLETION/166.1.md (not yet reviewed)
+166.2,166.2,UI v3 Rollout — Fiori Page Patterns on Every Built Page,M03,Partial,Reuse,Built; see docs/erp/COMPLETION/166.2.md (not yet reviewed)
+166.3,166.3,Mobile Site App — Phone-First Workflows for Site Teams (+ Telugu),M14,Partial,Reuse,Built; see docs/erp/COMPLETION/166.3.md (not yet reviewed)
+166.4,166.4,"Phone Performance — Code Splitting, Caching, Low-Bandwidth Mode",M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+166.5,166.5,"Home, Role Dashboards & Overview Pages in Fiori Overview Style",M03,Partial,Reuse,Built; see docs/erp/COMPLETION/166.5.md (not yet reviewed)
+166.6,166.6,Build Missing Part 07.14 — HR & Workforce Dashboards and Formal Gate Closure (G1–G4),M07,Partial,Reuse,Built; see docs/erp/COMPLETION/166.6.md (not yet reviewed)
+170,23.04,"Payments — Proposals, Payment Runs, Bank Files & Cheques",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.04.md (not yet reviewed)
+171,23.05,"Accounts Receivable — Client Ledger, Receipts, Credit Notes & Collections",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.05.md (not yet reviewed)
+172,23.06,"Cash, Bank, Bank Reconciliation, Petty Cash & Site Imprest",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.06.md (not yet reviewed)
+173,23.07,"GST Tax Engine, e-Invoice (IRN) & e-Way Bill",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.07.md (not yet reviewed)
+174,23.08,"GST Reconciliation, ITC Review & TDS/TCS Compliance",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.08.md (not yet reviewed)
+175,23.09,Fixed Assets & Depreciation,M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.09.md (not yet reviewed)
+176,23.10,"Project Accounting — WIP, Revenue Recognition & Overhead Allocation",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.10.md (not yet reviewed)
+177,23.11,Cost Forecast — ETC & EAC Engine,M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.11.md (not yet reviewed)
+178,23.12,Project P&L & Profitability,M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.12.md (not yet reviewed)
+179,23.13,Cash Flow Forecast & Treasury,M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.13.md (not yet reviewed)
+180,23.14,"Period Close, Financial Statements & Finance Dashboard",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.14.md (not yet reviewed)
+181,23.15,"Multi-Company, Inter-Company & Consolidation",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.15.md (not yet reviewed)
+182,24.01,"Salary Structures, Pay Components & Payroll Setup",M24,Partial,Reuse,Built; see docs/erp/COMPLETION/24.01.md (not yet reviewed)
+183,24.02,Monthly Staff Payroll Processing,M24,Partial,Reuse,Built; see docs/erp/COMPLETION/24.02.md (not yet reviewed)
+184,24.03,Labour Wages & Contract Labour Payroll,M24,Partial,Reuse,Built; see docs/erp/COMPLETION/24.03.md (not yet reviewed)
+185,24.04,"Statutory Compliance — PF, ESI, PT, LWF, TDS, Form 16 & Labour Registers",M24,Partial,Reuse,Built; see docs/erp/COMPLETION/24.04.md (not yet reviewed)
+186,24.05,"Payroll Posting, Payslips, Bank Transfers & Full-and-Final Settlement",M24,Partial,Reuse,Built; see docs/erp/COMPLETION/24.05.md (not yet reviewed)
 187,25.01,"Portal Framework — External Identity, Isolation & Branding",M25,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 188,25.02,Supplier Portal,M25,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 189,25.03,Vendor & Subcontractor Portal,M25,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 190,25.04,Client & Consultant Portal,M25,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-191,26.01,"Testing, Pre-Commissioning & Commissioning",M26,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-192,26.02,"Project Handover, As-Builts, O&M Manuals & Asset Register",M26,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-193,26.03,Defect Liability Period & Warranty Management,M26,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-194,26.04,"Project Closeout, Final Account, Lessons Learned & Knowledge Base",M26,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+191,26.01,"Testing, Pre-Commissioning & Commissioning",M26,Partial,Reuse,Built; see docs/erp/COMPLETION/26.01.md (not yet reviewed)
+192,26.02,"Project Handover, As-Builts, O&M Manuals & Asset Register",M26,Partial,Reuse,Built; see docs/erp/COMPLETION/26.02.md (not yet reviewed)
+193,26.03,Defect Liability Period & Warranty Management,M26,Partial,Reuse,Built; see docs/erp/COMPLETION/26.03.md (not yet reviewed)
+194,26.04,"Project Closeout, Final Account, Lessons Learned & Knowledge Base",M26,Partial,Reuse,Built; see docs/erp/COMPLETION/26.04.md (not yet reviewed)
 195,27.01,"Report Registry, Scheduler, Exports & Standard Report Catalogue",M27,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 196,27.02,Self-Service Report Builder & Semantic Layer,M27,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 197,27.03,"Metric Catalogue, Analytical Data Store & Historical Snapshots",M27,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
@@ -214,9 +217,9 @@ seq,part_id,title,module,existence,decision,evidence
 213,29.03,"Public API, Webhooks & Developer Portal",M29,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 214,29.04,Bulk Data Entry Workspace & Module Template Packs,M29,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 215,29.05,Legacy Data Migration & Opening Balances,M29,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-216,29.06,"Backup, Restore & Disaster Recovery",M29,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+216,29.06,"Backup, Restore & DR",M29,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 217,29.07,Data Retention & Archival,M29,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-218,29.08,"Help Desk, Support Tickets & In-App Help",M29,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+218,29.08,"Help Desk, Knowledge Base & In-App Help",M29,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 219,30.01,Cross-Module Integration & Real-Time Propagation,M30,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 220,30.02,Data Traceability & Reconciliation Suite,M30,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 221,30.03,Page-by-Page Completion Audit & Placeholder Elimination,M30,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
@@ -227,3 +230,8 @@ seq,part_id,title,module,existence,decision,evidence
 226,30.08,"DevOps, Environments, Deployment & Operations Runbooks",M30,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 227,30.09,User Manuals & Documentation Package,M30,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 228,30.10,"UAT, Production Cut-over & Hypercare",M30,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+166.7,166.7,"List Report / Object Page Consistency, Saved Views and Document Flow",M03,Partial,Reuse,Built; see docs/erp/COMPLETION/166.7.md (not yet reviewed)
+166.8,166.8,"Statutory Updates Retrofit — GST 2.0 Rates, Labour Codes, Income-tax Act 2025 References",M06,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+167,23.01,"General Ledger Core — Journals, Vouchers, Periods & Financial Years",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.01.md (not yet reviewed)
+168,23.02,Posting Engine & Cross-Module Posting Rules,M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.02.md (not yet reviewed)
+169,23.03,"Accounts Payable — Vendor Ledger, Bills, Debit Notes, Advances & TDS",M23,Partial,Reuse,Built; see docs/erp/COMPLETION/23.03.md (not yet reviewed)

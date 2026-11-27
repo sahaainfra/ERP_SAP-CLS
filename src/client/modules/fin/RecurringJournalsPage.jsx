@@ -75,7 +75,7 @@ export default function RecurringJournalsPage() {
   return (
     <section aria-labelledby="rcs-h" data-testid="gl-recurring">
       <PageHeader id="rcs-h" title={t('rc.title')} subtitle={t('rc.intro')} />
-      <ListReport listCode="fin.recurring_journals" endpoint="/fin/recurring-journals" title={t('rc.title')} session={session.data} rowHref={(r) => `/finance/recurring-journals?id=${r.id}`} onOpen={(r) => navigateTo(`/finance/recurring-journals?id=${r.id}`)}
+      <ListReport listCode="fin.recurring_journals" endpoint="/fin/recurring-journals" exportEndpoint="/ui/lists/fin.recurring_journals/export" title={t('rc.title')} session={session.data} rowHref={(r) => `/finance/recurring-journals?id=${r.id}`} onOpen={(r) => navigateTo(`/finance/recurring-journals?id=${r.id}`)}
         cardFields={['docNo', 'name', 'frequency', 'nextRunOn', 'total', 'status']} statusKey="status"
         newAction={{ label: t('rc.new'), permission: 'fin.recurring.manage', onClick: () => navigateTo('/finance/recurring-journals?new=1') }}
         empty={{ title: t('rc.emptyTitle'), text: t('rc.emptyBody') }} />

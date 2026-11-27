@@ -84,7 +84,7 @@ export default function ShipmentsPage() {
   return (
     <section aria-labelledby="shs-h" data-testid="proc-sh"><PageHeader id="shs-h" title={t('x.shipTitle')} subtitle={t('x.shipIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.shipment.create') && <Link to="/proc/shipments?new=1">{t('x.newShip')}</Link>} <Link to="/proc/expediting">{t('x.dashboard')}</Link></div>
-      <ListReport listCode="proc.shipments" endpoint="/proc/shipments" title={t('x.shipTitle')} session={session.data} rowHref={(r) => `/proc/shipments?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/shipments?id=${r.id}`)}
+      <ListReport listCode="proc.shipments" endpoint="/proc/shipments" exportEndpoint="/ui/lists/proc.shipments/export" title={t('x.shipTitle')} session={session.data} rowHref={(r) => `/proc/shipments?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/shipments?id=${r.id}`)}
         cardFields={['docNo', 'order', 'vendor', 'transporter', 'eta']} statusKey="status" empty={{ title: t('x.shipEmptyTitle'), text: t('x.shipEmptyBody') }} /></section>
   );
 }

@@ -87,7 +87,7 @@ export default function PurchaseOrdersPage() {
     <section aria-labelledby="pos-h" data-testid="proc-pos">
       <PageHeader id="pos-h" title={t('o.title')} subtitle={t('o.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.purchase_order.create') && <Link to="/proc/po-new">{t('o.new')}</Link>} <Link to="/proc/po-tracker">{t('o.tracker')}</Link></div>
-      <ListReport listCode="proc.purchase_orders" endpoint="/proc/purchase-orders" title={t('o.title')} session={session.data} rowHref={(r) => `/proc/purchase-orders?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/purchase-orders?id=${r.id}`)}
+      <ListReport listCode="proc.purchase_orders" endpoint="/proc/purchase-orders" exportEndpoint="/ui/lists/proc.purchase_orders/export" title={t('o.title')} session={session.data} rowHref={(r) => `/proc/purchase-orders?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/purchase-orders?id=${r.id}`)}
         cardFields={['docNo', 'vendor', 'project', 'amount', 'delivery']} statusKey="status" empty={{ title: t('o.emptyTitle'), text: t('o.emptyBody') }} />
     </section>
   );

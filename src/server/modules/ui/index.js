@@ -147,7 +147,7 @@ export const ui = {
     const hidden = { 'ui.sample_requests': (actor) => requests.maskedColumns(actor) };
     const lists = Router();
     lists.use(['/lists', '/saved-views', '/exports', '/sample-requests/export', '/sample-requests/bulk'], gate('ff.ui.p0303', 'Saved views, list exports and bulk actions are'));
-    lists.use(listRoutes({ views: createSavedViewService({ db }), exports, requests, describe: (actor, code) => describeFor(actor, code, hidden[code] ?? listExports.hidden(code) ?? undefined) }, { idempotentRequired }));
+    lists.use(listRoutes({ views: createSavedViewService({ db }), exports, requests, describe: (actor, code) => ({ ...describeFor(actor, code, hidden[code] ?? listExports.hidden(code) ?? undefined), exportable: exports.has(code) }) }, { idempotentRequired }));
     router.use(lists);
     // Part 03.04: the Object Page's routes (the record's own GET and actions are under /sample-requests).
     const objectsRouter = Router();

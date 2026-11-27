@@ -22,7 +22,7 @@ export default function ActionTrackerPage() {
           <div><dt>{t('trk.blocked')}</dt><dd>{s.blocked}</dd></div><div><dt>{t('trk.done')}</dt><dd data-testid="trk-done">{s.done}</dd></div><div><dt>{t('trk.overdue')}</dt><dd data-testid="trk-overdue">{s.overdue}</dd></div>
         </dl>
       )}
-      <ListReport listCode="proj.meeting_actions" endpoint="/proj/meeting-actions" title={t('trk.title')} session={session.data} rowHref={(r) => `/proj/meeting?id=${r.meetingId}`} onOpen={(r) => navigateTo(`/proj/meeting?id=${r.meetingId}`)} cardFields={['meeting', 'description', 'owner', 'dueDate', 'statusLabel']} empty={{ title: t('trk.emptyTitle'), text: t('trk.emptyText') }} />
+      <ListReport listCode="proj.meeting_actions" endpoint="/proj/meeting-actions" exportEndpoint="/ui/lists/proj.meeting_actions/export" title={t('trk.title')} session={session.data} rowHref={(r) => `/proj/meeting?id=${r.meetingId}`} onOpen={(r) => navigateTo(`/proj/meeting?id=${r.meetingId}`)} cardFields={['meeting', 'description', 'owner', 'dueDate', 'statusLabel']} empty={{ title: t('trk.emptyTitle'), text: t('trk.emptyText') }} />
       <p className="small"><Link to="/proj/meetings">{t('mtg.listTitle')}</Link></p>
     </section>
   );

@@ -146,6 +146,15 @@ export function createOrgService({ db, approvals, clock }) {
   const select = (key) => `SELECT t.*${ENTITIES[key].extra ? `, ${ENTITIES[key].extra}` : ''} FROM ${ENTITIES[key].table} t`;
   const live = 't.is_active = 1 AND t.deleted_at IS NULL';
 
+  // A company record is listed and read across the installation (an administrator sees every company), but it is changed only from inside
+  // that company, or by the platform's super administrator (06_ROLE_CATALOGUE: SYSADM is company-scoped configuration, SUPADM is the platform)
+  const isSuperAdmin = (actor) => (Array.isArray(actor.roles) ? actor.roles : String(actor.roles ?? '').split(',')).map((r) => String(r).trim()).includes('SUPADM');
+  function mayChange(actor, key, row) {
+    if (key === 'companies' && row.id !== actor.companyId && !isSuperAdmin(actor)) throw forbidden('A company record is changed from inside that company. Switch to it, or ask the platform super administrator.');
+  }
+  /** The company an audit entry of an organisation record belongs to: the changed company itself, so its own auditors see the change. */
+  const auditCompany = (key, row) => (key === 'companies' ? row.id : row.company_id ?? null);
+
   function load(actor, key, id) {
     const scope = scopeSql(key, actor);
     const row = db.prepare(`${select(key)} WHERE t.id = :id AND ${scope} AND ${live}`).get(scope.includes(':c') ? { id, c: cid(actor) } : { id });
@@ -356,7 +365,7 @@ export function createOrgService({ db, approvals, clock }) {
         if (spec && input[Object.keys(e.fields).find((n) => e.fields[n] === spec)] != null) {
           writeAssignment(key, row, spec, input[Object.keys(e.fields).find((n) => e.fields[n] === spec)], today(), 'Initial assignment', actor, true);
         }
-        writeAudit(db, { entity: e.table, entityId: id, action: 'create', newValues: input, actor: actor.user, correlationId: ctx.correlationId });
+        writeAudit(db, { companyId: auditCompany(key, row), entity: e.table, entityId: id, action: 'create', newValues: input, actor: actor.user, correlationId: ctx.correlationId });
         event(key, 'created', row, actor, { name: row.name ?? row.legal_name });
         return present(key, load(actor, key, id), actor);
       });
@@ -373,6 +382,7 @@ export function createOrgService({ db, approvals, clock }) {
         if (SCOPED.has(key)) guard(actor, e.permission, key, row);
         assertVersion(row.version, version, `The ${e.noun} ${row.code}`, 'Refresh the page and try again.');
         const before = currentApi(key, row);
+        mayChange(actor, key, row);
         if (key === 'projects' && row.status === 'CLOSED') throw unprocessable('A closed project cannot be edited.');
         if (key === 'sites' && row.status !== 'DRAFT') {
           const changed = GEOFENCE_FIELDS.filter((f) => f in input && !sameJson(input[f], before[f]));
@@ -388,7 +398,7 @@ export function createOrgService({ db, approvals, clock }) {
         if (Number(res.changes) !== 1) throw conflict(`The ${e.noun} was changed by someone else. Refresh and try again.`);
         const after = currentApi(key, db.prepare(`SELECT * FROM ${e.table} WHERE id = ?`).get(id));
         const names = Object.keys(input);
-        writeAudit(db, { entity: e.table, entityId: id, action: 'update', oldValues: Object.fromEntries(names.map((n) => [n, before[n]])), newValues: Object.fromEntries(names.map((n) => [n, after[n]])), reason: reason ?? null, actor: actor.user, correlationId: ctx.correlationId });
+        writeAudit(db, { companyId: auditCompany(key, row), entity: e.table, entityId: id, action: 'update', oldValues: Object.fromEntries(names.map((n) => [n, before[n]])), newValues: Object.fromEntries(names.map((n) => [n, after[n]])), reason: reason ?? null, actor: actor.user, correlationId: ctx.correlationId });
         event(key, 'updated', db.prepare(`SELECT * FROM ${e.table} WHERE id = ?`).get(id), actor, { fields: names });
         return present(key, load(actor, key, id), actor);
       });
@@ -409,11 +419,12 @@ export function createOrgService({ db, approvals, clock }) {
         const row = load(actor, key, id);
         if (SCOPED.has(key)) guard(actor, e.permission, key, row);
         assertVersion(row.version, version, `The ${e.noun} ${row.code}`, 'Refresh the page and try again.');
+        mayChange(actor, key, row);
         if (row.status === 'INACTIVE') throw unprocessable(`The ${e.noun} ${row.code} is already inactive.`);
         const blockers = builtInBlockers(key, row);
         if (blockers.length) throw blockedError(key, row, blockers);
         db.prepare("UPDATE " + e.table + " SET status = 'INACTIVE', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, new Date(clock()).toISOString(), id);
-        writeAudit(db, { entity: e.table, entityId: id, action: 'deactivate', oldValues: { status: row.status }, newValues: { status: 'INACTIVE' }, reason, actor: actor.user, correlationId: ctx.correlationId });
+        writeAudit(db, { companyId: auditCompany(key, row), entity: e.table, entityId: id, action: 'deactivate', oldValues: { status: row.status }, newValues: { status: 'INACTIVE' }, reason, actor: actor.user, correlationId: ctx.correlationId });
         event(key, 'deactivated', row, actor, { reason });
         return present(key, load(actor, key, id), actor);
       });
@@ -428,9 +439,10 @@ export function createOrgService({ db, approvals, clock }) {
         const row = load(actor, key, id);
         if (SCOPED.has(key)) guard(actor, e.permission, key, row);
         assertVersion(row.version, version, `The ${e.noun} ${row.code}`, 'Refresh the page and try again.');
+        mayChange(actor, key, row);
         if (row.status !== 'INACTIVE') throw unprocessable(`The ${e.noun} ${row.code} is already active.`);
         db.prepare("UPDATE " + e.table + " SET status = 'ACTIVE', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, new Date(clock()).toISOString(), id);
-        writeAudit(db, { entity: e.table, entityId: id, action: 'activate', oldValues: { status: 'INACTIVE' }, newValues: { status: 'ACTIVE' }, reason, actor: actor.user, correlationId: ctx.correlationId });
+        writeAudit(db, { companyId: auditCompany(key, row), entity: e.table, entityId: id, action: 'activate', oldValues: { status: 'INACTIVE' }, newValues: { status: 'ACTIVE' }, reason, actor: actor.user, correlationId: ctx.correlationId });
         event(key, 'activated', row, actor, { reason });
         return present(key, load(actor, key, id), actor);
       });

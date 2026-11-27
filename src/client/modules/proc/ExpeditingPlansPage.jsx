@@ -97,7 +97,7 @@ export default function ExpeditingPlansPage() {
   return (
     <section aria-labelledby="xps-h" data-testid="proc-xp"><PageHeader id="xps-h" title={t('x.plansTitle')} subtitle={t('x.plansIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.expediting_plan.create') && <Link to="/proc/expediting-plans?new=1">{t('x.newPlan')}</Link>} <Link to="/proc/expediting">{t('x.dashboard')}</Link></div>
-      <ListReport listCode="proc.expediting_plans" endpoint="/proc/expediting-plans" title={t('x.plansTitle')} session={session.data} rowHref={(r) => `/proc/expediting-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/expediting-plans?id=${r.id}`)}
+      <ListReport listCode="proc.expediting_plans" endpoint="/proc/expediting-plans" exportEndpoint="/ui/lists/proc.expediting_plans/export" title={t('x.plansTitle')} session={session.data} rowHref={(r) => `/proc/expediting-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/expediting-plans?id=${r.id}`)}
         cardFields={['docNo', 'order', 'vendor', 'required', 'eta']} statusKey="status" empty={{ title: t('x.plansEmptyTitle'), text: t('x.plansEmptyBody') }} /></section>
   );
 }

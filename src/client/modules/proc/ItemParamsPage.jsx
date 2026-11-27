@@ -79,7 +79,7 @@ export default function ItemParamsPage() {
     <section aria-labelledby="params-h" data-testid="proc-params">
       <PageHeader id="params-h" title={t('p.paramsTitle')} subtitle={t('p.paramsIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.item_param.edit') && <Link to="/proc/item-params?new=1">{t('p.paramNew')}</Link>} <Link to="/proc/mrp">{t('p.mrpTitle')}</Link></div>
-      <ListReport listCode="proc.item_params" endpoint="/proc/item-params" title={t('p.paramsTitle')} session={session.data} rowHref={(r) => `/proc/item-params?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/item-params?id=${r.id}`)}
+      <ListReport listCode="proc.item_params" endpoint="/proc/item-params" exportEndpoint="/ui/lists/proc.item_params/export" title={t('p.paramsTitle')} session={session.data} rowHref={(r) => `/proc/item-params?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/item-params?id=${r.id}`)}
         cardFields={['item', 'leadDays', 'moq', 'safety', 'longLead']} statusKey="status" empty={{ title: t('p.paramsEmptyTitle'), text: t('p.paramsEmptyBody') }} />
     </section>
   );

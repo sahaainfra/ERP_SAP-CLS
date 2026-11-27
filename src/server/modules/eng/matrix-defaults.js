@@ -14,6 +14,10 @@ const bands = (list, above) => [
 ];
 const fmt = (n) => (n >= CR ? `₹${n / CR} Cr` : n >= L ? `₹${n / L} L` : `₹${n / 1000} k`);
 
+/**
+ * `governedBy`: the bands of section B as the reference states them, kept so the Approval Simulator and the reference check can read them; the
+ * document's live chain is the workflow named here (its module's own definition), so this matrix is shown read-only and is not changed here.
+ */
 export const DEFAULT_MATRICES = [
   { docType: 'ACC_RACI', label: 'RACI change of a live project', owner: 'PD', financial: false, rules: [rule('Any change', [], ['PM', 'PD'])] },
   { docType: 'MDM_ITEM', label: 'New item or item version', owner: 'PROCMGR', financial: false, rules: [rule('Materials and services', [{ field: 'stewardRole', op: 'eq', value: 'PROCMGR' }], ['PROCMGR']), rule('Consumables, spares and tools', [{ field: 'stewardRole', op: 'eq', value: 'STOREMGR' }], ['STOREMGR']), rule('Labour and work items', [{ field: 'stewardRole', op: 'eq', value: 'EST' }], ['EST']), rule('Equipment classes', [], ['PLANTMGR'])] },
@@ -56,16 +60,16 @@ export const DEFAULT_MATRICES = [
   { docType: 'PO', label: 'Purchase order', owner: 'PROCMGR', financial: true, rules: bands([[5 * L, ['PROCMGR']], [25 * L, ['PROCMGR', 'PM']], [CR, ['PROCMGR', 'PM', 'PD']]], ['PROCMGR', 'PM', 'PD', 'DIR']) },
   { docType: 'SO', label: 'Service order', owner: 'PROCMGR', financial: true, rules: bands([[5 * L, ['PROCMGR']], [25 * L, ['PROCMGR', 'PM']], [CR, ['PROCMGR', 'PM', 'PD']]], ['PROCMGR', 'PM', 'PD', 'DIR']) },
   { docType: 'CS', label: 'Comparative statement (non-L1 selection)', owner: 'PROCMGR', financial: true, rules: bands([[5 * L, ['PROCMGR', 'PM']], [25 * L, ['PROCMGR', 'PM', 'PD']], [CR, ['PROCMGR', 'PM', 'PD', 'DIR']]], ['PROCMGR', 'PM', 'PD', 'DIR']) },
-  { docType: 'SWO', label: 'Subcontract work order', owner: 'COMMGR', financial: true, rules: bands([[10 * L, ['COMMGR']], [50 * L, ['COMMGR', 'PD']]], ['COMMGR', 'PD', 'DIR']) },
-  { docType: 'RABILL', label: 'Client RA bill', owner: 'COMMGR', financial: true, rules: [rule('Any amount', [], ['PM', 'COMMGR'])] },
-  { docType: 'VBILL', label: 'Subcontractor or vendor bill', owner: 'ACCMGR', financial: true, rules: bands([[10 * L, ['QS', 'PM']], [50 * L, ['QS', 'PM', 'COMMGR']]], ['QS', 'PM', 'COMMGR', 'CFO']) },
+  { docType: 'SWO', governedBy: 'CTR_WORK_ORDER', label: 'Subcontract work order', owner: 'COMMGR', financial: true, rules: bands([[10 * L, ['COMMGR']], [50 * L, ['COMMGR', 'PD']]], ['COMMGR', 'PD', 'DIR']) },
+  { docType: 'RABILL', governedBy: 'BILL_CLIENT_BILL', label: 'Client RA bill', owner: 'COMMGR', financial: true, rules: [rule('Any amount', [], ['PM', 'COMMGR'])] },
+  { docType: 'VBILL', governedBy: 'BILL_SUB_BILL', label: 'Subcontractor or vendor bill', owner: 'ACCMGR', financial: true, rules: bands([[10 * L, ['QS', 'PM']], [50 * L, ['QS', 'PM', 'COMMGR']]], ['QS', 'PM', 'COMMGR', 'CFO']) },
   { docType: 'PAY', label: 'Payment release', owner: 'ACCMGR', financial: true, rules: bands([[10 * L, ['ACCMGR']], [CR, ['ACCMGR', 'CFO']]], ['ACCMGR', 'CFO', 'DIR']) },
   { docType: 'ADV', label: 'Advance to vendor or subcontractor', owner: 'ACCMGR', financial: true, rules: bands([[25 * L, ['PM', 'COMMGR', 'CFO']]], ['PM', 'COMMGR', 'CFO', 'DIR']) },
   { docType: 'BUDGET', label: 'Budget (original)', owner: 'PCMGR', financial: true, rules: [rule('Any amount', [], ['PCMGR', 'PD', 'DIR'])] },
-  { docType: 'BUDREV', label: 'Budget revision or transfer', owner: 'PCMGR', financial: true, rules: [rule('Up to 2 % of the budget', [{ field: 'changePct', op: 'lte', value: 2 }], ['PCMGR']), rule('Up to 5 % of the budget', [{ field: 'changePct', op: 'lte', value: 5 }], ['PCMGR', 'PD']), rule('Above 5 % of the budget', [], ['PCMGR', 'PD', 'DIR'])] },
+  { docType: 'BUDREV', governedBy: 'BUD_CHANGE', label: 'Budget revision or transfer', owner: 'PCMGR', financial: true, rules: [rule('Up to 2 % of the budget', [{ field: 'changePct', op: 'lte', value: 2 }], ['PCMGR']), rule('Up to 5 % of the budget', [{ field: 'changePct', op: 'lte', value: 5 }], ['PCMGR', 'PD']), rule('Above 5 % of the budget', [], ['PCMGR', 'PD', 'DIR'])] },
   { docType: 'VO', label: 'Variation order', owner: 'COMMGR', financial: true, rules: bands([[10 * L, ['QS', 'COMMGR']], [50 * L, ['QS', 'COMMGR', 'PD']]], ['QS', 'COMMGR', 'PD', 'DIR']) },
   { docType: 'JV', label: 'Journal voucher (manual)', owner: 'ACCMGR', financial: true, rules: bands([[5 * L, ['ACCMGR']]], ['ACCMGR', 'CFO']) },
-  { docType: 'STKADJ', label: 'Stock adjustment or write-off', owner: 'STOREMGR', financial: true, rules: bands([[50_000, ['STOREMGR']], [5 * L, ['STOREMGR', 'PROCMGR']]], ['STOREMGR', 'PROCMGR', 'CFO']) },
+  { docType: 'STKADJ', governedBy: 'INV_ADJ_BAND', label: 'Stock adjustment or write-off', owner: 'STOREMGR', financial: true, rules: bands([[50_000, ['STOREMGR']], [5 * L, ['STOREMGR', 'PROCMGR']]], ['STOREMGR', 'PROCMGR', 'CFO']) },
   { docType: 'LEAVE', label: 'Leave', owner: 'HRMGR', financial: false, rules: [rule('More than 10 days or a special type', [{ field: 'days', op: 'gt', value: 10 }], ['MANAGER', 'HRMGR']), rule('Up to 10 days', [], ['MANAGER'])] },
   { docType: 'ATT', label: 'Attendance regularisation or overtime', owner: 'HRMGR', financial: false, rules: [rule('Policy exception', [{ field: 'policyException', op: 'eq', value: true }], ['MANAGER', 'PM', 'HRMGR']), rule('More than 4 h overtime a day', [{ field: 'otHours', op: 'gt', value: 4 }], ['MANAGER', 'PM']), rule('Within policy', [], ['MANAGER'])] },
   { docType: 'EXP', label: 'Expense claim or imprest', owner: 'ACCMGR', financial: true, rules: bands([[25_000, ['MANAGER']], [L, ['MANAGER', 'ACCMGR']]], ['MANAGER', 'ACCMGR', 'CFO']) },
@@ -76,13 +80,13 @@ export const DEFAULT_MATRICES = [
   { docType: 'IR', label: 'Inspection request', owner: 'QCMGR', financial: false, rules: [rule('Any', [], ['QCE'])] },
   { docType: 'NCR', label: 'Non-conformance report closure', owner: 'QCMGR', financial: false, rules: [rule('Critical', [{ field: 'severity', op: 'eq', value: 'critical' }], ['QCE', 'QCMGR', 'PD']), rule('Major', [{ field: 'severity', op: 'eq', value: 'major' }], ['QCE', 'QCMGR']), rule('Minor', [], ['QCE'])] },
   { docType: 'PTW', label: 'Permit to work', owner: 'HSEE', financial: false, rules: [rule('High-risk permit', [{ field: 'highRisk', op: 'eq', value: true }], ['HSEE', 'CM']), rule('Other permits', [], ['HSEE'])] },
-  { docType: 'EQH', label: 'Equipment hire or mobilisation', owner: 'PLANTMGR', financial: true, rules: [rule('More than ₹5 L a month', [{ field: 'monthlyAmount', op: 'gt', value: 5 * L }], ['PMSUP', 'PM', 'PLANTMGR']), rule('Up to ₹5 L a month', [], ['PMSUP', 'PM'])] },
+  { docType: 'EQH', governedBy: 'PLANT_HIRE_AGREEMENT', label: 'Equipment hire or mobilisation', owner: 'PLANTMGR', financial: true, rules: [rule('More than ₹5 L a month', [{ field: 'monthlyAmount', op: 'gt', value: 5 * L }], ['PMSUP', 'PM', 'PLANTMGR']), rule('Up to ₹5 L a month', [], ['PMSUP', 'PM'])] },
   { docType: 'FA', label: 'Fixed asset capitalisation or disposal', owner: 'ACCMGR', financial: true, rules: [rule('Disposal above ₹10 L', [{ field: 'action', op: 'eq', value: 'disposal' }, amount('gt', 10 * L)], ['ACCMGR', 'CFO', 'DIR']), rule('Other', [], ['ACCMGR', 'CFO'])] },
   { docType: 'PAYROLL', label: 'Payroll run', owner: 'HRMGR', financial: true, rules: [rule('Any', [], ['HRMGR', 'CFO'])] },
   { docType: 'BID', label: 'Tender bid or no-bid and bid submission', owner: 'EST', financial: false, rules: [rule('Any', [], ['DIR'])] },
   { docType: 'ESTIMATE', label: 'Estimate approval', owner: 'EST', financial: false, rules: [rule('Any', [], ['DIR'])] },
   { docType: 'CLAIM', label: 'Contract, claim or EOT submission', owner: 'COMMGR', financial: false, rules: [rule('Any', [], ['COMMGR', 'PD', 'DIR'])] },
-  { docType: 'ROLECHG', label: 'Role or permission change', owner: 'SYSADM', financial: false, rules: [rule('Any', [], ['ITADM|DIR'])] },
+  { docType: 'ROLECHG', governedBy: 'iam_role_change', label: 'Role or permission change', owner: 'SYSADM', financial: false, rules: [rule('Any', [], ['ITADM|DIR'])] },
   // the engine's own documents: the matrix and delegations are changed through the same engine
   { docType: 'ENG_SAMPLE_DOC', label: 'Sample document', owner: 'PROCMGR', financial: false, sample: true, rules: [rule('Any amount', [], ['PM', 'ACCMGR', 'CFO'])], stepWhen: { 2: amount('gte', 1_000_000) } },
 ];

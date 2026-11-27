@@ -111,6 +111,9 @@ test('FR-01 FR-02 BR-01 the rules: priority order, first full match, conditions 
   assert.equal(d.rules.length, 4);
   assert.equal((await api.call('POST', `${W}/matrix`, { ...pm, headers: key('d'), body: { docType: 'PO' } })).status, 403);
   assert.equal((await api.call('POST', `${W}/matrix`, { ...aud, headers: key('d'), body: { docType: 'PO' } })).status, 403, 'the auditor reads the matrix and does not change it');
+  // seven documents of the reference follow their module's own workflow: their matrix is the reference only and is not changed here
+  const governed = await api.call('POST', `${W}/matrix`, { ...sys, headers: key('d'), body: { docType: 'SWO' } });
+  assert.equal(governed.status, 422, JSON.stringify(governed.json)); assert.match(governed.json.error.message, /CTR_WORK_ORDER/);
   // a gap: bands that stop at 10 L leave everything above uncovered
   const gappy = [rule(10, 'Small', [{ field: 'amount', op: 'lte', value: 10 * L }], ['PROCMGR']), rule(20, 'Single source', [{ field: 'singleSource', op: 'eq', value: true }], ['PROCMGR', 'DIR'])];
   assert.equal((await api.call('PUT', `${W}/matrix/${d.id}`, { ...sys, headers: key('u'), body: { rules: gappy } })).status, 200);

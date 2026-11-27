@@ -470,6 +470,13 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 /* 29.08 help desk and in-app help */
 .hd-fab { position: fixed; right: var(--erp-space-3); bottom: calc(var(--erp-space-3) + 64px); z-index: 40; min-height: 48px; border-radius: 999px; box-shadow: 0 2px 8px rgb(0 0 0 / 0.2); }
 @media (min-width: 900px) { .hd-fab { bottom: var(--erp-space-4); } }
+/* the chat dock sits in the same corner on wide screens: the Help button stands above it rather than under it */
+@media (min-width: 900px) { body:has(.msg-dock) .hd-fab { bottom: calc(var(--erp-space-4) + 4rem); } }
+/* WCAG 2.2 target size (minimum 24 px) on phones and touch screens: links in action rows and card footers, check boxes and radio buttons */
+@media (max-width: 480px), (pointer: coarse) {
+  .actions-row a, .actions-row .link, .wd-foot a, .ui-card-foot a { display: inline-flex; align-items: center; min-height: 24px; }
+  input[type="checkbox"], input[type="radio"] { min-inline-size: 24px; min-block-size: 24px; }
+}
 .hd-panel, .hd-tour { position: fixed; right: var(--erp-space-3); bottom: calc(var(--erp-space-3) + 120px); z-index: 41; width: min(22rem, calc(100vw - 2 * var(--erp-space-3))); max-height: 70vh; overflow: auto; padding: var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); box-shadow: 0 4px 16px rgb(0 0 0 / 0.25); display: grid; gap: var(--erp-space-2); }
 @media (min-width: 900px) { .hd-panel, .hd-tour { bottom: calc(var(--erp-space-4) + 60px); } }
 .hd-panel .btn, .hd-tour .btn { min-height: 44px; }

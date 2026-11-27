@@ -118,7 +118,7 @@ export default function QuotationEntryPage() {
     <section aria-labelledby="quotes-h" data-testid="proc-quotes">
       <PageHeader id="quotes-h" title={t('q.entryTitle')} subtitle={t('q.quotesIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.quotation.create') && <Link to="/proc/quotation-entry?rfq=0">{t('q.newQuote')}</Link>} <Link to="/proc/rfqs">{t('q.title')}</Link></div>
-      <ListReport listCode="proc.quotations" endpoint="/proc/quotations" title={t('q.quotesTitle')} session={session.data} rowHref={(r) => `/proc/quotation-entry?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/quotation-entry?id=${r.id}`)}
+      <ListReport listCode="proc.quotations" endpoint="/proc/quotations" exportEndpoint="/ui/lists/proc.quotations/export" title={t('q.quotesTitle')} session={session.data} rowHref={(r) => `/proc/quotation-entry?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/quotation-entry?id=${r.id}`)}
         cardFields={['docNo', 'rfq', 'vendor', 'validUntil', 'total']} statusKey="status" empty={{ title: t('q.quotesEmptyTitle'), text: t('q.quotesEmptyBody') }} />
     </section>
   );

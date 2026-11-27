@@ -11,7 +11,7 @@ export default function GatePassesPage() {
   return (
     <section aria-labelledby="gp-h" data-testid="gate-passes"><PageHeader id="gp-h" title={t('g.returnables')} subtitle={t('g.returnablesIntro')} />
       <div className="actions-row no-print"><Link to={overdue ? '/inv/gate-passes' : '/inv/gate-passes?overdue=1'} data-testid="gp-overdue-toggle">{overdue ? t('g.showAll') : t('g.showOverdue')}</Link> <Link to="/inv/gate-register">{t('g.registerTitle')}</Link></div>
-      <ListReport key={overdue ? 'o' : 'a'} listCode="inv.gate_passes" endpoint="/inv/passes" title={t('g.returnables')} session={session.data} rowHref={(r) => `/inv/gate-pass?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/gate-pass?id=${r.id}`)} cardFields={['docNo', 'destination', 'expectedReturn', 'status']} statusKey="status" dateKey="date"
+      <ListReport key={overdue ? 'o' : 'a'} listCode="inv.gate_passes" endpoint="/inv/passes" exportEndpoint="/ui/lists/inv.gate_passes/export" title={t('g.returnables')} session={session.data} rowHref={(r) => `/inv/gate-pass?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/gate-pass?id=${r.id}`)} cardFields={['docNo', 'destination', 'expectedReturn', 'status']} statusKey="status" dateKey="date"
         contextFilters={[{ key: 'returnable', op: 'eq', value: 'Y' }, ...(overdue ? [{ key: 'overdue', op: 'eq', value: 'Y' }] : [])]} empty={{ title: t('g.passEmptyTitle'), text: t('g.passEmptyBody') }} /></section>
   );
 }

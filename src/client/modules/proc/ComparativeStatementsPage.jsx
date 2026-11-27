@@ -109,7 +109,7 @@ export default function ComparativeStatementsPage() {
     <section aria-labelledby="css-h" data-testid="proc-cs">
       <PageHeader id="css-h" title={t('c.title')} subtitle={t('c.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.comparative_statement.create') && <Link to="/proc/comparative-statements?new=1">{t('c.make')}</Link>} <Link to="/proc/rfqs">{t('q.title')}</Link></div>
-      <ListReport listCode="proc.comparative_statements" endpoint="/proc/comparative-statements" title={t('c.title')} session={session.data} rowHref={(r) => `/proc/comparative-statements?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/comparative-statements?id=${r.id}`)}
+      <ListReport listCode="proc.comparative_statements" endpoint="/proc/comparative-statements" exportEndpoint="/ui/lists/proc.comparative_statements/export" title={t('c.title')} session={session.data} rowHref={(r) => `/proc/comparative-statements?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/comparative-statements?id=${r.id}`)}
         cardFields={['docNo', 'rfq', 'project', 'value', 'nonL1']} statusKey="status" empty={{ title: t('c.emptyTitle'), text: t('c.emptyBody') }} />
     </section>
   );

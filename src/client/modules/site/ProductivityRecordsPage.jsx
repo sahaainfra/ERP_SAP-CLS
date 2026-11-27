@@ -12,7 +12,7 @@ export default function ProductivityRecordsPage() {
     <section aria-labelledby="prec-h" data-testid="site-productivity-records">
       <PageHeader id="prec-h" srOnly title={t('cnd.prr.records')} />
       <div className="actions-row no-print"><Link to="/site/productivity">{t('cnd.prd.title')}</Link> <Link to="/site/productivity-report">{t('cnd.prr.title')}</Link></div>
-      <ListReport listCode="site.productivity" endpoint="/site/productivity/rows" title={t('cnd.prr.records')} session={session.data} rowHref={(x) => `/site/dprs?id=${x.dprId}`} onOpen={(x) => navigateTo(`/site/dprs?id=${x.dprId}`)}
+      <ListReport listCode="site.productivity" endpoint="/site/productivity/rows" exportEndpoint="/ui/lists/site.productivity/export" title={t('cnd.prr.records')} session={session.data} rowHref={(x) => `/site/dprs?id=${x.dprId}`} onOpen={(x) => navigateTo(`/site/dprs?id=${x.dprId}`)}
         cardFields={['date', 'activity', 'site', 'productivity', 'variance']} empty={{ title: t('cnd.prd.emptyTitle'), text: t('cnd.prd.emptyBody') }} />
     </section>
   );

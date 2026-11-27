@@ -36,7 +36,7 @@ export default function InspectionsPage() {
   return (
     <section aria-labelledby="in-h" data-testid="qa-inspections"><PageHeader id="in-h" title={t('ins.title')} subtitle={t('ins.intro')} />
       <div className="actions-row no-print"><Link to="/qa/perform">{t('perf.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/export?kind=inspections', 'inspections.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="ins-export">{t('export')}</button></div>
-      <ListReport listCode="qa.inspections" endpoint="/qa/inspections" title={t('ins.title')} session={session.data} rowHref={(r) => `/qa/inspections?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/inspections?id=${r.id}`)} cardFields={['docNo', 'template', 'result', 'status']} statusKey="status" dateKey="inspected" empty={{ title: t('ins.emptyTitle'), text: t('ins.emptyBody') }} />
+      <ListReport listCode="qa.inspections" endpoint="/qa/inspections" exportEndpoint="/ui/lists/qa.inspections/export" title={t('ins.title')} session={session.data} rowHref={(r) => `/qa/inspections?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/inspections?id=${r.id}`)} cardFields={['docNo', 'template', 'result', 'status']} statusKey="status" dateKey="inspected" empty={{ title: t('ins.emptyTitle'), text: t('ins.emptyBody') }} />
     </section>
   );
 }

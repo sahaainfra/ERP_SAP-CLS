@@ -68,7 +68,7 @@ export default function InductionPage() {
   return (
     <section aria-labelledby="inl-h" data-testid="hse-induction"><PageHeader id="inl-h" title={t('ind.title')} subtitle={t('ind.intro')} />
       <Induct /><Check />
-      <ListReport listCode="hse.inductions" endpoint="/hse/inductions" title={t('ind.recent')} session={session.data} rowHref={(r) => `/hse/induction?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/induction?id=${r.id}`)} cardFields={['docNo', 'person', 'validUntil', 'status']} statusKey="status" dateKey="date" empty={{ title: t('ind.emptyTitle'), text: t('ind.emptyBody') }} />
+      <ListReport listCode="hse.inductions" endpoint="/hse/inductions" exportEndpoint="/ui/lists/hse.inductions/export" title={t('ind.recent')} session={session.data} rowHref={(r) => `/hse/induction?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/induction?id=${r.id}`)} cardFields={['docNo', 'person', 'validUntil', 'status']} statusKey="status" dateKey="date" empty={{ title: t('ind.emptyTitle'), text: t('ind.emptyBody') }} />
     </section>
   );
 }

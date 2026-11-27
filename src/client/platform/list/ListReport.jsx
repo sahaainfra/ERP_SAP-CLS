@@ -165,7 +165,7 @@ function CardRow({ rowHref, onOpenRow, actions, selectable, selected, onSelect, 
   );
 }
 
-export default function ListReport({ listCode, endpoint, title, rowHref, onOpen, cardFields, statusKey, mineFilter, dateKey, bulkActions = [], rowActions, newAction, session, empty, permission, contextFilters = [] }) {
+export default function ListReport({ listCode, endpoint, exportEndpoint, title, rowHref, onOpen, cardFields, statusKey, mineFilter, dateKey, bulkActions = [], rowActions, newAction, session, empty, permission, contextFilters = [] }) {
   const qc = useQueryClient();
   const narrow = useMedia('(max-width: 767px)');
   const desc = useQuery({ queryKey: ['ui', 'list', listCode], queryFn: () => unwrap(api.get(`/ui/lists/${listCode}`)), staleTime: 5 * 60_000, retry: false });
@@ -249,11 +249,14 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
   };
 
   const [exporting, setExporting] = useState('');
+  // a list whose module has no `<endpoint>/export` route exports through the List Report's route by list code; it offers Export only when its list has an export
+  const exportUrl = exportEndpoint ?? `${endpoint}/export`;
+  const canExport = !(exportEndpoint?.startsWith('/ui/lists/') && desc.data && desc.data.exportable === false);
   const exportAs = async (format) => {
     setExporting(format);
     setNotice('');
     try {
-      const send = () => fetch(`/api/v1${endpoint}/export?${toQuery({ ...withContext(state), page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
+      const send = () => fetch(`/api/v1${exportUrl}?${toQuery({ ...withContext(state), page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
       let res = await send();
       // this call does not go through the API client: an access token that has just expired is renewed here the same way, and the export asked again once
       if (res.status === 401 && authMode() === 'iam' && await refreshSession()) res = await send();
@@ -337,13 +340,13 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
         <ViewsMenu list={listCode} views={views.data ?? []} current={view} canShare={can('ui.view.share')} roles={session?.roles ?? []}
           onApply={(v) => { setView(v); update({ ...v.config, page: 1 }); setNotice(`View "${v.name}" applied.`); }} onSave={(b) => saveView.mutateAsync(b)} onDelete={(v) => window.confirm(`Delete the view "${v.name}"?`) && deleteView.mutate(v)} />
         <ColumnChooser all={columns} order={state.columns} hidden={state.hidden} onChange={({ order, hidden }) => saveColumns({ columns: order, hidden })} onReset={() => saveColumns({ columns: [], hidden: [], widths: {} })} />
-        <details className="lr-menu" data-testid="export-menu">
+        {canExport && <details className="lr-menu" data-testid="export-menu">
           <summary className="btn"><Icon name="erp.action.export" size={16} />{exporting ? `Exporting ${exporting.toUpperCase()}...` : 'Export'}</summary>
           <div className="lr-pop" role="group" aria-label="Export the current view">
             <p className="muted small">The rows of the current filters and sort, with your masks. {meta ? `${meta.total} rows.` : ''}</p>
             {['xlsx', 'csv', 'pdf'].map((f) => <button key={f} type="button" className="btn btn-small" disabled={Boolean(exporting) || !meta?.total} onClick={() => exportAs(f)}>{f.toUpperCase()}</button>)}
           </div>
-        </details>
+        </details>}
         {v7 && groupable.length > 0 && (
           <label className="lr-group">Group by
             <select value={groupBy} onChange={(e) => update({ groupBy: e.target.value, ...(e.target.value ? { sort: e.target.value } : {}) })} data-testid="list-group-by">

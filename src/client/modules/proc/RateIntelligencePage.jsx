@@ -76,7 +76,7 @@ export default function RateIntelligencePage() {
       {chosen && <Trend key={`${chosen}-${region}`} t={t} itemId={chosen} region={region} />}
       {d.indices.length > 0 && <div className="table-scroll"><table className="data-table" data-testid="ri-indices"><caption>{t('i.indices')}</caption><thead><tr><th>{t('i.group')}</th><th>{t('i.region')}</th><th>{t('i.month')}</th><th className="num">{t('i.value')}</th></tr></thead><tbody>{d.indices.map((x) => <tr key={`${x.group}-${x.region}`}><td>{x.group}</td><td>{x.region}</td><td>{x.period}</td><td className="num">{x.value}</td></tr>)}</tbody></table></div>}
       <h2>{t('i.history')}</h2>
-      <ListReport listCode="proc.rate_observations" endpoint="/proc/rate-observations" title={t('i.history')} session={session.data} rowHref={(r) => `/proc/rate-intelligence?obs=${r.id}`} onOpen={(r) => navigateTo(`/proc/rate-intelligence?obs=${r.id}`)} cardFields={['item', 'region', 'date', 'source', 'rate']} empty={{ title: t('i.emptyTitle'), text: t('i.emptyBody') }} />
+      <ListReport listCode="proc.rate_observations" endpoint="/proc/rate-observations" exportEndpoint="/ui/lists/proc.rate_observations/export" title={t('i.history')} session={session.data} rowHref={(r) => `/proc/rate-intelligence?obs=${r.id}`} onOpen={(r) => navigateTo(`/proc/rate-intelligence?obs=${r.id}`)} cardFields={['item', 'region', 'date', 'source', 'rate']} empty={{ title: t('i.emptyTitle'), text: t('i.emptyBody') }} />
     </section>
   );
 }

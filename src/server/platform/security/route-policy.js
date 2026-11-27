@@ -1200,6 +1200,7 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/ui/sample-requests/:id/decision', g: 'permission', k: 'core.sample.use', s: 'parseId', scope: 'project', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/ui/sample-requests/:id/submit', g: 'permission', k: 'core.sample.use', s: 'parseId', scope: 'project', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/ui/sample-requests/bulk', g: 'permission', k: 'core.sample.use', s: null, scope: 'project', rate: 'write', audit: true },
+  { m: 'GET', p: '/api/v1/ui/lists/:code/export', g: 'self', k: null, s: null, scope: 'company', rate: 'export', audit: false },
   { m: 'GET', p: '/api/v1/ui/sample-requests/export', g: 'permission', k: 'core.sample.use', s: null, scope: 'project', rate: 'export', audit: false },
   { m: 'GET', p: '/api/v1/ui/saved-views', g: 'self', k: null, s: 'parseViewList', scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/ui/saved-views', g: 'self', k: null, s: 'parseViewCreate', scope: 'company', rate: 'write', audit: true },

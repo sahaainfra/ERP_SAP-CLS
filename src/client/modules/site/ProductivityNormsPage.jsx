@@ -98,7 +98,7 @@ export default function ProductivityNormsPage() {
           <button type="button" className="btn" disabled={!projectId} onClick={boq} data-testid="norm-boq-go">{t('cnd.prn.load')}</button>{msg && <p className="mdm-banner" role="status" data-testid="norm-boq-note">{msg}</p>}{error && <p className="field-error" role="alert">{error}</p>}
         </div>
       )}
-      <ListReport listCode="site.prod_norms" endpoint="/site/productivity/norms" title={t('cnd.prn.title')} session={session.data} rowHref={(r) => `/site/productivity-norms?id=${r.id}`} onOpen={(r) => navigateTo(`/site/productivity-norms?id=${r.id}`)}
+      <ListReport listCode="site.prod_norms" endpoint="/site/productivity/norms" exportEndpoint="/ui/lists/site.prod_norms/export" title={t('cnd.prn.title')} session={session.data} rowHref={(r) => `/site/productivity-norms?id=${r.id}`} onOpen={(r) => navigateTo(`/site/productivity-norms?id=${r.id}`)}
         cardFields={['project', 'activity', 'resource', 'output', 'effectiveFrom']} statusKey="status" empty={{ title: t('cnd.prn.emptyTitle'), text: t('cnd.prn.emptyBody') }} />
     </section>
   );

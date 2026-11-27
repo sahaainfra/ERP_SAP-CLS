@@ -89,7 +89,7 @@ export default function MaterialRequestsPage() {
     <section aria-labelledby="mrs-h" data-testid="proc-mrs">
       <PageHeader id="mrs-h" title={t('p.mrTitle')} subtitle={t('p.mrIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.material_request.create') && <Link to="/proc/material-requests/new">{t('p.mrNew')}</Link>} {perms.includes('proc.requisition.create') && <Link to="/proc/consolidate">{t('p.consolidate')}</Link>} <Link to="/proc/requisitions">{t('p.prTitle')}</Link></div>
-      <ListReport listCode="proc.material_requests" endpoint="/proc/material-requests" title={t('p.mrTitle')} session={session.data} rowHref={(r) => `/proc/material-requests?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/material-requests?id=${r.id}`)}
+      <ListReport listCode="proc.material_requests" endpoint="/proc/material-requests" exportEndpoint="/ui/lists/proc.material_requests/export" title={t('p.mrTitle')} session={session.data} rowHref={(r) => `/proc/material-requests?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/material-requests?id=${r.id}`)}
         cardFields={['docNo', 'site', 'requiredBy', 'priority', 'fulfilment']} statusKey="status" empty={{ title: t('p.mrEmptyTitle'), text: t('p.mrEmptyBody') }} />
     </section>
   );

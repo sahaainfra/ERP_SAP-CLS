@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import '../src/server/modules/registry.js';
-import { EICAR, TEST_VIRUS, createActiveContentScanner, createBuiltinScanner, createClamdScanner, parseClamdReply, runScanners } from '../src/server/platform/files/scan.js';
+import { EICAR, TEST_VIRUS, createActiveContentScanner, createBuiltinScanner, createClamdScanner, createNoAntivirusScanner, parseClamdReply, runScanners } from '../src/server/platform/files/scan.js';
 import { PDFDocument } from 'pdf-lib';
 import { checkType, extensionOf, looksLikeText } from '../src/server/platform/files/types.js';
 import { createLocalStorage } from '../src/server/platform/files/storage.js';
@@ -620,4 +620,13 @@ test('BR-AUD-010 a PDF carrying JavaScript is quarantined; an ordinary PDF passe
   } finally {
     await t.cleanup();
   }
+});
+
+test('audit Part 03: a PDF too large to check for active content is held, and an installation without an anti-virus never decides', async () => {
+  const pdf = Buffer.from(`%PDF-1.4\n${'x'.repeat(64)}\n%%EOF`);
+  const big = await createActiveContentScanner({ maxBytes: 16 }).scan(async function* () { yield pdf; });
+  assert.equal(big.status, 'INFECTED');
+  assert.match(big.detail, /PDF-Too-Large/);
+  assert.equal((await createActiveContentScanner({ maxBytes: 1024 }).scan(async function* () { yield pdf; })).status, 'CLEAN', 'a small clean PDF passes');
+  await assert.rejects(createNoAntivirusScanner().scan(async function* () { yield Buffer.from('anything'); }), /No anti-virus scanner is configured/);
 });

@@ -93,7 +93,7 @@ export default function VendorScorecardsPage() {
   return (
     <section aria-labelledby="vss-h" data-testid="proc-vs"><PageHeader id="vss-h" title={t('v.scoreTitle')} subtitle={t('v.scoreIntro')} />
       <div className="actions-row no-print"><Link to="/proc/vendor-ranking">{t('v.rankTitle')}</Link> <Link to="/proc/avl">{t('v.avlTitle')}</Link> <Link to="/proc/prequalifications">{t('v.preqTitle')}</Link></div>
-      <ListReport listCode="proc.vendor_scorecards" endpoint="/proc/vendor-scorecards" title={t('v.scoreTitle')} session={session.data} rowHref={(r) => `/proc/vendor-scorecards?partner=${r.partnerId}`} onOpen={(r) => navigateTo(`/proc/vendor-scorecards?partner=${r.partnerId}`)}
+      <ListReport listCode="proc.vendor_scorecards" endpoint="/proc/vendor-scorecards" exportEndpoint="/ui/lists/proc.vendor_scorecards/export" title={t('v.scoreTitle')} session={session.data} rowHref={(r) => `/proc/vendor-scorecards?partner=${r.partnerId}`} onOpen={(r) => navigateTo(`/proc/vendor-scorecards?partner=${r.partnerId}`)}
         cardFields={['vendor', 'period', 'total', 'rating']} statusKey="rating" empty={{ title: t('v.scoreEmptyTitle'), text: t('v.scoreEmptyBody') }} /></section>
   );
 }

@@ -33,6 +33,12 @@ test('FR-08 a route guard says why a page cannot be drawn: permission, flag, con
   assert.equal(guard(nav, '/admin/sample-bills', { knownRoute: true, context: {} }).need, 'project');
   assert.equal(guard(nav, '/admin/sample-bills', { knownRoute: true, context: { projectId: 7 } }).ok, true, 'a project in the working context opens it');
   assert.equal(guard(nav, '/nothing', { knownRoute: false }).reason, 'unknown');
+  // a record or create page has no menu entry: its own registered permission decides
+  const record = { path: '/bd/tender/new', label: 'New tender', permission: 'bd.tender.create', menu: false };
+  const refused = guard(nav, '/bd/tender/new', { knownRoute: true, route: record, permissions: ['bd.tender.view'] });
+  assert.deepEqual([refused.ok, refused.reason, refused.permissionKey, refused.label], [false, 'permission', 'bd.tender.create', 'New tender']);
+  assert.equal(guard(nav, '/bd/tender/new', { knownRoute: true, route: record, permissions: ['bd.tender.create'] }).ok, true);
+  assert.equal(guard(nav, '/bd/tender/new', { knownRoute: true, route: { ...record, permission: undefined }, permissions: [] }).ok, true, 'a page with no permission of its own is open to the signed-in');
   assert.equal(guard(null, '/anything').ok, true, 'before the menu is known nothing is blocked');
 });
 

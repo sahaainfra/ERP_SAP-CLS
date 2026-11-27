@@ -66,7 +66,7 @@ export default function ResourcePlansPage() {
   return (
     <section aria-labelledby="rl-h" data-testid="plant-resource-plans"><PageHeader id="rl-h" title={t('r.plansTitle')} subtitle={t('r.plansIntro')} />
       <div className="actions-row no-print"><Link to="/plant/resource-plans?new=1">{t('r.newPlan')}</Link><Link to="/plant/capacity">{t('r.capacityTitle')}</Link><Link to="/plant/shortage-surplus">{t('r.shortageTitle')}</Link></div>
-      <ListReport listCode="plant.resource_plans" endpoint="/plant/resource-plans" title={t('r.plansTitle')} session={session.data} rowHref={(r) => `/plant/resource-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/resource-plans?id=${r.id}`)} cardFields={['docNo', 'name', 'status']} statusKey="status" dateKey="created" empty={{ title: t('r.plansEmptyTitle'), text: t('r.plansEmptyBody') }} />
+      <ListReport listCode="plant.resource_plans" endpoint="/plant/resource-plans" exportEndpoint="/ui/lists/plant.resource_plans/export" title={t('r.plansTitle')} session={session.data} rowHref={(r) => `/plant/resource-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/resource-plans?id=${r.id}`)} cardFields={['docNo', 'name', 'status']} statusKey="status" dateKey="created" empty={{ title: t('r.plansEmptyTitle'), text: t('r.plansEmptyBody') }} />
     </section>
   );
 }

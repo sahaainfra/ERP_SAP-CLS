@@ -89,6 +89,17 @@ test('FR-01 / BR-01 master data: codes are unique within the parent, a company i
   assert.equal((await get('/companies', sys)).json.data.find((c) => c.id === ok.json.data.id).pan, 'ABCDE1234F', 'the system administrator sees the PAN');
   assert.equal((await get('/companies', own)).json.data[0].pan, 'AB******4F', 'everyone else sees it masked');
   assert.equal((await get('/companies', sys)).json.data.length, 2, 'the system administrator sees every company');
+  // ...but changes only their own company's record: another company's is the platform super administrator's (06_ROLE_CATALOGUE SYSADM / SUPADM)
+  const other = ok.json.data.id;
+  const elsewhere = await patch(`/companies/${other}`, sys, { shortName: 'Changed from company 1', version: ok.json.data.version, reason: 'cross-company change' });
+  assert.equal(elsewhere.status, 403, JSON.stringify(elsewhere.json));
+  assert.equal((await get(`/companies/${other}`, sys)).json.data.shortName, 'Sahaa', 'nothing changed');
+  const inside = await patch(`/companies/${other}`, { ...sys, company: String(other) }, { shortName: 'Sahaa Infra', version: ok.json.data.version, reason: 'own company' });
+  assert.equal(inside.status, 200, JSON.stringify(inside.json));
+  const platform = await patch(`/companies/${other}`, { roles: 'SUPADM', user: 'root', company: '1' }, { shortName: 'Sahaa Infra Ltd', version: inside.json.data.version, reason: 'platform change' });
+  assert.equal(platform.status, 200, JSON.stringify(platform.json));
+  const trail = (await api.call('GET', `${C}/audit?entity=org_companies`, { roles: 'AUD', user: 'aud-sahaa', company: String(other) })).json.data;
+  assert.deepEqual(trail.map((x) => x.action).sort(), ['create', 'update', 'update'], 'the own auditors of the company see its creation and both changes');
 
   const a = (await post('/departments', hr, { code: 'OPS', name: 'Operations', kind: 'DIVISION' })).json.data;
   const b = (await post('/departments', hr, { code: 'QA', name: 'Quality', parentId: a.id })).json.data;

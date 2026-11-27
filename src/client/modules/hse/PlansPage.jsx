@@ -61,7 +61,7 @@ export default function PlansPage() {
   return (
     <section aria-labelledby="pll-h" data-testid="hse-plans"><PageHeader id="pll-h" title={t('plan.title')} subtitle={t('plan.intro')} />
       <div className="actions-row no-print"><Link to="/hse/plans?new=1" data-testid="hse-plan-new">{t('plan.new')}</Link></div>
-      <ListReport listCode="hse.plans" endpoint="/hse/plans" title={t('plan.title')} session={session.data} rowHref={(r) => `/hse/plans?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/plans?id=${r.id}`)} cardFields={['docNo', 'title', 'version', 'status']} statusKey="status" empty={{ title: t('plan.emptyTitle'), text: t('plan.emptyBody') }} />
+      <ListReport listCode="hse.plans" endpoint="/hse/plans" exportEndpoint="/ui/lists/hse.plans/export" title={t('plan.title')} session={session.data} rowHref={(r) => `/hse/plans?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/plans?id=${r.id}`)} cardFields={['docNo', 'title', 'version', 'status']} statusKey="status" empty={{ title: t('plan.emptyTitle'), text: t('plan.emptyBody') }} />
     </section>
   );
 }

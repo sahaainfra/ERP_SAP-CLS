@@ -43,7 +43,7 @@ export default function FuelAnomaliesPage() {
     <section aria-labelledby="fal-h" data-testid="plant-fuel-anomalies"><PageHeader id="fal-h" title={t('f.anomaliesTitle')} subtitle={t('f.anomaliesIntro')} />
       {sq.data && <p data-testid="fa-summary">{t('f.summary', { open: sq.data.open, waiting: sq.data.waiting, high: sq.data.high })}</p>}
       <div className="actions-row no-print"><Link to="/plant/fuel-reports">{t('f.reportsTitle')}</Link><Link to="/plant/fuel-issues">{t('f.issuesTitle')}</Link></div>
-      <ListReport listCode="plant.fuel_anomalies" endpoint="/plant/fuel/anomalies" title={t('f.anomaliesTitle')} session={session.data} rowHref={(r) => `/plant/fuel-anomalies?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/fuel-anomalies?id=${r.id}`)} cardFields={['docNo', 'rule', 'assetCode', 'status']} statusKey="status" dateKey="detected" empty={{ title: t('f.anomaliesEmptyTitle'), text: t('f.anomaliesEmptyBody') }} />
+      <ListReport listCode="plant.fuel_anomalies" endpoint="/plant/fuel/anomalies" exportEndpoint="/ui/lists/plant.fuel_anomalies/export" title={t('f.anomaliesTitle')} session={session.data} rowHref={(r) => `/plant/fuel-anomalies?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/fuel-anomalies?id=${r.id}`)} cardFields={['docNo', 'rule', 'assetCode', 'status']} statusKey="status" dateKey="detected" empty={{ title: t('f.anomaliesEmptyTitle'), text: t('f.anomaliesEmptyBody') }} />
     </section>
   );
 }

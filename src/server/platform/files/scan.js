@@ -68,7 +68,7 @@ export function createActiveContentScanner({ maxBytes = 200 * 1024 * 1024 } = {}
         const b = Buffer.from(chunk);
         if (isPdf === null) isPdf = b.subarray(0, 5).toString('latin1') === '%PDF-';
         if (!isPdf) return { status: 'CLEAN', detail: null };
-        size += b.length; if (size > maxBytes) return { status: 'CLEAN', detail: null };
+        size += b.length; if (size > maxBytes) return { status: 'INFECTED', detail: `PDF-Too-Large: a PDF over ${Math.round(maxBytes / 1048576)} MB is not checked for active content, so it is held` };
         parts.push(b);
       }
       if (!isPdf) return { status: 'CLEAN', detail: null };
@@ -88,6 +88,14 @@ export function parseClamdReply(text) {
   const found = /^stream:\s*(.+) FOUND$/.exec(reply);
   if (found) return { status: 'INFECTED', detail: found[1] };
   throw new Error(`ClamAV could not scan the file: ${reply || 'no reply'}`);
+}
+
+/**
+ * Where no anti-virus is connected in a production-like installation: it never decides, so every upload stays unavailable (BR-01) instead of
+ * being released after only the test-string check. Connect ClamAV (CLAMAV_HOST) and the waiting files are scanned on their next attempt.
+ */
+export function createNoAntivirusScanner() {
+  return { name: 'no-antivirus', scan: async () => { throw new Error('No anti-virus scanner is configured (CLAMAV_HOST): the file stays unavailable until one is.'); } };
 }
 
 export function createClamdScanner({ host, port = 3310, timeoutMs = 30_000 }) {
