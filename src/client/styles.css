@@ -640,7 +640,7 @@ tr.op-changed del, .op-delta del { color: var(--erp-color-status-error-fg); }
 .app-shell main:focus { outline: none; }
 .app-shell main .breadcrumb:not(.breadcrumb-object), .app-shell .bc-section { display: none; }
 .sh-crumbs { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--erp-space-3); margin-bottom: var(--erp-space-3); }
-.sh-crumbs ol { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); list-style: none; margin: 0; padding: 0; color: var(--erp-color-text-secondary); font: var(--erp-type-body-sm); }
+.sh-crumbs ol { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--erp-space-2); list-style: none; margin: 0; padding: 0; color: var(--erp-color-text-secondary); font: var(--erp-type-body-sm); }
 .sh-crumbs li + li::before { content: '\203A'; margin-right: var(--erp-space-2); }
 .sh-crumbs [aria-current='page'] { color: var(--erp-color-text-primary); font-weight: 600; }
 .sh-overlay { position: fixed; inset: 0; z-index: var(--erp-z-modal); display: flex; align-items: flex-start; justify-content: center; padding: 10vh var(--erp-space-4) 0; background: var(--erp-color-overlay-backdrop); }
