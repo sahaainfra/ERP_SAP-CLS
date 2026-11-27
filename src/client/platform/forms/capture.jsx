@@ -119,6 +119,7 @@ export function GpsField({ id, label, value, onChange, error, hint, required, di
  */
 export function PhotoField({ id, label, value, onChange, error, hint, required, disabled, readOnly, entity, entityId }) {
   const input = useRef(null);
+  const preview = useRef(null);
   const settings = useDeviceSettings();
   const low = useLowBandwidth();
   if (entity && entityId) {
@@ -141,7 +142,20 @@ export function PhotoField({ id, label, value, onChange, error, hint, required, 
       onChange({ error: err.message || 'The photo could not be prepared. Try again.' });
     }
   };
-  const shown = value?.preview ? <img className="ff-photo-img" src={value.preview} alt={`Photo for ${label}: ${value.name}`} /> : '';
+  const shown = value?.preview ? (
+    <>
+      <button type="button" className="ff-photo-open" aria-haspopup="dialog" aria-label={`View photo: ${value.name}`} onClick={() => preview.current?.showModal()} disabled={disabled}>
+        <img className="ff-photo-img" src={value.preview} alt={`Photo for ${label}: ${value.name}`} />
+      </button>
+      <dialog className="dialog ff-photo-dialog" ref={preview} aria-label={`Photo for ${label}`}>
+        <div className="ff-photo-heading">
+          <strong>{value.name}</strong>
+          <button type="button" className="btn" onClick={() => preview.current?.close()}>Close</button>
+        </div>
+        <img src={value.preview} alt={`Photo for ${label}: ${value.name}`} />
+      </dialog>
+    </>
+  ) : '';
   if (readOnly) return <FieldShell id={id} label={label} readOnly text={shown} />;
   return (
     <FieldShell id={id} label={label} required={required} hint={hint ?? 'Taken with the camera or chosen from the gallery. It is uploaded when the record is saved.'} error={error ?? value?.error} group>
