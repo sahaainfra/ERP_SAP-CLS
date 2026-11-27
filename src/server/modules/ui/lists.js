@@ -153,12 +153,14 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
   function resolve(code, actor, req) {
     const fn = sources.get(code) ?? listExports.source(code);
     if (!fn) throw notFound(`There is no export for ${code}.`);
-    let out = null;
-    try { out = fn(actor, req); } catch (err) { if (err?.code !== 'VALIDATION_ERROR') throw err; }
+    let out = null; let first = null;
+    try { out = fn(actor, req); } catch (err) { if (err?.code !== 'VALIDATION_ERROR') throw err; first = err; }
     if (out && typeof out.rows === 'function') return out;
-    const page = Array.isArray(out?.data) ? out : fn(actor, queryOf(req));
+    let page = Array.isArray(out?.data) ? out : null;
+    // only a source that is a list page in disguise is retried with the plain query; a real refusal of the request (a field it does not allow) stands
+    if (!page) { try { page = fn(actor, queryOf(req)); } catch (err) { throw first ?? err; } }
     const def = listRegistry.get(code);
-    if (!def || !Array.isArray(page?.data)) throw notFound(`There is no export for ${code}.`);
+    if (!def || !Array.isArray(page?.data)) { if (first) throw first; throw notFound(`There is no export for ${code}.`); }
     const total = Number(page.meta?.total ?? page.data.length);
     if (total > page.data.length) throw unprocessable(`This list can export ${page.data.length} rows at a time and holds ${total} with these filters. Narrow the filters and export in parts.`);
     const exportKey = def.permission ? `${def.permission.replace(/\.view$/, '')}.export` : null;
