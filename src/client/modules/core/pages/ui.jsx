@@ -1,5 +1,5 @@
 import { KpiTile } from '../../../platform/design/Kpi.jsx';
-import { cloneElement, isValidElement, useEffect, useId } from 'react';
+import { cloneElement, isValidElement, useEffect, useId, useRef, useState } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
 import { logExport } from '../../../platform/audit/index.js';
 import { confirmLeave } from '../../../platform/forms/guard.js';
@@ -74,11 +74,40 @@ export function Field({ label, name, error, children, hint }) {
 }
 
 /** A modal form. `onSubmit` receives FormData; `error` is the result of errorInfo(). */
+/** Whether a form's fields differ from how they were drawn (their default values): something was typed or chosen. */
+export function formChanged(form) {
+  if (!form) return false;
+  for (const el of form.elements) {
+    if (el.disabled || el.type === 'hidden' || el.type === 'button' || el.type === 'submit') continue;
+    if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked !== el.defaultChecked) return true; } else if (el.tagName === 'SELECT') { if ([...el.options].some((o) => o.selected !== o.defaultSelected)) return true; } else if (el.type === 'file') { if (el.files?.length) return true; } else if ('defaultValue' in el && el.value !== el.defaultValue) return true;
+  }
+  return false;
+}
+
+/**
+ * A modal form. `onSubmit` receives FormData; `error` is the result of errorInfo().
+ * Part 11: whenever it closes (Cancel, Escape, saved) the form goes back to how it was drawn, so what was typed and not saved is really
+ * cancelled and never shows up the next time it opens, for this or another record. Escape with something typed asks first, inside the dialog.
+ */
 export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, submitLabel = 'Save', reason = true }) {
   const titleId = useId();
+  const formRef = useRef(null);
+  const keepRef = useRef(null);
+  const [asking, setAsking] = useState(false);
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (!d) return undefined;
+    const onClose = () => { formRef.current?.reset(); setAsking(false); };
+    const onCancel = (e) => { if (formChanged(formRef.current)) { e.preventDefault(); setAsking(true); } };
+    d.addEventListener('close', onClose);
+    d.addEventListener('cancel', onCancel);
+    return () => { d.removeEventListener('close', onClose); d.removeEventListener('cancel', onCancel); };
+  }, [dialogRef]);
+  useEffect(() => { if (asking) keepRef.current?.focus(); }, [asking]);
   return (
     <dialog ref={dialogRef} className="dialog" aria-labelledby={titleId}>
       <form
+        ref={formRef}
         method="dialog"
         onSubmit={(e) => {
           e.preventDefault();
@@ -97,6 +126,15 @@ export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, 
             {error.form}
             {error.correlationId && <> (Correlation ID: <code>{error.correlationId}</code>)</>}
           </p>
+        )}
+        {asking && (
+          <div className="state state-warning dialog-discard" role="alert" data-testid="discard-ask">
+            <span>You have typed something that is not saved. Close and lose it?</span>
+            <div className="actions">
+              <button type="button" className="btn" ref={keepRef} onClick={() => setAsking(false)}>Keep editing</button>
+              <button type="button" className="btn btn-danger" onClick={() => dialogRef.current?.close()}>Discard changes</button>
+            </div>
+          </div>
         )}
         <div className="actions">
           <button type="button" className="btn" onClick={() => dialogRef.current?.close()}>Cancel</button>
