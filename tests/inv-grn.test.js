@@ -125,3 +125,28 @@ test('AC-03 AC-04 who sees and does what: the keeper sees no values, accounts re
   const g3 = (await r.grn(sk, { storeId: st.id, poId: p.id, lines: [line(r, p, 0, { receivedQty: 1 })] })).json; assert.equal(g3.error ? 'x' : 'ok', 'ok'); const imp = await r.call(mgr, 'POST', '/grns/import', { rows: [{ storeCode: 'GR-ST', poNo: r.d.prepare('SELECT doc_no FROM proc_purchase_orders WHERE id = ?').get(p.id).doc_no, itemCode: 'GR-CEM', challanNo: 'IMP-1', receivedQty: 5 }] }); assert.equal(imp.status, 201, JSON.stringify(imp.json));
   assert.equal((await r.call(mgr, 'POST', '/grns/import', { rows: [{ storeCode: 'NOPE', poNo: 'x', itemCode: 'y', receivedQty: 1 }] })).status, 400, 'all or nothing'); r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.inv.p1603'").run(); assert.equal((await r.call(sk, 'GET', '/grns')).status, 404, 'the flag is off'); assert.equal((await r.call(sk, 'GET', '/stores')).status, 200, '16.01 is not affected');
 });
+
+test('F01-1 a receipt into a site store is the project cost and consumes the order commitment; a return to vendor takes back what left the stock; a central store receipt is not yet cost, but a direct charge is', async () => {
+  const r = await ready(); const st = await r.store('GR-BUD'); const p = r.po([[r.cement, 100_000, 4000]]);
+  // the order's commitment, as the approved order puts it in the ledger: 100 bags at Rs 40, line 1
+  const cid = Number(r.d.prepare("INSERT INTO bud_commitments (company_id, org_project_id, resource_type, stage, doc_ref, qty, amount, status, commit_date, src_type, src_id, src_line_id, project_id, created_by, source_type) VALUES (1, ?, 'MATERIAL', 'PO', 'PO/GR', 100000, 400000, 'OPEN', ?, 'proc_po', ?, '1', ?, 'test', 'test')").run(r.pid, TODAY, String(p.id), r.pid).lastInsertRowid);
+  const g = (await r.grn(sk, { storeId: st.id, poId: p.id, lines: [line(r, p, 0, { receivedQty: 90, acceptedQty: 90, inspectionRequired: true })] })).json.data; await r.approveGrn(g.id); await r.drain();
+  const actual = () => ({ ...r.d.prepare("SELECT amount, qty, consumed_amount, commitment_id, org_project_id FROM bud_actuals WHERE src_type = 'inv_grn' AND src_id = ?").get(String(g.id)) });
+  const commitment = () => ({ ...r.d.prepare('SELECT consumed_amount, status FROM bud_commitments WHERE id = ?').get(cid) });
+  assert.deepEqual(actual(), { amount: 360000, qty: 90000, consumed_amount: 360000, commitment_id: cid, org_project_id: r.pid }, 'the 90 bags accepted, Rs 3,600, against the order line');
+  assert.deepEqual(commitment(), { consumed_amount: 360000, status: 'PARTIAL' }, 'Rs 400 of the order is still committed');
+  await r.drain(); assert.equal(r.d.prepare("SELECT COUNT(*) AS n FROM bud_actuals WHERE src_type = 'inv_grn'").get().n, 1, 'recorded once');
+  // 40 fail inspection and go back to the vendor
+  await r.call(qce, 'POST', `/grns/${g.id}/inspection`, { results: [{ lineId: g.lines[0].id, passedQty: 50, failedQty: 40 }] });
+  const rv = (await r.call(sk, 'POST', '/rtvs', { grnId: g.id, reason: 'Damaged on arrival', lines: [{ grnLineId: g.lines[0].id, qty: 40 }] })).json.data; const s = await r.call(sk, 'POST', `/rtvs/${rv.id}/submit`); assert.equal((await r.act(pr, s.json.data.workflowInstanceId)).status, 200); await r.drain();
+  assert.deepEqual(actual(), { amount: 200000, qty: 50000, consumed_amount: 200000, commitment_id: cid, org_project_id: r.pid }, 'Rs 1,600 for the 40 returned bags came off');
+  assert.deepEqual(commitment(), { consumed_amount: 200000, status: 'PARTIAL' }, 'the order is open again for the replacement');
+  assert.equal(r.d.prepare("SELECT COUNT(*) AS n FROM bud_commitment_log WHERE commitment_id = ? AND action = 'UNCONSUMED' AND ref_type = 'inv_rtv'").get(cid).n, 1);
+  // a central warehouse belongs to no project: its receipt is not yet anyone's cost; a non-stock line charged to its WBS is, at the receipt
+  const c = await r.call(mgr, 'POST', '/stores', { code: 'GR-CW', name: 'Central warehouse', type: 'CENTRAL_WAREHOUSE', keepers: ['isk1'] }); assert.equal(c.status, 201, JSON.stringify(c.json));
+  const cs = await r.call(mgr, 'POST', `/stores/${c.json.data.id}/submit`); assert.equal((await r.act(mgr2, cs.json.data.workflowInstanceId)).status, 200);
+  const p2 = r.po([[r.cement, 10_000, 4000], [r.hire, 1_000, 500_000]]);
+  const g2 = (await r.grn(sk, { storeId: c.json.data.id, poId: p2.id, lines: [line(r, p2, 0, { receivedQty: 10 }), line(r, p2, 1, { receivedQty: 1 })] })); assert.equal(g2.status, 201, JSON.stringify(g2.json)); await r.approveGrn(g2.json.data.id); await r.drain();
+  const rows = r.d.prepare("SELECT src_line_id, amount, wbs_id FROM bud_actuals WHERE src_type = 'inv_grn' AND src_id = ?").all(String(g2.json.data.id));
+  assert.deepEqual(rows.map((x) => [x.amount, x.wbs_id]), [[500000, r.wbs]], 'only the direct charge, Rs 5,000 on its WBS; the cement waits for its issue');
+});

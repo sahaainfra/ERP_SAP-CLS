@@ -956,3 +956,30 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   does for snags; the retention release stays in Billing on the DLP end basis.
 - **Translations** of the new `close` text area: English is the source; Hindi and Telugu are drafts that need review by a business owner
   who speaks the language before go-live.
+
+## Audit remediation — material cost recognition and company separation (owner: "as per your wise decision", 2026-11-27)
+
+- **ADR-772 Material is project cost once: at the receipt into the project's own store, otherwise at the issue (F01-1, D-799 in part).**
+  The project budget ledger never received material actuals: inventory publishes `inv.grn.posted` and `inv.issue.posted`, but not in the
+  ledger's contract (no `sourceId`), so the ledger ignored them. The ledger is built so that an actual consumes the commitment it names;
+  a purchase-order line carries the WBS and cost code the budget is controlled by. The rule:
+  - a receipt into a store that belongs to a project (a site store) is that project's cost, on the order line's WBS and cost code, and
+    consumes the order's commitment line, so the same rupee is committed then spent, never both;
+  - a direct-charge receipt line (a non-stock item charged to its WBS) is cost at the receipt, whatever the store;
+  - a receipt into a store that belongs to no project (a central warehouse) is nobody's cost yet; the issue to a project is, on the WBS and
+    cost code of the issue slip;
+  - an issue from the project's own store is not costed again;
+  - a return to the vendor takes back the value of what left accepted stock (rejected material never was cost) and gives the commitment
+    back, so an order still open is committed again for the replacement; good or damaged material back from site into a central store
+    takes back the issue's cost; scrap stays cost.
+  Implemented as a consumer of the existing inventory events (`bud.material`, `src/server/modules/bud/inventory.js`), so their payloads and
+  their other consumers (GL posting, procurement) are unchanged. The ledger's subscriptions are not renamed: commitments reach the ledger
+  by service calls, and renaming would count them twice (the reason D-799 recorded). Still open under D-799: AP-bill price variances and
+  plant cost publish no event; a stock transfer between two projects' stores does not move the cost between the projects.
+- **ADR-773 Companies stay one installation with a shared directory; each company changes only its own record.** The audit (F03-1) asked
+  whether companies should be separate tenants. The code and its tests deliberately keep the company list readable across the
+  installation (a group of companies run by one administration, with the platform super administrator over all of them), while every
+  business table is scoped by `company_id` and Part 03 found no business data leaking across 1,234 GET routes. Full tenant separation
+  (separate databases or row-level isolation of the directory) would be an architectural change with no confirmed need. Kept as is, with the
+  PR #23 safeguards: a company's record is changed only from inside that company or by SUPADM, and the change is audited under that company.
+  Revisit if the installation is ever offered to unrelated customers.

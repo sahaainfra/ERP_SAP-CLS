@@ -181,6 +181,31 @@ export function createLedgerService({ db, base }) {
     });
   }
 
+  /**
+   * F01-1: part of a posted actual line goes away (material returned to the vendor, or back from site into a store that is not the project's). The line keeps
+   * its history: its amount and quantity are reduced, never below zero, and what it had consumed of a commitment is given back to that commitment, so an
+   * order that is still open is committed again for the replacement (a closed one stays closed). Nothing posted for that line (for example a receipt into a central store) means nothing to reduce.
+   */
+  function reduceActual(actor, { sourceType, sourceId, lineId, amount, qty = 0, refType = null, refId = null, note = null }) {
+    const a = db.prepare("SELECT * FROM bud_actuals WHERE company_id = ? AND src_type = ? AND src_id = ? AND src_line_id = ? AND status = 'POSTED' AND deleted_at IS NULL").get(actor.companyId, sourceType, String(sourceId), String(lineId ?? ''));
+    if (!a) return null;
+    const cut = Math.min(a.amount, Math.max(0, Math.round(Number(amount) * 100))); const cutQty = Math.min(a.qty, Math.max(0, Math.round(Number(qty ?? 0) * 1000)));
+    if (cut === 0 && cutQty === 0) return { id: a.id, reduced: '0.00' };
+    const un = Math.min(a.consumed_amount, cut); const unQty = Math.min(a.consumed_qty, cutQty);
+    return transaction(db, () => {
+      db.prepare('UPDATE bud_actuals SET amount = amount - ?, qty = qty - ?, consumed_amount = consumed_amount - ?, consumed_qty = consumed_qty - ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(cut, cutQty, un, unQty, actor.user, nowIso(), a.id);
+      const c = a.commitment_id ? commitRow(a.commitment_id) : null;
+      if (c && un > 0) {
+        const n = { ...c, consumed_amount: Math.max(0, c.consumed_amount - un), consumed_qty: Math.max(0, c.consumed_qty - unQty) };
+        db.prepare('UPDATE bud_commitments SET consumed_amount = ?, consumed_qty = ?, status = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(n.consumed_amount, n.consumed_qty, c.status === 'CANCELLED' ? 'CANCELLED' : (c.released_amount > 0 ? 'CLOSED' : statusOf(n)), actor.user, nowIso(), c.id);
+        logOf(actor, c, 'UNCONSUMED', un, unQty, refType ?? sourceType, String(refId ?? sourceId), note ?? 'reduced');
+      }
+      audit(actor, 'bud_actuals', a.id, 'reduce', actor.companyId, { oldValues: { amount: money(a.amount) }, newValues: { amount: money(a.amount - cut), by: refType && refId ? `${refType} ${refId}` : null }, reason: note });
+      event('bud.actual.posted', actor, a.id, actor.companyId, a.org_project_id, { projectId: a.org_project_id, sourceType, sourceId: String(sourceId), lines: 1, amount: `-${money(cut)}`, reversed: false });
+      return { id: a.id, reduced: money(cut) };
+    });
+  }
+
   // ---- the check API, availability, the report ---------------------------------------------------------------------------------------------------------------------
   const ledger = {
     check(actor, b) {
@@ -243,7 +268,7 @@ export function createLedgerService({ db, base }) {
       return bad;
     },
     commitments: { commit, release, ledgerLog: (actor, id) => { const c = commitRow(rid(id)); if (!c || c.company_id !== actor.companyId || !may(actor, 'bud.ledger.view', c.org_project_id)) throw notFound('That commitment does not exist.'); return db.prepare('SELECT * FROM bud_commitment_log WHERE commitment_id = ? ORDER BY id').all(c.id).map((x) => ({ id: x.id, action: x.action, amountDelta: signed(x.amount_delta), refType: x.ref_type, refId: x.ref_id, note: x.note, at: x.created_at, by: x.created_by })); } },
-    actuals: { post: postActual, reverse: reverseActual },
+    actuals: { post: postActual, reverse: reverseActual, reduce: reduceActual },
     ingestCommitment(actor, b) {
       need(actor, 'bud.ledger.post', 'post to the commitment ledger', b.projectId);
       if (b.action === 'UPSERT') { if (!b.lines.length) throw unprocessable('A commitment has lines.'); return commit(actor, b); }
