@@ -35,7 +35,8 @@ export const TEXT_PAIRS = [
   { fg: 'text.on-accent', bg: 'brand.accent' },
   { fg: 'text.on-shell', bg: 'bg.shell' }, { fg: 'text.on-shell-muted', bg: 'bg.shell' }, { fg: 'text.on-shell', bg: 'bg.shell-hover' },
   ...['success', 'warning', 'error', 'info', 'neutral', 'muted'].flatMap((s) => [{ fg: `status.${s}.fg`, bg: `status.${s}.bg` }, { fg: `status.${s}.fg`, bg: 'bg.surface' }]),
-  { fg: 'border.focus', bg: 'bg.surface', large: true }, { fg: 'border.control', bg: 'bg.surface', large: true },
+  { fg: 'border.focus', bg: 'bg.surface', large: true }, { fg: 'border.focus', bg: 'bg.page', large: true }, { fg: 'border.control', bg: 'bg.surface', large: true },
+  // the shell bar marks focus with its own text colour (styles.css), so that ring is the text.on-shell / bg.shell pair above
 ];
 
 /** The contrast report of every pair in every theme. AAA (7:1, or 4.5:1 for large) is reported too; the high-contrast theme aims for it. */

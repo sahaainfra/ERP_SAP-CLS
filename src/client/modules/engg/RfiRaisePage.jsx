@@ -30,7 +30,7 @@ function Markup({ onChange }) {
         {has && <button type="button" className="btn" onClick={undo} data-testid="raise-undo">{t('raise.undo')}</button>}
       </div>
       {has && <p className="muted">{t('raise.markHint')}</p>}
-      <canvas ref={canvas} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-testid="raise-canvas" aria-label={t('raise.photo')} style={{ width: '100%', maxHeight: '60vh', objectFit: 'contain', touchAction: 'none', display: has ? 'block' : 'none', background: 'var(--erp-color-surface-subtle)' }} />
+      <canvas ref={canvas} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-testid="raise-canvas" aria-label={t('raise.photo')} style={{ width: '100%', maxHeight: '60vh', objectFit: 'contain', touchAction: 'none', display: has ? 'block' : 'none', background: 'var(--erp-color-bg-surface-sunken)' }} />
     </fieldset>
   );
 }

@@ -65,7 +65,7 @@ export default function BoardPage() {
     </li>
   );
   const Lane = ({ id, title, sub, tone, toneLabel, items, summary }) => (
-    <section className="mdm-panel" style={{ minWidth: 240, flex: '1 1 260px', outline: over === (id ?? 'none') ? '2px dashed var(--erp-color-focus)' : undefined }} aria-label={title} data-testid="bd-lane" data-front={title}
+    <section className="mdm-panel" style={{ minWidth: 240, flex: '1 1 260px', outline: over === (id ?? 'none') ? '2px dashed var(--erp-color-border-focus)' : undefined }} aria-label={title} data-testid="bd-lane" data-front={title}
       onDragOver={(e) => { if (dragged.current) { e.preventDefault(); setOver(id ?? 'none'); } }} onDragLeave={() => setOver(null)}
       onDrop={(e) => { e.preventDefault(); setOver(null); const d = dragged.current; dragged.current = null; if (d && d.from !== id) move(d.id, id, d.from); }}>
       <h2 style={{ fontSize: '1rem' }}>{title} {tone && <StatusBadge status={tone} label={toneLabel} />}</h2>
