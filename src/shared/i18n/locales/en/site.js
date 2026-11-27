@@ -336,6 +336,7 @@ export default {
   'dpr.sentAt': 'Sent',
   'dpr.start': 'Start the report',
   'dpr.startHelp': 'The work authorisations, attendance, material issues and plant logs of the day are offered; you confirm or change them.',
+  'dpr.prefillFailed': 'Could not load the report data. Check the site and date, then try again.',
   'dpr.steps': 'Steps of the report',
   'dpr.sum.equipment': '{n} equipment lines',
   'dpr.sum.labour': '{n} labour lines, {d} man-days',

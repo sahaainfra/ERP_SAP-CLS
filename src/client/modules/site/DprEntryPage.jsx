@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
@@ -71,9 +71,21 @@ const missingReasons = (f, tol) => {
 };
 
 export default function DprEntryPage() {
-  const t = useT('site'); usePageTitle(t('dpr.entry'));
+  const t = useT('site'); const common = useT('common'); usePageTitle(t('dpr.entry'));
   const sp = useSearch(); const editId = Number(sp.get('id')) || null; const offline = useOffline(); const online = offline.online !== false && navigator.onLine;
   const [step, setStep] = useState(0); const [siteId, setSiteId] = useState(Number(sp.get('siteId')) || null); const [date, setDate] = useState(sp.get('date') ?? today()); const [scope, setScope] = useState('SITE');
+  const stepHeading = useRef(null);
+  const focusStep = useRef(false);
+  const goToStep = (next) => {
+    if (next === step) return;
+    focusStep.current = true;
+    setStep(next);
+  };
+  useEffect(() => {
+    if (!focusStep.current) return;
+    focusStep.current = false;
+    stepHeading.current?.focus();
+  }, [step]);
   const [form, setForm] = useState(null); const [meta, setMeta] = useState(null); const [existing, setExisting] = useState(null); const [error, setError] = useState(null); const [busy, setBusy] = useState(false); const [note, setNote] = useState(null);
   const [photos, setPhotos] = useState([]); const [cmd, setCmd] = useState(null);
   const fieldOn = useFlagOn('ff.field.p16603'); const tf = useT('field'); const [voice, setVoice] = useState(null); const [sameNote, setSameNote] = useState(null);
@@ -92,10 +104,12 @@ export default function DprEntryPage() {
     try {
       let p = null;
       if (online) { try { p = await st.dprPrefill(siteId, date, scope); } catch (e) { if (e?.status) throw e; } }
-      if (p) { setExisting(p.existing); setMeta({ site: `${p.site.projectCode} ${p.site.code}`, tolerance: p.tolerance, cutoff: p.cutoff, date, scope }); setForm(fromPrefill(p)); if (!p.existing || !['DRAFT', 'RETURNED'].includes(p.existing.status)) setStep(1); return; }
+      if (p) { setExisting(p.existing); setMeta({ site: `${p.site.projectCode} ${p.site.code}`, tolerance: p.tolerance, cutoff: p.cutoff, date, scope }); setForm(fromPrefill(p)); if (!p.existing || !['DRAFT', 'RETURNED'].includes(p.existing.status)) goToStep(1); return; }
       const row = (offline.masters?.dpr_prefill ?? []).find((r) => r.id === `${siteId}:${date}`);
-      setMeta({ site: row?.site ?? String(siteId), tolerance: { qtyPct: 5, labourPct: 10 }, date, scope, cached: Boolean(row) }); setForm(fromPrefill(row ?? { work: [], labour: [], materials: [], equipment: [], notes: [], nextDay: null })); setNote(row ? t('dpr.fromPhone') : t('dpr.noCache')); setStep(1);
-    } catch (e) { setError(errorInfo(e)); } finally { setBusy(false); }
+      setMeta({ site: row?.site ?? String(siteId), tolerance: { qtyPct: 5, labourPct: 10 }, date, scope, cached: Boolean(row) }); setForm(fromPrefill(row ?? { work: [], labour: [], materials: [], equipment: [], notes: [], nextDay: null })); setNote(row ? t('dpr.fromPhone') : t('dpr.noCache')); goToStep(1);
+    } catch (e) {
+      setError({ key: 'dpr.prefillFailed', correlationId: e?.correlationId });
+    } finally { setBusy(false); }
   };
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const setLine = (sec, i, patch) => setForm((f) => ({ ...f, [sec]: f[sec].map((x, j) => (j === i ? { ...x, ...patch } : x)) }));
@@ -116,7 +130,7 @@ export default function DprEntryPage() {
   };
   const send = async (submit) => {
     setError(null); setNote(null);
-    if (submit && need.length) { setError({ form: t('dpr.needReasons', { n: need.length }) }); setStep(1); return; }
+    if (submit && need.length) { setError({ form: t('dpr.needReasons', { n: need.length }) }); goToStep(1); return; }
     setBusy(true);
     try {
       const b = body(form); const gps = await new Promise((res) => (navigator.geolocation ? navigator.geolocation.getCurrentPosition((p) => res({ lat: Number(p.coords.latitude.toFixed(6)), lng: Number(p.coords.longitude.toFixed(6)) }), () => res(null), { timeout: 4000, maximumAge: 60_000 }) : res(null)));
@@ -137,22 +151,23 @@ export default function DprEntryPage() {
   const reasonField = (sec, i, line) => (need.includes(`${sec}.${i}`) ? <Field label={t('dpr.reason')} name={`${sec}-${i}-reason`}><input value={line.reason} onChange={(e) => setLine(sec, i, { reason: e.target.value })} style={big} maxLength={500} data-testid={`dpr-reason-${sec}`} /></Field> : null);
   const Nav = ({ last = false }) => (
     <div className="actions-row" style={{ marginTop: 12 }}>
-      <button type="button" className="btn" style={big} onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} data-testid="dpr-back">{t('dpr.back')}</button>
-      {!last && <button type="button" className="btn btn-primary" style={big} onClick={() => setStep(step + 1)} data-testid="dpr-next">{t('dpr.next')}</button>}
+      <button type="button" className="btn" style={big} onClick={() => goToStep(step - 1)} disabled={step === (editId ? 1 : 0)} data-testid="dpr-back">{t('dpr.back')}</button>
+      {!last && <button type="button" className="btn btn-primary" style={big} onClick={() => goToStep(step + 1)} data-testid="dpr-next">{t('dpr.next')}</button>}
     </div>
   );
   return (
     <section aria-labelledby="dpr-h" data-testid="site-dpr-entry" style={{ maxWidth: 720 }}>
       <PageHeader id="dpr-h" title={t('dpr.entry')} />
       <p className={`att-net${online ? '' : ' is-off'}`} role="status" data-testid="dpr-net">{online ? t('dpr.online') : t('dpr.offline')}{offline.queue?.filter(isWaiting).length ? ` · ${t('dpr.waiting', { n: offline.queue.filter(isWaiting).length })}` : ''} · <Link to="/field/sync">{t('dpr.syncStatus')}</Link></p>
-      <ol className="steps" style={{ display: 'flex', gap: 4, flexWrap: 'wrap', listStyle: 'none', padding: 0 }} aria-label={t('dpr.steps')}>{STEPS.map((k, i) => <li key={k}><button type="button" className={`btn${i === step ? ' btn-primary' : ''}`} style={{ minHeight: 40 }} onClick={() => form && setStep(i)} disabled={!form && i > 0} aria-current={i === step ? 'step' : undefined} data-testid={`dpr-step-${k}`}>{i + 1}. {t(`dpr.s.${k}`)}</button></li>)}</ol>
-      {error?.form && <p className="field-error" role="alert" data-testid="dpr-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join('; ')}` : ''}</p>}
+      <ol className="steps" style={{ display: 'flex', gap: 4, flexWrap: 'wrap', listStyle: 'none', padding: 0 }} aria-label={t('dpr.steps')}>{STEPS.map((k, i) => <li key={k}><button type="button" className={`btn${i === step ? ' btn-primary' : ''}`} style={{ minHeight: 40 }} onClick={() => form && goToStep(i)} disabled={(!form && i > 0) || (Boolean(editId) && i === 0)} aria-current={i === step ? 'step' : undefined} data-testid={`dpr-step-${k}`}>{i + 1}. {t(`dpr.s.${k}`)}</button></li>)}</ol>
+      {(error?.key || error?.form) && <p className="field-error" role="alert" data-testid="dpr-error">{error.key ? t(error.key) : error.form}{error.correlationId && <> {common('error.correlation', { id: '' })}<code>{error.correlationId}</code></>}{error.fields ? ` ${Object.entries(error.fields).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="dpr-note">{note}</p>}
       {eq.isPending && editId && <Skeleton label={t('dpr.entry')} rows={4} />}
       {eq.isError && <ErrorState error={eq.error} onRetry={eq.refetch} />}
 
       {step === 0 && !editId && (
         <div className="mdm-panel" data-testid="dpr-day">
+          <h2 ref={stepHeading} tabIndex={-1}>{t('dpr.s.day')}</h2>
           <SiteDay siteId={siteId} date={date} onSite={onSite} onDate={setDate} testId="dpr" />
           <fieldset><legend>{t('dpr.scope')}</legend>{['SITE', 'SUPERVISOR'].map((k) => <label key={k} className="check" style={{ marginRight: 16, minHeight: 44 }}><input type="radio" name="scope" checked={scope === k} onChange={() => setScope(k)} data-testid={`dpr-scope-${k}`} /> {t(`dpr.scope.${k}`)}</label>)}</fieldset>
           {existing && <p className="mdm-banner" data-testid="dpr-existing">{t('dpr.existing', { n: existing.docNo })} <Link to={['DRAFT', 'RETURNED'].includes(existing.status) ? `/site/dpr-entry?id=${existing.id}` : `/site/dprs?id=${existing.id}`}>{t('dpr.open')}</Link></p>}
@@ -162,7 +177,7 @@ export default function DprEntryPage() {
       )}
 
       {form && step === 1 && (
-        <div data-testid="dpr-work"><h2>{t('dpr.s.work')}</h2><p className="muted">{t('dpr.workHelp', { p: meta.tolerance.qtyPct })}</p>
+        <div data-testid="dpr-work"><h2 ref={stepHeading} tabIndex={-1}>{t('dpr.s.work')}</h2><p className="muted">{t('dpr.workHelp', { p: meta.tolerance.qtyPct })}</p>
           {form.work.length === 0 && <p className="muted" data-testid="dpr-work-empty">{t('dpr.noWork')}</p>}
           {form.work.map((w, i) => (
             <fieldset key={w.waId} className="mdm-panel" data-testid="dpr-work-line"><legend>{w.waNo} · {w.activity}</legend>
@@ -176,7 +191,7 @@ export default function DprEntryPage() {
       )}
 
       {form && step === 2 && (
-        <div data-testid="dpr-labour"><h2>{t('dpr.s.labour')}</h2><p className="muted">{t('dpr.labourHelp', { p: meta.tolerance.labourPct })}</p>
+        <div data-testid="dpr-labour"><h2 ref={stepHeading} tabIndex={-1}>{t('dpr.s.labour')}</h2><p className="muted">{t('dpr.labourHelp', { p: meta.tolerance.labourPct })}</p>
           {fieldOn && online && <p><button type="button" className="btn" style={big} onClick={sameAsYesterday} data-testid="dpr-same-as-yesterday">{tf('sameAsYesterday')}</button>{sameNote && <span role="status" className="muted" data-testid="dpr-same-note"> {sameNote}</span>}</p>}
           {form.labour.map((l, i) => (
             <fieldset key={`${l.category}-${l.contractorId}-${l.trade}-${i}`} className="mdm-panel" data-testid="dpr-labour-line"><legend>{t(`dpr.cat.${l.category}`)} · {l.trade}{l.contractor ? ` · ${l.contractor}` : ''}</legend>
@@ -195,7 +210,7 @@ export default function DprEntryPage() {
       )}
 
       {form && step === 3 && (
-        <div data-testid="dpr-materials"><h2>{t('dpr.s.materials')}</h2>
+        <div data-testid="dpr-materials"><h2 ref={stepHeading} tabIndex={-1}>{t('dpr.s.materials')}</h2>
           {form.materials.map((m, i) => (
             <fieldset key={`${m.itemId}-${m.waId}-${i}`} className="mdm-panel" data-testid="dpr-material-line"><legend>{m.item}</legend>
               <Field label={t('dpr.qtyUsed', { u: m.uom ?? '' })} name={`m-${i}`}><input type="number" inputMode="decimal" min="0" step="0.001" value={m.qty} onChange={(e) => setLine('materials', i, { qty: e.target.value })} style={big} /></Field>
@@ -219,7 +234,7 @@ export default function DprEntryPage() {
       )}
 
       {form && step === 4 && (
-        <div data-testid="dpr-notes"><h2>{t('dpr.s.notes')}</h2>
+        <div data-testid="dpr-notes"><h2 ref={stepHeading} tabIndex={-1}>{t('dpr.s.notes')}</h2>
           <div className="form-grid">
             <Field label={t('dpr.weather')} name="weatherCode"><select value={form.weatherCode} onChange={(e) => set('weatherCode', e.target.value)} style={big} data-testid="dpr-weather"><option value="">—</option>{WEATHER_CODES.map((k) => <option key={k} value={k}>{t(`dpr.w.${k}`)}</option>)}</select></Field>
             <Field label={t('dpr.rain')} name="rainMm"><input type="number" inputMode="numeric" min="0" max="2000" value={form.rainMm} onChange={(e) => set('rainMm', e.target.value)} style={big} /></Field>
@@ -233,7 +248,7 @@ export default function DprEntryPage() {
       )}
 
       {form && step === 5 && (
-        <div data-testid="dpr-photos"><h2>{t('dpr.s.photos')}</h2><p className="muted">{t('dpr.photosHelp')}</p>
+        <div data-testid="dpr-photos"><h2 ref={stepHeading} tabIndex={-1}>{t('dpr.s.photos')}</h2><p className="muted">{t('dpr.photosHelp')}</p>
           <label className="btn btn-primary" style={{ ...big, display: 'inline-flex', alignItems: 'center' }}>{t('dpr.takePhoto')}<input type="file" accept="image/*" capture="environment" multiple onChange={async (e) => { const files = [...e.target.files]; e.target.value = ''; const lines = fieldOn ? await stampedPhotos(files) : files.map((file) => ({ file, caption: '' })); setPhotos((p) => [...p, ...lines]); }} style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} data-testid="dpr-photo-input" /></label>
           <ul style={{ listStyle: 'none', padding: 0 }}>{photos.map((p, i) => <li key={i} className="mdm-panel" data-testid="dpr-photo-line"><strong>{p.file.name}</strong> · {p.info ? tf('photo.made', { before: `${Math.round(p.info.before / 1024)} KB`, after: `${Math.round(p.info.after / 1024)} KB` }) : `${Math.round(p.file.size / 1024)} KB`}{p.info?.stamp && <span className="muted small" data-testid="dpr-photo-stamp"> · {p.info.stamp}</span>} <input aria-label={t('dpr.caption')} placeholder={t('dpr.caption')} value={p.caption} onChange={(e) => setPhotos((l) => l.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)))} style={big} maxLength={300} /> <button type="button" className="btn" onClick={() => setPhotos((l) => l.filter((_, j) => j !== i))}>{t('act.remove')}</button></li>)}</ul>
           {fieldOn && <VoiceNote value={voice} onChange={setVoice} testid="dpr-voice" />}
@@ -242,7 +257,7 @@ export default function DprEntryPage() {
       )}
 
       {form && step === 6 && (
-        <div className="mdm-panel" data-testid="dpr-send"><h2>{t('dpr.s.send')}</h2>
+        <div className="mdm-panel" data-testid="dpr-send"><h2 ref={stepHeading} tabIndex={-1}>{t('dpr.s.send')}</h2>
           <ul data-testid="dpr-summary"><li>{t('dpr.sum.work', { n: form.work.length })}</li><li>{t('dpr.sum.labour', { n: form.labour.length, d: fmtQty(form.labour.reduce((s, l) => s + num(l.manDays), 0)) })}</li><li>{t('dpr.sum.materials', { n: form.materials.length })}</li><li>{t('dpr.sum.equipment', { n: form.equipment.length })}</li><li>{t('dpr.sum.photos', { n: photos.length })}</li></ul>
           {need.length > 0 && <p className="field-error" role="alert" data-testid="dpr-need">{t('dpr.needReasons', { n: need.length })}</p>}
           {!online && <p className="muted" data-testid="dpr-offline-help">{t('dpr.offlineHelp')}</p>}
