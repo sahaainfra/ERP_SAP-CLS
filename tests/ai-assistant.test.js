@@ -3,12 +3,16 @@ import assert from 'node:assert/strict';
 import '../src/server/modules/registry.js';
 import { parseQuestion } from '../src/server/modules/ai/assistant.js';
 import { setupCompany, startApi } from './helpers.js';
+import { todayIST } from '../src/shared/dates.js';
 
 // Part 28.02: the AI assistant and role copilots on the 28.01 gateway.
 // T-01 the assistant refuses data outside the person's scope, and drafts are saved as DRAFT records; FR-01 what the panel offers follows the
 // enablement; FR-02 a question becomes a governed query, shown with the answer and its citations; BR-01 no data → says so without a model;
 // FR-03 drafts saved into their module only on confirmation; FR-04 copilots; FR-05 feedback; the kill switch stops the assistant too.
 const A = '/api/v1/ai';
+// PACK-W0-01: an RFI's required-by date must be today or later; a fixed '2027-01-15' would fail from 16 January 2027 (and did on the
+// year-end clock job), so it is 60 days after the application's today
+const REQUIRED_BY = new Date(Date.parse(`${todayIST()}T00:00:00Z`) + 60 * 86_400_000).toISOString().slice(0, 10);
 const W = '/api/v1/workflow';
 let seq = 0; const key = () => ({ 'content-type': 'application/json', 'idempotency-key': `as-${Date.now().toString(36)}-${(seq += 1)}` });
 const as = (roles, user) => ({ roles, user, company: '1' });
@@ -83,12 +87,12 @@ test('T-01 FR-03 FR-04 drafts become DRAFT records only on confirmation; copilot
   await enable(t, 'ai.draft_document', ['PM', 'DIR', 'SE']); await enable(t, 'ai.copilot_finance');
   // the save runs with the person's own module rights: a PM may not raise RFIs, a site engineer may
   const pmDraft = await t.call(pm, 'POST', `${A}/drafts`, { kind: 'RFI', projectId: t.pid, brief: 'Ask the consultant to confirm the cover to raft reinforcement.' });
-  assert.equal((await t.call(pm, 'POST', `${A}/drafts/${pmDraft.json.data.draftId}/save`, { subject: 'Cover to raft', discipline: 'STRUCTURAL', requiredBy: '2027-01-15' })).status, 403, 'the module refuses the PM (engg.rfi.create)');
+  assert.equal((await t.call(pm, 'POST', `${A}/drafts/${pmDraft.json.data.draftId}/save`, { subject: 'Cover to raft', discipline: 'STRUCTURAL', requiredBy: REQUIRED_BY })).status, 403, 'the module refuses the PM (engg.rfi.create)');
   const d = await t.call(se, 'POST', `${A}/drafts`, { kind: 'RFI', projectId: t.pid, brief: 'Ask the structural consultant to confirm the lap length of the raft reinforcement.' });
   assert.equal(d.status, 201, JSON.stringify(d.json)); assert.equal(d.json.data.canSave, true); assert.equal(d.json.data.label, 'AI-generated — verify');
   assert.equal(t.db.prepare('SELECT COUNT(*) AS n FROM engg_rfis').get().n, 0, 'nothing is created before the person confirms');
-  assert.equal((await t.call(dir, 'POST', `${A}/drafts/${d.json.data.draftId}/save`, { subject: 'Lap length', discipline: 'STRUCTURAL', requiredBy: '2027-01-15' })).status, 404, 'only the person who asked saves it');
-  const saved = await t.call(se, 'POST', `${A}/drafts/${d.json.data.draftId}/save`, { subject: 'Lap length of raft reinforcement', discipline: 'STRUCTURAL', requiredBy: '2027-01-15' });
+  assert.equal((await t.call(dir, 'POST', `${A}/drafts/${d.json.data.draftId}/save`, { subject: 'Lap length', discipline: 'STRUCTURAL', requiredBy: REQUIRED_BY })).status, 404, 'only the person who asked saves it');
+  const saved = await t.call(se, 'POST', `${A}/drafts/${d.json.data.draftId}/save`, { subject: 'Lap length of raft reinforcement', discipline: 'STRUCTURAL', requiredBy: REQUIRED_BY });
   assert.equal(saved.status, 201, JSON.stringify(saved.json)); assert.equal(saved.json.data.status, 'DRAFT');
   assert.equal(t.db.prepare('SELECT status FROM engg_rfis WHERE id = ?').get(saved.json.data.id).status, 'DRAFT', 'T-01: saved as a DRAFT of the module');
   assert.equal((await t.call(se, 'POST', `${A}/drafts/${d.json.data.draftId}/save`, { subject: 'Again' })).status, 422, 'once only');

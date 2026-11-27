@@ -102,7 +102,9 @@ export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, 
   useEffect(() => {
     const d = dialogRef.current;
     if (!d) return undefined;
-    const onClose = () => { formRef.current?.reset(); setAsking(false); };
+    // PACK-W0-01: called through the prototype, because a field named "reset" (the replay dialog's "Empty the consumer") replaces
+    // form.reset with that input ("reset is not a function" on closing it, e2e/operations.spec.js)
+    const onClose = () => { if (formRef.current) HTMLFormElement.prototype.reset.call(formRef.current); setAsking(false); };
     const onCancel = (e) => { if (formChanged(formRef.current)) { e.preventDefault(); setAsking(true); } };
     d.addEventListener('close', onClose);
     d.addEventListener('cancel', onCancel);

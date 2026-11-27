@@ -61,8 +61,10 @@ test('MRP: run for a project, drill to the activities, change and accept proposa
   // the proposals: oldest order-by first; change one, accept the cement ones
   await p.goto(`/proc/mrp-proposals?runId=${new URL(p.url()).searchParams.get('id') ?? ''}`); await p.getByTestId('prop-project').selectOption({ index: 0 }); await expect(p.getByTestId('prop-row').first()).toBeVisible(); await expect(p.getByTestId('prop-row').first()).toHaveAttribute('data-urgency', 'LATE');
   await p.getByTestId('prop-row').filter({ hasText: 'CEMX' }).first().getByTestId('prop-modify-open').click(); await expect(p.getByTestId('prop-modify')).toBeVisible(); await p.getByTestId('prop-qty').fill('350'); await p.getByTestId('prop-save').click(); await expect(p.getByTestId('prop-row').filter({ hasText: 'CEMX' }).first()).toContainText('350');
-  await shot(p, 'proposals', info); for (const r of await p.getByTestId('prop-row').filter({ hasText: 'CEMX' }).all()) await r.getByTestId('prop-check').check(); await p.getByTestId('prop-accept').click();
-  await expect(p.getByTestId('pr-object')).toBeVisible(); await expect(p.getByTestId('pr-object')).toHaveAttribute('data-status', 'DRAFT'); await expect(p.getByTestId('pr-figures')).toContainText('MRP proposal'); await expect(p.getByTestId('pr-line')).toHaveCount(2); await shot(p, 'draft-pr', info);
+  await shot(p, 'proposals', info); // PACK-W0-01: the 14-day activity starting 5 days from today falls into two or three weekly buckets depending on the weekday, so the
+  // requisition has one line per accepted cement proposal rather than a fixed two
+  const cement = await p.getByTestId('prop-row').filter({ hasText: 'CEMX' }).all(); expect(cement.length).toBeGreaterThanOrEqual(2); for (const r of cement) await r.getByTestId('prop-check').check(); await p.getByTestId('prop-accept').click();
+  await expect(p.getByTestId('pr-object')).toBeVisible(); await expect(p.getByTestId('pr-object')).toHaveAttribute('data-status', 'DRAFT'); await expect(p.getByTestId('pr-figures')).toContainText('MRP proposal'); await expect(p.getByTestId('pr-line')).toHaveCount(cement.length); await shot(p, 'draft-pr', info);
   // the heat-map and the long-lead list (the item has an approved long lead time)
   const pm = await open(browser, info, c, 'PROCMGR', s.u('mgr'), '/proc/item-params'); const m = pm.page; await expect(m.getByTestId('proc-params')).toBeVisible();
   // planning proposes parameters in the browser; the procurement manager approves them
