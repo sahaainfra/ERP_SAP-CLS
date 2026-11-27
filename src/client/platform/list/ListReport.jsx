@@ -259,6 +259,7 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
   // rows can be ticked for a bulk action, or to export only them (Part 10)
   const selectable = actions.length > 0 || canExport;
   const MAX_EXPORT_SELECTED = 1000;
+  const MAX_BULK = 200; // the bulk endpoints take at most 200 records (e.g. ui.sample-requests/bulk)
   const exportAs = async (format, ids = null) => {
     setExporting(format);
     setNotice('');
@@ -398,7 +399,8 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
       {selectable && selected.size > 0 && (
         <div className="toolbar lr-bulk" role="group" aria-label="Actions for the selected rows" data-testid="bulk-bar">
           <strong data-testid="selected-count">{selected.size} selected{offPage > 0 ? ` (${offPage} on other pages)` : ''}</strong>
-          {actions.map((a) => <button key={a.id} type="button" className="btn" onClick={() => (a.confirm || a.reasonFor ? setBulkAsk(a) : runBulk(a))}>{a.label}</button>)}
+          {actions.map((a) => <button key={a.id} type="button" className="btn" disabled={selected.size > MAX_BULK} onClick={() => (a.confirm || a.reasonFor ? setBulkAsk(a) : runBulk(a))}>{a.label}</button>)}
+          {actions.length > 0 && selected.size > MAX_BULK && <span className="muted small" data-testid="bulk-limit">An action takes at most {MAX_BULK} rows at a time; clear some of the {selected.size} selected.</span>}
           {canExport && (selected.size <= MAX_EXPORT_SELECTED
             ? ['xlsx', 'csv'].map((f) => <button key={f} type="button" className="btn" disabled={Boolean(exporting)} onClick={() => exportAs(f, [...selected])} data-testid={`export-selected-${f}`}>Export selected ({f.toUpperCase()})</button>)
             : <span className="muted small">More than {MAX_EXPORT_SELECTED} rows are selected: export the whole filtered list instead.</span>)}

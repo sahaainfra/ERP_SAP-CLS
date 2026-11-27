@@ -1,5 +1,5 @@
 import { KpiTile } from '../../../platform/design/Kpi.jsx';
-import { cloneElement, isValidElement, useEffect, useId, useRef, useState } from 'react';
+import { cloneElement, isValidElement, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
 import { logExport } from '../../../platform/audit/index.js';
 import { confirmLeave } from '../../../platform/forms/guard.js';
@@ -143,6 +143,20 @@ export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, 
       </form>
     </dialog>
   );
+}
+
+/**
+ * One save at a time (a page with "Save draft" and "Save and send"): the wrapped action is ignored while an earlier one is still running, so
+ * the second click of a double click, which can land on the other button once the page moves, does not send a second write. Call it at the top
+ * of the component (it is a hook) and wrap the page's action: `const once = useOneAtATime(); const run = once(async (...) => { ... });`
+ */
+export function useOneAtATime() {
+  const running = useRef(false);
+  return useCallback((fn) => async (...args) => {
+    if (running.current) return null;
+    running.current = true;
+    try { return await fn(...args); } finally { running.current = false; }
+  }, []);
 }
 
 export const can = (session, permission) => Boolean(session?.permissions?.includes(permission));
