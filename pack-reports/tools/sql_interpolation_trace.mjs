@@ -76,6 +76,18 @@ function verdict(expr, src, offset, depth = 0) {
   if (/assertIdent|safeIdent|\bident\(|quoteIdent|\b(spec|def|t|tbl|entity|reg|cfg|meta)\.(table|column|col|pk|key)\b|\btable(Name)?\b$|\bTABLES?\b/.test(e)) return ['IDENT_CHECKED', ''];
   if (/\b(where|wh|conds?|conditions|clauses?|filters?|filt|sets?|assign|parts|extra|and|andSql|frag|sqlWhere|having|joins?)\b(\.join\([^)]*\))?$/.test(e) || /\.join\(' (AND|OR) '\)$/.test(e) || /\.join\(', '\)$/.test(e)) return ['FRAGMENT_BUILT', ''];
   if (/^[A-Z][A-Z0-9_]*(\.[A-Za-z0-9_]+)*$/.test(e)) return ['CONSTANT', 'UPPER_CASE name'];
+  // a fragment object or string returned by a helper (`const w = expiredWhere(...)`, then `${w.sql}`): reviewed once per helper
+  const objMatch = /^([A-Za-z_$][\w$]*)(?:\.(sql|where|clause|text|from|on|join))?$/.exec(e);
+  if (objMatch && depth < 2) {
+    const def = definitionOf(src, objMatch[1], offset);
+    const call = def && /^(?:await\s+)?([A-Za-z_$][\w$.]*)\s*\(/.exec(def);
+    if (call) {
+      const fn = call[1];
+      if (/(^|\.)(scopeOf|scope|scopeSql|scopeFilter|projectScope|siteScope|scopeWhere|visibleScope|dataScope)$/i.test(fn)) return ['SCOPE_FILTER', `${objMatch[1]} = ${fn}(…)`];
+      if (/^(Number|Math\.|parseInt|String\(Number)/.test(fn)) return ['NUMERIC', `${objMatch[1]} = ${fn}(…)`];
+      return [`HELPER:${fn}`, `${objMatch[1]} = ${def.slice(0, 100)}`];
+    }
+  }
   if (/^[A-Za-z_$][\w$]*$/.test(e) && depth < 2) {
     const def = definitionOf(src, e, offset);
     if (def) {
@@ -101,8 +113,11 @@ for (const f of files) {
     }
   }
 }
-rows.sort((a, b) => (a.verdict === 'REVIEW') === (b.verdict === 'REVIEW') ? a.file.localeCompare(b.file) || a.line - b.line : a.verdict === 'REVIEW' ? -1 : 1);
+const rank = (v) => (v === 'REVIEW' ? 0 : v.startsWith('HELPER:') ? 1 : 2);
+rows.sort((a, b) => rank(a.verdict) - rank(b.verdict) || a.file.localeCompare(b.file) || a.line - b.line);
 const csv = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 writeFileSync(join(OUT, 'sql-interpolations.csv'), ['file,line,call,expression,verdict,evidence', ...rows.map((r) => [r.file, r.line, r.call, r.expr, r.verdict, r.evidence].map(csv).join(','))].join('\n') + '\n');
-const by = rows.reduce((a, r) => ({ ...a, [r.verdict]: (a[r.verdict] ?? 0) + 1 }), {});
-console.log(JSON.stringify({ files: new Set(rows.map((r) => r.file)).size, interpolations: rows.length, byVerdict: by }, null, 1));
+const by = rows.reduce((a, r) => { const k = r.verdict.startsWith('HELPER:') ? 'HELPER (review the helper once)' : r.verdict; return { ...a, [k]: (a[k] ?? 0) + 1 }; }, {});
+const helpers = rows.filter((r) => r.verdict.startsWith('HELPER:')).reduce((a, r) => { const k = `${r.file} ${r.verdict.slice(7)}`; a[k] = (a[k] ?? 0) + 1; return a; }, {});
+writeFileSync(join(OUT, 'sql-interpolation-helpers.csv'), ['file_and_helper,uses', ...Object.entries(helpers).sort((x, y) => y[1] - x[1]).map(([k, n]) => `${csv(k)},${n}`)].join('\n') + '\n');
+console.log(JSON.stringify({ files: new Set(rows.map((r) => r.file)).size, interpolations: rows.length, byVerdict: by, distinctHelpers: Object.keys(helpers).length }, null, 1));
