@@ -123,7 +123,7 @@ export function registerWidgetProviders() {
   reg('requests.by_project', (ctx) => {
     const s = requestScope(ctx);
     const rows = ctx.db.prepare(`SELECT p.code AS code, p.name AS name, COUNT(*) AS n FROM ui_sample_requests r JOIN org_projects p ON p.id = r.project_id WHERE ${s.where} GROUP BY p.id ORDER BY n DESC, p.code LIMIT 10`).all(s.params);
-    return { categories: rows.map((r) => r.code), series: [{ name: 'Requests', values: rows.map((r) => r.n), drill: rows.map((r) => requestsDrill({ projectCode: r.code, from: ctx.filters.from, to: ctx.filters.to })) }], unit: 'requests', titles: rows.map((r) => r.name) };
+    return { categories: rows.map((r) => r.code), series: [{ name: 'Requests', values: rows.map((r) => r.n), drill: rows.map((r) => requestsDrill({ ...baseDrill(ctx), projectCode: r.code })) }], unit: 'requests', titles: rows.map((r) => r.name) };
   });
   const buckets = (ctx) => {
     const days = daysBetween(ctx.filters.from, ctx.filters.to) + 1;
@@ -145,7 +145,7 @@ export function registerWidgetProviders() {
     const s = requestScope(ctx);
     const rows = ctx.db.prepare(`SELECT p.code AS code, r.priority AS priority, COUNT(*) AS n FROM ui_sample_requests r JOIN org_projects p ON p.id = r.project_id WHERE ${s.where} GROUP BY p.id, r.priority ORDER BY p.code`).all(s.params);
     const codes = [...new Set(rows.map((r) => r.code))].slice(0, 10);
-    const series = ['NORMAL', 'URGENT'].map((pr) => ({ name: pr === 'URGENT' ? 'Urgent' : 'Normal', values: codes.map((c) => rows.find((r) => r.code === c && r.priority === pr)?.n ?? 0), drill: codes.map((c) => requestsDrill({ projectCode: c, priority: pr, from: ctx.filters.from, to: ctx.filters.to })) }));
+    const series = ['NORMAL', 'URGENT'].map((pr) => ({ name: pr === 'URGENT' ? 'Urgent' : 'Normal', values: codes.map((c) => rows.find((r) => r.code === c && r.priority === pr)?.n ?? 0), drill: codes.map((c) => requestsDrill({ ...baseDrill(ctx), projectCode: c, priority: pr })) }));
     return { categories: codes, series, unit: 'requests' };
   });
   reg('requests.heatmap', (ctx) => {
@@ -153,7 +153,7 @@ export function registerWidgetProviders() {
     const rows = ctx.db.prepare(`SELECT p.code AS code, r.status AS status, COUNT(*) AS n FROM ui_sample_requests r JOIN org_projects p ON p.id = r.project_id WHERE ${s.where} GROUP BY p.id, r.status`).all(s.params);
     const rowsOf = [...new Set(rows.map((r) => r.code))].sort().slice(0, 12);
     const cols = ['DRAFT', 'SUBMITTED', 'CANCELLED'];
-    return { rows: rowsOf, cols: cols.map((c) => STATUS_LABEL[c]), cells: rowsOf.flatMap((code, ri) => cols.map((st, ci) => ({ row: ri, col: ci, value: rows.find((r) => r.code === code && r.status === st)?.n ?? 0, drill: requestsDrill({ projectCode: code, status: st, from: ctx.filters.from, to: ctx.filters.to }) }))), unit: 'requests' };
+    return { rows: rowsOf, cols: cols.map((c) => STATUS_LABEL[c]), cells: rowsOf.flatMap((code, ri) => cols.map((st, ci) => ({ row: ri, col: ci, value: rows.find((r) => r.code === code && r.status === st)?.n ?? 0, drill: requestsDrill({ ...baseDrill(ctx), projectCode: code, status: st }) }))), unit: 'requests' };
   });
   reg('requests.gantt', (ctx) => {
     const s = requestScope(ctx, { extra: "r.status IN ('DRAFT', 'SUBMITTED') AND r.required_by IS NOT NULL" });

@@ -94,6 +94,7 @@ tr:last-child td { border-bottom: 0; }
 
 .dialog { border: 1px solid var(--erp-color-border-strong); border-radius: var(--erp-radius-lg); background: var(--erp-color-bg-surface); color: var(--erp-color-text-primary); width: min(32rem, calc(100vw - 32px)); padding: var(--erp-space-6); }
 .dialog::backdrop { background: var(--erp-color-overlay-backdrop); }
+.dialog-discard { margin: var(--erp-space-4) 0; padding: var(--erp-space-3) var(--erp-space-4); border-radius: var(--erp-radius-md); background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); border: 1px solid var(--erp-color-status-warning-solid); }
 .field { min-width: 0; display: flex; flex-direction: column; gap: var(--erp-space-2); margin-bottom: var(--erp-space-4); font: var(--erp-type-label); }
 .field-inline { margin: 0; }
 .field-error { color: var(--erp-color-status-error-fg); font-weight: 400; }

@@ -93,8 +93,22 @@ const baseQuery = z.object({
  * Turn a request's query string into a validated list request: { page, pageSize, offset, q, sort: [{ key, dir }], filters: [{ key, op, value }] }.
  * `extra` names other query parameters a register accepts (for example `format` on an export).
  */
+/**
+ * Part 10: the column that holds a row's id, for a selection (`ids=4,9,12`). A list may name it (`idSql`), or declare an `id` column;
+ * otherwise it is the `id` of the first table of `from` ('ui_sample_requests r JOIN ...' -> r.id). Null when it cannot be told.
+ */
+const SQL_WORDS = new Set(['join', 'left', 'right', 'inner', 'outer', 'cross', 'where', 'on', 'as']);
+export function idSqlOf(def) {
+  if (def.idSql) return def.idSql;
+  if (def.columns.id?.sql) return def.columns.id.sql;
+  const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)(?:\s+(?:AS\s+)?([A-Za-z_][A-Za-z0-9_]*))?/i.exec(def.from ?? '');
+  if (!m) return null;
+  return `${m[2] && !SQL_WORDS.has(m[2].toLowerCase()) ? m[2] : m[1]}.id`;
+}
+export const MAX_SELECTED_IDS = 1000;
+
 export function parseListRequest(def, query, { extra = [] } = {}) {
-  const known = new Set(['page', 'pageSize', 'q', 'sort', ...extra]);
+  const known = new Set(['page', 'pageSize', 'q', 'sort', 'ids', ...extra]);
   const base = parse(baseQuery, Object.fromEntries(Object.entries(query).filter(([k]) => known.has(k))));
   const problems = [];
   const sort = [];
@@ -116,8 +130,18 @@ export function parseListRequest(def, query, { extra = [] } = {}) {
     if (typeof raw !== 'string' || raw.length > 500) { problems.push({ field: name, message: 'Use one value of at most 500 characters' }); continue; }
     filters.push({ key, op, raw });
   }
+  // a selection (Part 10): the rows the person ticked, always inside the filter (both apply), so an export of them never reaches past it
+  let ids;
+  if (query.ids !== undefined) {
+    const raw = String(query.ids);
+    const list = raw.split(',').map((x) => x.trim()).filter(Boolean);
+    if (!idSqlOf(def)) problems.push({ field: 'ids', message: 'This list cannot be narrowed to chosen rows' });
+    else if (!list.length || list.some((x) => !/^[1-9][0-9]{0,15}$/.test(x))) problems.push({ field: 'ids', message: 'Give the chosen rows as a comma list of record numbers' });
+    else if (list.length > MAX_SELECTED_IDS) problems.push({ field: 'ids', message: `Choose at most ${MAX_SELECTED_IDS} rows; to take more, export the whole filtered list` });
+    else ids = [...new Set(list.map(Number))];
+  }
   if (problems.length) throw badRequest('Some list parameters are invalid.', problems);
-  return { page: base.page, pageSize: base.pageSize, offset: (base.page - 1) * base.pageSize, q: base.q.trim(), sort, filters, ...Object.fromEntries(extra.filter((k) => query[k] !== undefined).map((k) => [k, query[k]])) };
+  return { page: base.page, pageSize: base.pageSize, offset: (base.page - 1) * base.pageSize, q: base.q.trim(), sort, filters, ...(ids ? { ids } : {}), ...Object.fromEntries(extra.filter((k) => query[k] !== undefined).map((k) => [k, query[k]])) };
 }
 
 /** The WHERE clause and parameters of a list request (search, filters, the register's own condition and the caller's scope). */
@@ -147,6 +171,7 @@ export function whereOf(def, req, { scopeSql = '1 = 1', params = {} } = {}) {
     else if (f.op === 'empty') parts.push(`(${sql} IS NULL OR ${sql} = '')`);
     else if (f.op === 'notempty') parts.push(`(${sql} IS NOT NULL AND ${sql} != '')`);
   }
+  if (req.ids?.length) parts.push(`${idSqlOf(def)} IN (${req.ids.map(bind).join(', ')})`);
   return { sql: parts.join(' AND '), params: p };
 }
 
@@ -182,7 +207,7 @@ export function countList(db, def, req, { scopeSql, params }) {
 }
 
 /** The filters of a request as plain data (for saved views, export jobs and the audit trail). */
-export const filtersOf = (req) => ({ q: req.q || undefined, sort: req.sort.map((s) => `${s.dir === 'desc' ? '-' : ''}${s.key}`).join(',') || undefined, filters: req.filters.map((f) => ({ key: f.key, op: f.op, value: f.raw })) });
+export const filtersOf = (req) => ({ q: req.q || undefined, sort: req.sort.map((s) => `${s.dir === 'desc' ? '-' : ''}${s.key}`).join(',') || undefined, filters: req.filters.map((f) => ({ key: f.key, op: f.op, value: f.raw })), ...(req.ids?.length ? { selected: req.ids.length } : {}) });
 
 /** The query-string parameters that reproduce a request (an export job replays the screen's query exactly). */
 export function queryOf(req) {
@@ -190,5 +215,6 @@ export function queryOf(req) {
   if (req.q) q.q = req.q;
   if (req.sort.length) q.sort = req.sort.map((s) => `${s.dir === 'desc' ? '-' : ''}${s.key}`).join(',');
   for (const f of req.filters) q[f.op === 'eq' ? `filter[${f.key}]` : `filter[${f.key}][${f.op}]`] = f.raw;
+  if (req.ids?.length) q.ids = req.ids.join(',');
   return q;
 }

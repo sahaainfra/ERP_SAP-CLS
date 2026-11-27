@@ -4,7 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
-import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { errorInfo, Field, Link, navigateTo, useOneAtATime, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { aw, dayIST, inr, tdr } from './api.js';
 import { TimelinePanel, useSearch } from './parts.jsx';
@@ -17,6 +17,7 @@ const blank = { outcome: 'WON', loaNo: '', loaDate: '', awardedValue: '', awarde
 export default function AwardPage() {
   const t = useT('bd');
   const qc = useQueryClient();
+  const once = useOneAtATime(); // one save at a time: a double click does not save twice
   const session = useSession();
   const perms = session.data?.permissions ?? [];
   const params = useSearch();
@@ -36,7 +37,7 @@ export default function AwardPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (tq.isError) return <ErrorState error={tq.error} onRetry={tq.refetch} />;
   const tn = tq.data; const negotiations = a ? a.negotiations : nq.data ?? []; const results = a ? a.results : rq.data?.rows ?? [];
-  const run = async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r ?? true; } catch (x) { setError(errorInfo(x)); return null; } };
+  const run = once(async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r ?? true; } catch (x) { setError(errorInfo(x)); return null; } });
   const why = (fn, done) => { const r = window.prompt(t('act.why')); if (r) run(() => fn(r), done); };
   const body = () => ({ outcome: v.outcome, ...(v.outcome === 'WON' ? { loaNo: v.loaNo.trim() || null, loaDate: v.loaDate || null, awardedValue: v.awardedValue === '' ? null : Number(v.awardedValue) } : { awardedTo: v.awardedTo.trim() || null, lossReasonCode: v.lossReasonCode || null, lossReason: v.lossReason.trim() || null }) });
   const editable = a ? a.can.edit : perms.includes('bd.award.create') && tn.stage === 'SUBMITTED';

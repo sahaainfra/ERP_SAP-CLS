@@ -315,3 +315,31 @@ test('a list whose module has no export route of its own exports through the Lis
   assert.equal((await api.call('GET', `${U}/lists/inv.stores`, store)).json.data.exportable, true);
   await api.close();
 });
+
+test('Part 10: rows chosen across pages of a filtered register export exactly; a chosen row outside the filter never does; the selection is checked', async () => {
+  const api = await startApi();
+  seed(api, 600);
+  const qs = 'filter[status]=DRAFT&sort=-total';
+  const page = async (n) => (await api.call('GET', `${U}/sample-requests?${qs}&page=${n}&pageSize=25`, pm)).json;
+  const p1 = await page(1); const p5 = await page(5);
+  assert.equal(p1.meta.total, 200, 'the filter keeps 200 of the 600');
+  const chosen = [...p1.data.slice(0, 3), ...p5.data.slice(10, 12)].map((r) => r.id);
+  const outside = Number(api.db.prepare("SELECT id FROM ui_sample_requests WHERE status = 'SUBMITTED' ORDER BY id LIMIT 1").get().id);
+  // the list itself, narrowed to the choice: the five drafts, not the submitted one
+  const screen = await api.call('GET', `${U}/sample-requests?${qs}&ids=${[...chosen, outside].join(',')}&pageSize=25`, pm);
+  assert.equal(screen.status, 200, JSON.stringify(screen.json));
+  assert.deepEqual(screen.json.data.map((r) => r.id).sort((a, b) => a - b), [...chosen].sort((a, b) => a - b));
+  assert.equal(screen.json.meta.total, 5);
+  // the export of the choice carries those rows, and says how many
+  const csv = await api.raw('GET', `${U}/sample-requests/export?format=csv&${qs}&ids=${[...chosen, outside].join(',')}`, pm);
+  assert.equal(csv.status, 200);
+  assert.equal(Number(csv.headers.get('x-export-rows')), 5, 'reconciles with the choice inside the filter');
+  const titles = new Set(api.db.prepare(`SELECT title FROM ui_sample_requests WHERE id IN (${chosen.join(',')})`).all().map((r) => r.title));
+  const body = csv.buffer.toString('utf8');
+  for (const t of titles) assert.ok(body.includes(t), `${t} is in the file`);
+  assert.equal(body.replace(/^\uFEFF/, '').trim().split('\r\n').filter((l) => /lot \d+/.test(l)).length, 5, 'five data rows: the submitted one is not in the file');
+  // the choice is checked
+  for (const bad of ['', 'a,b', '0', '-3', '1.5']) assert.equal((await api.call('GET', `${U}/sample-requests?ids=${bad}`, pm)).status, 400, `ids=${bad}`);
+  assert.equal((await api.call('GET', `${U}/sample-requests?ids=${Array.from({ length: 1001 }, (_, i) => i + 1).join(',')}`, pm)).status, 400, 'at most 1,000');
+  await api.close();
+});

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
-import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { errorInfo, Field, Link, navigateTo, useOneAtATime, usePageTitle } from '../core/pages/ui.jsx';
 import { SCORE_KEYS, inr, tdr } from './api.js';
 import { TimelinePanel, useSearch } from './parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
@@ -18,6 +18,7 @@ const payload = (v) => ({ scores: Object.fromEntries(SCORE_KEYS.filter((k) => v.
 export default function BidDecisionPage() {
   const t = useT('bd');
   const qc = useQueryClient();
+  const once = useOneAtATime(); // one save at a time: a double click does not save twice
   const params = useSearch();
   const id = Number(params.get('id')) || null; const tenderId = Number(params.get('tenderId')) || null;
   const dq = useQuery({ queryKey: ['bd', 'decision', id], queryFn: () => tdr.decision(id), enabled: Boolean(id), retry: false });
@@ -36,7 +37,7 @@ export default function BidDecisionPage() {
   const rated = SCORE_KEYS.every((k) => v.scores[k].score !== '');
   const total = rated ? Math.round(SCORE_KEYS.reduce((a, k) => a + (weights[k] * Number(v.scores[k].score)) / 5, 0)) : null;
   const recommendation = total == null ? null : total >= threshold ? 'BID' : 'NO_BID';
-  const run = async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r ?? true; } catch (e) { setError(errorInfo(e)); return null; } };
+  const run = once(async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r ?? true; } catch (e) { setError(errorInfo(e)); return null; } });
   const why = (fn, done) => { const r = window.prompt(t('act.why')); if (r) run(() => fn(r), done); };
   const editing = mode !== 'view'; const ro = !editing;
   const save = async (submit) => {

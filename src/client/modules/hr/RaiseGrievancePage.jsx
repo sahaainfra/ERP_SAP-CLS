@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useT } from '../../platform/i18n/index.js';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
-import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { errorInfo, Field, Link, navigateTo, useOneAtATime, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { ext } from './api.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
@@ -16,13 +16,14 @@ export default function RaiseGrievancePage() {
   const canWorker = (session.data?.permissions ?? []).includes('hr.worker.view');
   const [v, setV] = useState({ category: 'WAGES', subject: '', description: '', anonymous: false, forWorker: false, workerId: '' });
   const [error, setError] = useState(null); const [done, setDone] = useState(null);
-  const send = async (submit) => {
+  const once = useOneAtATime(); // one send at a time: a double click does not raise two grievances
+  const send = once(async (submit) => {
     setError(null);
     try {
       const r = await ext.createGrievance({ category: v.category, subject: v.subject.trim(), description: v.description.trim(), anonymous: v.anonymous, complainantType: v.forWorker ? 'WORKER' : 'EMPLOYEE', ...(v.forWorker ? { workerId: Number(v.workerId) } : {}), submit: v.anonymous ? true : submit });
       if (v.anonymous) setDone(r); else navigateTo(`/grievances/grievance?id=${r.id}`, { force: true });
     } catch (x) { setError(errorInfo(x)); }
-  };
+  });
   if (done) return (
     <section aria-labelledby="rg-title" data-testid="raise-grievance">
       <PageHeader id="rg-title" title={t('grv.raise')} />

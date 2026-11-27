@@ -4,7 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
-import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { errorInfo, Field, Link, navigateTo, useOneAtATime, usePageTitle } from '../core/pages/ui.jsx';
 import { EMD_MODES, aw, dayIST, inr, tdr } from './api.js';
 import { TimelinePanel, useSearch } from './parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
@@ -16,6 +16,7 @@ const RTONE = { NOT_APPLICABLE: 'CANCELLED', NOT_DUE: 'DRAFT', DUE: 'AT_RISK', R
 export default function EmdPage() {
   const t = useT('bd');
   const qc = useQueryClient();
+  const once = useOneAtATime(); // one save at a time: a double click does not save twice
   const params = useSearch();
   const id = Number(params.get('id')) || null; const tenderId = Number(params.get('tenderId')) || null; const kind = params.get('kind') === 'FEE' ? 'FEE' : 'EMD';
   const q = useQuery({ queryKey: ['bd', 'emd', id], queryFn: () => aw.emd(id), enabled: Boolean(id), retry: false });
@@ -30,7 +31,7 @@ export default function EmdPage() {
   if ((id && q.isPending) || (!id && tq.isPending)) return <Skeleton label={t('emd.register')} rows={4} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (tq.isError) return <ErrorState error={tq.error} onRetry={tq.refetch} />;
-  const run = async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r ?? true; } catch (x) { setError(errorInfo(x)); return null; } };
+  const run = once(async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r ?? true; } catch (x) { setError(errorInfo(x)); return null; } });
   const why = (fn, done) => { const r = window.prompt(t('act.why')); if (r) run(() => fn(r), done); };
   const errBox = error?.form && <p className="field-error" role="alert" data-testid="emd-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>;
   if (!id) {

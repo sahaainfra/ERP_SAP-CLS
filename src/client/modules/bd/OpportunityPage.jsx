@@ -5,7 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
-import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { errorInfo, Field, Link, navigateTo, useOneAtATime, usePageTitle } from '../core/pages/ui.jsx';
 import { OPEN_STAGES, REGIONS, SECTORS, bd, inr } from './api.js';
 import { InteractionsPanel, Tabs, TimelinePanel } from './parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
@@ -22,6 +22,7 @@ const body = (v, { withStage = false } = {}) => ({ clientPartnerId: Number(v.cli
 export default function OpportunityPage({ create = false }) {
   const t = useT('bd');
   const qc = useQueryClient();
+  const once = useOneAtATime(); // one save at a time: a double click does not save twice
   const id = Number(new URLSearchParams(window.location.search).get('id')) || null;
   const q = useQuery({ queryKey: ['bd', 'opp', id], queryFn: () => bd.opp(id), enabled: Boolean(id) && !create, retry: false });
   const o = q.data;
@@ -36,7 +37,7 @@ export default function OpportunityPage({ create = false }) {
   if (!create && q.isPending) return <Skeleton label={t('opp.title')} rows={5} />;
   if (!create && q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const set = (k, x) => setV({ ...v, [k]: x });
-  const run = async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r; } catch (e) { setError(errorInfo(e)); return null; } };
+  const run = once(async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r; } catch (e) { setError(errorInfo(e)); return null; } });
   const why = (fn, done) => { const r = window.prompt(t('act.why')); if (r) run(() => fn(r), done); };
   const save = async (submit) => {
     if (create) { const r = await run(() => bd.createOpp({ ...body(v, { withStage: true }), submit })); if (r) navigateTo(`/bd/opportunity?id=${r.id}`, { force: true }); return; }

@@ -1,5 +1,5 @@
 import { KpiTile } from '../../../platform/design/Kpi.jsx';
-import { useEffect, useId } from 'react';
+import { cloneElement, isValidElement, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
 import { logExport } from '../../../platform/audit/index.js';
 import { confirmLeave } from '../../../platform/forms/guard.js';
@@ -37,25 +37,77 @@ export function QueryState({ query, what, permission }) {
   return <QueryError error={query.error} what={what} permission={permission} onRetry={() => query.refetch()} />;
 }
 
-export function FieldError({ error, name }) {
-  return error?.fields?.[name] ? <span className="field-error" id={`err-${name}`}>{error.fields[name]}</span> : null;
+export function FieldError({ error, name, id }) {
+  return error?.fields?.[name] ? <span className="field-error" id={id ?? `err-${name}`}>{error.fields[name]}</span> : null;
 }
 
-export const Field = ({ label, name, error, children, hint }) => (
-  <label className="field">
-    <span>{label}</span>
-    {children}
-    {hint && <span className="muted small">{hint}</span>}
-    <FieldError error={error} name={name} />
-  </label>
-);
+const NATIVE = new Set(['input', 'select', 'textarea']);
+
+/**
+ * A labelled field of a hand-built form (used by most module pages). Part 09: when its control is one native input, select or textarea,
+ * the field marks it as required with the same visible star as the platform fields (the browser already tells assistive technology),
+ * and ties its hint and the server's message for it to the control (aria-describedby), marking it invalid while that message shows.
+ * Anything the page set itself on the control is kept.
+ */
+export function Field({ label, name, error, children, hint }) {
+  const uid = useId();
+  const hintId = hint ? `${uid}-hint` : undefined;
+  const message = error?.fields?.[name];
+  const errId = message ? `${uid}-err` : undefined;
+  const one = isValidElement(children) && typeof children.type === 'string' && NATIVE.has(children.type) ? children : null;
+  // no second mark where the page already wrote one into the label ('Site *') or says it in words
+  const required = Boolean(one?.props.required) && !(typeof label === 'string' && (/required/i.test(label) || /\*\s*$/.test(label)));
+  const control = one
+    ? cloneElement(one, {
+      'aria-describedby': one.props['aria-describedby'] ?? ([hintId, errId].filter(Boolean).join(' ') || undefined),
+      'aria-invalid': one.props['aria-invalid'] ?? (message ? true : undefined),
+    })
+    : children;
+  return (
+    <label className="field">
+      <span>{label}{required && <span className="ff-req" aria-hidden="true"> *</span>}</span>
+      {control}
+      {hint && <span className="muted small" id={hintId}>{hint}</span>}
+      <FieldError error={error} name={name} id={errId} />
+    </label>
+  );
+}
 
 /** A modal form. `onSubmit` receives FormData; `error` is the result of errorInfo(). */
+/** Whether a form's fields differ from how they were drawn (their default values): something was typed or chosen. */
+export function formChanged(form) {
+  if (!form) return false;
+  for (const el of form.elements) {
+    if (el.disabled || el.type === 'hidden' || el.type === 'button' || el.type === 'submit') continue;
+    if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked !== el.defaultChecked) return true; } else if (el.tagName === 'SELECT') { if ([...el.options].some((o) => o.selected !== o.defaultSelected)) return true; } else if (el.type === 'file') { if (el.files?.length) return true; } else if ('defaultValue' in el && el.value !== el.defaultValue) return true;
+  }
+  return false;
+}
+
+/**
+ * A modal form. `onSubmit` receives FormData; `error` is the result of errorInfo().
+ * Part 11: whenever it closes (Cancel, Escape, saved) the form goes back to how it was drawn, so what was typed and not saved is really
+ * cancelled and never shows up the next time it opens, for this or another record. Escape with something typed asks first, inside the dialog.
+ */
 export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, submitLabel = 'Save', reason = true }) {
   const titleId = useId();
+  const formRef = useRef(null);
+  const keepRef = useRef(null);
+  const [asking, setAsking] = useState(false);
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (!d) return undefined;
+    const onClose = () => { formRef.current?.reset(); setAsking(false); };
+    const onCancel = (e) => { if (formChanged(formRef.current)) { e.preventDefault(); setAsking(true); } };
+    d.addEventListener('close', onClose);
+    d.addEventListener('cancel', onCancel);
+    return () => { d.removeEventListener('close', onClose); d.removeEventListener('cancel', onCancel); };
+  }, [dialogRef]);
+  useEffect(() => { if (asking) keepRef.current?.focus(); }, [asking]);
   return (
     <dialog ref={dialogRef} className="dialog" aria-labelledby={titleId}>
       <form
+        ref={formRef}
         method="dialog"
         onSubmit={(e) => {
           e.preventDefault();
@@ -75,6 +127,15 @@ export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, 
             {error.correlationId && <> (Correlation ID: <code>{error.correlationId}</code>)</>}
           </p>
         )}
+        {asking && (
+          <div className="state state-warning dialog-discard" role="alert" data-testid="discard-ask">
+            <span>You have typed something that is not saved. Close and lose it?</span>
+            <div className="actions">
+              <button type="button" className="btn" ref={keepRef} onClick={() => setAsking(false)}>Keep editing</button>
+              <button type="button" className="btn btn-danger" onClick={() => dialogRef.current?.close()}>Discard changes</button>
+            </div>
+          </div>
+        )}
         <div className="actions">
           <button type="button" className="btn" onClick={() => dialogRef.current?.close()}>Cancel</button>
           <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving...' : submitLabel}</button>
@@ -82,6 +143,20 @@ export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, 
       </form>
     </dialog>
   );
+}
+
+/**
+ * One save at a time (a page with "Save draft" and "Save and send"): the wrapped action is ignored while an earlier one is still running, so
+ * the second click of a double click, which can land on the other button once the page moves, does not send a second write. Call it at the top
+ * of the component (it is a hook) and wrap the page's action: `const once = useOneAtATime(); const run = once(async (...) => { ... });`
+ */
+export function useOneAtATime() {
+  const running = useRef(false);
+  return useCallback((fn) => async (...args) => {
+    if (running.current) return null;
+    running.current = true;
+    try { return await fn(...args); } finally { running.current = false; }
+  }, []);
 }
 
 export const can = (session, permission) => Boolean(session?.permissions?.includes(permission));

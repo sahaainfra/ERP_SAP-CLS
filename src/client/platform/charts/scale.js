@@ -92,3 +92,11 @@ export function toCsv({ columns, rows }) {
   };
   return [columns, ...rows].map((r) => r.map(cell).join(',')).join('\r\n');
 }
+
+// the tooltip follows the pointer; near the right or bottom edge of the screen it opens on the other side, so it is never cut off on a phone (Part 12)
+const TIP_W = 256;
+const TIP_H = 64;
+export const tipStyle = (tip, vw = globalThis.innerWidth ?? 1024, vh = globalThis.innerHeight ?? 768) => ({
+  left: Math.max(4, tip.x + 12 + TIP_W > vw ? tip.x - 12 - TIP_W : tip.x + 12),
+  top: Math.max(4, tip.y + 12 + TIP_H > vh ? tip.y - 12 - TIP_H : tip.y + 12),
+});

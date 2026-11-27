@@ -4,7 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
-import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { errorInfo, Field, Link, navigateTo, useOneAtATime, usePageTitle } from '../core/pages/ui.jsx';
 import { BID_TYPES, PORTALS, REGIONS, bd, inr, tdr } from './api.js';
 import { useFlagOn } from '../../platform/shell/api.js';
 import { Tabs, TimelinePanel } from './parts.jsx';
@@ -23,6 +23,7 @@ const body = (v) => ({ clientPartnerId: Number(v.clientPartnerId), referenceNo: 
 export default function TenderPage({ create = false }) {
   const t = useT('bd');
   const qc = useQueryClient();
+  const once = useOneAtATime(); // one save at a time: a double click does not save twice
   const params = new URLSearchParams(window.location.search);
   const id = Number(params.get('id')) || null; const fromOpp = Number(params.get('opportunityId')) || null;
   const q = useQuery({ queryKey: ['bd', 'tender', id], queryFn: () => tdr.tender(id), enabled: Boolean(id) && !create, retry: false });
@@ -38,7 +39,7 @@ export default function TenderPage({ create = false }) {
   if (!create && q.isPending) return <Skeleton label={t('td.title')} rows={5} />;
   if (!create && q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const set = (k, val) => setV({ ...v, [k]: val });
-  const run = async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r ?? true; } catch (e) { setError(errorInfo(e)); return null; } };
+  const run = once(async (fn, done) => { setError(null); setNote(null); try { const r = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['bd'] }); return r ?? true; } catch (e) { setError(errorInfo(e)); return null; } });
   const why = (fn, done) => { const r = window.prompt(t('act.why')); if (r) run(() => fn(r), done); };
   const save = async (submit) => {
     if (create) { const r = await run(() => tdr.createTender({ ...body(v), ...(v.opportunityId ? { opportunityId: v.opportunityId } : {}), submit })); if (r?.id) navigateTo(`/bd/tender?id=${r.id}`, { force: true }); return; }
