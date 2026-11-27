@@ -14,5 +14,7 @@ coverage/
 __pycache__/
 *.pyc
 
-# PACK-W0-02: pack-only outputs (reports, maps, coverage ledger) stay local unless the owner decides to commit them
-pack-reports/
+# PACK-W0-02: pack-only outputs (reports, maps, coverage ledger) stay local unless the owner decides to commit them;
+# PACK-00: the scripts that reproduce them are committed (pack-reports/tools/)
+pack-reports/*
+!pack-reports/tools/
