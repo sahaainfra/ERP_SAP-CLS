@@ -983,3 +983,29 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   (separate databases or row-level isolation of the directory) would be an architectural change with no confirmed need. Kept as is, with the
   PR #23 safeguards: a company's record is changed only from inside that company or by SUPADM, and the change is audited under that company.
   Revisit if the installation is ever offered to unrelated customers.
+
+## PACK-W0-01 — CI gate integrity and a green main (2026-11-27)
+- **ADR-774 The required `verify` gate needs every regression job and is decided by a tested script.** `verify` needed only unit,
+  client and e2e, and decided with `test a = success && test b = success` under `bash -e`, which does not stop on a failed command that
+  is not the last of an `&&` list: PR run #150 had unit=failure and verify=success. Now `verify` needs unit, client, e2e, clock, dast,
+  perf-smoke, container-scan and deploy-rehearsal, and `scripts/ci_gate.mjs` checks each result on its own, failing closed. On an ordinary
+  pull request the long jobs may be skipped; on main, a manual run and a `full-ci` pull request each must succeed. `tests/ci-gate.test.js`
+  proves the decision and pins the workflow's `verify` job to the script. Chosen over a second `verify-full` check: one required check is
+  simpler to protect, and it already distinguishes a pull request from main.
+- **ADR-775 Identical writes are merged only while the first is in flight (the API client's window after success is off).** Part 09 made
+  the API client answer an identical write (method, path, body) from memory while it was on its way *and for 1 s after it succeeded*.
+  The second part broke deliberate repeats: a gate pass scanned twice showed "verified" again instead of "already used" (the one-use rule
+  is the server's, and the client hid its answer), a replacement PPE issue returned the first issue, and a rule run twice reported the
+  first run. That is 12 of the E2E failures on main. The double click is still covered: a second click while the first write is in
+  flight gets the same answer, pages disable their button while busy, and `useOneAtATime()` guards the two-button pages.
+  `dedupeWindowMs` stays an option of `createApiClient` (default 0).
+- **ADR-776 The weekday and year-end CI runs put the test process on the application's clock.** The clock jobs set `ERP_TEST_NOW` for
+  `clockNow()`, but tests built their dates from the real `Date.now()`, so test and server disagreed about "today". Instead of rewriting
+  some 80 test files, the clock jobs preload `tests/helpers/test_clock.mjs` (`NODE_OPTIONS=--import=...`), which moves `Date.now()` and
+  `new Date()` of the test process to `ERP_TEST_NOW` and lets time run on. Timers, `performance.now()` and SQLite's `datetime('now')`
+  keep the real clock. The failures that remain on the year-end run are fixed dates in fixtures that the real calendar will reach before
+  31 March 2027 (D-836).
+- **ADR-777 Container findings Debian has not fixed are accepted with a review date, and fixable ones block.** Trivy now blocks only
+  HIGH/CRITICAL findings that have a fixed version (`--ignore-unfixed`) and lists the rest in a second, non-blocking scan. The runtime image
+  takes Debian's published fixes at build and no longer ships npm/npx/corepack (the HIGH undici and brace-expansion findings were inside
+  the base image's npm, not the application's dependencies). The unfixed list and its review date are D-834.

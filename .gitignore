@@ -13,3 +13,6 @@ artifacts/
 coverage/
 __pycache__/
 *.pyc
+
+# PACK-W0-02: pack-only outputs (reports, maps, coverage ledger) stay local unless the owner decides to commit them
+pack-reports/

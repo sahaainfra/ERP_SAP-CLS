@@ -1,41 +1,72 @@
 # Release, deploy and rollback runbook
 
-Everything below runs from the repository root. Commands marked (GitHub) need the repository on GitHub and have not been run there yet (defect D-010).
+Everything below runs from the repository root. Commands marked (GitHub) need the repository on GitHub. The ruleset of §2 is proposed and not yet applied (D-010).
 
 ## 1. Quality gates (every pull request and every merge to main)
 `npm run erp:regression` runs, in order: lint, type check, unit/API/permission tests with coverage, coverage gate for changed files (60 %, to be raised to 80 %), migration up/down check, schema-diff, golden outputs, secret scan, client build, installable-app check, bundle budget, Playwright E2E on desktop (1280x800) and mobile (360x740), then the cross-company probe on the E2E database (`npm run erp:scope-probe`). Add `-- --with-audit` for the dependency audit.
 
-**In CI** (`.github/workflows/ci.yml`, audit AUD-DEF-020) the same stages run as parallel jobs that fit their time limits:
+**In CI** (`.github/workflows/ci.yml`, audit AUD-DEF-020, PACK-W0-01) the same stages run as parallel jobs that fit their time limits, and one gate decides:
 
-| Job | Runs | Time limit |
-|---|---|---|
-| `unit` | `erp:regression -- --skip-e2e` | 75 min |
-| `client` | build, installable-app check, bundle budget | — |
-| `e2e` | Playwright in 8 shards, each followed by the scope probe | 120 min per shard |
-| `verify` | Passes only when all three pass | — |
+| Job | Runs | Pull request | Push to main, manual run, `full-ci` label | Time limit | Usual duration (run #160) |
+|---|---|---|---|---|---|
+| `unit` | `erp:regression -- --skip-e2e` (lint, types, unit/API tests with coverage, gates, migration check, secret scan) | yes | yes | 75 min | 38 min |
+| `client` | build, installable-app check, bundle budget | yes | yes | 15 min | 1 min |
+| `security` | dependency audit, secret scan | yes | yes | 10 min | under 1 min |
+| `dependency-review` | new dependencies with a known High vulnerability or a licence we cannot ship | yes | — | 5 min | under 1 min |
+| `e2e` (8 shards) | Playwright desktop and mobile, then the cross-company probe | skipped | yes | 120 min per shard | 6–110 min (shards 3, 4 and 8 carry the page crawl, a11y sweep and UI v3 suites) |
+| `clock` (2) | the unit suite on a Sunday and on 31 March, test process and server on the same fixed clock | skipped | yes | 75 min | about 35 min (not yet seen complete on GitHub) |
+| `dast` | dynamic scan of the running app | skipped | yes | 15 min | under 1 min |
+| `perf-smoke` | small load test judged against the SLOs | skipped | yes | 15 min | 1 min |
+| `container-scan` | image build, compose check, Trivy (a HIGH/CRITICAL finding with a fix blocks) | skipped | yes | 15 min | 2 min |
+| `deploy-rehearsal` | environment parity, zero-downtime deploy and rollback drills | skipped | yes | 15 min | under 1 min |
+| `codeql` | static analysis (non-blocking until code scanning is enabled, D-012) | skipped | yes | 20 min | 7 min |
+| `verify` | **the required gate**: `scripts/ci_gate.mjs` | yes | yes | 5 min | seconds |
 
-`verify` stays the required check. `security` (dependency audit, secret scan) and `codeql` (static analysis) run beside it.
-
-To save Actions minutes (the repository is private and every runner minute is billed), a pull request runs only `unit`, `client`, `security`, `dependency-review` and `verify`; `verify` then accepts a skipped `e2e`. The long jobs (`e2e`, `clock`, `dast`, `perf-smoke`, `container-scan`, `deploy-rehearsal`, `codeql`) run on every push to `main`, on a manual run, and on a pull request labelled `full-ci`, where `verify` again requires `e2e` to pass. The nightly load and Sunday soak in `.github/workflows/perf.yml` are manual-only for the same reason.
+`verify` needs `unit`, `client`, `e2e`, `clock`, `dast`, `perf-smoke`, `container-scan` and `deploy-rehearsal`. It checks each job's result on its own and fails closed: a failed, cancelled, missing or unknown result fails it. On an ordinary pull request the long jobs are `skipped`, and that is accepted. On main, on a manual run and on a `full-ci` pull request every one of them must succeed. `tests/ci-gate.test.js` (part of `unit`) proves this and fails if the workflow's `verify` job drifts from the script. The required checks for `main` are `verify` and `security` (§2).
 
 A failing stage exits 1 and the report (`reports/regression/report.html`) names it. A migration without a working down-migration fails the migration check; a leaked credential fails the secret scan.
 
-## 2. Make the gates mandatory (GitHub, once, by a repository admin)
-On the current free plan this cannot be enforced for a private repository (defect D-010): GitHub shows "rulesets won't be enforced on this private repository until you move to GitHub Team". Do this after the plan changes or the repository becomes public.
+### 1a. CI health: reading and re-running a run (PACK-W0-01)
+- **Where to look.** The `verify` log lists every needed job as PASS or FAIL with its result. Open the failing job. E2E shards upload `e2e-shard-N` (Playwright report, `test-results/`, scope probe), `unit` uploads `regression-report-unit`, `dast` uploads `dast-report` and `perf-smoke` uploads `perf-smoke`.
+- **Re-run one shard.** In the run, open the failed `E2E shard N of 8` job and choose *Re-run this job* (or *Re-run failed jobs*); `verify` runs again when it finishes. Locally the same shard is `npm run build && npx playwright test --shard=N/8 --trace off`. Where Chrome is not installed as a channel, add `-c playwright.local.config.js` and set `PW_EXE=<path to chrome>`.
+- **Run the long jobs on a pull request.** Add the label `full-ci` to the pull request: the `labeled` event starts the full run straight away, and `verify` then requires every long job. Use it for any change to the client, shared components, the API client, the workflow or the Dockerfile. PR #25 merged without it, and two client regressions reached main unseen (PACK-W0-01).
+- **Clock jobs locally.** `NODE_ENV=test TZ=Asia/Kolkata ERP_TEST_NOW=2027-03-31T06:00:00Z NODE_OPTIONS=--import=./tests/helpers/test_clock.mjs npm test`.
+- **Flaky or slow tests.** A wall-clock budget in a unit test uses `timeBudget(ms)` from `tests/helpers.js` (CI multiplies it by `ERP_TEST_TIME_FACTOR=3`). A test that starts a server closes it in `t.after(() => api.close())`. A test is quarantined only with a DEFECTS.md row that names an owner and an expiry date.
+- **Main runs are never cancelled by a newer push** (only pull requests are), so every commit on main keeps its own verdict.
 
-`.github/CODEOWNERS` already requests review from `@sahaainfra`. After `gh auth login`, protect main:
+## 2. Make the gates mandatory (GitHub, once, by a repository admin)
+**Status (PACK-W0-01, 2026-11-27): proposed, not applied.** The repository is now public, so GitHub enforces rulesets on the free plan and D-010's blocker is gone. The settings below need the owner's approval before anyone applies them. Until then "no direct push to main, one reviewer" (BR-01) is still a habit: Parts 13, 14 and 15 were pushed straight to main.
+
+Ruleset for `main` (Settings → Rules → Rulesets → New branch ruleset, or the API call below):
+
+| Setting | Value | Why |
+|---|---|---|
+| Target | default branch (`main`) | |
+| Enforcement | Active | |
+| Restrict deletions | on | |
+| Block force pushes | on | history on main is never rewritten |
+| Require a pull request before merging | on: 1 approval, dismiss stale approvals on push, require review from Code Owners, require conversation resolution | BR-01 |
+| Require status checks to pass | `verify`, `security`; branches must be up to date | `verify` aggregates every regression job |
+| Bypass list | Repository admin, **for pull requests only** | one maintainer cannot approve their own pull request; this lets the admin merge an unreviewed pull request knowingly, never push to main directly |
 
 ```bash
-gh api -X PUT repos/sahaainfra/ERP_SAP-CLS/branches/main/protection --input - <<'EOF'
+gh api -X POST repos/sahaainfra/ERP_SAP-CLS/rulesets --input - <<'JSON'
 {
-  "required_status_checks": { "strict": true, "contexts": ["verify", "security"] },
-  "enforce_admins": true,
-  "required_pull_request_reviews": { "required_approving_review_count": 1, "require_code_owner_reviews": true },
-  "restrictions": null
+  "name": "main",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "bypass_actors": [ { "actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "pull_request" } ],
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    { "type": "pull_request", "parameters": { "required_approving_review_count": 1, "dismiss_stale_reviews_on_push": true, "require_code_owner_review": true, "require_last_push_approval": false, "required_review_thread_resolution": true } },
+    { "type": "required_status_checks", "parameters": { "strict_required_status_checks_policy": true, "required_status_checks": [ { "context": "verify" }, { "context": "security" } ] } }
+  ]
 }
-EOF
+JSON
 ```
-Add `"codeql"` to `contexts` once code scanning is enabled (D-012). With one owner, GitHub will not let the author approve their own pull request; add a second reviewer or relax `enforce_admins` knowingly and record that in DECISIONS.md.
+(`actor_id` 5 is GitHub's built-in *Repository admin* role.) Add `codeql` to the required checks once code scanning is enabled (D-012). If a second reviewer joins, remove the bypass entry. Record the decision and the date it was applied in DECISIONS.md, and close D-010 with the ruleset's URL.
 
 ## 3. Cut a release
 1. Write the commit subjects as `P<part>: summary (module code)`. Add a line `Release-note: <what changed, in business language>` to the body of any commit users will notice.
