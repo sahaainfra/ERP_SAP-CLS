@@ -1,4 +1,10 @@
 * { box-sizing: border-box; }
+/* Part 06 base rules: phones do not inflate text on rotation; images and video never grow past their container (thumbnails stay thumbnails);
+   long words, codes and URLs wrap inside their box rather than pushing it wider. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+main img, main video { max-width: 100%; height: auto; }
+main p, main li, main dd { overflow-wrap: break-word; }
+
 html, body { margin: 0; }
 body {
   font: var(--erp-type-body);

@@ -1,6 +1,7 @@
 import registry from '../../../shared/design/icon-registry.json';
 import { CONSTRUCTION_GLYPHS } from './construction-icons.jsx';
 import { GLYPHS } from './icon-map.js';
+import { snapIconSize } from './iconSize.js';
 
 // The one icon component (part 03.01, FR-05). Pages name an icon by its registry key (erp.action.approve, erp.state.overdue,
 // erp.group.finance, erp.cx.crane or a module key); the registry says which glyph that is, so a module never picks a glyph itself.
@@ -25,7 +26,7 @@ export const knownIcon = (name) => KEYS.has(name) || name in CONSTRUCTION_GLYPHS
  * (or the density's icon size by default); colour is the text colour around it.
  */
 export default function Icon({ name, size, label, className = '' }) {
-  const s = size ?? 'var(--erp-icon-density, 20px)';
+  const s = size == null ? 'var(--erp-icon-density, 20px)' : snapIconSize(size);
   const common = { width: s, height: s, className: `icon ${className}`.trim(), 'aria-hidden': label ? undefined : true, role: label ? 'img' : undefined, 'aria-label': label, focusable: 'false' };
   if (name in CONSTRUCTION_GLYPHS) {
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={registry.stroke} strokeLinecap="round" strokeLinejoin="round" {...common}>{CONSTRUCTION_GLYPHS[name]}</svg>;

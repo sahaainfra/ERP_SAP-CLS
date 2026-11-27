@@ -202,7 +202,7 @@
  },
  "typography": {
   "family": {
-   "sans": "'IBM Plex Sans', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+   "sans": "'IBM Plex Sans', 'IBM Plex Sans Devanagari', 'Noto Sans Telugu', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
    "indic": "'IBM Plex Sans Devanagari', 'Noto Sans Devanagari', 'Noto Sans', sans-serif",
    "telugu": "'IBM Plex Sans', 'Noto Sans Telugu', 'Noto Sans', sans-serif",
    "mono": "'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace"
@@ -245,21 +245,25 @@
    },
    "page-title": {
     "size": 22,
+    "fluidMin": 19,
     "lineHeight": 28,
     "weight": 600
    },
    "kpi": {
     "size": 28,
+    "fluidMin": 22,
     "lineHeight": 32,
     "weight": 600
    },
    "kpi-hero": {
     "size": 36,
+    "fluidMin": 26,
     "lineHeight": 40,
     "weight": 600
    },
    "display": {
     "size": 32,
+    "fluidMin": 24,
     "lineHeight": 40,
     "weight": 600
    }
