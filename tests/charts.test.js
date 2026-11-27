@@ -63,3 +63,20 @@ test('every chart can be read as a table, and the table as CSV that a spreadshee
   assert.ok(csv.includes("'@sum,-4"), 'an @ is made text, a negative number is left alone');
   assert.ok(csv.includes('-5,0'), 'a plain negative number stays a number');
 });
+
+test('Part 12: axis ticks are short Indian figures that fit the margin; the tooltip opens away from the screen edge', async () => {
+  const { formatAxis } = await import('../src/client/platform/charts/theme.js');
+  assert.equal(formatAxis(150000000), '15 Cr');
+  assert.equal(formatAxis(12500000), '1.25 Cr');
+  assert.equal(formatAxis(250000), '2.5 L');
+  assert.equal(formatAxis(-750000), '-7.5 L');
+  assert.equal(formatAxis(99999), '99,999');
+  assert.equal(formatAxis(0), '0');
+  // the y-axis has 42 px for its labels at 11 px (about 6.2 px a character): every tick of a crore-sized axis now fits
+  const { niceTicks } = await import('../src/client/platform/charts/scale.js');
+  for (const top of [7_43_21_000, 1_52_50_00_000, 98_765]) for (const t of niceTicks(top).ticks) assert.ok(formatAxis(t).length * 6.2 <= 42, `${t} -> ${formatAxis(t)}`);
+  const { tipStyle } = await import('../src/client/platform/charts/scale.js');
+  assert.deepEqual(tipStyle({ x: 100, y: 100 }, 1366, 900), { left: 112, top: 112 });
+  const corner = tipStyle({ x: 340, y: 760 }, 360, 780);
+  assert.ok(corner.left + 256 <= 360 && corner.top + 64 <= 780 && corner.left >= 4, JSON.stringify(corner));
+});

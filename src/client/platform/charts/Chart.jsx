@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react';
-import { arcPath, areaPath, bands, chartTable, dayFraction, formatCount, heatFill, linePath, niceTicks, seriesColour, sliceAngles, toCsv } from './scale.js';
+import { arcPath, areaPath, bands, chartTable, dayFraction, formatCount, heatFill, linePath, niceTicks, seriesColour, sliceAngles, tipStyle, toCsv } from './scale.js';
 import { downloadCsv } from '../../modules/core/pages/ui.jsx';
-import { isEmptyChart } from './theme.js';
+import { formatAxis, isEmptyChart } from './theme.js';
 import { EmptyState } from '../feedback/states.jsx';
 import { useLowBandwidthSaves } from '../device/lowBandwidth.js';
 
@@ -36,7 +36,7 @@ function Axes({ ticks, plotW, plotH, y }) {
       {ticks.map((t) => (
         <g key={t}>
           <line x1={PAD.l} x2={PAD.l + plotW} y1={y(t)} y2={y(t)} stroke="var(--erp-color-border-subtle)" strokeWidth="1" />
-          <text x={PAD.l - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill={TEXT}>{formatCount(t)}</text>
+          <text x={PAD.l - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill={TEXT}>{formatAxis(t)}</text>
         </g>
       ))}
       <line x1={PAD.l} x2={PAD.l + plotW} y1={PAD.t + plotH} y2={PAD.t + plotH} stroke="var(--erp-color-border-strong)" strokeWidth="1" />
@@ -199,7 +199,7 @@ function Scatter({ data, onDrill, setTip }) {
     <g>
       <Axes ticks={yt} plotW={plotW} plotH={plotH} y={y} />
       <g aria-hidden="true">
-        {xt.map((t) => <text key={t} x={x(t)} y={PAD.t + plotH + 16} textAnchor="middle" fontSize="11" fill={TEXT}>{formatCount(t)}</text>)}
+        {xt.map((t) => <text key={t} x={x(t)} y={PAD.t + plotH + 16} textAnchor="middle" fontSize="11" fill={TEXT}>{formatAxis(t)}</text>)}
         {data.xLabel && <text x={PAD.l + plotW} y={H - 4} textAnchor="end" fontSize="11" fill={TEXT}>{data.xLabel}</text>}
       </g>
       {data.points.map((p, i) => (
@@ -317,7 +317,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
           <title id={`${id}-t`}>{`${title}. ${pointCount} ${pointCount === 1 ? 'row' : 'rows'}; "Show as table" gives the same figures as a table.`}</title>
           {body}
         </svg>
-        {tip && <div className="ch-tip" role="status" style={{ left: tip.x + 12, top: tip.y + 12 }}>{tip.label}</div>}
+        {tip && <div className="ch-tip" role="status" style={tipStyle(tip)}>{tip.label}</div>}
         <Legend type={type} data={data} />
         <figcaption className="ch-foot">{exports}</figcaption>
       </figure>
@@ -329,7 +329,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
         <title id={`${id}-t`}>{`${title}. ${pointCount} ${pointCount === 1 ? 'row' : 'rows'}; the same figures are in the table below.`}</title>
         {body}
       </svg>
-      {tip && <div className="ch-tip" role="status" style={{ left: tip.x + 12, top: tip.y + 12 }}>{tip.label}</div>}
+      {tip && <div className="ch-tip" role="status" style={tipStyle(tip)}>{tip.label}</div>}
       <Legend type={type} data={data} />
       <figcaption className="ch-foot">
         <details className="ch-table">
