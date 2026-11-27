@@ -217,9 +217,11 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
 
   // column choices follow the person (ui_user_preferences.table_settings_json, FR-04)
   const persist = useMutation({ mutationFn: (settings) => unwrap(api.patch('/ui/preferences', { tableSettings: { [listCode]: settings } })), onSuccess: (data) => qc.setQueryData(['ui', 'preferences'], data) });
+  // Part 10: the selection survives moving between pages, sorting and changing columns, so rows can be chosen across pages; a new search,
+  // filter, view or grouping is a different set of rows, and starts the selection again (what is chosen is always inside what is shown)
   const update = (patch, { keep = false } = {}) => {
     setState((s) => ({ ...s, ...patch, page: patch.page ?? (keep ? s.page : 1) }));
-    setSelected(new Set());
+    if (['q', 'filters', 'groupBy'].some((k) => k in patch)) setSelected(new Set());
     setBulkResult(null);
   };
   const saveColumns = (next) => {
@@ -234,6 +236,8 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
   const can = (p) => !p || Boolean(session?.permissions?.includes(p));
   const actions = bulkActions.filter((a) => can(a.permission));
   const allOnPage = rows.length > 0 && rows.every((r) => selected.has(r.id));
+  const offPage = [...selected].filter((id) => !rows.some((r) => r.id === id)).length;
+  const togglePage = () => setSelected((s0) => { const n = new Set(s0); for (const r of rows) { if (allOnPage) n.delete(r.id); else n.add(r.id); } return n; });
   const runBulk = async (a, payload = {}) => {
     const ids = [...selected];
     setBulkResult(null);
@@ -252,11 +256,14 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
   // a list whose module has no `<endpoint>/export` route exports through the List Report's route by list code; it offers Export only when its list has an export
   const exportUrl = exportEndpoint ?? `${endpoint}/export`;
   const canExport = !(exportEndpoint?.startsWith('/ui/lists/') && desc.data && desc.data.exportable === false);
-  const exportAs = async (format) => {
+  // rows can be ticked for a bulk action, or to export only them (Part 10)
+  const selectable = actions.length > 0 || canExport;
+  const MAX_EXPORT_SELECTED = 1000;
+  const exportAs = async (format, ids = null) => {
     setExporting(format);
     setNotice('');
     try {
-      const send = () => fetch(`/api/v1${exportUrl}?${toQuery({ ...withContext(state), page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
+      const send = () => fetch(`/api/v1${exportUrl}?${toQuery({ ...withContext(state), page: 1 }, { format, ids: ids?.join(',') })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
       let res = await send();
       // this call does not go through the API client: an access token that has just expired is renewed here the same way, and the export asked again once
       if (res.status === 401 && authMode() === 'iam' && await refreshSession()) res = await send();
@@ -272,7 +279,8 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
       const url = URL.createObjectURL(blob);
       Object.assign(document.createElement('a'), { href: url, download: name }).click();
       URL.revokeObjectURL(url);
-      setNotice(`Exported ${res.headers.get('x-export-rows') ?? ''} rows as ${format.toUpperCase()}.`);
+      const sent = res.headers.get('x-export-rows');
+      setNotice(ids ? `Exported ${sent ?? ''} of the ${ids.length} selected rows as ${format.toUpperCase()}${sent !== null && Number(sent) !== ids.length ? ': the others are no longer in this list or no longer yours to see' : ''}.` : `Exported ${sent ?? ''} rows as ${format.toUpperCase()}.`);
     } catch (err) {
       setNotice(`Export failed: ${err.message}`);
     } finally {
@@ -387,10 +395,13 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
       )}
       </div>
       <p role="status" className="notice" data-testid="list-notice">{notice}</p>
-      {actions.length > 0 && selected.size > 0 && (
+      {selectable && selected.size > 0 && (
         <div className="toolbar lr-bulk" role="group" aria-label="Actions for the selected rows" data-testid="bulk-bar">
-          <strong>{selected.size} selected</strong>
+          <strong data-testid="selected-count">{selected.size} selected{offPage > 0 ? ` (${offPage} on other pages)` : ''}</strong>
           {actions.map((a) => <button key={a.id} type="button" className="btn" onClick={() => (a.confirm || a.reasonFor ? setBulkAsk(a) : runBulk(a))}>{a.label}</button>)}
+          {canExport && (selected.size <= MAX_EXPORT_SELECTED
+            ? ['xlsx', 'csv'].map((f) => <button key={f} type="button" className="btn" disabled={Boolean(exporting)} onClick={() => exportAs(f, [...selected])} data-testid={`export-selected-${f}`}>Export selected ({f.toUpperCase()})</button>)
+            : <span className="muted small">More than {MAX_EXPORT_SELECTED} rows are selected: export the whole filtered list instead.</span>)}
           <button type="button" className="btn" onClick={() => setSelected(new Set())}>Clear selection</button>
         </div>
       )}
@@ -418,7 +429,7 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
             {groupStarts.has(r.id) && <li className="lr-card-group" data-testid="list-group"><strong>{groupCol.label}: {groupLabel(r)}</strong> <span className="muted small">({groupStarts.get(r.id).length})</span></li>}
             <CardRow
               key={r.id} label={String(r[firstKey] ?? r.id)} rowHref={rowHref?.(r)} onOpenRow={open(r)} actions={rowActions ? rowActions(r) : []}
-              selectable={actions.length > 0} selected={selected.has(r.id)} onSelect={() => setSelected((s0) => { const n = new Set(s0); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })}
+              selectable={selectable} selected={selected.has(r.id)} onSelect={() => setSelected((s0) => { const n = new Set(s0); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })}
               fields={(cardFields ?? shown.slice(0, 4).map((c) => c.key)).map((k, i) => {
                 const c = columns.find((x) => x.key === k);
                 if (!c) return null;
@@ -435,7 +446,7 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
             <caption className="visually-hidden">{title}</caption>
             <thead>
               <tr>
-                {actions.length > 0 && <th className="lr-sel" scope="col"><input type="checkbox" aria-label="Select every row on this page" checked={allOnPage} onChange={() => setSelected(allOnPage ? new Set() : new Set(rows.map((r) => r.id)))} /></th>}
+                {selectable && <th className="lr-sel" scope="col"><input type="checkbox" aria-label="Select every row on this page" checked={allOnPage} onChange={togglePage} /></th>}
                 {shown.map((c, i) => {
                   const dir = state.sort === c.key ? 'ascending' : state.sort === `-${c.key}` ? 'descending' : 'none';
                   return (
@@ -454,13 +465,13 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
                 <Fragment key={r.id}>
                 {groupStarts.has(r.id) && (
                   <tr className="lr-group-row" data-testid="list-group">
-                    {actions.length > 0 && <td />}
+                    {selectable && <td />}
                     {shown.map((c, i) => <td key={c.key} className={`${i === 0 ? 'lr-freeze ' : ''}${c.total ? 'num' : ''}`}>{i === 0 ? <strong>{groupCol.label}: {groupLabel(r)} <span className="muted">({groupStarts.get(r.id).length} on this page)</span></strong> : c.total ? <strong>{formatCell(c, groupSum(groupStarts.get(r.id), c))}</strong> : null}</td>)}
                     {rowActions && <td />}
                   </tr>
                 )}
                 <tr className={selected.has(r.id) ? 'is-selected' : ''} data-testid={`row-${r.id}`}>
-                  {actions.length > 0 && <td className="lr-sel"><input type="checkbox" aria-label={`Select ${r[firstKey] ?? r.id}`} checked={selected.has(r.id)} onChange={() => setSelected((s) => { const n = new Set(s); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })} /></td>}
+                  {selectable && <td className="lr-sel"><input type="checkbox" aria-label={`Select ${r[firstKey] ?? r.id}`} checked={selected.has(r.id)} onChange={() => setSelected((s) => { const n = new Set(s); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })} /></td>}
                   {shown.map((c, i) => (
                     <td key={c.key} className={`${i === 0 ? 'lr-freeze ' : ''}${['money', 'number'].includes(c.type) ? 'num' : ''}`} data-label={c.label} title={['text', 'string'].includes(c.type) && String(r[c.key] ?? '').length > 40 ? String(r[c.key]) : undefined}>
                       {i === 0 && rowHref ? <a href={rowHref(r)} onClick={open(r)}>{formatCell(c, r[c.key]) || `#${r.id}`}</a> : c.key === statusKey ? <StatusBadge status={r[c.key]} /> : formatCell(c, r[c.key])}
@@ -484,7 +495,7 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
             {meta && Object.keys(meta.totals ?? {}).length > 0 && (
               <tfoot>
                 <tr data-testid="list-totals">
-                  {actions.length > 0 && <td />}
+                  {selectable && <td />}
                   {shown.map((c, i) => <td key={c.key} className={`${i === 0 ? 'lr-freeze ' : ''}${c.total ? 'num' : ''}`}>{i === 0 ? <strong>Total of {meta.total} rows</strong> : c.total ? <strong data-testid={`total-${c.key}`}>{formatCell(c, meta.totals[c.key])}</strong> : ''}</td>)}
                   {rowActions && <td />}
                 </tr>
