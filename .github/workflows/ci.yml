@@ -15,10 +15,11 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # PACK-W0-01: a newer push cancels an older run on a pull request only; every commit on main keeps its own complete verdict
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Actions minutes: the repository is private, so every runner minute is billed against the plan. A pull request runs the quick
-# gates (unit, client, security, dependency-review) and verify. The long jobs (E2E shards, clock, dast, perf-smoke, container-scan,
+# Which jobs run where (docs/erp/RELEASE.md, "CI health"): a pull request runs the quick gates (unit, client, security,
+# dependency-review) and verify. The long jobs (E2E shards, clock, dast, perf-smoke, container-scan,
 # deploy-rehearsal, codeql) run on every push to main, on a manual run, and on a pull request that carries the label "full-ci".
 
 jobs:
@@ -30,6 +31,8 @@ jobs:
     timeout-minutes: 75
     env:
       COVERAGE_MIN: '60'
+      # PACK-W0-01: wall-clock budgets in unit tests are tripled under coverage on a shared runner (tests/helpers.js timeBudget)
+      ERP_TEST_TIME_FACTOR: '3'
       COVERAGE_BASE: origin/${{ github.base_ref || 'main' }}
     steps:
       - uses: actions/checkout@v4
@@ -94,27 +97,34 @@ jobs:
             test-results
           if-no-files-found: ignore
 
+  # PACK-W0-01: the required gate. It needs every regression job, long ones included, so a red E2E shard, clock run, DAST, perf
+  # smoke, container scan or deploy rehearsal cannot be ignored on main. The decision is made by scripts/ci_gate.mjs, one job at a
+  # time (the old `test a && test b` under `bash -e` let a failed unit job pass, PR run #150); tests/ci-gate.test.js proves it.
+  # On an ordinary pull request the long jobs are "skipped" and that is accepted; on main, a manual run or a full-ci pull request
+  # every job must succeed.
   verify:
     name: verify
     runs-on: ubuntu-latest
     if: always()
-    needs: [unit, client, e2e]
+    needs: [unit, client, e2e, clock, dast, perf-smoke, container-scan, deploy-rehearsal]
     timeout-minutes: 5
     steps:
-      # E2E may be "skipped" only on a pull request without the full-ci label; on main, a manual run or a full-ci pull request it must pass.
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/ci_gate.mjs
+          sparse-checkout-cone-mode: false
       - name: every part of the regression passed
         env:
-          E2E_REQUIRED: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci') }}
-        run: |
-          echo "unit: ${{ needs.unit.result }}, client: ${{ needs.client.result }}, e2e: ${{ needs.e2e.result }} (required: $E2E_REQUIRED)"
-          test "${{ needs.unit.result }}" = success && test "${{ needs.client.result }}" = success
-          if [ "$E2E_REQUIRED" = true ]; then test "${{ needs.e2e.result }}" = success; else test "${{ needs.e2e.result }}" = success -o "${{ needs.e2e.result }}" = skipped; fi
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          FULL_RUN: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci') }}
+        run: node scripts/ci_gate.mjs
 
   clock:
     name: unit suite on a Sunday and on the last day of the year (part 166.1 F-09)
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # PACK-W0-01: 45 minutes was hit on run #160 by a test file that never exited, not by the suite's length; 75 like the unit job
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
@@ -123,6 +133,10 @@ jobs:
     env:
       ERP_TEST_NOW: ${{ matrix.now }}
       TZ: Asia/Kolkata
+      # PACK-W0-01: the test process runs on the same fixed clock as the application (tests/helpers/test_clock.mjs), so a test that
+      # builds "today plus 2 days" from Date.now() agrees with clockNow(); before, 5 of the first 23 files failed on that alone
+      NODE_OPTIONS: --import=./tests/helpers/test_clock.mjs
+      ERP_TEST_TIME_FACTOR: '3'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -162,7 +176,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: node scripts/dast_scan.mjs --out reports/dast.json
+      - run: mkdir -p reports && node scripts/dast_scan.mjs --out reports/dast.json
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -219,7 +233,12 @@ jobs:
         run: |
           docker build -t erp:scan .
           AUTH_SECRET=ci-placeholder-secret-0123456789abcdef VAULT_KEY=ci-placeholder docker compose config --quiet
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.58.0 image --severity HIGH,CRITICAL --exit-code 1 erp:scan
+          # PACK-W0-01: a HIGH or CRITICAL finding that has a fixed version blocks. Findings Debian has not fixed (status affected,
+          # will_not_fix, fix_deferred: zlib, util-linux, ncurses, systemd, perl, gzip, acl, zstd on bookworm) cannot be fixed by
+          # this repository; they are listed by the second scan, do not block, and are accepted in docs/erp/DEFECTS.md (D-834) with
+          # a review date.
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.58.0 image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 erp:scan
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.58.0 image --severity HIGH,CRITICAL --exit-code 0 --format table erp:scan
 
   # Part 30.08: environment parity (every environment defined by code, same keys, no secrets) and the zero-downtime blue-green deploy
   # and rollback rehearsal under traffic, with its two failure drills. Production changes go only through this pipeline (BR-01).

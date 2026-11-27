@@ -12,7 +12,14 @@ FROM node:24-bookworm-slim
 ARG BUILD_ID=local
 ENV NODE_ENV=production BUILD_ID=${BUILD_ID} PORT=3000 DATABASE_PATH=/data/erp.sqlite STORAGE_PATH=/data/storage
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/* && mkdir -p /data && chown node:node /data
+# PACK-W0-01 (container scan, runs #159/#160): take the Debian security fixes published since the base image was built (linux-pam
+# CVE-2025-6020 was fixed in 1.5.2-6+deb12u3), and drop npm, npx and corepack, which the running application never uses: Trivy found
+# HIGH advisories in the copies of undici and brace-expansion bundled inside the base image's npm, not in the application's own
+# node_modules (package-lock.json pins brace-expansion 5.0.12 and has no undici).
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && apt-get install -y --no-install-recommends tini \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+ && mkdir -p /data && chown node:node /data
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --chown=node:node package.json ./

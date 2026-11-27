@@ -7,7 +7,8 @@
 // Usage: node scripts/dast_scan.mjs [--base https://erp.example.com] [--post] [--out report.json] [--limit 400]
 // Without --base it starts the application in this process on an empty database (CI). With --post the findings are recorded as a DAST
 // scan (POST /api/v1/tst/security/scans/results) of the installation at --base, as an IT administrator (development headers) or --token.
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 const args = process.argv.slice(2);
@@ -75,7 +76,8 @@ for (const r of ROUTE_POLICY.filter((x) => !['public', 'infra'].includes(x.g)).f
 const bySeverity = findings.reduce((a, f) => ({ ...a, [f.severity]: (a[f.severity] ?? 0) + 1 }), {});
 console.log(`DAST of ${base}: ${checked} requests, ${lists.length} lists probed, ${findings.length} findings ${JSON.stringify(bySeverity)}`);
 for (const f of findings) console.log(`  ${f.severity.padEnd(8)} ${f.rule.padEnd(14)} ${f.title}`);
-const out = opt('out'); if (out) writeFileSync(out, JSON.stringify({ base, checked, findings }, null, 2));
+// PACK-W0-01: a fresh checkout has no reports/ folder; the scan passed on CI and then failed writing its report (runs #159, #160)
+const out = opt('out'); if (out) { mkdirSync(dirname(out), { recursive: true }); writeFileSync(out, JSON.stringify({ base, checked, findings }, null, 2)); }
 if (args.includes('--post')) {
   const target = opt('base') ?? base;
   const r = await fetch(`${target}/api/v1/tst/security/scans/results`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': `dast-${Date.now()}`, ...(token ? { authorization: `Bearer ${token}` } : { 'x-erp-user': 'dast-scanner', 'x-erp-roles': 'ITADM', 'x-erp-company': process.env.ERP_COMPANY ?? '1' }) }, body: JSON.stringify({ kind: 'DAST', checked, findings: findings.slice(0, 200) }) });
