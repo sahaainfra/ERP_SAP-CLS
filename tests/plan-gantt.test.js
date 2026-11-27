@@ -2,7 +2,7 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { PDFDocument } from 'pdf-lib';
 import '../src/server/modules/registry.js';
-import { setupCompany, startApi } from './helpers.js';
+import { setupCompany, startApi, timeBudget } from './helpers.js';
 
 // Part 13.02: the interactive Gantt, schedule editing and resource loading. T-01 a drag edit moves the successors through the server's recalculation, is tried before it is saved (conflicts with the logic and
 // the constraints shown first), and undo restores the schedule exactly; T-02 the programme of 1,000 activities is laid out legibly on A3 and A1 and written as PDF and SVG. Also: resources by hand and from the
@@ -169,7 +169,7 @@ test('T-02 the programme of 1,000 activities is laid out legibly on A3 and A1 an
     const buf = pdf.buffer; assert.equal(buf.subarray(0, 5).toString(), '%PDF-'); assert.equal(pdf.headers.get('x-pages'), String(L.pages));
     const doc = await PDFDocument.load(buf); assert.equal(doc.getPageCount(), L.pages); const [w, h] = [doc.getPage(0).getWidth(), doc.getPage(0).getHeight()];
     assert.deepEqual([Math.round(w), Math.round(h)], paper === 'A3' ? [1191, 842] : [2384, 1684]);
-    assert.ok(performance.now() - started < 15_000, 'quick enough to print on demand');
+    const took = performance.now() - started; assert.ok(took < timeBudget(15_000), `quick enough to print on demand: ${Math.round(took)} ms`);
   }
   const svg = await t.api.raw('GET', `${P}/schedules/${t.sid}/programme?format=svg&scale=week&filter=critical`, plan1); assert.equal(svg.status, 200); assert.match(svg.buffer.toString(), /^<svg /); assert.match(svg.buffer.toString(), /Critical/);
   assert.equal((await t.call(se, 'GET', `/schedules/${t.sid}/programme?format=pdf`)).status, 403, 'printing needs plan.schedule.print');

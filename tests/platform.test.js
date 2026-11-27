@@ -107,11 +107,24 @@ test('pipeline: a well-formed X-Correlation-Id is kept, a malformed one is repla
   await app.close();
 });
 
-test('request logging: one line per request with the correlation id and user, never the query string or body', async () => {
+/** Waits until `find()` returns something (PACK-W0-01): the request line is written on the response's 'finish' event, which can come
+ * after the client already holds the response, so reading the logger straight away was flaky in the full suite. */
+async function eventually(find, { timeoutMs = 5000, label = 'the expected entry' } = {}) {
+  const until = Date.now() + timeoutMs;
+  for (;;) {
+    const found = find();
+    if (found) return found;
+    if (Date.now() > until) assert.fail(`${label} did not appear within ${timeoutMs} ms`);
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
+
+test('request logging: one line per request with the correlation id and user, never the query string or body', async (t) => {
   const logger = createMemoryLogger();
   const api = await startApi({}, { logger });
+  t.after(() => api.close()); // closed even when an assertion fails, so a failure cannot leave the server open and hang the file
   const res = await api.call('GET', '/api/v1/core/feature-flags?q=confidential-text', { user: 'meera', roles: 'SYSADM' });
-  const line = logger.entries.find((e) => e.msg === 'request' && e.path.endsWith('/feature-flags'));
+  const line = await eventually(() => logger.entries.find((e) => e.msg === 'request' && e.path.endsWith('/feature-flags')), { label: 'the request log line' });
   assert.equal(line.correlationId, res.headers.get('x-correlation-id'));
   assert.equal(line.method, 'GET');
   assert.equal(line.status, 200);
@@ -121,7 +134,6 @@ test('request logging: one line per request with the correlation id and user, ne
   assert.equal(line.module, 'core');
   assert.ok(Number.isInteger(line.durationMs));
   assert.ok(!JSON.stringify(logger.entries).includes('confidential-text'));
-  await api.close();
 });
 
 test('the JSON logger writes one parseable object per line', () => {
@@ -133,8 +145,9 @@ test('the JSON logger writes one parseable object per line', () => {
   assert.equal(JSON.parse(lines[1]).level, 'error');
 });
 
-test('T-01 on the real app: 401, 403, 404 and validation all use the one envelope', async () => {
+test('T-01 on the real app: 401, 403, 404 and validation all use the one envelope', async (t) => {
   const api = await startApi();
+  t.after(() => api.close());
   const cases = [
     [await api.call('GET', '/api/v1/core/session', { user: null }), 401, 'UNAUTHENTICATED'],
     [await api.call('GET', '/api/v1/core/feature-flags', { roles: 'PM' }), 403, 'FORBIDDEN'],
@@ -147,7 +160,6 @@ test('T-01 on the real app: 401, 403, 404 and validation all use the one envelop
     assert.ok(Array.isArray(r.json.error.details));
     assert.equal(r.json.error.correlationId, r.headers.get('x-correlation-id'));
   }
-  await api.close();
 });
 
 test('every code in the error registry has a status, a meaning and advice, and codes are unique', () => {

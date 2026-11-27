@@ -16,6 +16,14 @@ export function memoryDb() {
 }
 
 /** Start the API on a random port; returns { db, call, close }. */
+/**
+ * A wall-clock budget for a test, in ms (PACK-W0-01). The unit job runs with coverage on a shared runner, where the same work takes
+ * about twice as long as on a developer machine: tests/plan-gantt.test.js T-02 took 31 s against its 15 s budget on main run #159
+ * and passed on the next run. CI sets ERP_TEST_TIME_FACTOR; the real response-time targets are measured by the perf scripts
+ * (npm run erp:*-perf, perf-smoke), not by unit tests, which only catch a gross slow-down.
+ */
+export const timeBudget = (ms) => ms * (Number(process.env.ERP_TEST_TIME_FACTOR) > 0 ? Number(process.env.ERP_TEST_TIME_FACTOR) : 1);
+
 export async function startApi(configOverrides = {}, appOverrides = {}) {
   const db = memoryDb();
   const app = createApp({ config: testConfig(configOverrides), db, logger: process.env.TEST_LOG ? { ...silentLogger, error: (...a) => console.error(...a), warn: (...a) => console.error(...a) } : silentLogger, ...appOverrides });
@@ -26,6 +34,10 @@ export async function startApi(configOverrides = {}, appOverrides = {}) {
   // keep-alive (5 s) closes an idle connection just as the client reuses it: ECONNRESET (D-455, reproduced 2 times in 6 with coverage). A longer server side keep-alive
   // leaves the client (undici, 4 s) to retire idle connections itself.
   server.keepAliveTimeout = 65_000; server.headersTimeout = 66_000;
+  // PACK-W0-01: a test that fails before its `await api.close()` used to leave this server listening, so the test file never exited
+  // (one flaky assertion stalled the whole local suite for 15 minutes; on CI it ran into the job timeout). The listening socket no
+  // longer keeps the process alive; tests still close their server, preferably in t.after(() => api.close()).
+  server.unref(); server.on('connection', (socket) => socket.unref()); // an idle keep-alive connection does not hold the process either
   const base = `http://127.0.0.1:${server.address().port}`;
   const call = async (method, path, { user = 'tester', roles = '', company = '1', body, headers = {} } = {}) => {
     const h = { 'content-type': 'application/json', ...headers };
