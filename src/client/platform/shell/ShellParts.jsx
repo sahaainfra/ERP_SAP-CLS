@@ -74,10 +74,29 @@ export function Sidebar({ groups, account, consoleGroup, path, go, language, ope
   const t = useT('shell');
   const [closedGroups, setClosedGroups] = useStored('erp.shell.closed-groups', []);
   const wrapped = (to) => (e) => { go(to)(e); onClose(); };
+  const navRef = useRef(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  // the phone menu: opening it moves focus to the current page's entry (or the first one); Escape closes it and gives focus back to what opened it
+  useEffect(() => {
+    if (!open) return undefined;
+    const opener = document.activeElement;
+    const el = navRef.current;
+    const shown = (n) => n && n.getClientRects().length > 0;
+    const current = el?.querySelector('a[aria-current="page"]');
+    (shown(current) ? current : [...(el?.querySelectorAll('a[href], button') ?? [])].find(shown))?.focus({ preventScroll: true });
+    const onKey = (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('[aria-modal="true"]')) return; // a dialog on top takes its own Escape
+      closeRef.current?.();
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus({ preventScroll: true });
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
   // part 166.4 (with ff.perf.p16604, on a phone): the menu is a closed drawer; its hundreds of entries are drawn when it is opened, not at start
-  if (drawOnOpen && !open) return <nav id="sh-nav" className="sh-nav" aria-label={t('nav.main')} data-open={open} data-collapsed={collapsed} />;
+  if (drawOnOpen && !open) return <nav id="sh-nav" ref={navRef} className="sh-nav" aria-label={t('nav.main')} data-open={open} data-collapsed={collapsed} />;
   return (
-    <nav id="sh-nav" className="sh-nav" aria-label={t('nav.main')} data-open={open} data-collapsed={collapsed}>
+    <nav id="sh-nav" ref={navRef} className="sh-nav" aria-label={t('nav.main')} data-open={open} data-collapsed={collapsed}>
       {groups.map((g) => <Section key={g.code} group={g} path={path} go={wrapped} language={language} closedGroups={closedGroups} setClosedGroups={setClosedGroups} />)}
       {account && <Section group={account} path={path} go={wrapped} language={language} name={t('nav.account')} closedGroups={closedGroups} setClosedGroups={setClosedGroups} />}
       {consoleGroup && <Section group={consoleGroup} path={path} go={wrapped} language={language} name={t('nav.console')} closedGroups={closedGroups} setClosedGroups={setClosedGroups} />}

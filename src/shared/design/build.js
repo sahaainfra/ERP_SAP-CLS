@@ -18,8 +18,10 @@ function baseLines(t) {
   const out = [];
   for (const [k, v] of Object.entries(t.typography.family)) out.push(`--erp-font-${k}: ${v};`);
   for (const [k, s] of Object.entries(t.typography.scale)) {
-    out.push(`--erp-type-${k}: ${s.weight} ${s.size}px/${s.lineHeight}px var(--erp-font-sans);`);
-    out.push(`--erp-font-size-${k}: ${s.size}px;`);
+    // `fluidMin`: the size shrinks with the viewport between 360 px and 1280 px wide, from fluidMin to size, and never leaves those bounds
+    const size = s.fluidMin ? `clamp(${s.fluidMin}px, calc(${s.fluidMin}px + ${s.size - s.fluidMin} * (100vw - 360px) / 920), ${s.size}px)` : `${s.size}px`;
+    out.push(`--erp-type-${k}: ${s.weight} ${size}/${Number((s.lineHeight / s.size).toFixed(4))} var(--erp-font-sans);`);
+    out.push(`--erp-font-size-${k}: ${size};`);
   }
   for (const [k, v] of Object.entries(t.space)) out.push(`--erp-space-${k}: ${px(v)};`);
   for (const [k, v] of Object.entries(t.radius)) out.push(`--erp-radius-${k}: ${px(v)};`);

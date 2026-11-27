@@ -40,7 +40,7 @@ function Transfer({ tr, t, run, busy }) {
       {tr.can.cancel && <button type="button" className="btn" style={big} disabled={busy} onClick={() => { const r = globalThis.prompt?.(t('pp.whyCancel')); if (r && r.trim().length >= 5) run(() => settle.cancelTransfer(tr.id, { reason: r.trim() }), t('pp.cancelled')); }}>{t('pp.cancel')}</button>}
       <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setOpen(!open)} aria-expanded={open} data-testid={`pp-open-${tr.id}`}>{open ? t('pp.hideLines') : t('pp.showLines')}</button>
     </div>
-    {open && (guardOf(q, t('pp.lines'), 'pay.transfer.view') ?? <><ul className="lp-list" data-testid={`pp-lines-${tr.id}`}>{q.data.items.map((l) => <li key={l.id} style={{ ...card, borderTop: '1px solid var(--erp-color-border)' }} data-testid={`pp-line-${l.id}`}>
+    {open && (guardOf(q, t('pp.lines'), 'pay.transfer.view') ?? <><ul className="lp-list" data-testid={`pp-lines-${tr.id}`}>{q.data.items.map((l) => <li key={l.id} style={{ ...card, borderTop: '1px solid var(--erp-color-border-subtle)' }} data-testid={`pp-line-${l.id}`}>
       <div style={row}><span>{l.employee}</span><span className="num">{amt(l.amount, t)}</span></div><span className="small">{l.bank} · {t(`pp.ls.${l.status}`)}{l.utr ? ` · UTR ${l.utr}` : ''}{l.reason ? ` · ${l.reason}` : ''}</span>
       {tr.can.confirm && l.status === 'INCLUDED' && <div className="form-grid">
         <Field label={t('pp.outcome')} name={`st${l.id}`} error={null}><select value={rows[l.id]?.status ?? 'PAID'} onChange={(e) => set(l.id, 'status', e.target.value)} style={big} data-testid={`pp-outcome-${l.id}`}><option value="PAID">{t('pp.ls.PAID')}</option><option value="FAILED">{t('pp.ls.FAILED')}</option></select></Field>
@@ -127,7 +127,7 @@ function FnfObject({ id }) {
   const bq = useQuery({ queryKey: ['gl', 'pp-banks'], queryFn: () => settle.banks(), retry: false, enabled: Boolean(q.data?.can?.pay) }); usePageTitle(t('ff.title'));
   const g = guardOf(q, t('ff.title'), 'pay.fnf.view'); if (g) return g; const x = q.data; const c = x.can; const list = adj ?? x.adjustments; const bank = pay.bankAccountId || bq.data?.[0]?.id || '';
   const earn = x.components.filter((k) => k.type === 'EARNING'); const ded = x.components.filter((k) => k.type === 'DEDUCTION'); const info = x.components.filter((k) => k.type === 'EMPLOYER' || k.type === 'INFO');
-  const Comp = ({ k }) => <li style={{ padding: '6px 0', borderTop: '1px solid var(--erp-color-border)' }} data-testid={`ff-c-${k.code}`}><div style={row}><span>{k.label}</span><span className="num">{k.type === 'DEDUCTION' ? '−' : ''}{money(k.amount)}</span></div><span className="small muted">{k.working}</span></li>;
+  const Comp = ({ k }) => <li style={{ padding: '6px 0', borderTop: '1px solid var(--erp-color-border-subtle)' }} data-testid={`ff-c-${k.code}`}><div style={row}><span>{k.label}</span><span className="num">{k.type === 'DEDUCTION' ? '−' : ''}{money(k.amount)}</span></div><span className="small muted">{k.working}</span></li>;
   return (<section aria-labelledby="ff-h" data-testid="ff-object" data-status={x.status}>
     <PageHeader id="ff-h" title={`${x.docNo} · ${x.employee}`} subtitle={[x.designation, x.department].filter(Boolean).join(' · ')} meta={<><StatusBadge status={TONE[x.status] ?? 'CANCELLED'} label={x.statusLabel} /> <StatusBadge status={x.payStatus === 'PAID' ? 'APPROVED' : 'DRAFT'} label={`${x.payStatusLabel}${x.late ? ` · ${t('ff.late')}` : ''}`} /></>} />
     <p><Link to="/payroll/fnf">{t('ff.back')}</Link></p><GlError error={error} />{note && <p className="mdm-banner" role="status">{note}</p>}
@@ -142,7 +142,7 @@ function FnfObject({ id }) {
     </div>}
     {tab === 'adjust' && <div className="mdm-panel" data-testid="ff-adjust"><h2>{t('ff.adjustments')}</h2>
       {list.length === 0 && <p className="small">{t('ff.noAdj')}</p>}
-      {list.map((a, i) => <div key={i} className="form-grid" style={{ borderTop: '1px solid var(--erp-color-border)', paddingTop: 6 }}>
+      {list.map((a, i) => <div key={i} className="form-grid" style={{ borderTop: '1px solid var(--erp-color-border-subtle)', paddingTop: 6 }}>
         <Field label={t('ff.label')} name={`l${i}`} error={null}><input value={a.label} disabled={!c.compute} onChange={(e) => setAdj(list.map((y, k) => (k === i ? { ...y, label: e.target.value } : y)))} style={big} /></Field>
         <Field label={t('ff.kind')} name={`k${i}`} error={null}><select value={a.type} disabled={!c.compute} onChange={(e) => setAdj(list.map((y, k) => (k === i ? { ...y, type: e.target.value } : y)))} style={big}><option value="EARNING">{t('ff.earning')}</option><option value="DEDUCTION">{t('ff.deduction')}</option></select></Field>
         <Field label={t('ff.amount')} name={`a${i}`} error={null}><input type="number" inputMode="decimal" min="0" step="0.01" value={a.amount} disabled={!c.compute} onChange={(e) => setAdj(list.map((y, k) => (k === i ? { ...y, amount: e.target.value } : y)))} style={big} /></Field>

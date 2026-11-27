@@ -462,7 +462,7 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
                 <tr className={selected.has(r.id) ? 'is-selected' : ''} data-testid={`row-${r.id}`}>
                   {actions.length > 0 && <td className="lr-sel"><input type="checkbox" aria-label={`Select ${r[firstKey] ?? r.id}`} checked={selected.has(r.id)} onChange={() => setSelected((s) => { const n = new Set(s); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })} /></td>}
                   {shown.map((c, i) => (
-                    <td key={c.key} className={`${i === 0 ? 'lr-freeze ' : ''}${['money', 'number'].includes(c.type) ? 'num' : ''}`} data-label={c.label}>
+                    <td key={c.key} className={`${i === 0 ? 'lr-freeze ' : ''}${['money', 'number'].includes(c.type) ? 'num' : ''}`} data-label={c.label} title={['text', 'string'].includes(c.type) && String(r[c.key] ?? '').length > 40 ? String(r[c.key]) : undefined}>
                       {i === 0 && rowHref ? <a href={rowHref(r)} onClick={open(r)}>{formatCell(c, r[c.key]) || `#${r.id}`}</a> : c.key === statusKey ? <StatusBadge status={r[c.key]} /> : formatCell(c, r[c.key])}
                     </td>
                   ))}

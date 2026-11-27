@@ -277,6 +277,30 @@ test('FR-04 FR-07 header and keyboard: search or go to, quick create, g-shortcut
   expect(errors).toEqual([]);
 });
 
+test('FR-07 the phone menu: opening it moves focus into it, Escape closes it and gives focus back, a link opens its page and closes the menu', async ({ browser, request }, info) => {
+  test.skip(info.project.name === 'desktop', 'the menu is a drawer on a phone only');
+  test.setTimeout(90_000);
+  const w = await world(request, 'SHDM');
+  const page = await as(browser, info, w.company, 'PM', 'e2e-drawer-m', '/home');
+  const errors = watch(page);
+  const nav = page.locator('#sh-nav');
+  await nav.waitFor({ state: 'attached' });
+  const burger = page.locator('.sh-burger, [data-testid="bottom-more"]').filter({ visible: true }).first(); // a touch phone opens the menu from the bottom bar
+  await expect(burger).toBeVisible();
+  await burger.click();
+  await expect(nav).toHaveAttribute('data-open', 'true');
+  await expect.poll(() => page.evaluate(() => Boolean(document.activeElement?.closest('#sh-nav')))).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(nav).not.toHaveAttribute('data-open', 'true');
+  await expect(burger).toBeFocused();
+  await burger.click();
+  await nav.getByRole('link', { name: 'Sample Material Requests' }).click();
+  await expect(page).toHaveURL(/\/admin\/sample-requests$/);
+  await expect(nav).not.toHaveAttribute('data-open', 'true');
+  await noOverflow(page);
+  expect(errors).toEqual([]);
+});
+
 test('AC-05 FR-01 FR-08 FR-09 the registry is changed by request and approval: a page may need a project; history, export and import follow', async ({ browser, request }, info) => {
   test.skip(info.project.name === 'mobile', 'the registry is shared by both viewports, so it is changed once');
   test.setTimeout(180_000);

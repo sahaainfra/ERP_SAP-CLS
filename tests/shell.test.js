@@ -62,3 +62,19 @@ test('a person still being onboarded sees the welcome page and the pages onboard
   assert.deepEqual(forOnboarding(nav, true).groups.flatMap((g) => g.pages.map((p) => p.code)), ['welcome', 'profile']);
   assert.ok(!forOnboarding(nav, false).groups.flatMap((g) => g.pages.map((p) => p.code)).includes('welcome'));
 });
+
+test('FR-07 a page is found by the name the screen shows: its Hindi and Telugu names and its group in those languages', () => {
+  const local = {
+    groups: [
+      { code: 'g-procurement', label: 'Procurement', labelHi: 'खरीद', labelTe: 'కొనుగోలు', placement: 'sidebar', pages: [page('proc-po', 'Purchase Orders', '/proc/purchase-orders', { labelHi: 'खरीद आदेश', labelTe: 'కొనుగోలు ఆర్డర్లు' })] },
+      { code: 'g-hr', label: 'People', labelHi: 'कर्मचारी', placement: 'sidebar', pages: [page('hr-emp', 'Employees', '/hr/employees', { labelHi: 'कर्मचारी सूची' })] },
+    ],
+  };
+  assert.deepEqual(searchEntries(local, 'खरीद आदेश').map((p) => p.code), ['proc-po'], 'the Hindi name');
+  assert.deepEqual(searchEntries(local, 'కొనుగోలు ఆర్డర్').map((p) => p.code), ['proc-po'], 'the Telugu name');
+  assert.deepEqual(searchEntries(local, 'कर्मचारी').map((p) => p.code), ['hr-emp'], 'a Hindi page name start ranks as a label match');
+  assert.deepEqual(searchEntries(local, 'purchase').map((p) => p.code), ['proc-po'], 'English still works');
+  assert.deepEqual(searchEntries(local, 'खरीद').map((p) => p.code), ['proc-po'], 'the group name in Hindi finds its pages');
+  const more = { groups: [{ code: 'g-p', label: 'Procurement', placement: 'sidebar', pages: [page('po-new', 'New Purchase Order', '/proc/po-new', { labelHi: 'खरीद आदेश बनाएँ' }), page('proc-po', 'Purchase Orders', '/proc/purchase-orders', { labelHi: 'खरीद आदेश' })] }] };
+  assert.deepEqual(searchEntries(more, 'खरीद आदेश').map((p) => p.code), ['proc-po', 'po-new'], 'the exact name ranks before names that only start with it');
+});

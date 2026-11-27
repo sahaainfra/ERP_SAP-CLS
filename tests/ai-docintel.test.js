@@ -6,7 +6,8 @@ import { join } from 'node:path';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import '../src/server/modules/registry.js';
 import { classify, closeOcr, contractClauses, extract, gstinValid, hamming, parseAmount, parseDate, simhash, textOf } from '../src/server/modules/ai/docintel.js';
-import { createCanvas } from '@napi-rs/canvas';
+import { createRequire } from 'node:module';
+import { GlobalFonts, createCanvas } from '@napi-rs/canvas';
 import { runtimeOf } from '../src/server/platform/runtime/index.js';
 import { fill } from './qa-helpers.js';
 import { setupCompany, startApi } from './helpers.js';
@@ -200,7 +201,10 @@ test('the text of files: a text layer, plain text, a file that is not an image; 
 });
 
 // D-786: scanned images and scanned PDFs (no text layer) are read by the local OCR engine (tesseract.js with its English data)
-const scanned = () => { const c = createCanvas(1240, 1754); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 1240, 1754); g.fillStyle = '#000'; g.font = '34px sans-serif';
+// The page is drawn with a font the repository ships (Liberation Sans, from pdfjs-dist), not the machine's 'sans-serif': on a CI runner that has no Latin
+// text font the letters were not drawn at all and only the digits came out (D-786 failed there as '2026 0457' for 'INV-2026/0457').
+GlobalFonts.registerFromPath(createRequire(import.meta.url).resolve('pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf'), 'OCR Test Sans');
+const scanned = () => { const c = createCanvas(1240, 1754); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 1240, 1754); g.fillStyle = '#000'; g.font = "34px 'OCR Test Sans'";
   ['Shree Cement Traders Pvt Ltd', 'TAX INVOICE', 'Invoice No: INV-2026/0457', 'Invoice Date: 14-11-2026', 'Grand Total 1,18,000.00'].forEach((l, i) => g.fillText(l, 100, 150 + i * 60)); return c.toBuffer('image/png'); };
 test('D-786 a scanned invoice is read by OCR, as an image and as a PDF without a text layer, and extracted', async () => {
   const png = scanned();

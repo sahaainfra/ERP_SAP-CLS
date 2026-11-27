@@ -156,3 +156,22 @@ test('a return approved before the batch split was kept counts each of its lines
   const put = Object.fromEntries(r.d.prepare("SELECT batch_no, SUM(qty_in) AS q FROM inv_stock_ledger WHERE source_type = 'inv_site_return' AND source_id = ? GROUP BY batch_no").all(String(second)).map((x) => [x.batch_no, x.q]));
   assert.deepEqual(put, { B1: 3000, B2: 5000 }, 'line 2 had 2 back in B1: B2 takes its 5, B1 the 3 it still has room for; line 1\'s 10 does not count against line 2');
 });
+
+test('F01-1 an issue from a central warehouse is the project cost at the issue, on the WBS of the slip; good material back from site takes it back, scrap does not; an issue from the project\'s own site store is not costed again', async () => {
+  const r = await ready(); const wa = r.wa(100_000);
+  const c = await r.call(mgr, 'POST', '/stores', { code: 'IS-CW', name: 'Central warehouse', type: 'CENTRAL_WAREHOUSE', keepers: ['isk1'] }); assert.equal(c.status, 201, JSON.stringify(c.json));
+  const cs = await r.call(mgr, 'POST', `/stores/${c.json.data.id}/submit`); assert.equal((await r.act2(mgr2, cs.json.data.workflowInstanceId)).status, 200); const cw = c.json.data;
+  await r.stockIn(cw, r.cement, 100, 40);
+  const made = await r.call(sk, 'POST', '/issues', r.issue({ storeId: cw.id, waId: wa, lines: [{ itemId: r.cement, qty: 60 }] })); assert.equal(made.status, 201, JSON.stringify(made.json)); const g = made.json.data;
+  await r.call(sk, 'POST', `/issues/${g.id}/submit`); assert.equal((await r.post(g.id)).status, 200); await r.drain();
+  const actual = () => ({ ...r.d.prepare("SELECT amount, qty, wbs_id, org_project_id, resource_type FROM bud_actuals WHERE src_type = 'inv_issue' AND src_id = ?").get(String(g.id)) });
+  assert.deepEqual(actual(), { amount: 240000, qty: 60000, wbs_id: r.wbs, org_project_id: r.pid, resource_type: 'MATERIAL' }, '60 bags at Rs 40 on the WBS of the slip');
+  const line = (await r.call(mgr, 'GET', `/issues/${g.id}`)).json.data.lines[0];
+  const back = async (condition, qty) => { const rt = (await r.call(sk, 'POST', '/site-returns', { issueId: g.id, condition, reason: 'Not needed any more', lines: [{ issueLineId: line.id, qty }] })); assert.equal(rt.status, 201, JSON.stringify(rt.json)); const s = await r.call(sk, 'POST', `/site-returns/${rt.json.data.id}/submit`); assert.equal((await r.act2(mgr, s.json.data.workflowInstanceId)).status, 200); await r.drain(); };
+  await back('GOOD', 20); assert.equal(actual().amount, 160000, 'the 20 good bags are back in the warehouse: Rs 800 off');
+  await back('SCRAP', 5); assert.equal(actual().amount, 160000, 'scrap was consumed: it stays cost');
+  // the project's own site store: its material was costed when it was received
+  const st = await r.store('IS-ST'); await r.stockIn(st, r.cement, 100, 40);
+  const g2 = (await r.call(sk, 'POST', '/issues', r.issue({ storeId: st.id, waId: wa, lines: [{ itemId: r.cement, qty: 10 }] }))).json.data; await r.call(sk, 'POST', `/issues/${g2.id}/submit`); assert.equal((await r.post(g2.id)).status, 200); await r.drain();
+  assert.equal(r.d.prepare("SELECT COUNT(*) AS n FROM bud_actuals WHERE src_type = 'inv_issue' AND src_id = ?").get(String(g2.id)).n, 0);
+});

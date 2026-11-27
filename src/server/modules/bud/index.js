@@ -11,6 +11,7 @@ import { createLedgerService } from './ledger.js';
 import { createDeptService } from './dept.js';
 import './dept-import.js';
 import { ACTUAL_EVENTS, COMMIT_EVENTS, GL_EVENT_FAMILY } from './constants.js';
+import { INVENTORY_EVENTS, createInventoryActuals } from './inventory.js';
 import { budRoutes } from './routes.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 
@@ -60,6 +61,9 @@ export const bud = {
     if (svc.ledger) {
       const types = [...Object.keys(COMMIT_EVENTS).flatMap((k) => ['approved', 'amended', 'closed', 'short_closed', 'cancelled'].map((v) => `${k}.${v}`)), ...ACTUAL_EVENTS.flatMap((k) => ['posted', 'reversed'].map((v) => `${k}.${v}`))];
       runtimeOf(db)?.bus?.subscribe(types, (e) => { svc.ledger.onEvent(e); }, { consumer: 'bud.ledger' });
+      // F01-1: material cost from the inventory events as they are published (receipt, return to vendor, issue, return from site)
+      const material = createInventoryActuals({ db, ledger: svc.ledger });
+      runtimeOf(db)?.bus?.subscribe(INVENTORY_EVENTS, (e) => { material.onEvent(e); }, { consumer: 'bud.material' });
       listExports.register('bud.ledger', { source: () => { throw new Error('The ledger report is exported from its own page'); }, hidden: () => [] });
     }
     if (svc.dept) {
