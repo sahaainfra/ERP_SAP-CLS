@@ -83,7 +83,7 @@ export default function CommandPalette({ open, onClose, nav, favourites = [], re
     // an action whose name holds the words comes first; one that matched only by a keyword follows the pages
     const named = matched.filter((c) => norm(c.label).includes(needle) || norm(c.command.labelHi).includes(needle));
     add(t('group.actions'), named.slice(0, 4));
-    add(t('group.pages'), searchEntries(nav, text, 5).map((p) => ({ id: `p-${p.code}`, kind: 'page', label: label(p), hint: p.groupLabel, route: p.route, icon: p.icon })));
+    add(t('group.pages'), searchEntries(nav, text, 5).map((p) => ({ id: `p-${p.code}`, kind: 'page', label: label(p), hint: labelIn({ label: p.groupLabel, labelHi: p.groupLabelHi, labelTe: p.groupLabelTe }, language), route: p.route, icon: p.icon })));
     add(t('group.keyword'), matched.filter((c) => !named.includes(c)).slice(0, 3));
     if (searchOn) {
       for (const g of search.data?.groups ?? []) {
@@ -158,7 +158,7 @@ export default function CommandPalette({ open, onClose, nav, favourites = [], re
 }
 
 /** The list of keyboard shortcuts (opened with ?). */
-export function ShortcutHelp({ open, onClose, nav }) {
+export function ShortcutHelp({ open, onClose, nav, language = 'en' }) {
   const ts = useT('shell');
   const tc = useT('common');
   const map = shortcutMap(nav);
@@ -171,7 +171,7 @@ export function ShortcutHelp({ open, onClose, nav }) {
           <dt><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>{ts('shortcuts.search')}</dd>
           <dt><kbd>?</kbd></dt><dd>{ts('shortcuts.list')}</dd>
           {Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).map(([k, p]) => (
-            <Fragment key={k}><dt><kbd>g</kbd> {ts('shortcuts.then')} <kbd>{k}</kbd></dt><dd>{p.label}</dd></Fragment>
+            <Fragment key={k}><dt><kbd>g</kbd> {ts('shortcuts.then')} <kbd>{k}</kbd></dt><dd>{labelIn(p, language)}</dd></Fragment>
           ))}
         </dl>
         <button type="button" className="btn" autoFocus onClick={onClose}>{tc('close')}</button>

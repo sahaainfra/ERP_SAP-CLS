@@ -191,7 +191,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
       </div>
       {device && phone && <BottomNav items={bottom} path={path.split('?')[0]} go={goTo} moreOpen={menuOpen} onMore={openMenu} />}
       <CommandPalette open={palette} onClose={() => setPalette(false)} nav={nav} favourites={favs.data ?? []} recent={recent.data ?? []} go={open} searchOn={searchOn} path={path} language={language} actions={{ setTheme, setLanguage, openHelp: () => setHelp(true) }} />
-      <ShortcutHelp open={help} onClose={() => setHelp(false)} nav={nav} />
+      <ShortcutHelp open={help} onClose={() => setHelp(false)} nav={nav} language={language} />
       {!onboarding && session && <HelpWidget path={path} />}
     </div>
   );

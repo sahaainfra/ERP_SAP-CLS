@@ -3,7 +3,7 @@
 const pathOf = (route) => route.split('?')[0];
 
 /** Every page entry the person may open, with its group. */
-export const flatPages = (nav) => (nav?.groups ?? []).flatMap((g) => g.pages.map((p) => ({ ...p, group: g.code, groupLabel: g.label, placement: g.placement })));
+export const flatPages = (nav) => (nav?.groups ?? []).flatMap((g) => g.pages.map((p) => ({ ...p, group: g.code, groupLabel: g.label, groupLabelHi: g.labelHi ?? null, groupLabelTe: g.labelTe ?? null, placement: g.placement })));
 
 /** The entry for an address (ignoring a query string), or undefined. */
 export const entryFor = (nav, path) => flatPages(nav).find((p) => pathOf(p.route) === pathOf(path));
@@ -60,13 +60,16 @@ export function searchEntries(nav, q, limit = 12) {
   if (!needle) return [];
   const scored = [];
   for (const p of flatPages(nav)) {
-    const label = norm(p.label);
+    // every name the entry has (English, Hindi, Telugu), so a person finds a page by the name the screen shows them
+    const labels = [p.label, p.labelHi, p.labelTe].filter(Boolean).map(norm);
+    const all = labels.join(' ');
     const words = norm(p.keywords);
     let score = 0;
-    if (label.startsWith(needle)) score = 4;
-    else if (label.includes(needle)) score = 3;
-    else if (needle.split(/\s+/).every((w) => words.includes(w) || label.includes(w))) score = 2;
-    else if (norm(p.groupLabel).includes(needle)) score = 1;
+    if (labels.includes(needle)) score = 5; // the page's exact name comes first
+    else if (labels.some((l) => l.startsWith(needle))) score = 4;
+    else if (all.includes(needle)) score = 3;
+    else if (needle.split(/\s+/).every((w) => words.includes(w) || all.includes(w))) score = 2;
+    else if ([p.groupLabel, p.groupLabelHi, p.groupLabelTe].some((g) => g && norm(g).includes(needle))) score = 1;
     if (score) scored.push({ p, score });
   }
   return scored.sort((a, b) => b.score - a.score || a.p.label.localeCompare(b.p.label)).slice(0, limit).map((x) => x.p);
