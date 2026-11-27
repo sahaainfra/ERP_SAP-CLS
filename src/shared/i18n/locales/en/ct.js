@@ -39,6 +39,7 @@ export default {
   "tile.dso": "Days sales outstanding",
   "tile.ltifr": "Lost-time injury frequency",
   "tile.stock": "Stock turns",
+  "tile.projects": "Projects in scope",
   "state.certified": "Certified · {n} project(s)",
   "state.UNCERTIFIED": "Awaiting certification",
   "state.MASKED": "Not visible to your role",

@@ -2,7 +2,7 @@
 export default {
   "title": "Morning Report",
   "archiveTitle": "Report Archive",
-  "asAt": "Data as at {cutoff} IST on {date} · for {data} · {no}",
+  "asAt": "Reporting cutoff {cutoff} IST on {date} · for {data} · {no}",
   "tab.report": "Report",
   "tab.archive": "Archive",
   "tab.settings": "Settings",
@@ -56,7 +56,7 @@ export default {
   "c.item": "Item",
   "c.store": "Store",
   "c.available": "Available",
-  "c.min": "Minimum",
+  "c.min": "Reorder level",
   "c.doc": "Document",
   "c.client": "Client",
   "c.amount": "Amount",

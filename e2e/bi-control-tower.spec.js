@@ -98,12 +98,22 @@ test('Enterprise control tower: executive dashboard, health matrix, drill-down a
   page.on('console', (message) => { if (message.type() === 'error' && !/socket\.io|WebSocket/.test(message.text())) errors.push(message.text()); });
   await page.addInitScript((identity) => localStorage.setItem('erp.dev.identity', JSON.stringify(identity)), { user: director, roles: 'DIR', company: String(company) });
   const noOverflow = () => expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+  const checkWidths = async () => {
+    const original = page.viewportSize();
+    const widths = phone ? [320, 360, 375, 390, 430] : [768, 1024, 1366, 1920];
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: width === 768 ? 1024 : 768 });
+      await noOverflow();
+    }
+    await page.setViewportSize(original);
+  };
 
   // the executive dashboard: hero KPI first, certified tiles with the last refresh, health chart, alerts, pending actions
   await page.goto('/bi/control-tower');
   await expect(page.getByRole('heading', { name: 'Enterprise Control Tower', level: 1 })).toBeVisible();
   await expect(page.getByText(/certified metrics evaluated/)).toBeVisible();
   const tiles = page.getByTestId('ct-tiles');
+  await expect(tiles.getByTestId('ct-project-count')).toContainText('2');
   await expect(tiles.locator('.kpi-tile').first()).toHaveAttribute('data-testid', 'ct-tile-eac');
   await expect(page.getByTestId('ct-tile-eac-value')).toContainText('69.50 Cr');
   await expect(page.getByTestId('ct-tile-spi-value')).toHaveText('0.90');
@@ -118,6 +128,13 @@ test('Enterprise control tower: executive dashboard, health matrix, drill-down a
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `docs/erp/screenshots/27.04/${phone ? 'mobile' : 'desktop'}-enterprise-control-tower.png`, fullPage: true });
   await checkAppearance(page);
+  await checkWidths();
+  await page.goto('/bi/control-tower?sector=BUILDINGS');
+  await expect(page.getByTestId('ct-project-count')).toContainText('1');
+  await page.getByTestId('ct-project-count').getByRole('link').click();
+  await expect(page).toHaveURL(/sector=BUILDINGS.*tab=matrix/);
+  await expect(page.getByTestId('ct-matrix-row')).toHaveCount(1);
+  await page.goto('/bi/control-tower');
 
   // the hero tile opens the health matrix; a filter narrows it; a project row opens the project with its source records
   await page.getByTestId('ct-tile-eac').getByRole('link').click();

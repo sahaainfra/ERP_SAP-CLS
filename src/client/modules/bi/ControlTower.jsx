@@ -58,7 +58,7 @@ function Filters({ data, search }) {
   </div>;
 }
 
-function Tiles({ tiles }) {
+function Tiles({ tiles, projectCount, matrixRoute }) {
   const t = useT('ct');
   const figure = useFigure();
   const { number } = useFormat();
@@ -73,6 +73,8 @@ function Tiles({ tiles }) {
         {note}{tile.target != null ? ` · ${t('state.target', { v: number(String(tile.target), { decimals: 2 }) })}` : ''}
       </KpiTile>;
     })}
+    <KpiTile testid="ct-project-count" label={t('tile.projects')} kind="count"
+      value={number(String(projectCount), { decimals: 0 })} to={matrixRoute} />
   </KpiRow>;
 }
 
@@ -115,7 +117,7 @@ function AlertRows({ rows, compact = false, onChanged }) {
   </div>;
 }
 
-function Overview({ data }) {
+function Overview({ data, filters }) {
   const t = useT('ct');
   const figure = useFigure();
   const { date } = useFormat();
@@ -123,7 +125,7 @@ function Overview({ data }) {
     series: ['RED', 'AMBER', 'GREEN', 'NONE'].map((state) => ({ name: t(`rag.${state}`), colour: RAG_COLOUR[state], values: DIMENSIONS.map((d) => data.dimensions[d][state]),
       drill: DIMENSIONS.map((d) => `/bi/control-tower?tab=matrix&dimension=${d}&dimensionRag=${state}`) })) };
   return <>
-    <Tiles tiles={data.tiles} />
+    <Tiles tiles={data.tiles} projectCount={data.matrix.total} matrixRoute={`/bi/control-tower${qs({ ...filters, page: '', tab: 'matrix' })}`} />
     <CardGrid testid="ct-cards">
       <Card title={t('card.health')} subtitle={t('card.healthSub')} viewAll="/bi/control-tower?tab=matrix" viewAllLabel={t('viewAll')} testid="ct-card-health">
         <Chart type="stacked" data={health} title={t('card.health')} onDrill={(to) => navigateTo(to)} exportName="portfolio-health" />
@@ -139,7 +141,7 @@ function Overview({ data }) {
             {data.pending.approvals.map((r) => <li key={`r${r.id}`}><Link to="/bi/control-tower?tab=settings">{t('card.pendingApproval', { title: r.title })}</Link></li>)}
           </ul>}
       </Card>
-      <Card title={t('card.cash')} viewAll={data.cash?.route ?? '/finance/treasury'} viewAllLabel={t('viewAll')} testid="ct-card-cash">
+      <Card title={t('card.cash')} viewAll={data.cashMasked ? undefined : data.cash?.route ?? '/finance/treasury'} viewAllLabel={t('viewAll')} testid="ct-card-cash">
         {data.cashMasked ? <p className="muted">{t('card.cashMasked')}</p> : !data.cash ? <EmptyState compact title={t('card.cashNone')} />
           : <KpiRow><KpiTile label={t('card.cashLowest')} kind="money" amount={data.cash.lowest} value={figure(data.cash.lowest, 'INR')} tone={data.cash.lowest < 0 ? 'error' : 'success'} to={data.cash.route}>
             {t('card.cashWeek', { week: date(data.cash.lowestWeek) })} · {data.cash.docNo}
@@ -337,7 +339,7 @@ export function ControlTower({ session, initialTab = 'overview' }) {
         onClick={() => go({ tab: k, page: '', ...(k !== 'matrix' ? { projectId: '' } : {}) })}>{t(`tab.${k}`)}{k === 'alerts' && d.alerts.open ? ` (${d.alerts.open})` : ''}</button>)}
     </div>
     {tab !== 'settings' && tab !== 'alerts' && <Filters data={d} search={search} />}
-    {tab === 'overview' && <Overview data={d} />}
+    {tab === 'overview' && <Overview data={d} filters={filters} />}
     {tab === 'matrix' && <Matrix data={d} search={search} />}
     {tab === 'alerts' && <Alerts search={search} />}
     {tab === 'settings' && <Settings session={session} />}

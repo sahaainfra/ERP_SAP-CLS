@@ -39,6 +39,7 @@ export default {
   "tile.dso": "प्राप्य दिवस",
   "tile.ltifr": "चोट आवृत्ति दर",
   "tile.stock": "स्टॉक आवर्तन",
+  "tile.projects": "दायरे में परियोजनाएँ",
   "state.certified": "प्रमाणित · {n} परियोजना",
   "state.UNCERTIFIED": "प्रमाणन प्रतीक्षित",
   "state.MASKED": "आपकी भूमिका के लिए छिपा",

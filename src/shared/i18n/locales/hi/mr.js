@@ -2,7 +2,7 @@
 export default {
   title: "प्रातः प्रबंधन रिपोर्ट",
   archiveTitle: "रिपोर्ट संग्रह",
-  asAt: "{date} को {cutoff} IST तक का डेटा · {data} के लिए · {no}",
+  asAt: "रिपोर्ट की समय-सीमा {date} को {cutoff} IST · {data} के लिए · {no}",
   "tab.report": "रिपोर्ट",
   "tab.archive": "संग्रह",
   "tab.settings": "सेटिंग",
@@ -56,7 +56,7 @@ export default {
   "c.item": "सामग्री",
   "c.store": "भंडार",
   "c.available": "उपलब्ध",
-  "c.min": "न्यूनतम",
+  "c.min": "पुनः ऑर्डर का स्तर",
   "c.doc": "दस्तावेज़",
   "c.client": "ग्राहक",
   "c.amount": "राशि",

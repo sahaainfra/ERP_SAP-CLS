@@ -16,7 +16,7 @@ import { towerOf } from './control-tower.js';
 /**
  * Part 27.05 — the daily morning management report.
  *
- * Each recipient gets one report a day, built as that person (their roles and project scopes decide every figure) from the data as at the
+ * Each recipient gets one report a day, built as that person (their roles and project scopes decide every figure) after the
  * cut-off (06:00 IST by default) and frozen as a snapshot in `mr_reports` (BR-01: opening or regenerating the report of a date gives the same
  * figures, byte for byte, because it is drawn from the snapshot and its hash is kept). Sections follow the recipient's configuration (per user,
  * else per role); the executive summary is written by rules from the section figures; the exceptions (DPRs missing, overdue approvals,
@@ -103,14 +103,13 @@ export function createMorningReport(context, { jobs, scheduler, environment }) {
   const has = (table) => Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(table));
 
   /** The configuration of a person: their own, else the first role of theirs that has one, else the default (not delivered). */
-  function configFor(companyId, user, roles) {
-    const all = currentConfigs(db, companyId);
+  function configFor(companyId, user, roles, all = currentConfigs(db, companyId)) {
     const own = all.find((c) => c.scopeType === 'USER' && c.scopeRef === user);
     const role = all.find((c) => c.scopeType === 'ROLE' && (roles ?? []).includes(c.scopeRef));
     return own ?? role ?? { ...DEFAULT_CONFIG, scopeType: 'DEFAULT', scopeRef: null, active: false, version: 0 };
   }
 
-  // ---------------------------------------------------------------- the sections (each as the recipient, as at the cut-off)
+  // ---------------------------------------------------------------- the sections (each as the recipient, using the reporting date and cut-off)
   const builders = {
     tower(actor) {
       const tower = towerOf(db);
@@ -150,18 +149,22 @@ export function createMorningReport(context, { jobs, scheduler, environment }) {
       return { date, present: rows.reduce((a, r) => a + r.present, 0), absent: rows.reduce((a, r) => a + r.absent, 0), missingPunch: rows.reduce((a, r) => a + r.missing, 0),
         manHours: Math.round(rows.reduce((a, r) => a + (r.minutes ?? 0), 0) / 6) / 10, rows: rows.map((r) => ({ ...r, manHours: Math.round((r.minutes ?? 0) / 6) / 10, minutes: undefined })), route: `/att/register?date=${date}` };
     },
-    stock(actor) {
+    stock(actor, { today }) {
       if (!has('inv_reorder_params') || !may(actor, 'inv.stock.view')) return null;
       const sc = scope(actor, 'inv.stock.view', 'st.org_project_id', 'st.org_site_id');
       const rows = db.prepare(`SELECT st.id AS storeId, st.code AS store, i.id AS itemId, i.code AS item, i.name, i.base_uom AS uom, r.min_qty AS minQty, r.reorder_level AS reorderLevel,
-          COALESCE((SELECT SUM(b.qty_on_hand - b.qty_reserved) FROM inv_balances b WHERE b.store_id = r.store_id AND b.item_id = r.item_id AND b.deleted_at IS NULL), 0) AS available
-        FROM inv_reorder_params r JOIN inv_stores st ON st.id = r.store_id AND st.store_status = 'ACTIVE' JOIN mdm_items i ON i.id = r.item_id
-        WHERE r.company_id = :c AND r.deleted_at IS NULL AND (${sc}) ORDER BY st.code, i.code`).all({ c: actor.companyId })
-        .filter((r) => r.available <= Math.max(r.minQty, r.reorderLevel));
+          COALESCE((SELECT SUM(b.qty_on_hand - b.qty_reserved - b.qty_inspection) FROM inv_balances b WHERE b.company_id = r.company_id AND b.store_id = r.store_id AND b.item_id = r.item_id AND b.deleted_at IS NULL), 0) AS available
+        FROM inv_reorder_params r JOIN inv_stores st ON st.id = r.store_id AND st.company_id = r.company_id
+        JOIN mdm_items i ON i.id = r.item_id AND i.company_id = r.company_id
+        WHERE r.company_id = :c AND r.deleted_at IS NULL AND st.deleted_at IS NULL AND i.deleted_at IS NULL
+          AND st.store_status = 'ACTIVE' AND r.reorder_level > 0 AND (${sc})
+          AND r.effective_from <= :today
+        ORDER BY st.code, i.code`).all({ c: actor.companyId, today })
+        .filter((r) => r.available <= r.reorderLevel);
       const q = (v) => Math.round(v) / 1000;
       const short = rows.map((r) => ({ store: r.store, item: `${r.item} ${r.name}`, uom: r.uom, available: q(r.available), minQty: q(r.minQty), reorderLevel: q(r.reorderLevel), stockOut: r.available <= 0,
         route: `/inv/balances?storeId=${r.storeId}&itemId=${r.itemId}` }));
-      return { stockOuts: short.filter((r) => r.stockOut).length, belowMinimum: short.length, rows: short.slice(0, 50), route: '/inv/reorder-suggestions' };
+      return { stockOuts: short.filter((r) => r.stockOut).length, belowMinimum: short.length, rows: short.slice(0, 50), route: '/inv/balances' };
     },
     receivables(actor, { today }) {
       if (!has('ar_invoices') || !may(actor, 'fin.invoice.view')) return null;
@@ -202,12 +205,19 @@ export function createMorningReport(context, { jobs, scheduler, environment }) {
     },
     tasks(actor, { today }) {
       if (!has('tsk_tasks')) return null;
-      const rows = db.prepare(`SELECT t.id, t.task_no AS taskNo, t.title, t.priority, t.due_date AS dueDate, t.status FROM tsk_tasks t
-        JOIN tsk_assignees a ON a.task_id = t.id AND a.role = 'ASSIGNEE' AND a.is_active = 1 AND a.user_ref = :u
-        WHERE t.company_id = :c AND t.is_active = 1 AND t.status NOT IN ('DONE','VERIFIED','CLOSED','CANCELLED')
+      const rows = db.prepare(`SELECT t.id, t.task_no AS taskNo, t.title, t.priority, t.due_date AS dueDate, t.status,
+          COUNT(*) OVER () AS critical, COUNT(CASE WHEN t.due_date < :today THEN 1 END) OVER () AS overdue
+        FROM tsk_tasks t
+        JOIN tsk_assignees a ON a.task_id = t.id AND a.company_id = t.company_id AND a.role = 'ASSIGNEE' AND a.is_active = 1 AND a.deleted_at IS NULL AND a.user_ref = :u
+        WHERE t.company_id = :c AND t.is_active = 1 AND t.deleted_at IS NULL AND t.status NOT IN ('DONE','VERIFIED','CLOSED','CANCELLED')
           AND (t.priority IN ('URGENT','HIGH') OR (t.due_date IS NOT NULL AND t.due_date <= :today))
-        ORDER BY CASE t.priority WHEN 'URGENT' THEN 0 WHEN 'HIGH' THEN 1 ELSE 2 END, COALESCE(t.due_date, '9999') LIMIT 50`).all({ c: actor.companyId, u: actor.user, today });
-      return { critical: rows.length, overdue: rows.filter((r) => r.dueDate && r.dueDate < today).length, rows: rows.slice(0, 20).map((r) => ({ ...r, route: `/tasks/task?id=${r.id}` })), route: '/tasks' };
+        ORDER BY CASE t.priority WHEN 'URGENT' THEN 0 WHEN 'HIGH' THEN 1 ELSE 2 END, COALESCE(t.due_date, '9999'), t.id LIMIT 20`).all({ c: actor.companyId, u: actor.user, today });
+      return {
+        critical: rows[0]?.critical ?? 0,
+        overdue: rows[0]?.overdue ?? 0,
+        rows: rows.map(({ id, taskNo, title, priority, dueDate, status }) => ({ id, taskNo, title, priority, dueDate, status, route: `/tasks/task?id=${id}` })),
+        route: '/tasks',
+      };
     },
     risks(actor) {
       if (!has('proj_risks') || !may(actor, 'proj.risk.view')) return null;
@@ -257,15 +267,17 @@ export function createMorningReport(context, { jobs, scheduler, environment }) {
     return { kind: 'RULE_BASED', lines };
   }
 
+  const actorOfUser = (companyId, user) => authz.enrich({
+    companyId, userId: user.id, user: user.username, roles: JSON.parse(user.roles_json || '[]'),
+  });
   const recipientActor = (companyId, username) => {
-    const u = db.prepare("SELECT id, username, roles_json FROM iam_users WHERE company_id = ? AND username = ? AND is_active = 1 AND status = 'ACTIVE'").get(companyId, username);
-    if (!u) return null;
-    return authz.enrich({ companyId, userId: u.id, user: u.username, roles: JSON.parse(u.roles_json || '[]') });
+    const user = db.prepare("SELECT id, username, roles_json FROM iam_users WHERE company_id = ? AND username = ? AND is_active = 1 AND status = 'ACTIVE'").get(companyId, username);
+    return user ? actorOfUser(companyId, user) : null;
   };
   const nextNo = (companyId) => `MR-${String(Number(db.prepare("SELECT COALESCE(MAX(CAST(substr(report_no, 4) AS INTEGER)), 0) + 1 AS n FROM mr_reports WHERE company_id = ?").get(companyId).n)).padStart(6, '0')}`;
 
   /**
-   * The report of `reportDate` for `actor`: the stored one, else built now from the data as at the cut-off and stored (BR-01). The figures are
+   * The report of `reportDate` for `actor`: the stored one, else captured from the sources after the reporting cut-off and stored (BR-01). The figures are
    * those the recipient may see. Returns the stored row id.
    */
   function generate(actor, reportDate, { trigger = 'on_demand' } = {}) {
@@ -273,7 +285,7 @@ export function createMorningReport(context, { jobs, scheduler, environment }) {
     if (existing) return { id: existing.id, created: false };
     const config = configFor(actor.companyId, actor.user, actor.roles);
     const cutoffAt = istInstant(reportDate, config.cutoff);
-    if (Date.now() < Date.parse(cutoffAt)) throw badRequest(`The report of ${reportDate} is built from the data at ${config.cutoff}; that time has not come yet.`, [{ field: 'date', message: 'is after the cut-off' }]);
+    if (Date.now() < Date.parse(cutoffAt)) throw badRequest(`The report of ${reportDate} can be generated after ${config.cutoff} IST; that time has not come yet.`, [{ field: 'date', message: 'is after the cut-off' }]);
     const date = addDays(reportDate, -1); // "yesterday" of the report
     const sections = {};
     for (const key of config.sections) if (builders[key]) sections[key] = builders[key](actor, { date, today: reportDate, cutoffAt }) ?? undefined;
@@ -347,32 +359,32 @@ export function createMorningReport(context, { jobs, scheduler, environment }) {
     ];
     const buffer = writeExport(format, { columns: [{ key: 'section', label: 'Section', type: 'text' }, { key: 'item', label: 'Item', type: 'text' }, { key: 'value', label: 'Value', type: 'text' }],
       rows, title: `Morning report ${row.report_no} — ${row.report_date}`, sheetName: 'Morning report',
-      footer: [`Data as at ${s.cutoff} IST on ${s.reportDate} (cut-off ${s.cutoffAt}) · snapshot sha256:${row.snapshot_hash.slice(0, 16)} · ${row.recipient_user}`, 'Executive summary: rule-based.'] });
+      footer: [`Reporting cutoff ${s.cutoff} IST on ${s.reportDate} · Generated ${row.generated_at} · snapshot sha256:${row.snapshot_hash.slice(0, 16)} · ${row.recipient_user}`, 'Executive summary: rule-based.'] });
     writeAudit(db, { companyId: actor.companyId, entity: 'mr_reports', entityId: id, action: format === 'pdf' ? 'print' : 'export', newValues: { format }, actor: actor.user });
     return { buffer, contentType: FORMATS[format], fileName: `morning-report-${row.report_date}.${format}` };
   }
 
   // ---------------------------------------------------------------- FR-03: delivery by schedule
-  function recipientsOf(companyId) {
-    const users = db.prepare("SELECT username, roles_json FROM iam_users WHERE company_id = ? AND is_active = 1 AND status = 'ACTIVE' ORDER BY username").all(companyId);
-    return users.map((u) => ({ user: u.username, config: configFor(companyId, u.username, JSON.parse(u.roles_json || '[]')) })).filter((r) => r.config.active);
-  }
-
   /** Deliver today's reports whose time has come. Idempotent: one report per recipient and date. */
   function deliverDue(companyId, { now = nowIstHhmm(), date = todayIST() } = {}) {
     const ctx = { companyId, user: 'system' };
     if (!context.flags.isOn(ctx, MR_FLAG)) return { delivered: 0 };
     try { requireMorningReport(context, ctx); } catch (error) { if (error.status === 404) return { delivered: 0 }; throw error; }
     let delivered = 0; const failures = [];
-    for (const { user, config } of recipientsOf(companyId)) {
-      if (config.time > now || now < config.cutoff) continue;
-      const actor = recipientActor(companyId, user);
-      if (!actor || !hasPermissionAnywhere(actor, 'bi.morning_report.view')) continue;
-      if (db.prepare('SELECT 1 FROM mr_reports WHERE company_id = ? AND report_date = ? AND recipient_user = ? AND delivered_at IS NOT NULL').get(companyId, date, user)) continue;
+    const configs = currentConfigs(db, companyId);
+    if (!configs.some((config) => config.active)) return { delivered: 0 };
+    const users = db.prepare("SELECT id, username, roles_json FROM iam_users WHERE company_id = ? AND is_active = 1 AND status = 'ACTIVE' ORDER BY username").all(companyId);
+    for (const recipient of users) {
+      const user = recipient.username;
       try {
-        transaction(db, () => {
+        const actor = actorOfUser(companyId, recipient);
+        if (!may(actor, 'bi.morning_report.view')) continue;
+        const config = configFor(companyId, user, actor.roles, configs);
+        if (!config.active || config.time > now || now < config.cutoff) continue;
+        const sent = transaction(db, () => {
           const made = generate(actor, date, { trigger: 'schedule' });
           const row = db.prepare('SELECT * FROM mr_reports WHERE id = ?').get(made.id);
+          if (row.delivered_at) return false;
           const stamp = new Date().toISOString();
           db.prepare('UPDATE mr_reports SET delivered_at = ?, channels_json = ?, status = \'DELIVERED\', updated_by = \'system\', updated_at = ?, version = version + 1 WHERE id = ?')
             .run(stamp, JSON.stringify(config.channels), stamp, row.id);
@@ -382,8 +394,9 @@ export function createMorningReport(context, { jobs, scheduler, environment }) {
             priority: row.exceptions ? 'NORMAL' : 'LOW', sourceType: 'mr_reports', sourceId: row.id, eventKey: `mr:${row.id}:delivered` });
           publishEvent(db, { type: 'bi.morning_report.delivered', entity: 'mr_reports', entityId: row.id, actorId: 'system', companyId,
             data: { reportNo: row.report_no, reportDate: date, recipient: user, exceptions: row.exceptions, hash: row.snapshot_hash } });
+          return true;
         });
-        delivered += 1;
+        if (sent) delivered += 1;
       } catch (error) {
         failures.push({ user, error: String(error.message ?? error).slice(0, 200) });
       }

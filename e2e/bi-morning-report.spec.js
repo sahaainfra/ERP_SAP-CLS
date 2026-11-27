@@ -57,10 +57,19 @@ test('Morning report: summary, exceptions, sections, reproducibility, archive an
   page.on('console', (message) => { if (message.type() === 'error' && !/socket\.io|WebSocket/.test(message.text())) errors.push(message.text()); });
   await page.addInitScript((identity) => localStorage.setItem('erp.dev.identity', JSON.stringify(identity)), { user: director, roles: 'DIR', company: String(company) });
   const noOverflow = () => expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+  const checkWidths = async () => {
+    const original = page.viewportSize();
+    const widths = phone ? [320, 360, 375, 390, 430] : [768, 1024, 1366, 1920];
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: width === 768 ? 1024 : 768 });
+      await noOverflow();
+    }
+    await page.setViewportSize(original);
+  };
 
   await page.goto(`/bi/morning-report?date=${reportDate}`);
   await expect(page.getByRole('heading', { name: 'Morning Report', level: 1 })).toBeVisible();
-  await expect(page.getByTestId('mr-asat')).toContainText('Data as at 06:00 IST');
+  await expect(page.getByTestId('mr-asat')).toContainText('Reporting cutoff 06:00 IST');
   await expect(page.getByTestId('mr-summary-lines')).toContainText('DPRs for');
   await expect(page.getByTestId('mr-summary-lines')).toContainText('1 missing');
   await expect(page.getByTestId('mr-exceptions').locator('li[data-kind="DPR_MISSING"]')).toContainText('TWR-S1');
@@ -75,6 +84,7 @@ test('Morning report: summary, exceptions, sections, reproducibility, archive an
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `docs/erp/screenshots/27.05/${phone ? 'mobile' : 'desktop'}-morning-report.png`, fullPage: true });
   await checkAppearance(page);
+  await checkWidths();
   const [file] = await Promise.all([page.waitForEvent('download'), page.getByTestId('mr-export').click()]);
   expect(file.suggestedFilename()).toBe(`morning-report-${reportDate}.pdf`);
 
@@ -82,7 +92,7 @@ test('Morning report: summary, exceptions, sections, reproducibility, archive an
   await page.getByRole('tab', { name: 'Archive' }).click();
   await expect(page.getByRole('heading', { name: 'Report Archive', level: 1 })).toBeVisible();
   await expect(page.getByTestId('mr-archive-row')).toHaveCount(1);
-  await noOverflow();
+  await checkWidths();
   await page.screenshot({ path: `docs/erp/screenshots/27.05/${phone ? 'mobile' : 'desktop'}-report-archive.png`, fullPage: true });
   await page.getByTestId('mr-archive-row').getByRole('link').click();
   await expect(page.getByTestId('mr-summary-lines')).toContainText('1 missing');

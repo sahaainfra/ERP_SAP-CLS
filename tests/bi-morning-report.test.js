@@ -52,7 +52,7 @@ async function setup() {
   db.prepare("INSERT INTO hse_incidents (company_id, doc_no, org_project_id, org_site_id, incident_type, classification, severity, occurred_at, description, reported_by, incident_status) VALUES (1, 'INC-MR', ?, ?, 'INJURY', 'LTI', 'HIGH', ?, 'Fall from scaffold', 'fixture', 'REPORTED')").run(Bp, sB, `${dataDate}T10:00`);
   const get = (who, path) => api.call('GET', B + path, who);
   const post = (who, path, body, k = key()) => api.call('POST', B + path, { ...who, body, headers: k });
-  return { api, db, A, Bp, sA, sB, reportDate, dataDate, get, post };
+  return { api, db, A, Bp, sA, sB, store, item, client, reportDate, dataDate, get, post };
 }
 
 test('27.05 the morning report: sections, rule-based summary, exceptions, reproducible snapshot, archive and export', async () => {
@@ -135,7 +135,13 @@ test('27.05 configurations are maker-checker; delivery happens at the scheduled 
   const t = await setup();
   const { db } = t;
   db.prepare("INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.bi.p2705', 1, 'Morning report fixture', 0, 1)").run();
-  const body = { scopeType: 'ROLE', scopeRef: 'DIR', sections: ['progress', 'stock', 'receivables', 'incidents'], cutoff: '06:00', time: '06:30', channels: ['IN_APP', 'EMAIL'], pdf: true, active: true, reason: 'Board wants the digest by 06:30' };
+  const assignmentUser = db.prepare("SELECT id FROM iam_users WHERE username = 'mr-dir2'").get().id;
+  authzOf(db).seed();
+  db.prepare(`INSERT INTO iam_assignments (company_id, user_id, role_id, scope_type, scope_ids_json, status, created_by)
+    VALUES (1, ?, (SELECT id FROM iam_roles WHERE code = 'DIR' AND company_id IS NULL), 'COMPANY', '[]', 'ACTIVE', 'test')`).run(assignmentUser);
+  db.prepare("UPDATE iam_users SET roles_json = '[]' WHERE id = ?").run(assignmentUser);
+  authzOf(db).invalidate();
+  const body = { scopeType: 'ROLE', scopeRef: 'DIR', sections: ['progress', 'stock', 'receivables', 'payables', 'tasks', 'incidents'], cutoff: '06:00', time: '06:30', channels: ['IN_APP', 'EMAIL'], pdf: true, active: true, reason: 'Board wants the digest by 06:30' };
   assert.equal((await t.post(pm, '/morning-report-settings/requests', body)).status, 403, 'a PM cannot configure');
   assert.equal((await t.post(dir, '/morning-report-settings/requests', { ...body, time: '05:00' })).status, 400, 'delivery before the cut-off');
   assert.equal((await t.post(dir, '/morning-report-settings/requests', { ...body, channels: ['EMAIL'] })).status, 400, 'in-app is always on');
@@ -152,6 +158,30 @@ test('27.05 configurations are maker-checker; delivery happens at the scheduled 
   const audit = db.prepare("SELECT new_values FROM core_audit_log WHERE entity = 'mr_configs' AND action = 'config_change'").get();
   assert.equal(JSON.parse(audit.new_values).requestedBy, 'mr-dir1');
 
+  const storeConfig = await t.post(dir, '/morning-report-settings/requests', { ...body, scopeRef: 'PROCMGR' });
+  assert.equal(storeConfig.status, 201, JSON.stringify(storeConfig.json));
+  assert.equal((await t.post(cfo, `/morning-report-settings/requests/${storeConfig.json.data.id}/act`, {
+    action: 'approve', version: storeConfig.json.data.version,
+  })).status, 200);
+
+  const bin = db.prepare("INSERT INTO inv_bins (company_id, store_id, code) VALUES (1, ?, 'MR-BIN')").run(t.store).lastInsertRowid;
+  db.prepare(`INSERT INTO inv_balances (company_id, store_id, bin_id, item_id, qty_on_hand, qty_reserved, qty_inspection)
+    VALUES (1, ?, ?, ?, 120000, 20000, 100000)`).run(t.store, bin, t.item);
+  db.prepare(`INSERT INTO ap_bills (company_id, doc_no, bill_source, org_project_id, org_site_id, partner_id, payee_name,
+    bill_date, due_date, msme, msme_due_date, net_payable_paise, adjusted_paise, paid_paise, status)
+    VALUES (1, 'MR-BILL', 'DIRECT', ?, ?, ?, 'Vendor', ?, ?, 1, ?, 800000, 50000, 150000, 'APPROVED')`)
+    .run(t.A, t.sA, t.client, t.dataDate, addDays(t.reportDate, 10), t.reportDate);
+  const task = db.prepare("INSERT INTO tsk_tasks (company_id, task_no, title, priority, status, due_date, assigner) VALUES (1, ?, ?, ?, ?, ?, 'fixture')");
+  const assign = db.prepare("INSERT INTO tsk_assignees (company_id, task_id, user_ref, role) VALUES (1, ?, ?, 'ASSIGNEE')");
+  for (let i = 0; i < 52; i += 1) {
+    const id = task.run(`MR-T${i}`, `Assigned review ${i}`, 'HIGH', 'OPEN', i < 51 ? t.dataDate : t.reportDate).lastInsertRowid;
+    assign.run(id, 'mr-dir1');
+  }
+  assign.run(task.run('MR-CLOSED', 'Closed task', 'URGENT', 'CLOSED', t.dataDate).lastInsertRowid, 'mr-dir1');
+  assign.run(task.run('MR-OTHER', 'Other recipient', 'URGENT', 'OPEN', t.dataDate).lastInsertRowid, 'mr-dir2');
+  db.exec(`CREATE TRIGGER simulate_report_failure BEFORE UPDATE OF delivered_at ON mr_reports
+    WHEN NEW.recipient_user = 'mr-dir2' BEGIN SELECT RAISE(ABORT, 'test delivery failure'); END`);
+
   // delivery: nothing before the configured time; at 06:30 both directors get today's report once
   const { jobs } = runtimeOf(db);
   const run = async (params) => { const job = jobs.enqueue('bi.morning_report.deliver', params, { companyId: 1, createdBy: 'test' }); for (let i = 0; i < 10 && jobs.get(job.id).status === 'QUEUED'; i += 1) await jobs.runNext(); return jobs.get(job.id); };
@@ -159,15 +189,31 @@ test('27.05 configurations are maker-checker; delivery happens at the scheduled 
   assert.equal(early.status, 'SUCCEEDED', JSON.stringify(early));
   assert.equal(early.result.delivered, 0, 'not before 06:30');
   const due = await run({ companyId: 1, now: '06:30', date: t.reportDate });
-  assert.equal(due.result.delivered, 2, JSON.stringify(due.result));
+  assert.deepEqual(due.result, { delivered: 2, failed: 1 });
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM mr_reports WHERE recipient_user = 'mr-dir2'").get().n, 0);
+  db.exec('DROP TRIGGER simulate_report_failure');
+  const retry = await run({ companyId: 1, now: '06:45', date: t.reportDate });
+  assert.deepEqual(retry.result, { delivered: 1, failed: 0 });
   const reports = db.prepare('SELECT * FROM mr_reports ORDER BY recipient_user').all();
-  assert.deepEqual(reports.map((x) => [x.recipient_user, x.status, x.trigger]), [['mr-dir1', 'DELIVERED', 'schedule'], ['mr-dir2', 'DELIVERED', 'schedule']]);
+  assert.deepEqual(reports.map((x) => [x.recipient_user, x.status, x.trigger]), [['mr-dir1', 'DELIVERED', 'schedule'], ['mr-dir2', 'DELIVERED', 'schedule'], ['mr-proc', 'DELIVERED', 'schedule']]);
   assert.deepEqual(JSON.parse(reports[0].channels_json), ['IN_APP', 'EMAIL']);
-  assert.deepEqual(Object.keys(JSON.parse(reports[0].snapshot_json).sections).sort(), ['incidents', 'progress', 'receivables'], 'only the configured sections the director may see (no stock permission)');
+  assert.deepEqual(Object.keys(JSON.parse(reports[0].snapshot_json).sections).sort(), ['incidents', 'payables', 'progress', 'receivables', 'tasks'], 'only the configured sections the director may see (no stock permission)');
   assert.ok(db.prepare("SELECT 1 FROM ntf_notifications WHERE source_type = 'mr_reports' AND source_id = ?").get(String(reports[0].id)), 'delivered in-app');
   assert.ok(db.prepare("SELECT 1 FROM core_outbox WHERE event_type = 'bi.morning_report.delivered'").get());
   const twice = await run({ companyId: 1, now: '07:00', date: t.reportDate });
   assert.equal(twice.result.delivered, 0, 'once per recipient and day');
+  const director = JSON.parse(reports[0].snapshot_json);
+  assert.equal(director.cutoffAt, `${t.reportDate}T00:30:00.000Z`);
+  assert.equal(director.sections.receivables.dueToday, 200000);
+  assert.deepEqual(director.sections.payables, { outstanding: 6000, overdue: 0, dueToday: 6000, msmeDue: 6000, route: '/finance/payables' });
+  assert.deepEqual([director.sections.tasks.critical, director.sections.tasks.overdue, director.sections.tasks.rows.length], [52, 51, 20]);
+  assert.equal(JSON.parse(reports[1].snapshot_json).sections.tasks.critical, 1, 'the second director only sees their own task');
+  const procurement = JSON.parse(reports[2].snapshot_json).sections;
+  assert.deepEqual([procurement.stock.stockOuts, procurement.stock.belowMinimum, procurement.stock.rows[0].available], [1, 1, 0]);
+  assert.equal(procurement.receivables, undefined);
+  assert.equal(procurement.payables, undefined);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM ntf_notifications WHERE source_type = 'mr_reports'").get().n, 3);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM core_outbox WHERE event_type = 'bi.morning_report.delivered'").get().n, 3);
   // the delivered report opens as its recipient's interactive version, with the same figures
   const opened2 = await t.get(dir2, `/morning-reports/${reports[1].id}`);
   assert.equal(opened2.json.data.hash, reports[1].snapshot_hash);
