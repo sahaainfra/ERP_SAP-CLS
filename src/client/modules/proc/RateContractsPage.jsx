@@ -126,7 +126,7 @@ export default function RateContractsPage() {
   return (
     <section aria-labelledby="rcs-h" data-testid="proc-rcs"><PageHeader id="rcs-h" title={t('r.title')} subtitle={t('r.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.rate_contract.create') && <Link to="/proc/rate-contracts?new=1">{t('r.new')}</Link>} <Link to="/proc/purchase-orders">{t('r.orders')}</Link></div>
-      <ListReport listCode="proc.rate_contracts" endpoint="/proc/rate-contracts" title={t('r.title')} session={session.data} rowHref={(r) => `/proc/rate-contracts?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/rate-contracts?id=${r.id}`)}
+      <ListReport listCode="proc.rate_contracts" endpoint="/proc/rate-contracts" exportEndpoint="/ui/lists/proc.rate_contracts/export" title={t('r.title')} session={session.data} rowHref={(r) => `/proc/rate-contracts?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/rate-contracts?id=${r.id}`)}
         cardFields={['docNo', 'vendor', 'validTo', 'ceiling', 'used']} statusKey="status" empty={{ title: t('r.emptyTitle'), text: t('r.emptyBody') }} /></section>
   );
 }

@@ -73,6 +73,9 @@ export function listRoutes({ views, exports, requests, describe }, { idempotentR
   r.delete('/saved-views/:id', (req, res) => res.json({ data: views.remove(req.actor, parseId(req.params.id), parseVersionBody(req.body)) }));
   r.get('/exports', (req, res) => res.json({ data: exports.mine(req.actor) }));
   r.get('/exports/:id/download', (req, res) => sendExport(res, { kind: 'file', ...exports.download(req.actor, parseId(req.params.id)) }));
+  // Any list with an export source, by its code: the List Report's export for a list whose module has no `<endpoint>/export` route of its own.
+  // The source and the export guard check the list's export permission, row scope, masks and the personal-data approval as on a module route.
+  r.get('/lists/:code/export', (req, res) => sendExport(res, exports.start(req.actor, String(req.params.code), req.query)));
   r.get('/sample-requests/export', (req, res) => sendExport(res, exports.start(req.actor, 'ui.sample_requests', req.query)));
   r.post('/sample-requests/bulk', idempotentRequired, (req, res) => res.json({ data: requests.bulk(req.actor, bulkBody(req.body), req.correlationId) }));
   return r;

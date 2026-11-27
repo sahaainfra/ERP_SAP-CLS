@@ -68,7 +68,7 @@ export default function ControlUnallocatedPage() {
     <section aria-labelledby="una-h" data-testid="site-control-unallocated">
       <PageHeader id="una-h" title={t('cnd.una.title')} subtitle={t('cnd.una.intro')} />
       <div className="actions-row no-print"><Link to="/site/control">{t('cnd.ctl.title')}</Link> <Link to="/site/control-variance">{t('cnd.cvr.title')}</Link></div>
-      <ListReport listCode="site.control_unallocated" endpoint="/site/control/unallocated" title={t('cnd.una.title')} session={session.data} rowHref={(r) => `/site/control-unallocated?id=${r.id}`} onOpen={(r) => navigateTo(`/site/control-unallocated?id=${r.id}`)}
+      <ListReport listCode="site.control_unallocated" endpoint="/site/control/unallocated" exportEndpoint="/ui/lists/site.control_unallocated/export" title={t('cnd.una.title')} session={session.data} rowHref={(r) => `/site/control-unallocated?id=${r.id}`} onOpen={(r) => navigateTo(`/site/control-unallocated?id=${r.id}`)}
         cardFields={['project', 'doc', 'amount', 'ageDays', 'reason']} statusKey="status" empty={{ title: t('cnd.una.emptyTitle'), text: t('cnd.una.emptyBody') }} />
     </section>
   );

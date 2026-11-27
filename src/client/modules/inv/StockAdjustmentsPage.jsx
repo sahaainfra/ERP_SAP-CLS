@@ -70,6 +70,6 @@ export default function StockAdjustmentsPage() {
   return (
     <section aria-labelledby="ads-h" data-testid="inv-ad"><PageHeader id="ads-h" title={t('adjTitle')} subtitle={t('adjIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.adjustment.create') && <Link to="/inv/adjustments?new=1">{t('newAdj')}</Link>} <Link to="/inv/dashboard">{t('dashTitle')}</Link></div>
-      <ListReport listCode="inv.adjustments" endpoint="/inv/adjustments" title={t('adjTitle')} session={session.data} rowHref={(r) => `/inv/adjustments?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/adjustments?id=${r.id}`)} cardFields={['docNo', 'store', 'date', 'type']} statusKey="status" empty={{ title: t('adjEmptyTitle'), text: t('adjEmptyBody') }} /></section>
+      <ListReport listCode="inv.adjustments" endpoint="/inv/adjustments" exportEndpoint="/ui/lists/inv.adjustments/export" title={t('adjTitle')} session={session.data} rowHref={(r) => `/inv/adjustments?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/adjustments?id=${r.id}`)} cardFields={['docNo', 'store', 'date', 'type']} statusKey="status" empty={{ title: t('adjEmptyTitle'), text: t('adjEmptyBody') }} /></section>
   );
 }

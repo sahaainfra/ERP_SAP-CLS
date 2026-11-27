@@ -67,7 +67,7 @@ export default function JsaPage() {
   return (
     <section aria-labelledby="jsl-h" data-testid="hse-jsa"><PageHeader id="jsl-h" title={t('jsa.title')} subtitle={t('jsa.intro')} />
       <div className="actions-row no-print"><Link to="/hse/jsa?new=1" data-testid="hse-jsa-new">{t('jsa.new')}</Link></div>
-      <ListReport listCode="hse.jsa" endpoint="/hse/jsa" title={t('jsa.title')} session={session.data} rowHref={(r) => `/hse/jsa?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/jsa?id=${r.id}`)} cardFields={['docNo', 'task', 'validOn', 'status']} statusKey="status" dateKey="validOn" empty={{ title: t('jsa.emptyTitle'), text: t('jsa.emptyBody') }} />
+      <ListReport listCode="hse.jsa" endpoint="/hse/jsa" exportEndpoint="/ui/lists/hse.jsa/export" title={t('jsa.title')} session={session.data} rowHref={(r) => `/hse/jsa?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/jsa?id=${r.id}`)} cardFields={['docNo', 'task', 'validOn', 'status']} statusKey="status" dateKey="validOn" empty={{ title: t('jsa.emptyTitle'), text: t('jsa.emptyBody') }} />
     </section>
   );
 }

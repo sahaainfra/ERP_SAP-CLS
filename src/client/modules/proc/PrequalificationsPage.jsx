@@ -86,7 +86,7 @@ export default function PrequalificationsPage() {
   return (
     <section aria-labelledby="pqs-h" data-testid="proc-pq"><PageHeader id="pqs-h" title={t('v.preqTitle')} subtitle={t('v.preqIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.prequalification.create') && <Link to="/proc/prequalifications?new=1">{t('v.newPreq')}</Link>} <Link to="/proc/avl">{t('v.avlTitle')}</Link> <Link to="/proc/vendor-ranking">{t('v.rankTitle')}</Link></div>
-      <ListReport listCode="proc.prequalifications" endpoint="/proc/prequalifications" title={t('v.preqTitle')} session={session.data} rowHref={(r) => `/proc/prequalifications?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/prequalifications?id=${r.id}`)}
+      <ListReport listCode="proc.prequalifications" endpoint="/proc/prequalifications" exportEndpoint="/ui/lists/proc.prequalifications/export" title={t('v.preqTitle')} session={session.data} rowHref={(r) => `/proc/prequalifications?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/prequalifications?id=${r.id}`)}
         cardFields={['docNo', 'vendor', 'score', 'result', 'validUntil']} statusKey="status" empty={{ title: t('v.preqEmptyTitle'), text: t('v.preqEmptyBody') }} /></section>
   );
 }

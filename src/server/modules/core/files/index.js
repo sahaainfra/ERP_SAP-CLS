@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { hasPermission } from '../../../platform/auth/index.js';
 import { eventTypes } from '../../../platform/events/index.js';
 import { fileEntities } from '../../../platform/files/entities.js';
-import { createActiveContentScanner, createClamdScanner, createBuiltinScanner } from '../../../platform/files/scan.js';
+import { createActiveContentScanner, createClamdScanner, createBuiltinScanner, createNoAntivirusScanner } from '../../../platform/files/scan.js';
 import { createSigner } from '../../../platform/files/signing.js';
 import { bindFiles } from '../../../platform/files/registry.js';
 import { createLocalStorage } from '../../../platform/files/storage.js';
@@ -43,6 +43,8 @@ export function mountFiles({ api, publicApi, db, config, runtime, approvals, opt
   const storage = createLocalStorage({ root: join(storagePath, 'files') });
   const scanners = [createBuiltinScanner(), createActiveContentScanner()];
   if (config.clamav) scanners.push(createClamdScanner(config.clamav));
+  // production and staging never release an upload on the built-in test-string check alone (audit Part 03, F03-2)
+  else if ([config.nodeEnv, config.environment].some((e) => e === 'production' || e === 'staging')) scanners.push(createNoAntivirusScanner());
   const signer = createSigner(config.fileUrlSecret ?? randomBytes(32).toString('hex'));
   const service = createFileService({ db, storage, scanners, jobs: runtime.jobs, signer, approvals });
   bindFiles(db, service);

@@ -18,7 +18,7 @@ export default function CrewsPage() {
   return (
     <section aria-labelledby="cw-title" data-testid="crews">
       <PageHeader id="cw-title" srOnly title={"Crews & Gangs"} />
-      <ListReport listCode="hr.crews" endpoint="/hr/crews" title="Crews & Gangs" session={session.data}
+      <ListReport listCode="hr.crews" endpoint="/hr/crews" exportEndpoint="/ui/lists/hr.crews/export" title="Crews & Gangs" session={session.data}
         rowHref={(r) => `/hr/crews/crew?id=${r.id}`} onOpen={(r) => navigateTo(`/hr/crews/crew?id=${r.id}`)}
         cardFields={['code', 'name', 'site', 'members', 'active']} statusKey="active"
         newAction={canNew ? { label: 'New crew', onClick: () => setAdding(true) } : undefined}

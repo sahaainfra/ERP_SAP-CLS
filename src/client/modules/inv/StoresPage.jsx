@@ -88,6 +88,6 @@ export default function StoresPage() {
   return (
     <section aria-labelledby="sts-h" data-testid="inv-st"><PageHeader id="sts-h" title={t('storesTitle')} subtitle={t('storesIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.store.create') && <Link to="/inv/stores?new=1">{t('newStore')}</Link>} <Link to="/inv/dashboard">{t('dashTitle')}</Link></div>
-      <ListReport listCode="inv.stores" endpoint="/inv/stores" title={t('storesTitle')} session={session.data} rowHref={(r) => `/inv/stores?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/stores?id=${r.id}`)} cardFields={['code', 'name', 'typeLabel', 'project']} statusKey="status" empty={{ title: t('storesEmptyTitle'), text: t('storesEmptyBody') }} /></section>
+      <ListReport listCode="inv.stores" endpoint="/inv/stores" exportEndpoint="/ui/lists/inv.stores/export" title={t('storesTitle')} session={session.data} rowHref={(r) => `/inv/stores?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/stores?id=${r.id}`)} cardFields={['code', 'name', 'typeLabel', 'project']} statusKey="status" empty={{ title: t('storesEmptyTitle'), text: t('storesEmptyBody') }} /></section>
   );
 }

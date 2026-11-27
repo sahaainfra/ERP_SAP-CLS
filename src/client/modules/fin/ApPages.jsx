@@ -169,7 +169,7 @@ export function DebitNotesPage() {
   if (sp.get('new')) return <section aria-labelledby="dnn-h"><PageHeader id="dnn-h" title={t('dn.new')} meta={<Link to="/finance/debit-notes">{t('dn.title')}</Link>} /><NoteForm /></section>;
   return (
     <section aria-labelledby="dns-h" data-testid="ap-notes"><PageHeader id="dns-h" title={t('dn.title')} subtitle={t('dn.intro')} meta={<Link to="/finance/ap-bills">{t('ap.title')}</Link>} />
-      <ListReport listCode="fin.debit_notes" endpoint="/fin/debit-notes" title={t('dn.title')} session={session.data} rowHref={(r) => `/finance/debit-notes?id=${r.id}`} onOpen={(r) => navigateTo(`/finance/debit-notes?id=${r.id}`)} cardFields={['docNo', 'partner', 'reason', 'total', 'status']} statusKey="status"
+      <ListReport listCode="fin.debit_notes" endpoint="/fin/debit-notes" exportEndpoint="/ui/lists/fin.debit_notes/export" title={t('dn.title')} session={session.data} rowHref={(r) => `/finance/debit-notes?id=${r.id}`} onOpen={(r) => navigateTo(`/finance/debit-notes?id=${r.id}`)} cardFields={['docNo', 'partner', 'reason', 'total', 'status']} statusKey="status"
         newAction={{ label: t('dn.new'), permission: 'fin.debit_note.create', onClick: () => navigateTo('/finance/debit-notes?new=1') }} empty={{ title: t('dn.emptyTitle'), text: t('dn.emptyBody') }} />
     </section>
   );

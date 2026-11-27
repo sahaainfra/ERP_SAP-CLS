@@ -142,7 +142,7 @@ export default function RequisitionsPage() {
     <section aria-labelledby="prs-h" data-testid="proc-prs">
       <PageHeader id="prs-h" title={t('p.prTitle')} subtitle={t('p.prIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.requisition.create') && <Link to="/proc/requisitions?new=1">{t('p.prNew')}</Link>} {perms.includes('proc.requisition.create') && <Link to="/proc/consolidate">{t('p.consolidate')}</Link>} <Link to="/proc/material-requests">{t('p.mrTitle')}</Link></div>
-      <ListReport listCode="proc.requisitions" endpoint="/proc/requisitions" title={t('p.prTitle')} session={session.data} rowHref={(r) => `/proc/requisitions?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/requisitions?id=${r.id}`)}
+      <ListReport listCode="proc.requisitions" endpoint="/proc/requisitions" exportEndpoint="/ui/lists/proc.requisitions/export" title={t('p.prTitle')} session={session.data} rowHref={(r) => `/proc/requisitions?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/requisitions?id=${r.id}`)}
         cardFields={['docNo', 'project', 'requiredBy', 'amount', 'budget']} statusKey="status" empty={{ title: t('p.prEmptyTitle'), text: t('p.prEmptyBody') }} />
     </section>
   );

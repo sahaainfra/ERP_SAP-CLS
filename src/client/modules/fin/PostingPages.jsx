@@ -133,7 +133,7 @@ export function PostingRulesPage() {
   if (id) return <section aria-labelledby="pr-h"><Rule id={id} /></section>;
   return (
     <section aria-labelledby="prs-h" data-testid="pe-rules"><PageHeader id="prs-h" title={t('pr.title')} subtitle={t('pr.intro')} meta={<><Link to="/finance/failed-postings">{t('fp.title')}</Link> · <Link to="/finance/reconciliation">{t('rc2.title')}</Link></>} />
-      <ListReport listCode="fin.posting_rules" endpoint="/fin/posting-rules" title={t('pr.title')} session={session.data} rowHref={(r) => `/finance/posting-rules?id=${r.id}`} onOpen={(r) => navigateTo(`/finance/posting-rules?id=${r.id}`)} cardFields={['ruleCode', 'name', 'eventType', 'effectiveFrom', 'status']} statusKey="status" empty={{ title: t('pr.emptyTitle'), text: t('pr.emptyBody') }} />
+      <ListReport listCode="fin.posting_rules" endpoint="/fin/posting-rules" exportEndpoint="/ui/lists/fin.posting_rules/export" title={t('pr.title')} session={session.data} rowHref={(r) => `/finance/posting-rules?id=${r.id}`} onOpen={(r) => navigateTo(`/finance/posting-rules?id=${r.id}`)} cardFields={['ruleCode', 'name', 'eventType', 'effectiveFrom', 'status']} statusKey="status" empty={{ title: t('pr.emptyTitle'), text: t('pr.emptyBody') }} />
     </section>
   );
 }

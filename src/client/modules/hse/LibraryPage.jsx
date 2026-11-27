@@ -38,9 +38,9 @@ export default function LibraryPage() {
   return (
     <section aria-labelledby="lib-h" data-testid="hse-library"><PageHeader id="lib-h" title={t('lib.title')} subtitle={<>{t('lib.intro')} <Link to="/hse/induction">{t('ind.title')}</Link> · <Link to="/hse/toolbox">{t('tbt.title')}</Link></>} />
       <h2>{t('lib.contentHeading')}</h2><ContentForm />
-      <ListReport listCode="hse.induction_content" endpoint="/hse/induction-content" title={t('lib.contentHeading')} session={session.data} cardFields={['code', 'title', 'passPct', 'status']} statusKey="status" empty={{ title: t('lib.emptyContentTitle'), text: t('lib.emptyContentBody') }} />
+      <ListReport listCode="hse.induction_content" endpoint="/hse/induction-content" exportEndpoint="/ui/lists/hse.induction_content/export" title={t('lib.contentHeading')} session={session.data} cardFields={['code', 'title', 'passPct', 'status']} statusKey="status" empty={{ title: t('lib.emptyContentTitle'), text: t('lib.emptyContentBody') }} />
       <h2>{t('lib.topicHeading')}</h2><TopicForm />
-      <ListReport listCode="hse.toolbox_topics" endpoint="/hse/toolbox-topics" title={t('lib.topicHeading')} session={session.data} cardFields={['code', 'title', 'frequency', 'status']} statusKey="status" empty={{ title: t('lib.emptyTopicTitle'), text: t('lib.emptyTopicBody') }} />
+      <ListReport listCode="hse.toolbox_topics" endpoint="/hse/toolbox-topics" exportEndpoint="/ui/lists/hse.toolbox_topics/export" title={t('lib.topicHeading')} session={session.data} cardFields={['code', 'title', 'frequency', 'status']} statusKey="status" empty={{ title: t('lib.emptyTopicTitle'), text: t('lib.emptyTopicBody') }} />
     </section>
   );
 }

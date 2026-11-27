@@ -12,7 +12,7 @@ export default function ClientsPage() {
   return (
     <section aria-labelledby="cl-title" data-testid="clients">
       <PageHeader id="cl-title" srOnly title={t('clients.title')} />
-      <ListReport listCode="bd.clients" endpoint="/bd/clients" title={t('clients.title')} session={session.data} rowHref={(r) => `/bd/client?id=${r.id}`} onOpen={(r) => navigateTo(`/bd/client?id=${r.id}`)} cardFields={['name', 'code', 'status']} statusKey="status" empty={{ title: t('clients.emptyTitle'), text: t('clients.emptyText') }} />
+      <ListReport listCode="bd.clients" endpoint="/bd/clients" exportEndpoint="/ui/lists/bd.clients/export" title={t('clients.title')} session={session.data} rowHref={(r) => `/bd/client?id=${r.id}`} onOpen={(r) => navigateTo(`/bd/client?id=${r.id}`)} cardFields={['name', 'code', 'status']} statusKey="status" empty={{ title: t('clients.emptyTitle'), text: t('clients.emptyText') }} />
       <p className="small">{t('clients.registerHint')} <Link to="/mdm/partners">{t('clients.partners')}</Link></p>
     </section>
   );

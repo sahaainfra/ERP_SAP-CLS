@@ -55,6 +55,6 @@ export default function SiteReturnsPage() {
   if (id) return <section aria-labelledby="srv-h" data-testid="site-returns"><Return key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="srs-h" data-testid="site-returns"><PageHeader id="srs-h" title={t('i.returnsPageTitle')} subtitle={t('i.returnsIntro')} /><div className="actions-row no-print"><Link to="/inv/issues">{t('i.issuesTitle')}</Link></div>
-      <ListReport listCode="inv.site_returns" endpoint="/inv/site-returns" title={t('i.returnsPageTitle')} session={session.data} rowHref={(r) => `/inv/site-returns?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/site-returns?id=${r.id}`)} cardFields={['docNo', 'issue', 'from', 'status']} statusKey="status" dateKey="date" empty={{ title: t('i.returnsEmptyTitle'), text: t('i.returnsEmptyBody') }} /></section>
+      <ListReport listCode="inv.site_returns" endpoint="/inv/site-returns" exportEndpoint="/ui/lists/inv.site_returns/export" title={t('i.returnsPageTitle')} session={session.data} rowHref={(r) => `/inv/site-returns?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/site-returns?id=${r.id}`)} cardFields={['docNo', 'issue', 'from', 'status']} statusKey="status" dateKey="date" empty={{ title: t('i.returnsEmptyTitle'), text: t('i.returnsEmptyBody') }} /></section>
   );
 }

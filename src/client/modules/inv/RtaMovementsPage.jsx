@@ -42,6 +42,6 @@ export default function RtaMovementsPage() {
   return (
     <section aria-labelledby="rtl-h" data-testid="rta-movements"><PageHeader id="rtl-h" title={t('ra.movementsTitle')} subtitle={t('ra.movementsIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.movement.create') && <Link to="/inv/rta-issue">{t('ra.issueTitle')}</Link>} <Link to="/inv/rta">{t('ra.title')}</Link></div>
-      <ListReport listCode="inv.rta_movements" endpoint="/inv/rta/movements" title={t('ra.movementsTitle')} session={session.data} rowHref={(r) => `/inv/rta-movements?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/rta-movements?id=${r.id}`)} cardFields={['docNo', 'type', 'item', 'status']} statusKey="status" dateKey="date" empty={{ title: t('ra.mEmptyTitle'), text: t('ra.mEmptyBody') }} /></section>
+      <ListReport listCode="inv.rta_movements" endpoint="/inv/rta/movements" exportEndpoint="/ui/lists/inv.rta_movements/export" title={t('ra.movementsTitle')} session={session.data} rowHref={(r) => `/inv/rta-movements?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/rta-movements?id=${r.id}`)} cardFields={['docNo', 'type', 'item', 'status']} statusKey="status" dateKey="date" empty={{ title: t('ra.mEmptyTitle'), text: t('ra.mEmptyBody') }} /></section>
   );
 }

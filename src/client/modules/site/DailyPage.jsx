@@ -85,7 +85,7 @@ export default function DailyPage() {
           <div className="actions"><button type="submit" className="btn btn-primary" disabled={busy || !siteId} data-testid="dp-create">{t('dp.create')}</button></div>
         </form>
       )}
-      <ListReport listCode="site.daily_plans" endpoint="/site/daily-plans" title={t('dp.list')} session={session.data} rowHref={(r) => `/site/daily-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/site/daily-plans?id=${r.id}`)}
+      <ListReport listCode="site.daily_plans" endpoint="/site/daily-plans" exportEndpoint="/ui/lists/site.daily_plans/export" title={t('dp.list')} session={session.data} rowHref={(r) => `/site/daily-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/site/daily-plans?id=${r.id}`)}
         cardFields={['docNo', 'planDate', 'site', 'supervisor']} statusKey="status"
         empty={{ title: t('dp.emptyTitle'), text: t('dp.emptyBody') }} />
       <p className="muted"><Link to="/site/board">{t('bd.title')}</Link> · <Link to="/plan/weekly">{t('dp.weekly')}</Link> · {fmtDate(today())}</p>

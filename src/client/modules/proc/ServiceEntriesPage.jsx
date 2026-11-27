@@ -86,7 +86,7 @@ export default function ServiceEntriesPage() {
   return (
     <section aria-labelledby="ses-h" data-testid="proc-ses"><PageHeader id="ses-h" title={t('e.title')} subtitle={t('e.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.service_entry.create') && <Link to="/proc/service-entries?new=1">{t('e.new')}</Link>} <Link to="/proc/service-orders">{t('e.orders')}</Link></div>
-      <ListReport listCode="proc.service_entries" endpoint="/proc/service-entries" title={t('e.title')} session={session.data} rowHref={(r) => `/proc/service-entries?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/service-entries?id=${r.id}`)}
+      <ListReport listCode="proc.service_entries" endpoint="/proc/service-entries" exportEndpoint="/ui/lists/proc.service_entries/export" title={t('e.title')} session={session.data} rowHref={(r) => `/proc/service-entries?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/service-entries?id=${r.id}`)}
         cardFields={['docNo', 'order', 'vendor', 'periodTo', 'amount']} statusKey="status" empty={{ title: t('e.emptyTitle'), text: t('e.emptyBody') }} /></section>
   );
 }

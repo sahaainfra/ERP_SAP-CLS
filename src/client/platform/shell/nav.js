@@ -37,7 +37,7 @@ export function titleFor(nav, path, fallback = 'ERP') {
  * either denied or unknown), and a page that needs a project or a site needs one in the working context.
  * Returns { ok: true } or { ok: false, reason: 'permission' | 'flag' | 'context', ... }.
  */
-export function guard(nav, path, { knownRoute, context = {} } = {}) {
+export function guard(nav, path, { knownRoute, context = {}, route = null, permissions = null } = {}) {
   if (!nav) return { ok: true };
   const entry = entryFor(nav, path);
   if (entry) {
@@ -47,6 +47,8 @@ export function guard(nav, path, { knownRoute, context = {} } = {}) {
   }
   const denied = deniedFor(nav, path);
   if (denied) return { ok: false, reason: denied.reason, permissionKey: denied.permissionKey, featureFlag: denied.featureFlag, label: denied.label };
+  // a record or create page (menu: false) has no navigation entry, so the server's menu says nothing about it: its own registered permission decides
+  if (knownRoute && route?.permission && Array.isArray(permissions) && !permissions.includes(route.permission)) return { ok: false, reason: 'permission', permissionKey: route.permission, label: route.label };
   return knownRoute ? { ok: true } : { ok: false, reason: 'unknown' };
 }
 

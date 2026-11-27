@@ -29,6 +29,7 @@ export function createMatrixService({ db, engine, limits, paths }) {
   const authz = authzOf(db);
   const seeded = new Set();
   const present = (m, { rules = false } = {}) => ({
+    governedBy: DEFAULT_MATRICES.find((d) => d.docType === m.doc_type)?.governedBy ?? null,
     id: m.id, docType: m.doc_type, docLabel: workflowTypes.get(m.doc_type)?.label ?? DEFAULT_MATRICES.find((d) => d.docType === m.doc_type)?.label ?? m.doc_type, scopeType: m.scope_type, scopeId: m.scope_id || null,
     version: m.matrix_version, name: m.name, status: m.status, effectiveFrom: m.effective_from, effectiveTo: m.effective_to, activatedBy: m.activated_by, createdBy: m.created_by, createdAt: m.created_at, updatedAt: m.updated_at,
     rowVersion: m.version, instanceId: m.activation_instance_id, ruleCount: db.prepare('SELECT COUNT(*) AS n FROM wf_matrix_rules WHERE matrix_id = ? AND deleted_at IS NULL').get(m.id).n,
@@ -219,6 +220,8 @@ export function createMatrixService({ db, engine, limits, paths }) {
     /** A new draft: a copy of the version in force for the scope (or of a given version), ready to change. */
     create(actor, { docType, scopeType = 'COMPANY', scopeId = 0, name, copyOf, rules }) {
       mustManage(actor);
+      const governed = DEFAULT_MATRICES.find((d) => d.docType === docType)?.governedBy;
+      if (governed) throw unprocessable(`${docType} follows its own workflow (${governed}), not this matrix: change that workflow's definition instead. This matrix is the reference only.`);
       ensureDefaults(actor.companyId);
       return inTransaction(db, () => {
         if (!SCOPES.includes(scopeType)) throw badRequest('The scope must be the company, a department or a project.', [{ field: 'scopeType', message: 'is not valid' }]);

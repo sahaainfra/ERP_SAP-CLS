@@ -58,6 +58,6 @@ export default function RtvsPage() {
   if (id) return <section aria-labelledby="rv-h" data-testid="rtvs"><Rtv key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="rvs-h" data-testid="rtvs"><PageHeader id="rvs-h" title={t('r.rtvTitle')} subtitle={t('r.rtvIntro')} /><div className="actions-row no-print"><Link to="/inv/grns">{t('r.grnTitle')}</Link></div>
-      <ListReport listCode="inv.rtvs" endpoint="/inv/rtvs" title={t('r.rtvTitle')} session={session.data} rowHref={(r) => `/inv/rtvs?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/rtvs?id=${r.id}`)} cardFields={['docNo', 'grn', 'vendor', 'status']} statusKey="status" dateKey="date" empty={{ title: t('r.rtvEmptyTitle'), text: t('r.rtvEmptyBody') }} /></section>
+      <ListReport listCode="inv.rtvs" endpoint="/inv/rtvs" exportEndpoint="/ui/lists/inv.rtvs/export" title={t('r.rtvTitle')} session={session.data} rowHref={(r) => `/inv/rtvs?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/rtvs?id=${r.id}`)} cardFields={['docNo', 'grn', 'vendor', 'status']} statusKey="status" dateKey="date" empty={{ title: t('r.rtvEmptyTitle'), text: t('r.rtvEmptyBody') }} /></section>
   );
 }

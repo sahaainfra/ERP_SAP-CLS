@@ -60,7 +60,7 @@ export default function ToolboxPage() {
   return (
     <section aria-labelledby="tbl-h" data-testid="hse-toolbox"><PageHeader id="tbl-h" title={t('tbt.title')} subtitle={t('tbt.intro')} />
       <div className="actions-row no-print"><Link to="/hse/toolbox?new=1" data-testid="hse-tbt-new">{t('tbt.new')}</Link></div>
-      <ListReport listCode="hse.toolbox_talks" endpoint="/hse/toolbox-talks" title={t('tbt.title')} session={session.data} rowHref={(r) => `/hse/toolbox?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/toolbox?id=${r.id}`)} cardFields={['docNo', 'topic', 'date', 'attendees']} statusKey="status" dateKey="date" empty={{ title: t('tbt.emptyTitle'), text: t('tbt.emptyBody') }} />
+      <ListReport listCode="hse.toolbox_talks" endpoint="/hse/toolbox-talks" exportEndpoint="/ui/lists/hse.toolbox_talks/export" title={t('tbt.title')} session={session.data} rowHref={(r) => `/hse/toolbox?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/toolbox?id=${r.id}`)} cardFields={['docNo', 'topic', 'date', 'attendees']} statusKey="status" dateKey="date" empty={{ title: t('tbt.emptyTitle'), text: t('tbt.emptyBody') }} />
     </section>
   );
 }

@@ -143,8 +143,40 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
   const changed = () => forbidden('Your report access changed. Request a new export.');
   const present = (r) => ({ id: r.id, list: r.list_code, format: r.format, status: r.status, rows: r.rows_written || r.rows_planned, fileName: r.file_name, bytes: r.bytes, error: r.error, createdAt: r.created_at, finishedAt: r.finished_at, expiresAt: r.expires_at, filters: JSON.parse(r.query_json) });
 
+  /**
+   * The export source of a list. Many modules register a source that hands back their list page ({ data, meta }, the first 100 rows)
+   * rather than an export source, and validates the query as its own list route does (a parsed request fails that check). Such a
+   * source is asked with the plain query and turned into an export source: the columns and title of the list definition, the export
+   * permission of the list where one exists, and the page's rows. A list longer than that page is refused rather than cut short.
+   */
+  const knownPermission = (key) => Boolean(db.prepare('SELECT 1 FROM iam_permissions WHERE perm_key = ?').get(key));
+  function resolve(code, actor, req) {
+    const fn = sources.get(code) ?? listExports.source(code);
+    if (!fn) throw notFound(`There is no export for ${code}.`);
+    let out = null; let first = null;
+    try { out = fn(actor, req); } catch (err) { if (err?.code !== 'VALIDATION_ERROR') throw err; first = err; }
+    if (out && typeof out.rows === 'function') return out;
+    let page = Array.isArray(out?.data) ? out : null;
+    // only a source that is a list page in disguise is retried with the plain query; a real refusal of the request (a field it does not allow) stands
+    if (!page) { try { page = fn(actor, queryOf(req)); } catch (err) { throw first ?? err; } }
+    const def = listRegistry.get(code);
+    if (!def || !Array.isArray(page?.data)) { if (first) throw first; throw notFound(`There is no export for ${code}.`); }
+    const total = Number(page.meta?.total ?? page.data.length);
+    if (total > page.data.length) throw unprocessable(`This list can export ${page.data.length} rows at a time and holds ${total} with these filters. Narrow the filters and export in parts.`);
+    const exportKey = def.permission ? `${def.permission.replace(/\.view$/, '')}.export` : null;
+    return {
+      title: def.label,
+      permission: exportKey && knownPermission(exportKey) ? exportKey : def.permission,
+      personal: Boolean(def.personal),
+      columns: Object.entries(def.columns).map(([key, c]) => ({ key, label: c.label ?? key, type: c.type })),
+      count: () => total,
+      rows: () => page.data,
+      describe: (r) => [r.q ? `search "${r.q}"` : '', ...(r.filters ?? []).map((x) => `${def.columns[x.key]?.label ?? x.key} ${x.op} ${x.raw}`)].filter(Boolean).join('; '),
+    };
+  }
+
   function build(actor, code, req, format) {
-    const src = (sources.get(code) ?? listExports.source(code))(actor, req);
+    const src = resolve(code, actor, req);
     const rows = src.rows();
     const generatedAt = istStamp();
     const footer = footerLines({ title: src.title, generatedBy: actor.user, generatedAt, filters: src.describe(req), rows: rows.length });
@@ -155,6 +187,8 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
   }
 
   const service = {
+    /** Whether a list has an export: a source of its own here, or one its module registered (listExports). */
+    has: (code) => Boolean(sources.get(code) ?? listExports.source(code)),
     register(code, source, { checkAccess = undefined, parameters = [] } = {}) {
       sources.set(code, source);
       if (checkAccess) downloadChecks.set(code, checkAccess);
@@ -163,14 +197,13 @@ export function createExportService({ db, storagePath, jobs, devHeaders = false 
 
     /** Export now, or queue a job when the export is larger than a direct download may be. */
     start(actor, code, query, { queued = false } = {}) {
-      const src0 = sources.get(code) ?? listExports.source(code);
-      if (!src0) throw notFound(`There is no export for ${code}.`);
+      if (!(sources.get(code) ?? listExports.source(code))) throw notFound(`There is no export for ${code}.`);
       const def = listRegistry.get(code);
       const parameters = sourceParameters.get(code) ?? [];
       const req = parseListRequest(def, query, { extra: ['format', 'approvalId', ...parameters] });
       const format = String(req.format ?? 'csv');
       if (!FORMATS[format]) throw badRequest('Some fields are invalid.', [{ field: 'format', message: 'Use xlsx, csv or pdf' }]);
-      const src = src0(actor, req);
+      const src = resolve(code, actor, req);
       const count = src.count();
       const background = queued || count > guard.maxRows(actor.companyId);
       const approvalId = req.approvalId == null || req.approvalId === '' ? null : Number(req.approvalId);

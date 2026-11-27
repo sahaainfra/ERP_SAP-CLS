@@ -125,7 +125,7 @@ export function BatchesPage() {
   return (
     <section aria-labelledby="bts-h" data-testid="rmc-batches"><PageHeader id="bts-h" title={t('bt.title')} subtitle={t('bt.intro')} />
       <div className="actions-row no-print"><Link to="/rmc/batches?new=1" data-testid="rmc-batch-new">{t('bt.new')}</Link> · <Link to="/rmc/consumption">{t('co.title')}</Link></div>
-      <ListReport listCode="rmc.batches" endpoint="/rmc/batches" title={t('bt.title')} session={session.data} rowHref={(r) => `/rmc/batches?id=${r.id}`} onOpen={(r) => navigateTo(`/rmc/batches?id=${r.id}`)} cardFields={['docNo', 'plant', 'grade', 'qty']} empty={{ title: t('bt.emptyTitle'), text: t('bt.emptyBody') }} />
+      <ListReport listCode="rmc.batches" endpoint="/rmc/batches" exportEndpoint="/ui/lists/rmc.batches/export" title={t('bt.title')} session={session.data} rowHref={(r) => `/rmc/batches?id=${r.id}`} onOpen={(r) => navigateTo(`/rmc/batches?id=${r.id}`)} cardFields={['docNo', 'plant', 'grade', 'qty']} empty={{ title: t('bt.emptyTitle'), text: t('bt.emptyBody') }} />
     </section>
   );
 }

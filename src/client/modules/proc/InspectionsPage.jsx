@@ -89,7 +89,7 @@ export default function InspectionsPage() {
   return (
     <section aria-labelledby="ins-h" data-testid="proc-in"><PageHeader id="ins-h" title={t('x.inspTitle')} subtitle={t('x.inspIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.inspection.create') && <Link to="/proc/inspections?new=1">{t('x.newInsp')}</Link>} <Link to="/proc/expediting">{t('x.dashboard')}</Link></div>
-      <ListReport listCode="proc.inspections" endpoint="/proc/inspections" title={t('x.inspTitle')} session={session.data} rowHref={(r) => `/proc/inspections?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/inspections?id=${r.id}`)}
+      <ListReport listCode="proc.inspections" endpoint="/proc/inspections" exportEndpoint="/ui/lists/proc.inspections/export" title={t('x.inspTitle')} session={session.data} rowHref={(r) => `/proc/inspections?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/inspections?id=${r.id}`)}
         cardFields={['docNo', 'order', 'vendor', 'itype', 'call', 'result']} statusKey="status" empty={{ title: t('x.inspEmptyTitle'), text: t('x.inspEmptyBody') }} /></section>
   );
 }

@@ -71,7 +71,7 @@ export default function ItpPage() {
   return (
     <section aria-labelledby="il-h" data-testid="qa-itps"><PageHeader id="il-h" title={t('itp.title')} subtitle={t('itp.intro')} />
       <div className="actions-row no-print"><Link to="/qa/itps?new=1">{t('itp.new')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/export?kind=itps', 'itps.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="itp-export">{t('export')}</button></div>
-      <ListReport listCode="qa.itps" endpoint="/qa/itps" title={t('itp.title')} session={session.data} rowHref={(r) => `/qa/itps?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/itps?id=${r.id}`)} cardFields={['code', 'title', 'status']} statusKey="status" empty={{ title: t('itp.emptyTitle'), text: t('itp.emptyBody') }} />
+      <ListReport listCode="qa.itps" endpoint="/qa/itps" exportEndpoint="/ui/lists/qa.itps/export" title={t('itp.title')} session={session.data} rowHref={(r) => `/qa/itps?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/itps?id=${r.id}`)} cardFields={['code', 'title', 'status']} statusKey="status" empty={{ title: t('itp.emptyTitle'), text: t('itp.emptyBody') }} />
     </section>
   );
 }

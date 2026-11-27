@@ -1,4 +1,4 @@
-import { Component, Suspense } from 'react';
+import { Component, Fragment, Suspense } from 'react';
 import Icon from '../design/Icon.jsx';
 import PageHeader from '../design/PageHeader.jsx';
 import { Skeleton } from '../feedback/states.jsx';
@@ -9,7 +9,8 @@ import { isChunkError } from './lazyPage.js';
 // Draws the page of a route (part 166.4, FR-01). A page's code arrives with its first opening: until then a skeleton holds the page's place (one
 // status region, no layout jump), and a fetch that fails, offline or after a release removed the old file, says so and offers to reload: the
 // browser remembers a failed script for the life of the page, so only a reload fetches it again (into the current version, open drafts saved
-// first with the flag, FR-04). Any other error of the page is not caught here.
+// first with the flag, FR-04). Any other error of the page (a page drawing data that did not arrive) shows a page-level error with Try again:
+// the shell, its menu and the other pages keep working, and the error is still reported (window.reportError reaches the client reporter).
 
 function PageLoadFailed({ offline, onRetry }) {
   const t = useT('shell');
@@ -26,14 +27,31 @@ function PageLoadFailed({ offline, onRetry }) {
   );
 }
 
+function PageCrashed({ onRetry }) {
+  const t = useT('shell');
+  return (
+    <div data-testid="page-crashed">
+      <PageHeader id="page-crashed" title={t('page.crashTitle')} />
+      <div className="state state-error fb-error" role="alert" data-testid="error-state">
+        <p><Icon name="erp.state.exception" size={20} /> {t('page.crashBody')}</p>
+        <div className="actions-row">
+          <button type="button" className="btn btn-primary" onClick={onRetry}>{t('page.tryAgain')}</button>
+          <a className="btn" href="/home">{t('page.home')}</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 class ChunkBoundary extends Component {
-  constructor(props) { super(props); this.state = { failed: false, other: null }; }
+  constructor(props) { super(props); this.state = { failed: false, other: null, attempt: 0 }; }
   static getDerivedStateFromError(error) { return isChunkError(error) ? { failed: true } : { other: error }; }
+  componentDidCatch(error) { if (!isChunkError(error)) globalThis.reportError?.(error); }
   componentDidUpdate(prev) { if (prev.path !== this.props.path && (this.state.failed || this.state.other)) this.setState({ failed: false, other: null }); }
   render() {
-    if (this.state.other) throw this.state.other; // not a missing script: handled as before, above this boundary
+    if (this.state.other) return <PageCrashed onRetry={() => this.setState((s) => ({ other: null, attempt: s.attempt + 1 }))} />;
     if (this.state.failed) return <PageLoadFailed offline={typeof navigator !== 'undefined' && navigator.onLine === false} onRetry={() => pwa.applyUpdate()} />;
-    return this.props.children;
+    return <Fragment key={this.state.attempt}>{this.props.children}</Fragment>;
   }
 }
 

@@ -89,7 +89,7 @@ export default function TemplatesPage() {
   return (
     <section aria-labelledby="tl-h" data-testid="qa-templates"><PageHeader id="tl-h" title={t('tpl.title')} subtitle={t('tpl.intro')} />
       <div className="actions-row no-print"><Link to="/qa/templates?new=1">{t('tpl.new')}</Link></div>
-      <ListReport listCode="qa.templates" endpoint="/qa/templates" title={t('tpl.title')} session={session.data} rowHref={(r) => `/qa/templates?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/templates?id=${r.id}`)} cardFields={['code', 'name', 'status']} statusKey="status" empty={{ title: t('tpl.emptyTitle'), text: t('tpl.emptyBody') }} />
+      <ListReport listCode="qa.templates" endpoint="/qa/templates" exportEndpoint="/ui/lists/qa.templates/export" title={t('tpl.title')} session={session.data} rowHref={(r) => `/qa/templates?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/templates?id=${r.id}`)} cardFields={['code', 'name', 'status']} statusKey="status" empty={{ title: t('tpl.emptyTitle'), text: t('tpl.emptyBody') }} />
     </section>
   );
 }

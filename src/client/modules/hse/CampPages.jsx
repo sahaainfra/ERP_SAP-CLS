@@ -42,7 +42,7 @@ export function CampSetupPage() {
   return (
     <section aria-labelledby="cl-h" data-testid="hse-camp-list"><PageHeader id="cl-h" title={t('camp.camps')} />
       <div className="actions-row no-print"><Link to="/hse/camp-setup?new=1" data-testid="hse-camp-new">{t('camp.new')}</Link> · <Link to="/hse/camp">{t('camp.title')}</Link></div>
-      <ListReport listCode="hse.camps" endpoint="/hse/camps" title={t('camp.camps')} session={session.data} rowHref={(r) => `/hse/camp-setup?camp=${r.id}`} onOpen={(r) => navigateTo(`/hse/camp-setup?camp=${r.id}`)} cardFields={['code', 'name', 'site', 'status']} statusKey="status" empty={{ title: t('camp.emptyTitle'), text: t('camp.emptyBody') }} />
+      <ListReport listCode="hse.camps" endpoint="/hse/camps" exportEndpoint="/ui/lists/hse.camps/export" title={t('camp.camps')} session={session.data} rowHref={(r) => `/hse/camp-setup?camp=${r.id}`} onOpen={(r) => navigateTo(`/hse/camp-setup?camp=${r.id}`)} cardFields={['code', 'name', 'site', 'status']} statusKey="status" empty={{ title: t('camp.emptyTitle'), text: t('camp.emptyBody') }} />
     </section>
   );
 }
@@ -118,7 +118,7 @@ export function AllocationsPage() {
               </div>))}</div>
           </div>))}</div>)}
       {pick && <form onSubmit={give} className="mdm-panel no-print" data-testid="hse-al-form"><h2>{t('al.giveBed', { bed: pick.label })}</h2><Field label={t('al.badge')} name="badge" error={error?.fields?.badge}><input value={badge} onChange={(e) => setBadge(e.target.value)} style={big} autoFocus data-testid="hse-al-badge" /></Field><div className="actions-row"><button className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !badge.trim()} data-testid="hse-al-give">{t('al.give')}</button><button type="button" className="btn" onClick={() => setPick(null)}>{t('cancel')}</button></div></form>}
-      <ListReport listCode="hse.allocations" endpoint="/hse/camp-allocation" title={t('al.title')} session={session.data} cardFields={['docNo', 'person', 'room', 'state']} statusKey="state" empty={{ title: t('al.emptyTitle'), text: t('al.emptyBody') }} />
+      <ListReport listCode="hse.allocations" endpoint="/hse/allocations" exportEndpoint="/ui/lists/hse.allocations/export" title={t('al.title')} session={session.data} cardFields={['docNo', 'person', 'room', 'state']} statusKey="state" empty={{ title: t('al.emptyTitle'), text: t('al.emptyBody') }} />
     </section>
   );
 }
@@ -135,7 +135,7 @@ export function CampInspectionsPage() {
         <Field label={t('ci.result')} name="result" error={fe.result}><select value={f.result} onChange={(e) => setF({ ...f, result: e.target.value })} style={big} data-testid="hse-ci-result">{['PASS', 'CONDITIONAL', 'FAIL'].map((k) => <option key={k} value={k}>{t(`ci.r.${k}`)}</option>)}</select></Field>
         <Field label={t('ci.findings')} name="findings" error={fe.findings}><textarea rows={3} value={f.findings} onChange={(e) => setF({ ...f, findings: e.target.value })} style={big} data-testid="hse-ci-findings" /></Field>
         <div className="actions-row"><button className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !f.campId} data-testid="hse-ci-save">{t('save')}</button></div></form>
-      <ListReport listCode="hse.camp_inspections" endpoint="/hse/camp-inspections" title={t('ci.title')} session={session.data} cardFields={['camp', 'area', 'date', 'result']} empty={{ title: t('ci.emptyTitle'), text: t('ci.emptyBody') }} />
+      <ListReport listCode="hse.camp_inspections" endpoint="/hse/camp-inspections" exportEndpoint="/ui/lists/hse.camp_inspections/export" title={t('ci.title')} session={session.data} cardFields={['camp', 'area', 'date', 'result']} empty={{ title: t('ci.emptyTitle'), text: t('ci.emptyBody') }} />
     </section>
   );
 }
@@ -164,7 +164,7 @@ export function CampMessPage() {
       <form onSubmit={makeRecovery} className="form-grid no-print" data-testid="hse-recovery-form"><h2>{t('mess.makeRecovery')}</h2><CampPick camps={oq.data?.camps ?? []} value={rc.campId} onChange={(v) => setRc({ campId: v, contractorId: '' })} testid="hse-rc-camp" />
         <Field label={t('camp.contractor')} name="contractorId" error={fe.contractorId}><select value={rc.contractorId} onChange={(e) => setRc({ ...rc, contractorId: e.target.value })} style={big} data-testid="hse-rc-contractor"><option value="">—</option>{contractors(rc.campId).map((b) => <option key={b.contractorId} value={b.contractorId}>{b.name}</option>)}</select></Field>
         <div className="actions-row"><button className="btn" style={{ minHeight: 48 }} disabled={busy || !rc.campId || !rc.contractorId} data-testid="hse-rc-make">{t('mess.makeRecovery')}</button></div></form>
-      <ListReport listCode="hse.recoveries" endpoint="/hse/camp-recoveries" title={t('mess.recoveries')} session={session.data} rowHref={(r) => `/hse/camp-mess?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/camp-mess?id=${r.id}`)} cardFields={['docNo', 'contractor', 'period', 'total', 'status']} statusKey="status" empty={{ title: t('mess.noRecoveries'), text: t('mess.noRecoveriesBody') }} />
+      <ListReport listCode="hse.recoveries" endpoint="/hse/camp-recoveries" exportEndpoint="/ui/lists/hse.recoveries/export" title={t('mess.recoveries')} session={session.data} rowHref={(r) => `/hse/camp-mess?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/camp-mess?id=${r.id}`)} cardFields={['docNo', 'contractor', 'period', 'total', 'status']} statusKey="status" empty={{ title: t('mess.noRecoveries'), text: t('mess.noRecoveriesBody') }} />
     </section>
   );
 }

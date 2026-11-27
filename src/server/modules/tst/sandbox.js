@@ -122,6 +122,13 @@ export function createSandboxService(context, { config = {} } = {}) {
   };
   const TODAY = () => todayIST();
   const day = (n) => isoOf(ordOf(TODAY()) - n);
+  /** The same day of the month as yesterday, `m` calendar months back (clamped to the month's last day): one date in each of m + 1 distinct months. */
+  const monthBack = (m) => {
+    const [y, mo, d] = day(1).split('-').map(Number);
+    const first = new Date(Date.UTC(y, mo - 1 - m, 1));
+    const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+    return `${first.getUTCFullYear()}-${String(first.getUTCMonth() + 1).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
+  };
 
   /** A synthetic company with its people, flags and masters. */
   function makeCompany() {
@@ -208,7 +215,7 @@ export function createSandboxService(context, { config = {} } = {}) {
     for (const p of projects) {
       // twelve months of work: one approved report a month, and the cement received and issued for it through the stock API
       for (let m = months - 1; m >= 0; m -= 1) {
-        const date = day(m * 30 + 1);
+        const date = monthBack(m); // calendar months: 30-day steps put two reports in one month and none in another on some dates
         dpr(co, p, date, [['A10', 100 / (months * 2)]]); dprs += 1;
         await call(user(co, 'store1'), 'POST', '/api/v1/inv/movements', { storeId: p.store, itemId: items['SBX-CEM'], type: 'RECEIPT', qty: 60, rate: 380, date, reason: 'Synthetic monthly receipt (sandbox)' });
         await call(user(co, 'store1'), 'POST', '/api/v1/inv/movements', { storeId: p.store, itemId: items['SBX-CEM'], type: 'ISSUE', qty: 40, date, reason: 'Synthetic monthly issue (sandbox)' });

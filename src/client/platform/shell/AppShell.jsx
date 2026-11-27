@@ -144,7 +144,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
   if (!nav) return <div className="app-shell"><main id="main"><Skeleton label={t('menu.loading')} rows={4} /></main></div>;
 
   const knownRoute = Boolean(route);
-  const verdict = guard(nav, path, { knownRoute, context });
+  const verdict = guard(nav, path, { knownRoute, context, route, permissions: session?.permissions })
   const profile = entryFor(nav, '/account/profile') ?? accountGroup(nav)?.pages.find((p) => p.code === 'profile');
   const groups = sidebarGroups(nav);
   const phone = layout === 'phone';
