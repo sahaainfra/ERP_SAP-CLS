@@ -20,6 +20,8 @@ export default function AdvanceRequestPage() {
   const h = useQuery({ queryKey: ['exp', 'advance-history', id], queryFn: () => exp.advanceHistory(id), enabled: Boolean(id) && q.isSuccess, retry: false });
   const [v, setV] = useState({ type: params.get('travel') ? 'TRAVEL' : 'SALARY', amount: '', purpose: '', instalments: '1', travelRequestId: params.get('travel') ?? '' });
   const [error, setError] = useState(null); const [note, setNote] = useState(null); const loaded = useRef(false);
+  // Part 09: one save at a time; the second click of a double click (which can land on the other button once the message above moves) is ignored
+  const [busy, setBusy] = useState(false); const busyRef = useRef(false);
   const a = q.data;
   usePageTitle(a ? a.docNo : t('adv.title'));
   useEffect(() => { if (a && !loaded.current) { loaded.current = true; setV({ type: a.type, amount: String(a.amount), purpose: a.purpose, instalments: String(a.instalments), travelRequestId: a.travelRequestId ? String(a.travelRequestId) : '' }); } }, [a]);
@@ -28,7 +30,7 @@ export default function AdvanceRequestPage() {
   if (id && q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const editable = !id || a.can.edit;
   const body = () => ({ type: v.type, amount: Number(v.amount || 0), purpose: v.purpose.trim(), instalments: v.type === 'SALARY' ? Number(v.instalments || 1) : 1, travelRequestId: v.travelRequestId ? Number(v.travelRequestId) : null });
-  const run = async (fn, done) => { setError(null); setNote(null); try { const out = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['exp'] }); return out; } catch (e) { setError(errorInfo(e)); return null; } };
+  const run = async (fn, done) => { if (busyRef.current) return null; busyRef.current = true; setBusy(true); setError(null); setNote(null); try { const out = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['exp'] }); return out; } catch (e) { setError(errorInfo(e)); return null; } finally { busyRef.current = false; setBusy(false); } };
   const save = (submit) => run(async () => { const out = id ? await exp.updateAdvance(id, { ...body(), version: a.rowVersion }) : await exp.createAdvance({ ...body(), submit }); if (id && submit) await exp.advanceAct(id, 'submit'); if (!id) navigateTo(`/expenses/advance?id=${out.id}`, { force: true }); else loaded.current = false; return out; }, submit ? t('adv.sent') : t('adv.saved'));
   const per = v.type === 'SALARY' && Number(v.amount) > 0 ? Number(v.amount) / Math.max(1, Number(v.instalments || 1)) : null;
   return (
@@ -43,7 +45,7 @@ export default function AdvanceRequestPage() {
         {v.type === 'SALARY' && <Field label={t('adv.instalments')} name="instalments" error={error} hint={per ? t('adv.perInstalment', { amount: inr(per) }) : t('adv.recoveredFromSalary')}><input type="number" min="1" max="36" value={v.instalments} disabled={!editable} onChange={(e) => setV({ ...v, instalments: e.target.value })} data-testid="ad-instalments" /></Field>}
         {v.type !== 'SALARY' && <p className="muted small">{t('adv.settled')}</p>}
         {v.travelRequestId && <p className="muted small">{t('adv.forTrip')}: <Link to={`/expenses/travel?id=${v.travelRequestId}`}>#{v.travelRequestId}</Link></p>}
-        {editable && <div className="actions"><button type="submit" className="btn" data-testid="ad-save">{t('act.saveDraft')}</button><button type="button" className="btn btn-primary" onClick={() => save(true)} data-testid="ad-send">{t('act.saveSend')}</button></div>}
+        {editable && <div className="actions"><button type="submit" className="btn" disabled={busy} data-testid="ad-save">{t('act.saveDraft')}</button><button type="button" className="btn btn-primary" onClick={() => save(true)} disabled={busy} data-testid="ad-send">{t('act.saveSend')}</button></div>}
       </form>
       {a && (
         <>

@@ -1,5 +1,5 @@
 import { KpiTile } from '../../../platform/design/Kpi.jsx';
-import { useEffect, useId } from 'react';
+import { cloneElement, isValidElement, useEffect, useId } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
 import { logExport } from '../../../platform/audit/index.js';
 import { confirmLeave } from '../../../platform/forms/guard.js';
@@ -37,18 +37,41 @@ export function QueryState({ query, what, permission }) {
   return <QueryError error={query.error} what={what} permission={permission} onRetry={() => query.refetch()} />;
 }
 
-export function FieldError({ error, name }) {
-  return error?.fields?.[name] ? <span className="field-error" id={`err-${name}`}>{error.fields[name]}</span> : null;
+export function FieldError({ error, name, id }) {
+  return error?.fields?.[name] ? <span className="field-error" id={id ?? `err-${name}`}>{error.fields[name]}</span> : null;
 }
 
-export const Field = ({ label, name, error, children, hint }) => (
-  <label className="field">
-    <span>{label}</span>
-    {children}
-    {hint && <span className="muted small">{hint}</span>}
-    <FieldError error={error} name={name} />
-  </label>
-);
+const NATIVE = new Set(['input', 'select', 'textarea']);
+
+/**
+ * A labelled field of a hand-built form (used by most module pages). Part 09: when its control is one native input, select or textarea,
+ * the field marks it as required with the same visible star as the platform fields (the browser already tells assistive technology),
+ * and ties its hint and the server's message for it to the control (aria-describedby), marking it invalid while that message shows.
+ * Anything the page set itself on the control is kept.
+ */
+export function Field({ label, name, error, children, hint }) {
+  const uid = useId();
+  const hintId = hint ? `${uid}-hint` : undefined;
+  const message = error?.fields?.[name];
+  const errId = message ? `${uid}-err` : undefined;
+  const one = isValidElement(children) && typeof children.type === 'string' && NATIVE.has(children.type) ? children : null;
+  // no second mark where the page already wrote one into the label ('Site *') or says it in words
+  const required = Boolean(one?.props.required) && !(typeof label === 'string' && (/required/i.test(label) || /\*\s*$/.test(label)));
+  const control = one
+    ? cloneElement(one, {
+      'aria-describedby': one.props['aria-describedby'] ?? ([hintId, errId].filter(Boolean).join(' ') || undefined),
+      'aria-invalid': one.props['aria-invalid'] ?? (message ? true : undefined),
+    })
+    : children;
+  return (
+    <label className="field">
+      <span>{label}{required && <span className="ff-req" aria-hidden="true"> *</span>}</span>
+      {control}
+      {hint && <span className="muted small" id={hintId}>{hint}</span>}
+      <FieldError error={error} name={name} id={errId} />
+    </label>
+  );
+}
 
 /** A modal form. `onSubmit` receives FormData; `error` is the result of errorInfo(). */
 export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, submitLabel = 'Save', reason = true }) {

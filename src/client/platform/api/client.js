@@ -42,6 +42,9 @@ export function createApiClient({
   backoffMs = 200,
   onFailure = () => {},
   onUnauthorized = null,
+  dedupeWindowMs = 1000,
+  now = () => Date.now(),
+  setTimer = (fn, ms) => { const t = setTimeout(fn, ms); t?.unref?.(); return t; },
 } = {}) {
   const fail = (err, path) => {
     lastFailure = { correlationId: err.correlationId ?? null, status: err.status ?? null, code: err.code ?? null, path, at: new Date().toISOString() };
@@ -52,7 +55,27 @@ export function createApiClient({
     }
     return err;
   };
-  async function request(method, path, body, { signal, headers = {}, raw = false } = {}) {
+  // Part 09: a write the person makes twice in a row (a double click, a key held down, two buttons that save the same thing) is sent once.
+  // While an identical write (method, path and body) is on its way, or for a moment after it succeeded, the same answer is given again
+  // instead of a second request; each call still has its own idempotency key, so without this the server would apply both. A failed
+  // write is not kept: correcting and sending again goes to the server. Files sent raw are never merged.
+  const inFlight = new Map();
+  function request(method, path, body, opts = {}) {
+    if (method === 'GET' || method === 'HEAD' || opts.raw || opts.signal || dedupeWindowMs < 0) return send(method, path, body, opts);
+    let key;
+    try { key = `${method} ${path} ${body === undefined ? '' : JSON.stringify(body)}`; } catch { return send(method, path, body, opts); }
+    const known = inFlight.get(key);
+    if (known && (known.pending || now() - known.at <= dedupeWindowMs)) return known.promise;
+    const entry = { pending: true, at: 0, promise: null };
+    entry.promise = send(method, path, body, opts).then((out) => {
+      entry.pending = false; entry.at = now();
+      setTimer(() => { if (inFlight.get(key) === entry) inFlight.delete(key); }, dedupeWindowMs);
+      return out;
+    }, (err) => { if (inFlight.get(key) === entry) inFlight.delete(key); throw err; });
+    inFlight.set(key, entry);
+    return entry.promise;
+  }
+  async function send(method, path, body, { signal, headers = {}, raw = false } = {}) {
     const correlationId = newId();
     const canRetry = method === 'GET' || method === 'HEAD';
     const maxAttempts = canRetry ? retries + 1 : 1;

@@ -20,6 +20,8 @@ export default function TravelRequestPage() {
   const h = useQuery({ queryKey: ['exp', 'travel-history', id], queryFn: () => exp.travelHistory(id), enabled: Boolean(id) && q.isSuccess, retry: false });
   const [v, setV] = useState({ purpose: '', fromPlace: '', toPlace: '', startDate: dayIST(3), endDate: dayIST(4), mode: 'TRAIN', estCost: '', advance: '', projectId: '' });
   const [error, setError] = useState(null); const [note, setNote] = useState(null); const loaded = useRef(false);
+  // Part 09: one save at a time; the second click of a double click (which can land on the other button once the message above moves) is ignored
+  const [busy, setBusy] = useState(false); const busyRef = useRef(false);
   const r = q.data;
   usePageTitle(r ? r.docNo : t('travel.title'));
   useEffect(() => { if (r && !loaded.current) { loaded.current = true; setV({ purpose: r.purpose, fromPlace: r.fromPlace, toPlace: r.toPlace, startDate: r.startDate, endDate: r.endDate, mode: r.mode, estCost: String(r.estCost), advance: r.advance ? String(r.advance) : '', projectId: r.projectId ? String(r.projectId) : '' }); } }, [r]);
@@ -28,7 +30,7 @@ export default function TravelRequestPage() {
   if (id && q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const editable = !id || r.can.edit;
   const body = () => ({ purpose: v.purpose.trim(), fromPlace: v.fromPlace.trim(), toPlace: v.toPlace.trim(), startDate: v.startDate, endDate: v.endDate, mode: v.mode, estCost: Number(v.estCost || 0), advance: Number(v.advance || 0), projectId: v.projectId ? Number(v.projectId) : null });
-  const run = async (fn, done) => { setError(null); setNote(null); try { const out = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['exp'] }); return out; } catch (e) { setError(errorInfo(e)); return null; } };
+  const run = async (fn, done) => { if (busyRef.current) return null; busyRef.current = true; setBusy(true); setError(null); setNote(null); try { const out = await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['exp'] }); return out; } catch (e) { setError(errorInfo(e)); return null; } finally { busyRef.current = false; setBusy(false); } };
   const save = (submit) => run(async () => { const out = id ? await exp.updateTravel(id, { ...body(), version: r.rowVersion }) : await exp.createTravel({ ...body(), submit }); if (id && submit) await exp.travelAct(id, 'submit'); if (!id) navigateTo(`/expenses/travel?id=${out.id}`, { force: true }); else loaded.current = false; return out; }, submit ? t('travel.sent') : t('travel.saved'));
   return (
     <section aria-labelledby="tr-title" data-testid="travel" data-status={r?.status ?? 'NEW'}>
@@ -45,7 +47,7 @@ export default function TravelRequestPage() {
         <Field label={t('travel.mode')} name="mode" error={error}><select value={v.mode} disabled={!editable} onChange={(e) => setV({ ...v, mode: e.target.value })} data-testid="tr-mode">{MODES.map((m) => <option key={m} value={m}>{t(`mode.${m}`)}</option>)}</select></Field>
         <Field label={t('travel.estCost')} name="estCost" error={error}><input type="number" min="0" step="0.01" value={v.estCost} disabled={!editable} onChange={(e) => setV({ ...v, estCost: e.target.value })} required data-testid="tr-cost" /></Field>
         <Field label={t('travel.advance')} name="advance" error={error} hint={t('travel.advanceHint')}><input type="number" min="0" step="0.01" value={v.advance} disabled={!editable} onChange={(e) => setV({ ...v, advance: e.target.value })} data-testid="tr-advance" /></Field>
-        {editable && <div className="actions"><button type="submit" className="btn" data-testid="tr-save">{t('act.saveDraft')}</button><button type="button" className="btn btn-primary" onClick={() => save(true)} data-testid="tr-send">{t('act.saveSend')}</button></div>}
+        {editable && <div className="actions"><button type="submit" className="btn" disabled={busy} data-testid="tr-save">{t('act.saveDraft')}</button><button type="button" className="btn btn-primary" onClick={() => save(true)} disabled={busy} data-testid="tr-send">{t('act.saveSend')}</button></div>}
       </form>
       {r && (
         <div className="actions-row no-print" data-testid="tr-actions">

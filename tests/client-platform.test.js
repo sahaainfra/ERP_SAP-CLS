@@ -171,3 +171,30 @@ test('query keys: module first, resource next, so one prefix invalidates a whole
   assert.deepEqual(queryKeys.core.flags.evaluate(['b', 'a']).slice(0, 2), queryKeys.core.flags.all);
   assert.equal(queryKeys.core.flags.evaluate(['b', 'a'])[3], 'a,b', 'key order does not create separate cache entries');
 });
+
+test('Part 09: the same write twice in a row is sent once (double click), a different or later one is sent, a failed one can be sent again', async () => {
+  let clock = 1000;
+  const timers = [];
+  const c = client([response(201, { data: { id: 7 } }), response(201, { data: { id: 8 } }), envelope(422, 'BUSINESS_RULE', 'refused'), response(201, { data: { id: 9 } }), response(201, { data: { id: 10 } })], { now: () => clock, setTimer: (fn, ms) => timers.push({ fn, ms }) });
+  const body = { type: 'SALARY', amount: 5000, purpose: 'Site visit' };
+  // two clicks while the first is on its way, with their own idempotency keys: one request, one answer for both
+  const [a, b] = await Promise.all([c.api.post('/hr/advances', body, { headers: { 'idempotency-key': 'k-1' } }), c.api.post('/hr/advances', body, { headers: { 'idempotency-key': 'k-2' } })]);
+  assert.deepEqual([a, b, c.calls.length], [{ data: { id: 7 } }, { data: { id: 7 } }, 1]);
+  // the second click lands just after the answer came back: still the same answer
+  clock += 400; assert.deepEqual(await c.api.post('/hr/advances', { ...body }), { data: { id: 7 } }); assert.equal(c.calls.length, 1);
+  // a different body is a different write
+  assert.deepEqual(await c.api.post('/hr/advances', { ...body, amount: 6000 }), { data: { id: 8 } }); assert.equal(c.calls.length, 2);
+  // after the moment has passed the same body is a new, deliberate write
+  clock += 1000; timers.splice(0).forEach((t) => t.fn());
+  await assert.rejects(c.api.post('/hr/advances', body), { status: 422 }); assert.equal(c.calls.length, 3);
+  // a refused write is not kept: sending it again goes to the server
+  assert.deepEqual(await c.api.post('/hr/advances', body), { data: { id: 9 } }); assert.equal(c.calls.length, 4);
+  // reads, raw uploads and calls that can be cancelled are never merged
+  const g = client([response(200, { n: 1 }), response(200, { n: 2 })]);
+  await Promise.all([g.api.get('/core/x'), g.api.get('/core/x')]); assert.equal(g.calls.length, 2);
+  const r = client([response(200, {}), response(200, {})]);
+  await Promise.all([r.api.post('/x/upload', 'bytes', { raw: true }), r.api.post('/x/upload', 'bytes', { raw: true })]); assert.equal(r.calls.length, 2);
+  // the window can be switched off
+  const off = client([response(200, {}), response(200, {})], { dedupeWindowMs: -1 });
+  await Promise.all([off.api.post('/x', {}), off.api.post('/x', {})]); assert.equal(off.calls.length, 2);
+});
