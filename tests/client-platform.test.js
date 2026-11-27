@@ -172,10 +172,23 @@ test('query keys: module first, resource next, so one prefix invalidates a whole
   assert.equal(queryKeys.core.flags.evaluate(['b', 'a'])[3], 'a,b', 'key order does not create separate cache entries');
 });
 
+test('PACK-W0-01: by default a deliberate second identical write is sent once the first has answered (scan a pass twice, issue twice)', async () => {
+  const c = client([response(200, { data: { ok: true } }), envelope(409, 'BUSINESS_RULE', 'already used'), response(201, { data: { id: 1 } }), response(201, { data: { id: 2 } })]);
+  const scan = { code: 'GPS-1' };
+  assert.deepEqual(await c.api.post('/inv/gate-exit/verify', scan), { data: { ok: true } });
+  await assert.rejects(c.api.post('/inv/gate-exit/verify', scan), { status: 409 }, 'the second scan reaches the server and is refused');
+  assert.equal(c.calls.length, 2);
+  // a double click while the first is on its way is still one request
+  const [a, b] = await Promise.all([c.api.post('/hse/ppe', { badge: 'LAB:1' }), c.api.post('/hse/ppe', { badge: 'LAB:1' })]);
+  assert.deepEqual([a, b, c.calls.length], [{ data: { id: 1 } }, { data: { id: 1 } }, 3]);
+  assert.deepEqual(await c.api.post('/hse/ppe', { badge: 'LAB:1' }), { data: { id: 2 } }, 'the replacement issue is a new write'); assert.equal(c.calls.length, 4);
+});
+
 test('Part 09: the same write twice in a row is sent once (double click), a different or later one is sent, a failed one can be sent again', async () => {
   let clock = 1000;
   const timers = [];
-  const c = client([response(201, { data: { id: 7 } }), response(201, { data: { id: 8 } }), envelope(422, 'BUSINESS_RULE', 'refused'), response(201, { data: { id: 9 } }), response(201, { data: { id: 10 } })], { now: () => clock, setTimer: (fn, ms) => timers.push({ fn, ms }) });
+  // the optional window after success (off by default since PACK-W0-01, see the next test) is exercised here with 1 s
+  const c = client([response(201, { data: { id: 7 } }), response(201, { data: { id: 8 } }), envelope(422, 'BUSINESS_RULE', 'refused'), response(201, { data: { id: 9 } }), response(201, { data: { id: 10 } })], { now: () => clock, setTimer: (fn, ms) => timers.push({ fn, ms }), dedupeWindowMs: 1000 });
   const body = { type: 'SALARY', amount: 5000, purpose: 'Site visit' };
   // two clicks while the first is on its way, with their own idempotency keys: one request, one answer for both
   const [a, b] = await Promise.all([c.api.post('/hr/advances', body, { headers: { 'idempotency-key': 'k-1' } }), c.api.post('/hr/advances', body, { headers: { 'idempotency-key': 'k-2' } })]);

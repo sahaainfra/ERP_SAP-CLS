@@ -42,7 +42,8 @@ export function createApiClient({
   backoffMs = 200,
   onFailure = () => {},
   onUnauthorized = null,
-  dedupeWindowMs = 1000,
+  // PACK-W0-01: 0 = merge identical writes only while the first is on its way (see request() below)
+  dedupeWindowMs = 0,
   now = () => Date.now(),
   setTimer = (fn, ms) => { const t = setTimeout(fn, ms); t?.unref?.(); return t; },
 } = {}) {
@@ -59,17 +60,22 @@ export function createApiClient({
   // While an identical write (method, path and body) is on its way, or for a moment after it succeeded, the same answer is given again
   // instead of a second request; each call still has its own idempotency key, so without this the server would apply both. A failed
   // write is not kept: correcting and sending again goes to the server. Files sent raw are never merged.
+  // PACK-W0-01: the moment after success (dedupeWindowMs) is now 0 by default. With 1 s, a deliberate second identical write that
+  // came back within the second was never sent: a gate pass scanned again showed "verified" instead of "already used", a second PPE
+  // issue to the same person returned the first one, a rule run again reported the first run (12 E2E specs on main, runs #159/#160).
+  // Merging while the first write is on its way keeps the double-click protection; pages also disable their button while busy.
   const inFlight = new Map();
   function request(method, path, body, opts = {}) {
     if (method === 'GET' || method === 'HEAD' || opts.raw || opts.signal || dedupeWindowMs < 0) return send(method, path, body, opts);
     let key;
     try { key = `${method} ${path} ${body === undefined ? '' : JSON.stringify(body)}`; } catch { return send(method, path, body, opts); }
     const known = inFlight.get(key);
-    if (known && (known.pending || now() - known.at <= dedupeWindowMs)) return known.promise;
+    if (known && (known.pending || (dedupeWindowMs > 0 && now() - known.at <= dedupeWindowMs))) return known.promise;
     const entry = { pending: true, at: 0, promise: null };
     entry.promise = send(method, path, body, opts).then((out) => {
       entry.pending = false; entry.at = now();
-      setTimer(() => { if (inFlight.get(key) === entry) inFlight.delete(key); }, dedupeWindowMs);
+      if (dedupeWindowMs > 0) setTimer(() => { if (inFlight.get(key) === entry) inFlight.delete(key); }, dedupeWindowMs);
+      else if (inFlight.get(key) === entry) inFlight.delete(key);
       return out;
     }, (err) => { if (inFlight.get(key) === entry) inFlight.delete(key); throw err; });
     inFlight.set(key, entry);

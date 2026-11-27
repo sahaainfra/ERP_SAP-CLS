@@ -57,15 +57,20 @@ export function Field({ label, name, error, children, hint }) {
   const one = isValidElement(children) && typeof children.type === 'string' && NATIVE.has(children.type) ? children : null;
   // no second mark where the page already wrote one into the label ('Site *') or says it in words
   const required = Boolean(one?.props.required) && !(typeof label === 'string' && (/required/i.test(label) || /\*\s*$/.test(label)));
+  // PACK-W0-01: with the star inside the <label>, the label's text became "Reason *" and every lookup of the control by its exact
+  // label failed (17 E2E specs on main, runs #159/#160). The control is now named by the label text alone (aria-labelledby), which
+  // is also what assistive technology already announced; a name the page set itself is kept.
+  const labelId = required && !one.props['aria-label'] && !one.props['aria-labelledby'] ? `${uid}-label` : undefined;
   const control = one
     ? cloneElement(one, {
       'aria-describedby': one.props['aria-describedby'] ?? ([hintId, errId].filter(Boolean).join(' ') || undefined),
       'aria-invalid': one.props['aria-invalid'] ?? (message ? true : undefined),
+      ...(labelId ? { 'aria-labelledby': labelId } : {}),
     })
     : children;
   return (
     <label className="field">
-      <span>{label}{required && <span className="ff-req" aria-hidden="true"> *</span>}</span>
+      <span>{labelId ? <span id={labelId}>{label}</span> : label}{required && <span className="ff-req" aria-hidden="true"> *</span>}</span>
       {control}
       {hint && <span className="muted small" id={hintId}>{hint}</span>}
       <FieldError error={error} name={name} id={errId} />

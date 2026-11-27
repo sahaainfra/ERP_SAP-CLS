@@ -68,13 +68,20 @@ test('Scenario Builder: drivers, live impact, save and compare without touching 
   await page.getByLabel('Project *').selectOption(String(project));
   // the default driver is steel +10 %: 150 t to go × ₹60,000 × 10 % = ₹9,00,000
   await expect(page.getByTestId('scn-sticky').getByTestId('scn-eac')).toContainText('9,00,000');
+  // PACK-W0-01: the calendar days a 10-working-day delay adds depend on the weekday of the finish (one or two Sundays crossed), and the
+  // seeded finish moves with today's date; the expectation is worked out from the finish shown before the delay, as the server does
+  const before = (await page.getByTestId('scn-sticky').getByTestId('scn-finish').textContent()).match(/(\d{2})-([A-Za-z]{3})-(\d{4})/);
+  expect(before, 'the completion date is shown before the delay').not.toBeNull();
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const finish = new Date(Date.UTC(Number(before[3]), MON.indexOf(before[2]), Number(before[1])));
+  let calendarDays = 0; for (let work = 0; work < 10;) { calendarDays += 1; if (new Date(finish.getTime() + calendarDays * 86_400_000).getUTCDay() !== 0) work += 1; }
   await page.getByTestId('scn-scope').getByRole('button', { name: 'Next' }).click();
   // step 2: add a schedule delay on the pile caps
   await page.getByTestId('scn-add').click();
   const second = page.getByTestId('scn-driver').nth(1);
   await second.getByLabel('Activity code').fill('P20');
   await second.getByLabel('Days *').fill('10');
-  await expect(page.getByTestId('scn-sticky').getByTestId('scn-finish')).toContainText('12 days later'); // 10 working days of a six-day week
+  await expect(page.getByTestId('scn-sticky').getByTestId('scn-finish')).toContainText(`${calendarDays} days later`); // 10 working days of a six-day week
   await page.getByTestId('scn-drivers').getByRole('button', { name: 'Next' }).click();
   await expect(page.getByTestId('scn-lines')).toContainText('Reinforcement steel');
   await noOverflow();
