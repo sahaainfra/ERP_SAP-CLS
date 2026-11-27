@@ -29,6 +29,8 @@ async function payApp({ required = true, clock = { now: Date.now() } } = {}) {
   const server = await new Promise((resolve) => {
     const s = app.listen(0, () => resolve(s));
   });
+  // PACK-W0-01: as in startApi, a failed assertion before close() must not keep the file from exiting
+  server.unref(); server.on('connection', (socket) => socket.unref());
   const base = `http://127.0.0.1:${server.address().port}`;
   const post = async (path, body, { key, user } = {}) => {
     const res = await fetch(base + path, {
@@ -149,8 +151,10 @@ test('a second request with a key whose first request is still running gets 409 
   const body = { amount: 7 };
   const hash = requestHash({ method: 'POST', originalUrl: '/pay', body });
   app.db
-    .prepare('INSERT INTO core_idempotency_keys (key, user_id, endpoint, request_hash, expires_at) VALUES (?, ?, ?, ?, ?)')
-    .run('inflight-key-01', 'meera', 'POST /pay', hash, new Date(Date.now() + 3600_000).toISOString());
+    // PACK-W0-01: created_at is written from the test's clock, not SQLite's datetime('now'), so the claim is "just started" on the
+    // year-end clock job too (with the database default it looked hours old there and was taken over as abandoned)
+    .prepare('INSERT INTO core_idempotency_keys (key, user_id, endpoint, request_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run('inflight-key-01', 'meera', 'POST /pay', hash, new Date().toISOString(), new Date(Date.now() + 3600_000).toISOString());
   const r = await app.post('/pay', body, { key: 'inflight-key-01' });
   assert.equal(r.status, 409);
   assert.equal(r.json.error.code, 'REQUEST_IN_PROGRESS');
