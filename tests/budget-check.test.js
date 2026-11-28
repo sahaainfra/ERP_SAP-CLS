@@ -156,3 +156,35 @@ test('roles, isolation, the reports by cost code, cost head and vendor, export a
   assert.equal((await t.call(qs, 'GET', '/budgets')).status, 200);
 });
 void pcm; void pm2; void phased;
+
+test('PACK-16 a cost checked or committed for a project still in set-up is a warning that says so (ff.proj.pack16); never a block; flag off: no change', async () => {
+  const r = await ready(); const { t } = r; const db = t.api.db;
+  const chk = async (amount, stage = 'PO') => (await t.call(pm, 'POST', '/check', { projectId: t.pid, stage, lines: [{ wbsId: t.w2, costCodeId: r.mat.id, amount }] })).json.data;
+  await setMode(t, 'BLOCK', { stage: 'PO' });
+  const lifecycle = () => db.prepare('SELECT lifecycle_state AS s FROM proj_projects WHERE project_id = ?').get(t.pid).s;
+  const original = lifecycle();
+  db.prepare("UPDATE proj_projects SET lifecycle_state = 'SETUP' WHERE project_id = ?").run(t.pid);
+  // flag off: within the budget, the line is OK and says nothing about the set-up
+  const off = await chk(1000);
+  assert.equal(off.result, 'OK');
+  assert.doesNotMatch(off.lines[0].message ?? '', /set-up/);
+  db.prepare("INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.proj.pack16', 1, 'PACK-16 fixture', 0, 1)").run();
+  // flag on, project in set-up: a warning that names the set-up; a cost head that blocks over budget still only warns for the set-up
+  const on = await chk(1000);
+  assert.equal(on.result, 'WARNING');
+  assert.match(on.lines[0].message, /still in set-up: its set-up checklist is not complete/);
+  // over the budget in a blocking stage: the block (and its reason) stays, the set-up is said too
+  const over = await chk(200000);
+  assert.equal(over.result, 'BLOCK');
+  assert.match(over.lines[0].message, /still in set-up.*over the budget available/);
+  // the commitment of an approved PO is recorded with the warning, not refused (no dead letter)
+  const c = await ing(r, sys, po(r, { sourceId: 'PO-SETUP', docRef: 'PO/2026/SETUP', lines: [{ ...po(r).lines[0], amount: 1000 }] }));
+  assert.equal(c.status, 201, JSON.stringify(c.json).slice(0, 300));
+  assert.equal(c.json.data.result, 'WARNING', 'recorded with the warning');
+  assert.equal(c.json.data.lines[0].action, 'CREATED');
+  // set-up done (mobilisation): no set-up warning
+  db.prepare("UPDATE proj_projects SET lifecycle_state = 'MOBILISATION' WHERE project_id = ?").run(t.pid);
+  const done = await chk(1000);
+  assert.equal(done.result, 'OK');
+  db.prepare('UPDATE proj_projects SET lifecycle_state = ? WHERE project_id = ?').run(original, t.pid);
+});

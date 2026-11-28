@@ -1052,3 +1052,13 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   (`nearestIndex`) for the tooltip, unless a point is a link (drill). With a mark per point, a 5,000-point S-curve was 37,045 nodes and blocked
   the main thread for about 0.3–0.45 s, and its tooltip was hard to hit. The "View as table" rows are built when the person opens it. The table
   stays the full accessible alternative, with every point.
+
+- **ADR-783 A cost committed to a project still in set-up is a budget-check warning, not a block; actuals still post (PACK-16).** The project
+  set-up checklist (`readinessOf` in `proj/project.js`: client, contract value, dates, a site, the project manager and director) is what
+  moves a project out of the Set-up stage. No module that commits or posts cost looked at that stage, so a PO could commit cost to a project
+  nobody had finished setting up. With `ff.proj.pack16`, the budget check (`bud/ledger.js` `checkLine`) adds a warning to every line for a
+  project still in Set-up, naming the incomplete checklist. The person sees it before approval in the budget check, it is kept on the
+  commitment, and the project manager is told as for any budget warning. It is not a block at the ledger: a commitment arrives from a
+  document already approved, and a refusal there is dead-lettered (D-833). A block, where wanted, belongs at the document's own approval.
+  Actual costs (payroll, issues) keep posting to the project they are allocated to, as the owner decided in D-833. A cost head whose check
+  is OFF gets no set-up warning either.

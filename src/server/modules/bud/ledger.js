@@ -3,6 +3,7 @@ import { HttpError, conflict, forbidden, notFound, unprocessable } from '../../p
 import { controlRegistry, protocolOf } from '../../platform/protocol/index.js';
 import { evidenceProviders, workflowOf, workflowTypes } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 import {
   ACTUAL_EVENTS, CHECK_DOC, CHECK_MODES, CHECK_RESULTS, COMMIT_EVENTS, COMMIT_STATUS, CONFIG_STATUS, CONTROL_CODE, DIMENSIONS, STAGES, cell, nowIso, rid, rupees, same, signed,
 } from './constants.js';
@@ -58,6 +59,14 @@ export function createLedgerService({ db, base }) {
       if (over <= tolerance) { result = 'WARNING'; message = `₹ ${money(over)} over the budget available, within the tolerance of ${cfg.tolerancePct / 10000} %.`; }
       else if (cfg.mode === 'WARN') { result = 'WARNING'; message = `₹ ${money(over)} over the budget available (₹ ${signed(f.available)}).`; }
       else { result = 'BLOCK'; message = `₹ ${money(over)} over the budget available (₹ ${signed(f.available)}); this cost head blocks commitments above its budget.`; }
+    }
+    // PACK-16 (ff.proj.pack16, ADR-783): a cost committed to a project whose set-up is not complete (still in the Set-up stage of its life cycle)
+    // is a warning on the line, shown before approval in the budget check and kept on the commitment; never a block here (the commitment
+    // comes from a document already approved, and a refusal at this point would be dead-lettered, D-833).
+    if (cfg.mode !== 'OFF' && isEnabled(db, 'ff.proj.pack16', { companyId: actor.companyId }) && projOf(o.id)?.lifecycle_state === 'SETUP') {
+      const setup = 'The project is still in set-up: its set-up checklist is not complete (Projects, the project, Readiness).';
+      if (result === 'OK') result = 'WARNING';
+      message = message ? `${setup} ${message}` : setup;
     }
     const w = l.wbsId ? wbsMeta(l.wbsId) : null;
     return {
