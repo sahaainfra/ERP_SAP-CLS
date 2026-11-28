@@ -26,4 +26,14 @@ export default {
   'confirm.typeWrong': 'Type {word} exactly to go on.',
   'confirm.releaseTitle': 'Release {doc} to the bank?',
   'confirm.releaseText': '{amount} goes to {bank} for payment. Once released, the transfer cannot be called back from here.',
+  // PACK-12: the accessible summary of a chart (src/client/platform/charts/Chart.jsx)
+  'chart.sum.points': '{n} points from {from} to {to}.',
+  'chart.sum.series': '{name}: {first} at the start, {last} at the end, highest {max} at {at}.',
+  'chart.sum.slices': '{count} parts; the largest is {label} with {value} of {total}.',
+  'chart.sum.gauge': 'Value {value}.',
+  'chart.sum.target': 'Target {target}.',
+  'chart.sum.rows': '{n} rows.',
+  'chart.sum.table': 'The same figures are in the table below.',
+  'chart.sum.switch': '"Show as table" gives the same figures as a table.',
+  'chart.table': '{title} as a table',
 };

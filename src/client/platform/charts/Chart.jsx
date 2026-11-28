@@ -1,9 +1,11 @@
 import { useId, useRef, useState } from 'react';
-import { arcPath, areaPath, bands, chartTable, dayFraction, formatCount, heatFill, linePath, niceTicks, seriesColour, sliceAngles, tipStyle, toCsv } from './scale.js';
+import { DENSE_POINTS, arcPath, areaPath, bands, chartSummary, chartTable, dayFraction, formatCount, heatFill, linePath, nearestIndex, niceTicks, seriesColour, sliceAngles, tipStyle, toCsv } from './scale.js';
 import { downloadCsv } from '../../modules/core/pages/ui.jsx';
 import { formatAxis, isEmptyChart } from './theme.js';
 import { EmptyState } from '../feedback/states.jsx';
 import { useLowBandwidthSaves } from '../device/lowBandwidth.js';
+import { useFlagOn } from '../shell/api.js';
+import { useT } from '../i18n/index.js';
 
 // The chart library (part 03.07, FR-08). Every chart is drawn in SVG from the design tokens (--erp-chart-1..8 and the status colours, so
 // light and dark themes both work), has a tooltip on hover and focus, a legend, the same data as a table (the accessible alternative),
@@ -44,7 +46,7 @@ function Axes({ ticks, plotW, plotH, y }) {
   );
 }
 
-function Cartesian({ kind, data, onDrill, setTip }) {
+function Cartesian({ kind, data, onDrill, setTip, denseOk = false }) {
   const plotW = W - PAD.l - PAD.r;
   const plotH = H - PAD.t - PAD.b;
   const n = data.categories.length;
@@ -58,6 +60,17 @@ function Cartesian({ kind, data, onDrill, setTip }) {
   const drillOf = (s, i) => s.drill?.[i] ?? data.drill;
   const unit = data.unit ? ` ${data.unit}` : '';
   const skip = Math.ceil(n / 8);
+  // PACK-12: a long line (an S-curve of thousands of days) is drawn as its lines only, with one pointer layer for the tooltip: no mark per
+  // point (thousands of nodes and handlers). Only when no point is a link; the table gives every figure.
+  const dense = denseOk && (kind === 'line' || kind === 'area') && n > DENSE_POINTS && !data.drill && data.series.every((s) => !s.drill);
+  const pointer = (e) => {
+    const svg = e.currentTarget.ownerSVGElement; const ctm = svg?.getScreenCTM?.();
+    if (!ctm) return;
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const i = nearestIndex(pt.matrixTransform(ctm.inverse()).x, PAD.l, plotW, n);
+    const parts = data.series.map((s) => (s.values[i] == null ? null : `${s.name} ${formatCount(s.values[i])}${unit}`)).filter(Boolean);
+    setTip({ label: `${data.categories[i]}: ${parts.join(', ')}`, x: e.clientX, y: e.clientY });
+  };
   return (
     <>
       <Axes ticks={ticks} plotW={plotW} plotH={plotH} y={y} />
@@ -86,7 +99,7 @@ function Cartesian({ kind, data, onDrill, setTip }) {
           <g key={s.name}>
             {kind === 'area' && runs.map((r, ri) => <path key={`a${ri}`} d={areaPath(r.pts, PAD.t + plotH)} fill={seriesColour(si)} fillOpacity="0.18" aria-hidden="true" />)}
             {runs.map((r, ri) => <path key={`l${ri}`} d={linePath(r.pts)} fill="none" stroke={seriesColour(si)} strokeWidth="2.5" strokeLinejoin="round" aria-hidden="true" />)}
-            {pts.map((pt, i) => pt && (
+            {!dense && pts.map((pt, i) => pt && (
               <Mark key={data.categories[i]} label={`${data.categories[i]}, ${s.name}: ${formatCount(s.values[i])}${unit}`} drill={drillOf(s, i)} onDrill={onDrill} setTip={setTip}>
                 <circle cx={pt[0]} cy={pt[1]} r={n > 24 ? 2 : 4} fill="var(--erp-color-bg-surface)" stroke={seriesColour(si)} strokeWidth="2" />
               </Mark>
@@ -94,6 +107,7 @@ function Cartesian({ kind, data, onDrill, setTip }) {
           </g>
         );
       })}
+      {dense && <rect x={PAD.l} y={PAD.t} width={plotW} height={plotH} fill="transparent" onPointerMove={pointer} onPointerLeave={() => setTip(null)} data-testid="chart-pointer" aria-hidden="true" />}
     </>
   );
 }
@@ -263,6 +277,8 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
   const saves = useLowBandwidthSaves(); // low-bandwidth mode with ff.perf.p16604 (part 166.4, FR-03): the table first, the chart on request
   const [drawAnyway, setDrawAnyway] = useState(false);
   const [asTable, setAsTable] = useState(false); // "Show as table" (part 166.5, FR-04): the same figures as a table in place of the drawing
+  const pack12 = useFlagOn('ff.charts.pack12'); const tc = useT('common');
+  const [tableOpen, setTableOpen] = useState(false); // PACK-12: the "View as table" rows are drawn when it is opened, not with every chart
   // nothing to draw: the empty state of the chart theme, not an empty frame with axes (part 166.2, U-08)
   if (isEmptyChart(type, data)) return <figure className="ch ch-empty" data-chart={type} data-testid="chart-empty"><EmptyState compact title={title ? `No data for ${title}` : 'No data to chart'} message="Change the filters or the period to see figures here." /></figure>;
   const table = chartTable(type, data);
@@ -272,8 +288,24 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
       : type === 'heatmap' ? <Heatmap data={data} onDrill={onDrill} setTip={setTip} />
         : type === 'gantt' ? <Gantt data={data} onDrill={onDrill} setTip={setTip} />
           : type === 'scatter' ? <Scatter data={data} onDrill={onDrill} setTip={setTip} />
-            : <Cartesian kind={type} data={data} onDrill={onDrill} setTip={setTip} />;
-  const rowsTable = (
+            : <Cartesian kind={type} data={data} onDrill={onDrill} setTip={setTip} denseOk={pack12} />;
+  // PACK-12: the accessible summary says what the chart shows, not only how many rows it has
+  const summaryText = (() => {
+    if (!pack12) return null;
+    const sm = chartSummary(type, data); const u = data?.unit ? ` ${data.unit}` : ''; const f = (v) => `${formatCount(v)}${u}`;
+    const out = [];
+    if (sm.kind === 'series') {
+      out.push(tc('chart.sum.points', { n: formatCount(sm.n), from: sm.from, to: sm.to }));
+      for (const x of sm.series) if (x.first !== null) out.push(tc('chart.sum.series', { name: x.name, first: f(x.first), last: f(x.last), max: f(x.max), at: x.maxAt }));
+    } else if (sm.kind === 'slices' && sm.top) out.push(tc('chart.sum.slices', { count: sm.count, label: sm.top.label, value: f(sm.top.value), total: f(sm.total) }));
+    else if (sm.kind === 'gauge') out.push(tc('chart.sum.gauge', { value: f(sm.value) }) + (sm.target !== null ? ` ${tc('chart.sum.target', { target: f(sm.target) })}` : ''));
+    else out.push(tc('chart.sum.rows', { n: formatCount(sm.n) }));
+    return `${title}. ${out.join(' ')} ${tableSwitch ? tc('chart.sum.switch') : tc('chart.sum.table')}`;
+  })();
+  // PACK-12: the table's scrolling box can be reached and scrolled by keyboard (axe scrollable-region-focusable), and is named
+  const tableRegion = { tabIndex: 0, role: 'region', 'aria-label': tc('chart.table', { title: title ?? '' }) };
+  const needTable = !pack12 || tableOpen || asTable || (saves && !drawAnyway); // PACK-12: no table elements for a chart nobody reads as a table
+  const rowsTable = needTable && (
     <table>
       <caption className="sr-only">{title}</caption>
       <thead><tr>{table.columns.map((c, i) => <th key={`${c}-${i}`} scope="col">{c}</th>)}</tr></thead>
@@ -283,7 +315,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
   if (saves && !drawAnyway) {
     return (
       <figure className="ch ch-as-table" data-chart={type} data-testid="chart-as-table">
-        <div className="table-scroll" data-no-cards="">{rowsTable}</div>
+        <div className="table-scroll" data-no-cards="" {...tableRegion}>{rowsTable}</div>
         <figcaption className="ch-foot">
           <span className="muted">Shown as a table to save data.</span>
           <span className="ch-export">
@@ -305,7 +337,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
   if (tableSwitch && asTable) {
     return (
       <figure className="ch ch-as-table" data-chart={type} data-testid="chart-table-view">
-        <div className="table-scroll" data-no-cards="">{rowsTable}</div>
+        <div className="table-scroll" data-no-cards="" {...tableRegion}>{rowsTable}</div>
         <figcaption className="ch-foot">{exports}</figcaption>
       </figure>
     );
@@ -314,7 +346,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
     return (
       <figure className="ch ch-v5" data-chart={type}>
         <svg ref={svgRef} viewBox={box} role="group" aria-roledescription="chart" aria-labelledby={`${id}-t`} focusable="false" className="ch-svg">
-          <title id={`${id}-t`}>{`${title}. ${pointCount} ${pointCount === 1 ? 'row' : 'rows'}; "Show as table" gives the same figures as a table.`}</title>
+          <title id={`${id}-t`}>{summaryText ?? `${title}. ${pointCount} ${pointCount === 1 ? 'row' : 'rows'}; "Show as table" gives the same figures as a table.`}</title>
           {body}
         </svg>
         {tip && <div className="ch-tip" role="status" style={tipStyle(tip)}>{tip.label}</div>}
@@ -326,15 +358,15 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
   return (
     <figure className="ch" data-chart={type}>
       <svg ref={svgRef} viewBox={box} role="group" aria-roledescription="chart" aria-labelledby={`${id}-t`} focusable="false" className="ch-svg">
-        <title id={`${id}-t`}>{`${title}. ${pointCount} ${pointCount === 1 ? 'row' : 'rows'}; the same figures are in the table below.`}</title>
+        <title id={`${id}-t`}>{summaryText ?? `${title}. ${pointCount} ${pointCount === 1 ? 'row' : 'rows'}; the same figures are in the table below.`}</title>
         {body}
       </svg>
       {tip && <div className="ch-tip" role="status" style={tipStyle(tip)}>{tip.label}</div>}
       <Legend type={type} data={data} />
       <figcaption className="ch-foot">
-        <details className="ch-table">
+        <details className="ch-table" onToggle={(e) => setTableOpen(e.currentTarget.open)}>
           <summary>View as table</summary>
-          <div className="table-scroll" data-no-cards="">{rowsTable}</div>
+          {(!pack12 || tableOpen) && <div className="table-scroll" data-no-cards="" {...tableRegion}>{rowsTable}</div>}
         </details>
         <span className="ch-export">
           <button type="button" className="btn btn-small" onClick={() => downloadCsv(`${exportName}.csv`, `\uFEFF${toCsv(table)}`)}>CSV</button>

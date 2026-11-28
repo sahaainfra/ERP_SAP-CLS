@@ -30,6 +30,16 @@ export default {
     'confirm.typeWrong': 'కొనసాగడానికి సరిగ్గా {word} టైప్ చేయండి.',
     'confirm.releaseTitle': '{doc} బ్యాంకుకు విడుదల చేయాలా?',
     'confirm.releaseText': '{amount} చెల్లింపు కోసం {bank}కు వెళ్తుంది. విడుదలైన తర్వాత ఈ బదిలీని ఇక్కడ నుండి వెనక్కి తీసుకోలేము.',
+    // PACK-12: chart summary
+    'chart.sum.points': '{from} నుండి {to} వరకు {n} బిందువులు.',
+    'chart.sum.series': '{name}: ప్రారంభంలో {first}, చివరలో {last}, అత్యధికం {max} ({at} వద్ద).',
+    'chart.sum.slices': '{count} భాగాలు; అతిపెద్దది {label}, {total}లో {value}.',
+    'chart.sum.gauge': 'విలువ {value}.',
+    'chart.sum.target': 'లక్ష్యం {target}.',
+    'chart.sum.rows': '{n} వరుసలు.',
+    'chart.sum.table': 'ఇవే అంకెలు క్రింది పట్టికలో ఉన్నాయి.',
+    'chart.sum.switch': '"పట్టికగా చూపించు" ఇవే అంకెలను పట్టికగా ఇస్తుంది.',
+    'chart.table': '{title} పట్టికగా',
   },
   shell: {
     'context.recent': 'ఇటీవలి', 'context.recentAria': 'ఇటీవలి పని సందర్భాలు',

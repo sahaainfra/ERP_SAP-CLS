@@ -48,4 +48,14 @@ export default {
   'confirm.typeWrong': 'आगे बढ़ने के लिए ठीक {word} टाइप करें।',
   'confirm.releaseTitle': '{doc} बैंक को जारी करें?',
   'confirm.releaseText': '{amount} भुगतान के लिए {bank} को जाएगा। जारी होने के बाद ट्रांसफ़र यहाँ से वापस नहीं लिया जा सकता।',
+  // PACK-12: the accessible summary of a chart (src/client/platform/charts/Chart.jsx)
+  'chart.sum.points': '{from} से {to} तक {n} बिंदु।',
+  'chart.sum.series': '{name}: शुरुआत में {first}, अंत में {last}, सबसे अधिक {max} ({at} पर)।',
+  'chart.sum.slices': '{count} हिस्से; सबसे बड़ा {label}, {total} में से {value}।',
+  'chart.sum.gauge': 'मान {value}।',
+  'chart.sum.target': 'लक्ष्य {target}।',
+  'chart.sum.rows': '{n} पंक्तियाँ।',
+  'chart.sum.table': 'यही आँकड़े नीचे की तालिका में हैं।',
+  'chart.sum.switch': '"तालिका के रूप में दिखाएँ" यही आँकड़े तालिका में देता है।',
+  'chart.table': '{title} तालिका के रूप में',
 };
