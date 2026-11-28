@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { parse } from '../../platform/validation/index.js';
+import { zIndianId } from '../../../shared/forms/indian-ids.js'; // PACK-09: the same checks as the browser
 
 // Inputs of the contract labour API (part 07.08). The service checks the rules again (the age of a worker above all); these reject malformed input at the door.
 const id = z.coerce.number().int().min(1);
@@ -13,11 +14,11 @@ export const parseId = (v) => parse(id, v);
 export const parseReason = (b) => parse(z.object({ reason }).strict(), b ?? {});
 export const parseSubmit = (b) => parse(z.object({ comment: text(500).optional() }).strict(), b ?? {});
 const body = {
-  name: text(100).min(2), photoFileId: id.nullish().transform((v) => v ?? null), aadhaar: z.string().trim().regex(/^\d{12}$/, 'The ID number is 12 digits').nullish().transform((v) => v || null), mobile: z.string().trim().regex(/^\d{10}$/, 'The mobile number is 10 digits').nullish().transform((v) => v || null),
+  name: text(100).min(2), photoFileId: id.nullish().transform((v) => v ?? null), aadhaar: zIndianId('aadhaar', { optional: true }), mobile: zIndianId('mobile', { optional: true }),
   dob: day, gender: z.enum(['MALE', 'FEMALE', 'OTHER']), homeState: optText(40), tradeCode: text(30).min(2), skillCategory: SKILL, contractorId: id,
-  bankAccount: z.string().trim().regex(/^\d{9,18}$/, 'The account number is 9 to 18 digits').nullish().transform((v) => v || null), ifsc: z.string().trim().toUpperCase().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Use an IFSC such as SBIN0001234').nullish().transform((v) => v || null),
-  uan: z.string().trim().regex(/^\d{12}$/, 'The UAN is 12 digits').nullish().transform((v) => v || null), esicIp: z.string().trim().regex(/^\d{10,17}$/, 'The ESIC number is 10 to 17 digits').nullish().transform((v) => v || null), bocwNo: optText(40),
-  emergencyName: optText(100), emergencyMobile: z.string().trim().regex(/^\d{10}$/, 'The mobile number is 10 digits').nullish().transform((v) => v || null),
+  bankAccount: z.string().trim().regex(/^\d{9,18}$/, 'The account number is 9 to 18 digits').nullish().transform((v) => v || null), ifsc: zIndianId('ifsc', { optional: true }),
+  uan: zIndianId('uan', { optional: true }), esicIp: z.string().trim().regex(/^\d{10,17}$/, 'The ESIC number is 10 to 17 digits').nullish().transform((v) => v || null), bocwNo: optText(40),
+  emergencyName: optText(100), emergencyMobile: zIndianId('mobile', { optional: true }),
 };
 export const parseWorkerCreate = (b) => parse(z.object({ ...body, submit: z.boolean().default(false), comment: text(500).optional() }).strict(), b);
 export const parseWorkerUpdate = (b) => parse(z.object({ ...body, version: z.number().int().min(1) }).strict(), b);

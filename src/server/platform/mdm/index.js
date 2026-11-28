@@ -15,6 +15,7 @@
  * The records of a registered master are kept by the framework (mdm_records and mdm_record_versions) with their effective-dated versions; a later master that keeps its
  * own table can register with the same definition and use the change requests, duplicates, merge map, quality rules and stewards of the framework (see ARCHITECTURE section 55).
  */
+import { INDIAN_IDS, isValidId, normaliseId } from '../../../shared/forms/indian-ids.js';
 const types = new Map();
 export const masterTypes = {
   register(def) {
@@ -43,14 +44,22 @@ export function gstinCheckChar(first14) {
   }
   return GST_CHARS[(36 - (sum % 36)) % 36];
 }
+// PACK-09: the identifier checks are the shared ones (`src/shared/forms/indian-ids.js`), so the browser and the server agree.
+const ok = (kind) => (v) => isValidId(kind, v);
+const SHARED_KIND = { TAN: 'tan', UAN: 'uan', ESIC: 'esic', AADHAAR: 'aadhaarMasked', VEHICLE: 'vehicle' };
 export const FORMATS = Object.freeze({
-  PAN: { label: 'PAN', test: (v) => /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v), hint: 'five letters, four digits and a letter, for example ABCDE1234F' },
-  GSTIN: { label: 'GSTIN', test: (v) => /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(v) && gstinCheckChar(v.slice(0, 14)) === v[14], hint: '15 characters: state code, PAN, entity number, Z and a check character' },
-  IFSC: { label: 'IFSC', test: (v) => /^[A-Z]{4}0[A-Z0-9]{6}$/.test(v), hint: 'four letters, a zero and six letters or digits, for example SBIN0001234' },
-  PIN: { label: 'PIN code', test: (v) => /^[1-9][0-9]{5}$/.test(v), hint: 'six digits, not starting with 0' },
-  MOBILE: { label: 'mobile number', test: (v) => /^[6-9][0-9]{9}$/.test(v), hint: 'ten digits starting with 6, 7, 8 or 9' },
+  PAN: { label: 'PAN', test: ok('pan'), hint: INDIAN_IDS.pan.hint },
+  GSTIN: { label: 'GSTIN', test: ok('gstin'), hint: '15 characters: state code, PAN, entity number, Z and a check character' },
+  IFSC: { label: 'IFSC', test: ok('ifsc'), hint: INDIAN_IDS.ifsc.hint },
+  PIN: { label: 'PIN code', test: ok('pincode'), hint: INDIAN_IDS.pincode.hint },
+  MOBILE: { label: 'mobile number', test: ok('mobile'), hint: INDIAN_IDS.mobile.hint },
   EMAIL: { label: 'e-mail address', test: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v), hint: 'name@example.com' },
   BANK_ACCOUNT: { label: 'bank account number', test: (v) => /^[0-9]{9,18}$/.test(v), hint: '9 to 18 digits' },
+  TAN: { label: 'TAN', test: ok('tan'), hint: INDIAN_IDS.tan.hint },
+  UAN: { label: 'UAN', test: ok('uan'), hint: INDIAN_IDS.uan.hint },
+  ESIC: { label: 'ESIC number', test: ok('esic'), hint: INDIAN_IDS.esic.hint },
+  AADHAAR: { label: 'Aadhaar (last 4 digits)', test: ok('aadhaarMasked'), hint: INDIAN_IDS.aadhaarMasked.hint },
+  VEHICLE: { label: 'vehicle number', test: ok('vehicle'), hint: INDIAN_IDS.vehicle.hint },
 });
 /** A value as it is stored: trimmed, capitals where the format wants them, a mobile number without +91 or spaces. */
 export function normalise(field, value) {
@@ -58,6 +67,7 @@ export function normalise(field, value) {
   let v = String(value).trim();
   if (!v) return null;
   if (['PAN', 'GSTIN', 'IFSC'].includes(field.format) || field.upper) v = v.toUpperCase().replace(/\s+/g, '');
+  if (SHARED_KIND[field.format]) v = normaliseId(SHARED_KIND[field.format], v);
   if (field.format === 'MOBILE') v = v.replace(/[\s-]/g, '').replace(/^(\+91|0091|91(?=\d{10}$)|0(?=\d{10}$))/, '');
   if (field.format === 'BANK_ACCOUNT' || field.format === 'PIN') v = v.replace(/\s+/g, '');
   if (field.format === 'EMAIL') v = v.toLowerCase();
