@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areaPath, arcPath, bands, chartTable, dayFraction, heatFill, linePath, niceTicks, seriesColour, sliceAngles, toCsv } from '../src/client/platform/charts/scale.js';
+import { DENSE_POINTS, areaPath, arcPath, bands, chartSummary, chartTable, nearestIndex, dayFraction, heatFill, linePath, niceTicks, seriesColour, sliceAngles, toCsv } from '../src/client/platform/charts/scale.js';
 
 // Part 03.07, FR-08: the geometry, the colours, the accessible table and the CSV of the chart library.
 test('axes end at a tidy number with ticks up to it', () => {
@@ -79,4 +79,23 @@ test('Part 12: axis ticks are short Indian figures that fit the margin; the tool
   assert.deepEqual(tipStyle({ x: 100, y: 100 }, 1366, 900), { left: 112, top: 112 });
   const corner = tipStyle({ x: 340, y: 760 }, 360, 780);
   assert.ok(corner.left + 256 <= 360 && corner.top + 64 <= 780 && corner.left >= 4, JSON.stringify(corner));
+});
+
+test('PACK-12 chartSummary says what a chart shows: span, first, last and highest per series; the largest slice; the gauge value', () => {
+  const line = { categories: ['2026-04', '2026-05', '2026-06', '2026-07'], series: [{ name: 'Planned', values: [10, 40, 70, 100] }, { name: 'Actual', values: [8, 35, 52, null] }] };
+  assert.deepEqual(chartSummary('line', line), { kind: 'series', n: 4, from: '2026-04', to: '2026-07', series: [{ name: 'Planned', first: 10, last: 100, max: 100, maxAt: '2026-07' }, { name: 'Actual', first: 8, last: 52, max: 52, maxAt: '2026-06' }] });
+  assert.deepEqual(chartSummary('donut', { slices: [{ label: 'Cement', value: 30 }, { label: 'Steel', value: 50 }, { label: 'Sand', value: 20 }] }), { kind: 'slices', count: 3, top: { label: 'Steel', value: 50 }, total: 100 });
+  assert.deepEqual(chartSummary('gauge', { value: 72, target: 80 }), { kind: 'gauge', value: 72, target: 80 });
+  assert.deepEqual(chartSummary('gantt', { rows: [{ label: 'A', start: '2026-01-01', end: '2026-02-01' }] }), { kind: 'rows', n: 1 });
+  const empty = chartSummary('line', { categories: ['a'], series: [{ name: 'S', values: [null] }] });
+  assert.deepEqual(empty.series[0], { name: 'S', first: null, last: null, max: null, maxAt: null });
+});
+
+test('PACK-12 the pointer layer of a dense line finds the category under the pointer; a dense chart starts above 400 points', () => {
+  assert.equal(DENSE_POINTS, 400);
+  assert.equal(nearestIndex(50, 50, 500, 5000), 0);
+  assert.equal(nearestIndex(549.99, 50, 500, 5000), 4999);
+  assert.equal(nearestIndex(300, 50, 500, 5000), 2500);
+  assert.equal(nearestIndex(-10, 50, 500, 10), 0, 'left of the plot');
+  assert.equal(nearestIndex(9999, 50, 500, 10), 9, 'right of the plot');
 });

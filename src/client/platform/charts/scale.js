@@ -100,3 +100,37 @@ export const tipStyle = (tip, vw = globalThis.innerWidth ?? 1024, vh = globalThi
   left: Math.max(4, tip.x + 12 + TIP_W > vw ? tip.x - 12 - TIP_W : tip.x + 12),
   top: Math.max(4, tip.y + 12 + TIP_H > vh ? tip.y - 12 - TIP_H : tip.y + 12),
 });
+
+/** Above this many points a line or area chart is drawn as lines only, with one pointer layer for the tooltip (PACK-12). */
+export const DENSE_POINTS = 400;
+
+/**
+ * What a chart says, for its accessible summary (PACK-12): for lines, bars and areas the span of the categories and, per series, the first
+ * and last value and the highest one with where it is; for a donut the largest part; for a gauge its value and target; otherwise a row count.
+ * Values are numbers; the caller words and formats them.
+ */
+export function chartSummary(type, d) {
+  if (type === 'donut') {
+    const slices = (d.slices ?? []).filter((s) => typeof s.value === 'number');
+    const top = slices.reduce((a, s) => (a === null || s.value > a.value ? s : a), null);
+    return { kind: 'slices', count: slices.length, top: top ? { label: top.label, value: top.value } : null, total: slices.reduce((a, s) => a + s.value, 0) };
+  }
+  if (type === 'gauge') return { kind: 'gauge', value: d.value ?? null, target: d.target ?? null };
+  if (d?.categories && d?.series) {
+    const series = d.series.map((s) => {
+      let first = null; let last = null; let max = null; let maxAt = null;
+      s.values.forEach((v, i) => {
+        if (typeof v !== 'number') return;
+        if (first === null) first = v;
+        last = v;
+        if (max === null || v > max) { max = v; maxAt = d.categories[i]; }
+      });
+      return { name: s.name, first, last, max, maxAt };
+    });
+    return { kind: 'series', n: d.categories.length, from: d.categories[0] ?? null, to: d.categories.at(-1) ?? null, series };
+  }
+  return { kind: 'rows', n: chartTable(type, d).rows.length };
+}
+
+/** The index of the category under an x position in the plot (bands of equal width), clamped to the categories. */
+export const nearestIndex = (x, left, width, n) => Math.min(n - 1, Math.max(0, Math.floor(((x - left) / width) * n)));
