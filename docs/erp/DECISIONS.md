@@ -1018,3 +1018,12 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   behind a flag: the keys are written into the index row for every company, so a per-company flag cannot switch them; the change only
   adds matches, and rollback is a revert plus a rebuild. Rows written before the change get the Telugu keys only after the index is rebuilt
   for `user` and `project` (Administration, Search, Rebuild; permission `ui.search.reindex`).
+
+- **ADR-779 One definition of each Indian identifier, used by the browser and the server; Aadhaar has a full and a masked kind (PACK-09).**
+  `src/shared/forms/indian-ids.js` defines GSTIN, PAN, TAN, IFSC, UAN, ESIC (insurance number and employer code), Aadhaar, vehicle number,
+  PIN code and mobile: how a value is stored (capitals, no spaces, mobile without +91), what is wrong with it (a problem code, which is also
+  the catalogue key, and an English message for the API), and a zod helper `zIndianId`. The browser field `IdField` and the server use the
+  same functions. Aadhaar comes in two kinds because the repository already keeps a keyed hash and the last four digits of the full number
+  in HR (to find the same person twice): `aadhaar` is the full number in transit, `aadhaarMasked` is the last four only, and the server
+  refuses a full number there. The browser also runs the Verhoeff check on a full number. The server does not yet (D-847). PAN is checked
+  for shape only (five letters, four digits, a letter), not the holder-type letter, to stay as permissive as the checks it replaces.
