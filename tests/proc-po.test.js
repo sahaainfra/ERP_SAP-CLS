@@ -145,3 +145,32 @@ test('FR-05 FR-06 advances by the terms and the three approvers; the tracker lis
   assert.equal((await r.call(mgr, 'GET', '/purchase-orders?filter[status]=APPROVED')).json.data.length, 2); const k = key(); assert.equal((await r.call(ic, 'POST', `/purchase-orders/${p.id}/resend`, undefined, k)).status, 200); assert.equal((await r.call(ic, 'POST', `/purchase-orders/${p.id}/resend`, undefined, k)).status, 200);
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.proc.p1505'").run(); assert.equal((await r.call(ic, 'GET', '/purchase-orders')).status, 404);
 });
+
+test('PACK-22 thread through the API: requisition → RFQ → quotations → comparative statement → PO approved and committed → GRN approved → vendor invoice matched three ways', async () => {
+  const r = await approvedCs(); const d = r.d;
+  for (const [n, role] of [['tsk1', 'SK'], ['tmgr1', 'STOREMGR'], ['tmgr2', 'STOREMGR'], ['tfin1', 'FINEX'], ['tacc1', 'ACCMGR']]) d.prepare('INSERT OR IGNORE INTO iam_users (company_id, username, display_name, roles_json, email) VALUES (1, ?, ?, ?, ?)').run(n, n, JSON.stringify([role]), `${n}@example.com`);
+  const sk = as('SK', 'tsk1'); const smgr = as('STOREMGR', 'tmgr1'); const smgr2 = as('STOREMGR', 'tmgr2'); const fin = as('FINEX', 'tfin1');
+  const h = () => ({ 'content-type': 'application/json', 'idempotency-key': `th-${Math.random().toString(36).slice(2)}` });
+  const inv = (who, method, path, body) => r.api.call(method, `/api/v1/inv${path}`, { ...who, headers: h(), body }); const bill = (who, method, path, body) => r.api.call(method, `/api/v1/bill${path}`, { ...who, headers: h(), body });
+  const act = async (who, instanceId) => { const task = (await r.api.call('GET', `${W}/tasks?mine=assigned`, who)).json.data.rows.find((x) => x.instance.id === instanceId); assert.ok(task, `${who.user} has the task`); const a = await r.api.call('POST', `${W}/tasks/${task.id}/act`, { ...who, headers: h(), body: { action: 'approve', comment: 'ok' } }); assert.equal(a.status, 200, JSON.stringify(a.json)); };
+  // the order from the approved statement (the CS came from the RFQ and its quotations, the RFQ from an approved requisition)
+  assert.equal(d.prepare("SELECT status FROM proc_comparative_statements WHERE id = ?").get(r.cs.id).status, 'APPROVED');
+  const c = await r.po(r.v2); assert.equal(c.status, 201, JSON.stringify(c.json)); const po = c.json.data; await r.approvePo(po.id); const before = r.committed(); assert.ok(before > 0, 'the approval committed the order');
+  const prLine = d.prepare('SELECT pr_line_id FROM proc_po_lines WHERE po_id = ? AND pr_line_id IS NOT NULL').get(po.id); assert.ok(prLine, 'the order line points back to the requisition line');
+  // the store of the site and the goods receipt against the order
+  const st = await inv(smgr, 'POST', '/stores', { code: 'TH-ST', name: 'Store TH', type: 'SITE_STORE', projectId: r.pid, siteId: r.s1, keepers: ['tsk1'] }); assert.equal(st.status, 201, JSON.stringify(st.json));
+  const ss = await inv(smgr, 'POST', `/stores/${st.json.data.id}/submit`); await act(smgr2, ss.json.data.workflowInstanceId);
+  const lines = d.prepare('SELECT id, qty FROM proc_po_lines WHERE po_id = ? ORDER BY line_no').all(po.id);
+  const wbs = Number(d.prepare("INSERT INTO proj_wbs (company_id, project_id, code, name, level, created_by) VALUES (1, ?, 'TH-1', 'Slab', 1, 'test')").run(r.pid).lastInsertRowid);
+  const g = await inv(sk, 'POST', '/grns', { storeId: st.json.data.id, poId: po.id, lines: lines.map((l) => ({ poLineId: l.id, receivedQty: l.qty / 1000, wbsId: wbs })) }); assert.equal(g.status, 201, JSON.stringify(g.json));
+  const gs = await inv(sk, 'POST', `/grns/${g.json.data.id}/submit`); assert.equal(gs.status, 202, JSON.stringify(gs.json)); await act(smgr, gs.json.data.workflowInstanceId);
+  assert.equal(d.prepare('SELECT status FROM inv_grns WHERE id = ?').get(g.json.data.id).status, 'APPROVED');
+  // the vendor's invoice, matched against the order and the goods accepted
+  const pl = d.prepare('SELECT id, qty, rate, gst_pct FROM proc_po_lines WHERE po_id = ? ORDER BY line_no').all(po.id);
+  const vi = await bill(fin, 'POST', '/vendor-invoices', { invoiceKind: 'PO', vendorId: r.v2, poId: po.id, vendorGstin: '27BBBBB0000B1Z5', invoiceNo: 'TH/INV/1', invoiceDate: TODAY, source: 'MANUAL', lines: pl.map((l) => ({ poLineId: l.id, qty: l.qty / 1000, rate: l.rate / 100, gstPct: l.gst_pct / 10000 })) });
+  assert.equal(vi.status, 201, JSON.stringify(vi.json)); assert.deepEqual([vi.json.data.matchStatus, vi.json.data.exceptionCount, vi.json.data.blocked], ['MATCHED', 0, false], 'PO, GRN and invoice agree');
+  assert.equal(vi.json.data.total, po.totalAmount, 'the invoice total is the order total to the paisa');
+  // the document flow of the order shows the chain in order
+  const flow = await r.api.call('GET', `/api/v1/ui/doc-flow?type=PO&id=${po.id}`, mgr); assert.equal(flow.status, 200, JSON.stringify(flow.json));
+  const text = JSON.stringify(flow.json.data); for (const no of [po.docNo, g.json.data.docNo, vi.json.data.docNo ?? 'TH/INV/1']) assert.ok(text.includes(no), `the document flow of the order lists ${no}`);
+});

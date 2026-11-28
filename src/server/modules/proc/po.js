@@ -11,6 +11,7 @@ import { parameterRegistry } from '../../platform/parameters/index.js';
 import { workflowOf } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
 import { budOf } from '../bud/budgets.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 import { d3, json, nowIso, q3, rid, rs, same } from './base.js';
 import { rateBenchmarks } from './pr.js';
 
@@ -211,6 +212,7 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
     submit(actor, id) {
       const r = row(actor, id, 'proc.purchase_order.submit'); if (!EDITABLE.includes(r.status)) throw unprocessable('Only a draft or a returned order is sent for approval.'); const ls = linesOf(r.id); if (!ls.length) throw unprocessable('The order has no lines.');
       const above = ls.filter((l) => l.cs_rate != null && l.rate > l.cs_rate);
+      budgetAtSubmit(actor, r, ls); // outside the transaction: the stop it registers with the control engine stays, so the exception can be raised from it
       return transaction(db, () => {
         if (above.length) protocolOf(db).enforce(actor, 'CP-PROC-05', { entity: 'proc_po', entityId: String(r.id), amount: Number(rs(r.total_amount)), valueAtRisk: Number(rs(above.reduce((n, l) => n + Math.round(((l.rate - l.cs_rate) * l.qty) / 1000), 0))), ref: r.doc_no, items: above.map((l) => l.description).join(', '), message: `${r.doc_no}: the rate of ${above.map((l) => `line ${l.line_no}`).join(', ')} is above the rate approved in the comparative statement.` });
         let level = levelOf(r.company_id, r.total_amount); if (rcOf(r)) { rc.check(actor, rcOf(r), r.org_project_id, ls.filter((l) => lineRc(l.id)).map((l) => ({ rcLineId: lineRc(l.id), qty: l.qty, basic: l.basic_amount })), { excludePoId: r.id }); level = r.total_amount > Number(param(r.company_id, 'proc.rc.calloff_pm_minor') ?? 250_000_000) ? 1 : 0; } if (r.variance_flag || r.is_emergency) level = Math.max(level, 1);
@@ -235,8 +237,17 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
   const RES = { MATERIAL: 'MATERIAL', CONSUMABLE: 'MATERIAL', SPARE: 'MATERIAL', TOOL: 'MATERIAL', RETURNABLE: 'MATERIAL', EQUIPMENT: 'EQUIPMENT', LABOUR: 'LABOUR', SERVICE: 'SUBCONTRACT', SUBCONTRACT: 'SUBCONTRACT' };
   function commitLedger(actor, r, lines) {
     const bud = budOf(db)?.ledger; if (!bud || !lines.length || !db.prepare('SELECT 1 FROM proj_projects WHERE project_id = ? AND deleted_at IS NULL').get(r.org_project_id)) return null;
-    return bud.commitments.commit(sysActor(r.company_id, actor.user), { projectId: r.org_project_id, stage: 'PO', sourceType: 'proc_po', sourceId: String(r.id), docRef: r.doc_no, vendorRef: vname(r.vendor_id).code, vendorName: vname(r.vendor_id).name,
-      lines: lines.map((l) => ({ lineId: String(l.line_no), wbsId: l.wbs_id ?? undefined, costCodeId: l.cost_code_id ?? undefined, resourceType: RES[itemOf(r.company_id, l.item_id)?.item_type] ?? 'OTHER', qty: d3(l.qty - l.short_closed_qty), amount: (l.qty > 0 ? Math.round((l.basic_amount * (l.qty - l.short_closed_qty)) / l.qty) : 0) / 100, description: l.description })) });
+    return bud.commitments.commit(sysActor(r.company_id, actor.user), { projectId: r.org_project_id, stage: 'PO', sourceType: 'proc_po', sourceId: String(r.id), docRef: r.doc_no, vendorRef: vname(r.vendor_id).code, vendorName: vname(r.vendor_id).name, lines: ledgerLines(r, lines) });
+  }
+  const ledgerLines = (r, lines) => lines.map((l) => ({ lineId: String(l.line_no), wbsId: l.wbs_id ?? undefined, costCodeId: l.cost_code_id ?? undefined, resourceType: RES[itemOf(r.company_id, l.item_id)?.item_type] ?? 'OTHER', qty: d3(l.qty - l.short_closed_qty), amount: (l.qty > 0 ? Math.round((l.basic_amount * (l.qty - l.short_closed_qty)) / l.qty) : 0) / 100, description: l.description }));
+  /** PACK-22 (ff.proc.pack22): the budget check of the order before it is sent for approval; a block needs the approved exception first (the same one the commitment asks for). */
+  function budgetAtSubmit(actor, r, lines) {
+    const bud = budOf(db)?.ledger; if (!bud || !lines.length || !isEnabled(db, 'ff.proc.pack22', { companyId: r.company_id }) || !db.prepare('SELECT 1 FROM proj_projects WHERE project_id = ? AND deleted_at IS NULL').get(r.org_project_id)) return null;
+    // as the requisition does (pr.js): the person's own check, or the check as the system when the person may not use the check API
+    const body = { projectId: r.org_project_id, stage: 'PO', lines: ledgerLines(r, lines).map((l) => ({ ...l, sourceType: 'proc_po', sourceId: String(r.id) })) };
+    const c = (() => { try { return bud.check(actor, body); } catch { return bud.check({ user: actor.user, companyId: r.company_id, roles: ['SYSADM'] }, body); } })();
+    if (c.result === 'BLOCK' && c.exception?.required && !c.exception.excepted) throw Object.assign(unprocessable(`${r.doc_no} is over the budget of a cost head that blocks: raise an exception for it and have it approved before sending the order for approval.`), { details: c.lines.filter((x) => x.result === 'BLOCK').map((x) => ({ field: `lines.${x.lineId ?? ''}`, message: x.message })) });
+    return c;
   }
   const releaseLedger = (actor, r, cancel, reason) => budOf(db)?.ledger?.commitments?.release(sysActor(r.company_id, actor.user), { sourceType: 'proc_po', sourceId: String(r.id), cancel, reason, quiet: true });
   const prDeltas = (lines, sign = 1) => lines.filter((l) => l.pr_line_id).map((l) => ({ prLineId: l.pr_line_id, qty: sign * d3(l.qty) }));

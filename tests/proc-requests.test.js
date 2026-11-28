@@ -203,3 +203,23 @@ test('AC-03 AC-04 roles and isolation: who sees and does what; another company g
   assert.equal((await r.call(ic, 'GET', '/requisitions?filter[status]=DRAFT')).json.data.length >= 1, true);
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.proc.p1501'").run(); assert.equal((await r.call(ic, 'GET', '/requisitions')).status, 404); assert.equal((await r.call(se, 'GET', '/material-requests')).status, 404);
 });
+
+test('PACK-22 a purchase order over a blocking budget is stopped at submit, not at its last approval; the approved exception lets it through and is used once by the commitment', async () => {
+  const r = await ready(); await r.setMode('BLOCK'); const d = r.d;
+  const v = Number(d.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, constitution, partner_status, steward_role, created_by) VALUES (1, 'V-P22', 'Pack Traders', 'Pack Traders', 'PRIVATE_LIMITED', 'ACTIVE', 'PROCMGR', 'test')").run().lastInsertRowid);
+  d.prepare("INSERT INTO mdm_partner_roles (company_id, partner_id, partner_role, categories_json, created_by) VALUES (1, ?, 'VENDOR', '[]', 'test')").run(v); d.prepare("INSERT INTO mdm_partner_contacts (company_id, partner_id, name, email, mobile, is_primary, created_by) VALUES (1, ?, 'Pack', 'pack@vendor.example', '9812345678', 1, 'test')").run(v);
+  d.prepare("INSERT INTO mdm_partner_gstins (company_id, partner_id, state_code, gstin, created_by) VALUES (1, ?, '27', '27PACKA0000A1Z5', 'test')").run(v);
+  const body = { projectId: r.pid, source: 'DIRECT', vendorId: v, directReason: 'A one-off order of the yard', terms: { deliveryAddress: 'Tower site', deliveryStateCode: '27', paymentTerms: '30 days', priceBasis: 'FOR_SITE' }, lines: [{ itemId: r.cement, qty: 600, uom: 'bag', rate: 380, wbsId: r.w2, costCodeId: r.mat.id, requiredBy: day(7) }] };
+  const c = await r.call(ic, 'POST', '/purchase-orders', body); assert.equal(c.status, 201, JSON.stringify(c.json)); const po = c.json.data;
+  // flag off: the order goes for approval as before (the block would be met only by the commitment at the last approval)
+  const off = await r.call(ic, 'POST', `/purchase-orders/${po.id}/submit`); assert.equal(off.status, 202, JSON.stringify(off.json)); assert.equal((await r.call(ic, 'POST', `/purchase-orders/${po.id}/withdraw`, { reason: 'Checked against the budget first' })).status < 300, true);
+  d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.proc.pack22', 1, 'test', 0, 1)").run();
+  const stop = await r.call(ic, 'POST', `/purchase-orders/${po.id}/submit`); assert.equal(stop.status, 422, JSON.stringify(stop.json)); assert.match(stop.json.error.message, /over the budget of a cost head that blocks/); assert.match(stop.json.error.details[0].message, /over the budget available/);
+  assert.equal(d.prepare('SELECT status FROM proc_purchase_orders WHERE id = ?').get(po.id).status, 'DRAFT', 'still a draft'); assert.equal(d.prepare("SELECT COUNT(*) AS n FROM bud_commitments WHERE src_type = 'proc_po'").get().n, 0);
+  const e = await r.except(ic, 'CP-BUD-01', po.id, { entity: 'proc_po' });
+  const go = await r.call(ic, 'POST', `/purchase-orders/${po.id}/submit`); assert.equal(go.status, 202, JSON.stringify(go.json));
+  for (const who of [pmgr, pm]) { const tasks = (await r.api.call('GET', '/api/v1/workflow/tasks?mine=assigned', who)).json.data.rows.filter((x) => x.instance.id === go.json.data.workflowInstanceId); for (const tk of tasks) assert.equal((await r.api.call('POST', `/api/v1/workflow/tasks/${tk.id}/act`, { ...who, headers: { 'content-type': 'application/json', 'idempotency-key': `a-${Math.random()}` }, body: { action: 'approve', comment: 'ok' } })).status, 200); }
+  assert.equal(d.prepare('SELECT status FROM proc_purchase_orders WHERE id = ?').get(po.id).status, 'APPROVED');
+  assert.equal(d.prepare("SELECT COUNT(*) AS n FROM bud_commitments WHERE src_type = 'proc_po' AND src_id = ?").get(String(po.id)).n, 1, 'committed once');
+  assert.equal(d.prepare('SELECT status FROM pcs_exceptions WHERE id = ?').get(e.id).status, 'USED', 'the exception is used by the commitment');
+});
