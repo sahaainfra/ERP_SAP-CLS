@@ -393,4 +393,13 @@ export default {
   'tab.risks': "Risk and tax",
   'tab.sections': "Cost and margin",
   'tab.versions': "Versions",
+  // PACK-19: the calculation of a rate analysis
+  "ra.calc.tab": "Show calculation",
+  "ra.calc.loading": "Loading the calculation",
+  "ra.calc.intro": "How the rate was worked out when the analysis was last priced: the inputs, every step with its formula, the rounding and the result, with the formula version.",
+  "ra.calc.none": "No calculation stored yet",
+  "ra.calc.noneHint": "Save or recalculate the analysis to store how it was calculated.",
+  "ra.calc.unit": "Unit rate (overheads, profit and the other additions)",
+  "ra.calc.line": "Amount of a component line (the last line priced)",
+  "ra.calc.when": "Calculated {when} by {who}.",
 };

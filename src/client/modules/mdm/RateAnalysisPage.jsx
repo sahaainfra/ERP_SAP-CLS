@@ -9,6 +9,10 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { ADDON_LABELS, ANALYSIS_STATUS, COMPONENTS, SCOPE_LABEL, rates, todayIST } from './api.js';
 import { inr } from './RateAnalysesPage.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
+import { useT } from '../../platform/i18n/index.js';
+import { useCalcTraces } from '../core/api/index.js';
+import { TraceView } from '../core/components/TraceView.jsx';
 
 // Rate Analysis (object page, part 06.06, FR-03 to FR-06): one version of the analysed unit rate of a work item. The component grid (kind, item or typed description, unit, quantity per basis, wastage %,
 // rate from the library or typed, amount), the add-ons (water and electricity, overhead, profit, contingency, insurance, escalation, GST added or not) and the unit rate, the comparison with its schedule of
@@ -29,6 +33,9 @@ export default function RateAnalysisPage() {
   const q = useQuery({ queryKey: ['mdm', 'rates', 'analysis', id], queryFn: () => rates.analysis(id), enabled: id > 0, retry: false });
   usePageTitle(q.data ? `${q.data.ref} ${q.data.title}` : isNew ? 'New Rate Analysis' : 'Rate Analysis');
   const [tab, setTab] = useState('components');
+  // PACK-19 (ff.est.pack19): the calculation traces stored when the analysis was priced, step by step
+  const te = useT('est'); const pack19 = useFlagOn('ff.est.pack19'); const traces = useCalcTraces('ra_analysis', id, pack19 && tab === 'calc' && id > 0);
+  const tabs = pack19 ? [...TABS.slice(0, 1), ['calc', te('ra.calc.tab')], ...TABS.slice(1)] : TABS;
   const [draft, setDraft] = useState(null);
   const [pick, setPick] = useState(null);
   const [error, setError] = useState(null);
@@ -140,7 +147,7 @@ export default function RateAnalysisPage() {
       </div>
       {(a.can.amend || a.can.cancel) && <Field label="Reason (for amend or cancel)" name="reason" error={error}><input value={reason} onChange={(e) => setReason(e.target.value)} data-testid="ra-reason" /></Field>}
       {error?.form && <p className="field-error" role="alert" data-testid="ra-error">{error.form}</p>}
-      <div className="seg" role="tablist" aria-label="Sections">{TABS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn btn-small ${tab === k ? 'btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`ra-tab-${k}`}>{l}</button>)}</div>
+      <div className="seg" role="tablist" aria-label="Sections">{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn btn-small ${tab === k ? 'btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`ra-tab-${k}`}>{l}</button>)}</div>
       {tab === 'components' && (
         <div data-testid="ra-components">
           <div className="table-wrap" tabIndex={0} role="region" aria-label="Components"><table className="grid"><thead><tr><th>#</th><th>Kind</th><th>Component</th><th>Unit</th><th className="num">Qty</th><th className="num">Wastage %</th><th className="num">Rate (₹)</th><th className="num">Amount (₹)</th></tr></thead>
@@ -154,6 +161,10 @@ export default function RateAnalysisPage() {
             </tfoot></table></div>
           <p className="muted small">By kind: {Object.entries(b.byType ?? {}).map(([k, v]) => `${COMPONENTS.find(([x]) => x === k)?.[1] ?? k} ₹ ${inr(v)}`).join(' · ')}. Calculated by the engine with ra.line_amount v{a.formulas['ra.line_amount']} and ra.unit_rate v{a.formulas['ra.unit_rate']}{a.calculatedAt ? `, ${formatDateTime(a.calculatedAt)}` : ''}.</p>
         </div>)}
+      {tab === 'calc' && pack19 && (traces.isPending ? <Skeleton label={te('ra.calc.loading')} rows={3} /> : traces.isError ? <ErrorState error={traces.error} onRetry={traces.refetch} /> : (
+        <div data-testid="ra-calc"><p className="muted">{te('ra.calc.intro')}</p>
+          {(traces.data ?? []).length === 0 ? <EmptyState title={te('ra.calc.none')} message={te('ra.calc.noneHint')} /> : [...traces.data].sort((x, y) => (x.formula.code === 'ra.unit_rate' ? -1 : y.formula.code === 'ra.unit_rate' ? 1 : 0)).map((tr) => <section key={tr.formula.code} className="mdm-panel" data-testid="ra-calc-trace" data-code={tr.formula.code}><h3>{te(tr.formula.code === 'ra.unit_rate' ? 'ra.calc.unit' : 'ra.calc.line')}</h3><TraceView trace={tr} /><p className="muted small">{te('ra.calc.when', { when: formatDateTime(tr.computedAt), who: tr.computedBy ?? '—' })}</p></section>)}
+        </div>))}
       {tab === 'sor' && (a.sor ? (
         <div data-testid="ra-sor"><dl className="mdm-dl"><dt>Schedule item</dt><dd>{a.sor.item.book} · {a.sor.item.itemCode} {a.sor.item.description}</dd><dt>Schedule rate</dt><dd>₹ {inr(a.sor.sorRate)} per {a.sor.item.uom ?? '—'}</dd><dt>Analysed rate</dt><dd>₹ {inr(a.sor.analysedRate)} per {a.basisUom}</dd>
           <dt>Difference</dt><dd data-testid="ra-sor-diff"><strong>{a.sor.percent}% {a.sor.position}</strong> (₹ {inr(a.sor.difference)})</dd></dl>{!a.sor.uomMatches && <p className="mdm-banner is-warning">The schedule item is per {a.sor.item.uom}, the analysis per {a.basisUom}: compare with care.</p>}</div>

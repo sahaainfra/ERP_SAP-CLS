@@ -273,3 +273,19 @@ test('roles and isolation: QS and project controls read, a site engineer sees no
   assert.equal((await call(est, 'GET', '/analyses')).status, 404, 'flag off');
   api.db.prepare("UPDATE core_feature_flags SET enabled = 1 WHERE key = 'ff.mdm.p0606'").run();
 });
+
+test('PACK-19 "Show calculation" of a rate analysis: the stored traces are read back with the flag, for those who may see the analysis', async () => {
+  const { api, call, m25 } = await setup();
+  const a = (await call(est, 'POST', '/analyses', m25())).json.data;
+  const tr = (who) => api.call('GET', `/api/v1/core/calc-traces?entity=ra_analysis&entityId=${a.id}`, who);
+  assert.equal((await tr(qs)).status, 404, 'flag off: not offered');
+  api.db.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.est.pack19', 1, 'test', 0, 1)").run();
+  const r = await tr(qs); assert.equal(r.status, 200, JSON.stringify(r.json));
+  const unit = r.json.data.find((x) => x.formula.code === 'ra.unit_rate'); assert.ok(unit, 'the unit rate trace');
+  assert.equal(Number(unit.outputs.unit_rate), Number(a.unitRate), 'the trace ends in the unit rate on the screen');
+  assert.ok(unit.steps.length >= 3 && unit.steps.every((s) => s.formula && s.name), 'every step with its formula');
+  assert.ok(r.json.data.some((x) => x.formula.code === 'ra.line_amount'), 'a line amount trace');
+  assert.equal((await tr(se)).status, 404, 'a site engineer, who may not see analyses, gets nothing');
+  assert.equal((await tr({ ...qs, company: '2' })).status, 404, 'another company: not found');
+  assert.equal((await api.call('GET', `/api/v1/core/calc-traces?entity=ra_analysis&entityId=999999`, qs)).status, 404);
+});

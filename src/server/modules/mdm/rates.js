@@ -10,6 +10,8 @@ import { evidenceProviders, workflowOf, workflowTypes } from '../../platform/wor
 import { dec } from '../../../shared/decimal.js';
 import { fromUnits, toUnits } from '../../../shared/money.js';
 import { todayIST } from '../../../shared/dates.js';
+import { fileEntities } from '../../platform/files/entities.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 
 // The rate analysis engine and the schedule of rates library (part 06.06). The resource rate library holds the rate of a material, labour trade, equipment or transport item by region, project and date
 // with where it came from (FR-01); schedules of rates (CPWD DSR, state PWD, client SORs) are books in editions with their items (FR-02). A rate analysis prices a work item: its components (from the item's
@@ -642,3 +644,12 @@ objectTypes.register({
   summary(db, actor, id) { const r = db.prepare('SELECT analysis_no, version_no, title, analysis_status FROM ra_analyses WHERE id = ? AND company_id = ?').get(Number(id), actor.companyId); return r ? { label: `${r.analysis_no}/v${r.version_no} ${r.title}`, status: r.analysis_status } : null; },
   search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'mdm.analyse.view').allowed) return []; return db.prepare('SELECT id FROM ra_analyses WHERE company_id = ? AND deleted_at IS NULL AND project_id IS NULL AND (analysis_no LIKE ? OR title LIKE ?) ORDER BY analysis_no DESC LIMIT ?').all(actor.companyId, `${q}%`, `%${q}%`, limit); },
 });
+
+// PACK-19 (ff.est.pack19): the traces of an analysis (stored against 'ra_analysis' when it is saved) are read back by "Show calculation"
+// (GET /api/v1/core/calc-traces), which asks the file-entity registry who may see the record. Registered read-only: nothing can be attached.
+fileEntities.register({ entity: 'ra_analysis', label: 'Rate analysis (calculation traces)', resolve: (db, actor, id) => {
+  if (!isEnabled(db, 'ff.est.pack19', { companyId: actor.companyId })) return null;
+  const r = db.prepare('SELECT company_id, project_id FROM ra_analyses WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
+  if (!authzOf(db).check(actor, 'mdm.analyse.view', { companyId: r.company_id, projectId: r.project_id ?? undefined }).allowed) return null;
+  return { companyId: r.company_id, projectId: r.project_id ?? undefined, canView: true, canEdit: false, locked: true };
+} });
