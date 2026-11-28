@@ -373,7 +373,7 @@ test('AC-05 FR-01 FR-08 FR-09 the registry is changed by request and approval: a
 
 test('PACK-07 the context switcher by keyboard alone: type and Enter, arrows over the recent contexts, Escape gives focus back; recent contexts follow the person', async ({ browser, request }, info) => {
   test.setTimeout(150_000);
-  const w = await world(request, pick(info, 'SHKD', 'SHKM'));
+  const w = await world(request, pick(info, 'SHXD', 'SHXM'));
   const flag = await request.patch('/api/v1/core/feature-flags/ff.ui.pack07', { headers: H('SYSADM', w.company, 'e2e-setup'), data: { scope: { level: 'company', companyId: w.company }, enabled: true, reason: 'e2e: PACK-07 switcher' } });
   expect(flag.status(), await flag.text()).toBe(200);
   const user = pick(info, 'e2e-kbd-d', 'e2e-kbd-m');
