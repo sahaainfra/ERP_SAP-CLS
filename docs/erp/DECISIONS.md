@@ -1088,3 +1088,13 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   - One journal per adjustment, by its net, because the engine posts one journal per source document.
 
   The accounts and rules are reference data. A company changes them through the posting-rule maker-checker of 23.02.
+
+- **ADR-787 Breakdown downtime is charged to the project at the machine's owning cost per hour (PACK-25).** When a breakdown job card
+  closes with `ff.plant.pack25`, `plant.cost.posted` carries two lines to the budget ledger, for the project of the card:
+  - the repair: labour, spares and external cost, as worked out by the card;
+  - the downtime: the hours between the downtime start and end, times the owning cost per hour of the machine. That rate is the latest
+    monthly cost snapshot of 17.07, owning cost ÷ hours.
+
+  The owning cost (depreciation, insurance, finance) is incurred whether the machine works or not. Its operating part is not, so idle hours
+  are charged at owning cost only. With no snapshot there is no downtime line, only the repair, and the event says the rate was unknown.
+  An internal hire charge goes to the project the same way. A hire-in bill reaches project cost through invoice matching and the AP bill.
