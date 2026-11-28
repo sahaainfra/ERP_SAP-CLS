@@ -10,6 +10,8 @@ import { NOTE_TYPES, WEATHER_CODES, fmtQty, st, today } from './api.js';
 import { SiteDay, useSearch } from './parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { useFlagOn } from '../../platform/shell/api.js';
+import { useLongFormDraft } from '../../platform/forms/useLongFormDraft.js';
+import { DraftBanner } from '../../platform/forms/layout.jsx';
 import { compressImage } from '../../platform/device/camera.js';
 import { readPosition } from '../../platform/device/location.js';
 import VoiceNote from '../../platform/device/VoiceNote.jsx';
@@ -89,6 +91,10 @@ export default function DprEntryPage() {
   const [form, setForm] = useState(null); const [meta, setMeta] = useState(null); const [existing, setExisting] = useState(null); const [error, setError] = useState(null); const [busy, setBusy] = useState(false); const [note, setNote] = useState(null);
   const [photos, setPhotos] = useState([]); const [cmd, setCmd] = useState(null);
   const fieldOn = useFlagOn('ff.field.p16603'); const tf = useT('field'); const [voice, setVoice] = useState(null); const [sameNote, setSameNote] = useState(null);
+  // PACK-09: a draft of the report on the server (every 30 s and on leaving a field) and a question before leaving with unsaved changes
+  const pack09 = useFlagOn('ff.forms.pack09');
+  const ld = useLongFormDraft({ formCode: 'site.dpr', entityKey: editId ? `id-${editId}` : `${siteId ?? 0}-${date}-${scope}`, values: form && meta ? { form, meta } : null, enabled: pack09 && Boolean(editId || siteId), title: meta ? `DPR ${meta.site} ${meta.date}` : '', siteId });
+  const finished = async () => { if (pack09) await ld.done().catch(() => null); };
   const sitesQ = useQuery({ queryKey: ['site', 'dpr-sites'], queryFn: st.dprSites, retry: false, enabled: online });
   const optQ = useQuery({ queryKey: ['site', 'dpr-options', siteId], queryFn: () => st.dprOptions(siteId), enabled: Boolean(siteId) && online, retry: false });
   const eq = useQuery({ queryKey: ['site', 'dpr-edit', editId], queryFn: () => st.dpr(editId), enabled: Boolean(editId), retry: false });
@@ -138,12 +144,12 @@ export default function DprEntryPage() {
         await st.updateDpr(editId, { ...b, rowVersion: eq.data.rowVersion });
         if (voice) await uploadFile(voice, { transport, entity: 'site_dpr', entityId: editId }); // the voice note is an attachment of the report, not a photo
         for (const p of photos) { const f = await uploadFile(p.file, { transport, entity: 'site_dpr', entityId: editId }); await st.dprPhoto(editId, f.id, { caption: p.caption || null, takenAt: new Date(p.file.lastModified || Date.now()).toISOString(), ...(gps ?? {}) }).catch(() => null); }
-        if (submit) await st.dprAct(editId, 'submit'); navigateTo(`/site/dprs?id=${editId}`); return;
+        if (submit) await st.dprAct(editId, 'submit'); await finished(); navigateTo(`/site/dprs?id=${editId}`); return;
       }
       if (offline.ready && offline.forms?.some((f) => f.code === 'dpr' && f.available !== false)) {
-        const c = await enqueue({ type: 'dpr', values: { siteId, dprDate: date, scope, ...b, ...(submit ? { submit: true } : {}) }, label: `DPR ${meta.site} ${date}`, photos: [...photos.map((p) => p.file), ...(voice ? [voice] : [])] }); setCmd(c); setPhotos([]); setVoice(null); return;
+        const c = await enqueue({ type: 'dpr', values: { siteId, dprDate: date, scope, ...b, ...(submit ? { submit: true } : {}) }, label: `DPR ${meta.site} ${date}`, photos: [...photos.map((p) => p.file), ...(voice ? [voice] : [])] }); setCmd(c); setPhotos([]); setVoice(null); await finished(); return;
       }
-      const d = await st.createDpr({ siteId, dprDate: date, scope, ...b }); if (submit) await st.dprAct(d.id, 'submit'); navigateTo(`/site/dprs?id=${d.id}`);
+      const d = await st.createDpr({ siteId, dprDate: date, scope, ...b }); if (submit) await st.dprAct(d.id, 'submit'); await finished(); navigateTo(`/site/dprs?id=${d.id}`);
     } catch (e) { setError(e?.errors?.length ? { form: e.message } : errorInfo(e)); } finally { setBusy(false); }
   };
 
@@ -156,12 +162,13 @@ export default function DprEntryPage() {
     </div>
   );
   return (
-    <section aria-labelledby="dpr-h" data-testid="site-dpr-entry" style={{ maxWidth: 720 }}>
+    <section aria-labelledby="dpr-h" data-testid="site-dpr-entry" style={{ maxWidth: 720 }} onBlur={pack09 ? ld.onBlur : undefined}>
       <PageHeader id="dpr-h" title={t('dpr.entry')} />
       <p className={`att-net${online ? '' : ' is-off'}`} role="status" data-testid="dpr-net">{online ? t('dpr.online') : t('dpr.offline')}{offline.queue?.filter(isWaiting).length ? ` · ${t('dpr.waiting', { n: offline.queue.filter(isWaiting).length })}` : ''} · <Link to="/field/sync">{t('dpr.syncStatus')}</Link></p>
       <ol className="steps" style={{ display: 'flex', gap: 4, flexWrap: 'wrap', listStyle: 'none', padding: 0 }} aria-label={t('dpr.steps')}>{STEPS.map((k, i) => <li key={k}><button type="button" className={`btn${i === step ? ' btn-primary' : ''}`} style={{ minHeight: 40 }} onClick={() => form && goToStep(i)} disabled={(!form && i > 0) || (Boolean(editId) && i === 0)} aria-current={i === step ? 'step' : undefined} data-testid={`dpr-step-${k}`}>{i + 1}. {t(`dpr.s.${k}`)}</button></li>)}</ol>
       {(error?.key || error?.form) && <p className="field-error" role="alert" data-testid="dpr-error">{error.key ? t(error.key) : error.form}{error.correlationId && <> {common('error.correlation', { id: '' })}<code>{error.correlationId}</code></>}{error.fields ? ` ${Object.entries(error.fields).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="dpr-note">{note}</p>}
+      {pack09 && <DraftBanner draft={ld.draft} onResume={() => { const p = ld.resume(); if (p?.form) { setForm(p.form); setMeta(p.meta); goToStep(1); } }} onDiscard={ld.discard} />}
       {eq.isPending && editId && <Skeleton label={t('dpr.entry')} rows={4} />}
       {eq.isError && <ErrorState error={eq.error} onRetry={eq.refetch} />}
 

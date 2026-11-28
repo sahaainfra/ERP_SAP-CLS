@@ -5,4 +5,13 @@ export default {
   'error.title': 'Something went wrong', 'error.body': 'The request failed. Try again.', 'error.correlation': 'Correlation ID: {id}',
   'theme.light': 'Light', 'theme.dark': 'Dark', 'theme.high-contrast': 'High contrast', 'empty.alt': 'Nothing here yet',
   'pager.summary': '{total} {noun}, page {page} of {pages}',
+  // PACK-09: drafts of long forms (src/client/platform/forms/layout.jsx DraftBanner, longDraft.js)
+  'draft.found': 'You have a draft saved {when}{auto}.',
+  'draft.foundTitled': 'You have a draft "{title}" saved {when}{auto}.',
+  'draft.auto': '(kept automatically)',
+  'draft.resume': 'Resume the draft',
+  'draft.discard': 'Discard it',
+  'draft.kept': 'Draft kept {when}.',
+  'draft.saving': 'Keeping a draft...',
+  'draft.failed': 'The draft could not be kept; your changes are still on this page.',
 };

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/index.js';
 import { formatDateTime } from '../format.js';
 import Icon from '../design/Icon.jsx';
+import { useT } from '../i18n/index.js';
 import { fieldId } from './useForm.js';
 
 // Layout of a data-entry form (part 03.02, FR-02, FR-03, FR-07, FR-08): sections in 1, 2 or 3 columns that fold to one on a phone,
@@ -78,14 +79,16 @@ export function ErrorSummary({ formError, errors, labelOf = (p) => p }) {
 
 /** "You have a draft from 31-Oct-2026 11:40. Resume or discard?" */
 export function DraftBanner({ draft, onResume, onDiscard }) {
+  const t = useT('common'); // PACK-09: the banner's text is in the catalogue (en, hi, te); the English text is unchanged
   if (!draft.found) return null;
+  const when = formatDateTime(draft.found.savedAt);
   return (
     <div className="ff-draft" role="status" data-testid="draft-banner">
       <Icon name="erp.state.draft" size={18} />
-      <span>You have a draft{draft.found.title ? ` "${draft.found.title}"` : ''} saved {formatDateTime(draft.found.savedAt)}{draft.found.savedBy === 'autosave' ? ' (kept automatically)' : ''}.</span>
+      <span>{t(draft.found.title ? 'draft.foundTitled' : 'draft.found', { title: draft.found.title, when, auto: draft.found.savedBy === 'autosave' ? ` ${t('draft.auto')}` : '' })}</span>
       <span className="spacer" />
-      <button type="button" className="btn btn-small btn-primary" onClick={onResume}>Resume the draft</button>
-      <button type="button" className="btn btn-small" onClick={onDiscard}>Discard it</button>
+      <button type="button" className="btn btn-small btn-primary" onClick={onResume}>{t('draft.resume')}</button>
+      <button type="button" className="btn btn-small" onClick={onDiscard}>{t('draft.discard')}</button>
     </div>
   );
 }

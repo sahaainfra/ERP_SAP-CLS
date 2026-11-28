@@ -27,4 +27,13 @@ export default {
   "theme.high-contrast": "उच्च कंट्रास्ट",
   "empty.alt": "यहाँ अभी कुछ नहीं है",
   "pager.summary": "{total} {noun}, पृष्ठ {page} / {pages}",
+  // PACK-09: drafts of long forms (src/client/platform/forms/layout.jsx DraftBanner, longDraft.js)
+  'draft.found': 'आपका एक ड्राफ़्ट {when} को सहेजा गया है{auto}।',
+  'draft.foundTitled': 'आपका ड्राफ़्ट "{title}" {when} को सहेजा गया है{auto}।',
+  'draft.auto': '(अपने आप रखा गया)',
+  'draft.resume': 'ड्राफ़्ट फिर से खोलें',
+  'draft.discard': 'इसे हटाएँ',
+  'draft.kept': 'ड्राफ़्ट {when} को रखा गया।',
+  'draft.saving': 'ड्राफ़्ट रखा जा रहा है...',
+  'draft.failed': 'ड्राफ़्ट नहीं रखा जा सका; आपके बदलाव अभी भी इस पेज पर हैं।',
 };

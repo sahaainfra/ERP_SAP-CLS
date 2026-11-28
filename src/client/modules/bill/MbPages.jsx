@@ -11,6 +11,9 @@ import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
+import { useLongFormDraft } from '../../platform/forms/useLongFormDraft.js';
+import { DraftBanner } from '../../platform/forms/layout.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // The measurement book (part 22.01): Record Measurement (a mobile form), the Measurement Book list with the entry and its checks, the MB Abstract and the book in print.
@@ -37,6 +40,9 @@ function MeasureForm({ onSaved }) {
   const o = useQuery({ queryKey: ['bill', 'mb-options'], queryFn: () => bill.get('/mb-entries/options'), retry: false });
   const body = ready(v) ? payload(v) : null;
   const pv = useQuery({ queryKey: ['bill', 'mb-preview', JSON.stringify(body)], queryFn: () => bill.post('/mb-entries/preview', body), enabled: Boolean(body), retry: false, placeholderData: (p) => p });
+  // PACK-09: a draft of the measurement on the server and a question before leaving with unsaved changes
+  const pack09 = useFlagOn('ff.forms.pack09');
+  const ld = useLongFormDraft({ formCode: 'bill.mb_entry', values: v, enabled: pack09, title: v.description, projectId: v.projectId });
   const sg = useQuery({ queryKey: ['bill', 'mb-suggestions', v.projectId], queryFn: () => bill.get(`/mb-entries/suggestions${qs({ projectId: v.projectId })}`), enabled: Boolean(v.projectId), retry: false });
   if (o.error?.status === 403) return <NoPermission what={t('rec.title')} permission="bill.mb_entry.create" />; if (o.isPending) return <Skeleton label={t('rec.title')} rows={4} />; if (o.isError) return <ErrorState error={o.error} onRetry={o.refetch} />; const d = o.data;
   const set = (k) => (e) => setV({ ...v, [k]: e.target.value }); const items = d.items.filter((i) => String(i.projectId) === String(v.projectId)); const locs = d.locations.filter((l) => String(l.projectId) === String(v.projectId));
@@ -44,8 +50,9 @@ function MeasureForm({ onSaved }) {
   const dims = DIMS[v.template]; const labels = { nos: t('rec.nos'), length: t('rec.length'), breadth: t('rec.breadth'), depth: t('rec.depth') };
   const use = (s) => setV({ ...v, description: v.description || s.activity, locationId: s.locationId ? String(s.locationId) : v.locationId, waId: s.waId ? String(s.waId) : v.waId, activityId: String(s.activityId), dprWorkId: String(s.id), ...(v.template === 'QTY' ? { qty: String(s.qty) } : {}) });
   return (
-    <form className="mdm-panel" data-testid="bill-mb-form" onSubmit={async (e) => { e.preventDefault(); const r = await run(() => bill.post('/mb-entries', body)); if (r) onSaved(r); }}>
+    <form className="mdm-panel" data-testid="bill-mb-form" onBlur={pack09 ? ld.onBlur : undefined} onSubmit={async (e) => { e.preventDefault(); const r = await run(() => bill.post('/mb-entries', body)); if (r) { if (pack09) await ld.done().catch(() => null); onSaved(r); } }}>
       <ErrorLine error={error} id="bill-error" />
+      {pack09 && <DraftBanner draft={ld.draft} onResume={() => { const p = ld.resume(); if (p) setV({ ...blank, ...p }); }} onDiscard={ld.discard} />}
       <div className="form-grid">
         <Field label={t('project')} name="projectId" error={fe.projectId}><select value={v.projectId} onChange={(e) => setV({ ...blank, projectId: e.target.value, measuredOn: v.measuredOn })} style={big} data-testid="bill-mb-project"><option value="">—</option>{d.projects.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field>
         <Field label={t('rec.item')} name="boqLineId" error={fe.boqLineId}><select value={v.boqLineId} onChange={(e) => { const i = items.find((x) => String(x.id) === e.target.value); setV({ ...v, boqLineId: e.target.value, description: v.description || (i ? i.description : '') }); }} style={big} data-testid="bill-mb-item"><option value="">—</option>{items.map((i) => <option key={i.id} value={i.id}>{i.code} {i.description} ({i.uom})</option>)}</select></Field>
