@@ -104,6 +104,7 @@ test('PACK-10 a list of 10,000 rows (paged by the server) opens and pages withou
   test.setTimeout(120_000);
   const w = await world(request, pick(info, 'BTKD', 'BTKM'));
   const db = new DatabaseSync('data/e2e.sqlite');
+  db.exec('PRAGMA busy_timeout = 15000'); // the server and other specs write to the same file at the same time
   const ins = db.prepare("INSERT INTO ui_sample_requests (company_id, doc_no, doc_date, status, title, project_id, requested_by, required_by, priority, total_amount, line_count, created_by, created_at, source_type) VALUES (?, ?, ?, ?, ?, ?, 'e2e-big', '2026-12-31', 'NORMAL', ?, 1, 'e2e', ?, 'e2e')");
   db.exec('BEGIN');
   for (let i = 1; i <= 10_000; i += 1) ins.run(w.company, `MR/BIG/${String(i).padStart(6, '0')}`, `2026-${String((i % 7) + 4).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')}`, i % 3 ? 'SUBMITTED' : 'CANCELLED', `Lot ${i} ${i % 2 ? 'cement' : 'steel'}`, w.project.id, (i % 97) * 10_000, '2026-11-01T00:00:00.000Z');
