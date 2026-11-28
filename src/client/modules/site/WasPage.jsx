@@ -60,13 +60,13 @@ export function CloseForm({ t, w, onDone, compact = false }) {
   return (
     <form className={compact ? '' : 'mdm-panel'} onSubmit={async (e) => { e.preventDefault(); setError(null); setBusy(true); try { await st.close(w.id, { actualQty: qty === '' ? null : Number(qty), resources: w.resources.map((r) => ({ id: r.id, actualQty: Number(res[r.id] || 0) })), varianceReason: why.trim() || null, closureNotes: notes.trim() || null, rowVersion: w.rowVersion }); onDone(); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } }} data-testid="wa-close-form" aria-label={t('wa.close')}>
       {!compact && <h2>{t('wa.close')}</h2>}
-      <Field label={t('wa.actualQty', { u: w.uom ?? '' })} name="actualQty" error={error}><input type="number" min="0" step="0.001" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} style={{ minHeight: 44 }} data-testid="wa-actual" /></Field>
+      <Field label={t('wa.actualQty', { u: w.uom ?? '' })} name="actualQty" error={error}><input type="number" min="0" step="0.001" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="wa-actual" /></Field>
       {w.dprQty > 0 && <p className="muted">{t('wa.fromDpr', { q: fmtQty(w.dprQty) })}</p>}
-      {w.resources.map((r) => <Field key={r.id} label={`${r.label} (${r.uom}) · ${t('wa.authorised')} ${fmtQty(r.plannedQty)}`} name={`res-${r.id}`}><input type="number" min="0" step="0.001" inputMode="decimal" value={res[r.id]} onChange={(e) => setRes({ ...res, [r.id]: e.target.value })} style={{ minHeight: 44 }} data-testid="wa-res-actual" data-type={r.type} /></Field>)}
+      {w.resources.map((r) => <Field key={r.id} label={`${r.label} (${r.uom}) · ${t('wa.authorised')} ${fmtQty(r.plannedQty)}`} name={`res-${r.id}`}><input type="number" min="0" step="0.001" inputMode="decimal" value={res[r.id]} onChange={(e) => setRes({ ...res, [r.id]: e.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="wa-res-actual" data-type={r.type} /></Field>)}
       {beyond.length > 0 && <Field label={t('wa.varianceReason', { p: w.tolerancePct })} name="varianceReason" error={error}><textarea value={why} onChange={(e) => setWhy(e.target.value)} required maxLength={1000} rows={2} data-testid="wa-variance" /></Field>}
       <Field label={t('wa.closureNotes')} name="closureNotes"><textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} rows={2} /></Field>
       {error?.form && <p className="field-error" role="alert" data-testid="wa-close-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
-      <div className="actions"><button type="submit" className="btn btn-primary" disabled={busy} style={{ minHeight: 44 }} data-testid="wa-close-save">{t('wa.closeBtn')}</button></div>
+      <div className="actions"><button type="submit" className="btn btn-primary" disabled={busy} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="wa-close-save">{t('wa.closeBtn')}</button></div>
     </form>
   );
 }

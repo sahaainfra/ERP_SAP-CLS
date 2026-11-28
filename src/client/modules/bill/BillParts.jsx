@@ -18,7 +18,7 @@ export function useRecord(kind, id, what, permission) {
   return { q, guard };
 }
 export function Status({ x }) { const t = useT('bill'); return <StatusBadge status={BILL_TONE[x.status]} label={t(`st.${x.status}`)} />; }
-export const big = { minHeight: 48, fontSize: '1rem' };
+export const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 export function ErrorLine({ error, id }) { return error?.form ? <p className="field-error" role="alert" data-testid={id}>{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p> : null; }
 export function DocBar({ kind, x, printName, extra = null }) {
   const t = useT('bill'); const { error, setError, note, busy, run } = useRunner(); const [comment, setComment] = useState(''); const can = x.can ?? {};

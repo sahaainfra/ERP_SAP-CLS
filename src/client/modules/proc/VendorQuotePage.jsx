@@ -7,7 +7,7 @@ import PageHeader from '../../platform/design/PageHeader.jsx';
 const token = () => new URLSearchParams(window.location.search).get('token') ?? '';
 const addDays = (n) => new Date(Date.now() + 5.5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
 const num = (s) => (s === '' || s == null ? undefined : Number(s));
-const field = { minHeight: 44, width: '100%', boxSizing: 'border-box' };
+const field = { minHeight: 'var(--erp-target-min)', width: '100%', boxSizing: 'border-box' };
 
 export default function VendorQuotePage() {
   const [info, setInfo] = useState(null); const [error, setError] = useState(null); const [done, setDone] = useState(null); const [busy, setBusy] = useState(false); const [rows, setRows] = useState([]); const [asked, setAsked] = useState(null); const [question, setQuestion] = useState('');
@@ -53,9 +53,9 @@ export default function VendorQuotePage() {
           <label><input type="checkbox" checked={f.gstInclusive} onChange={(ev) => set('gstInclusive', ev.target.checked)} data-testid="vq-incl" /> My rates include GST</label>
         </div>
         {error && <p className="field-error" role="alert" data-testid="vq-error">{error.message}{(error.details ?? []).filter((d) => !/^lines\.\d+\.\w+$|^validUntil$/.test(d.field)).map((d, i) => <span key={i}> {d.message}</span>)}</p>}
-        <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} data-testid="vq-submit">Send my quotation</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={decline} data-testid="vq-decline">I will not quote</button></div>
+        <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} data-testid="vq-submit">Send my quotation</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={decline} data-testid="vq-decline">I will not quote</button></div>
       </form>
-      <div style={{ marginTop: 24 }}><h2>Ask a question</h2><div className="actions-row"><input value={question} maxLength={1000} placeholder="Your question about this request" onChange={(ev) => setQuestion(ev.target.value)} style={{ ...field, flex: 1 }} data-testid="vq-question" /><button type="button" className="btn" style={{ minHeight: 48 }} onClick={ask} data-testid="vq-ask">Send question</button></div>{asked && <p role="status" data-testid="vq-asked">{asked}</p>}</div>
+      <div style={{ marginTop: 24 }}><h2>Ask a question</h2><div className="actions-row"><input value={question} maxLength={1000} placeholder="Your question about this request" onChange={(ev) => setQuestion(ev.target.value)} style={{ ...field, flex: 1 }} data-testid="vq-question" /><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} onClick={ask} data-testid="vq-ask">Send question</button></div>{asked && <p role="status" data-testid="vq-asked">{asked}</p>}</div>
     </>,
   );
 }

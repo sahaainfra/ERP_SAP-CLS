@@ -49,7 +49,7 @@ export function IrRaisePage() {
   const [f, setF] = useState({ projectId: '', siteId: '', plannedPointId: '', activityId: '', pointType: 'HOLD', description: '', requestedFor: today(), consultantRequired: false, reinspectionOfId: re ? String(re) : '' }); const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   const oq = useQuery({ queryKey: ['qa', 'ir-options', f.projectId], queryFn: () => qa.get(`/inspection-requests/options${f.projectId ? `?projectId=${f.projectId}` : ''}`), retry: false }); const o = oq.data;
   const send = async () => { const body = { projectId: Number(f.projectId), siteId: f.siteId ? Number(f.siteId) : null, plannedPointId: f.plannedPointId ? Number(f.plannedPointId) : null, activityId: f.activityId ? Number(f.activityId) : null, pointType: f.pointType, description: f.description || null, requestedFor: f.requestedFor, consultantRequired: f.consultantRequired, reinspectionOfId: f.reinspectionOfId ? Number(f.reinspectionOfId) : null, submit: true }; const d = await run(() => qa.make('/inspection-requests', body), t('saved')); if (d) navigateTo(`/qa/inspection-requests?id=${d.id}`); };
-  const big = { minHeight: 48, fontSize: '1rem' }; const points = (o?.points ?? []).filter((p) => !f.projectId || String(p.projectId) === String(f.projectId));
+  const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' }; const points = (o?.points ?? []).filter((p) => !f.projectId || String(p.projectId) === String(f.projectId));
   return (
     <section aria-labelledby="irr-h" data-testid="qa-ir-raise"><PageHeader id="irr-h" title={t('ir.raise')} subtitle={<Link to="/qa/inspection-requests">{t('ir.title')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="irr-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
@@ -61,7 +61,7 @@ export function IrRaisePage() {
         {re && <Field label={t('ir.reinspectionOf')} name="reinspectionOfId" error={error}><select value={f.reinspectionOfId} onChange={(e) => set('reinspectionOfId', e.target.value)} style={big} data-testid="irr-rejected">{(o?.rejected ?? []).map((x) => <option key={x.id} value={x.id}>{x.docNo} {x.description}</option>)}</select></Field>}
         <Field label={t('ir.what')} name="description" error={error}><input value={f.description} onChange={(e) => set('description', e.target.value)} maxLength={500} style={big} data-testid="irr-description" /></Field>
         <Field label={t('ir.wantedFor')} name="requestedFor" error={error}><input type="date" value={f.requestedFor} min={today()} onChange={(e) => set('requestedFor', e.target.value)} style={big} data-testid="irr-date" /></Field>
-        <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 48 }}><input type="checkbox" checked={f.consultantRequired} onChange={(e) => set('consultantRequired', e.target.checked)} style={{ minWidth: 24, minHeight: 24 }} data-testid="irr-consultant" />{t('ir.consultantNeeded')}</label></div>
+        <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 'var(--erp-target-large)' }}><input type="checkbox" checked={f.consultantRequired} onChange={(e) => set('consultantRequired', e.target.checked)} style={{ minWidth: 24, minHeight: 24 }} data-testid="irr-consultant" />{t('ir.consultantNeeded')}</label></div>
         <div className="actions-row"><button type="button" className="btn btn-primary" style={big} disabled={busy || !f.projectId} onClick={send} data-testid="irr-send">{t('ir.sendRequest')}</button></div></div>
     </section>
   );

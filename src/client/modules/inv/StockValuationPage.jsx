@@ -16,7 +16,7 @@ export default function StockValuationPage() {
   const d = q.data;
   return (
     <section aria-labelledby="vl-h" data-testid="inv-vl"><PageHeader id="vl-h" title={t('valuationTitle')} subtitle={t('valuationIntro')} />
-      <div className="mdm-panel no-print" data-testid="vl-params"><label>{t('groupBy')}<select value={groupBy} onChange={(ev) => setGroupBy(ev.target.value)} style={{ minHeight: 44 }} data-testid="vl-group">{['store', 'project', 'category'].map((g) => <option key={g} value={g}>{t(`g.${g}`)}</option>)}</select></label></div>
+      <div className="mdm-panel no-print" data-testid="vl-params"><label>{t('groupBy')}<select value={groupBy} onChange={(ev) => setGroupBy(ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="vl-group">{['store', 'project', 'category'].map((g) => <option key={g} value={g}>{t(`g.${g}`)}</option>)}</select></label></div>
       {d.rows.length === 0 ? <div data-testid="vl-empty"><h2>{t('emptyTitle')}</h2><p className="muted">{t('emptyBody')}</p><Link to="/inv/posting">{t('postingTitle')}</Link></div> : <>
         <Bars rows={d.rows.slice(0, 12)} format={fmtRs} testId="vl-bars" label={t(`g.${groupBy}`)} />
         <div className="table-scroll"><table className="data-table" data-testid="vl-table"><caption>{t(`g.${groupBy}`)}</caption><thead><tr><th>{t(`g.${groupBy}`)}</th><th className="num">{t('items')}</th><th className="num">{t('value')}</th><th className="num">{t('share')}</th></tr></thead>

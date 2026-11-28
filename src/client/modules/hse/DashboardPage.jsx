@@ -49,7 +49,7 @@ function DashboardPageClassic() {
         <div className="actions-row">
           {d.can.export && <button type="button" className="btn" onClick={() => hse.exportFile(`/dashboard/export${qs({ ...f, kind: 'kpis' })}`, 'hse-kpis.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="hse-dash-export">{t('kpi.export')}</button>}
           {d.can.report && <><input type="month" value={month} onChange={(e) => setMonth(e.target.value)} style={big} aria-label={t('kpi.reportMonth')} data-testid="hse-dash-month" />
-            <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={report} data-testid="hse-dash-report">{t('kpi.report')}</button></>}</div></div>
+            <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={report} data-testid="hse-dash-report">{t('kpi.report')}</button></>}</div></div>
       <div className="mdm-panel" data-testid="hse-safe-hours"><h2>{t('kpi.safeTitle')}</h2><strong style={{ fontSize: '2.2rem' }} data-testid="hse-safe-value">{fmt(d.lagging.safe.manHours)}</strong> {t('kpi.hours')}
         <p className="muted">{d.lagging.safe.lastLtiDate ? t('kpi.lastLti', { date: fmtDate(d.lagging.safe.lastLtiDate), days: d.lagging.safe.days }) : t('kpi.noLti')}</p></div>
       <h2>{t('kpi.lagging')}</h2><KpiRow testid="hse-dash-lagging" label={t('kpi.lagging')}>{d.tiles.filter((k) => k.group === 'lagging').map(tile)}</KpiRow>

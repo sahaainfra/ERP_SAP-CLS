@@ -46,12 +46,12 @@ export default function MaterialRequestNewPage() {
       {projects.length === 0 && <div className="mdm-panel" data-testid="mrn-none"><h2>{t('p.noProject')}</h2><p className="muted">{t('p.noProjectBody')}</p></div>}
       <form className="mdm-panel" onSubmit={(e) => { e.preventDefault(); save(false); }} noValidate>
         <div className="form-grid">
-          <Field label={t('p.project')} name="projectId" error={error}><select value={projectId} onChange={(e) => setF({ ...f, projectId: e.target.value, siteId: '', waId: '' })} style={{ minHeight: 44 }} data-testid="mrn-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
-          <Field label={t('p.site')} name="siteId" error={error}><select value={siteId} onChange={(e) => setF({ ...f, siteId: e.target.value, waId: '' })} style={{ minHeight: 44 }} data-testid="mrn-site"><option value="">{t('p.choose')}</option>{(o?.sites ?? []).map((s) => <option key={s.id} value={s.id}>{s.code} {s.name}</option>)}</select></Field>
-          <Field label={t('p.requiredBy')} name="requiredBy" error={error}><input type="date" value={f.requiredBy} min={o?.today} onChange={(e) => set('requiredBy', e.target.value)} style={{ minHeight: 44 }} data-testid="mrn-required" /></Field>
-          <Field label={t('p.priority')} name="priority" error={error}><select value={f.priority} onChange={(e) => set('priority', e.target.value)} style={{ minHeight: 44 }} data-testid="mrn-priority">{['LOW', 'NORMAL', 'HIGH', 'URGENT'].map((x) => <option key={x} value={x}>{t(`p.pri.${x}`)}</option>)}</select></Field>
-          <Field label={t('p.wa')} name="waId" error={error}><select value={f.waId} onChange={(e) => set('waId', e.target.value)} style={{ minHeight: 44 }} data-testid="mrn-wa"><option value="">{t('p.noWa')}</option>{was.map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}</select></Field>
-          <Field label={t('p.purpose')} name="purpose" error={error}><input value={f.purpose} maxLength={500} onChange={(e) => set('purpose', e.target.value)} style={{ minHeight: 44 }} data-testid="mrn-purpose" /></Field>
+          <Field label={t('p.project')} name="projectId" error={error}><select value={projectId} onChange={(e) => setF({ ...f, projectId: e.target.value, siteId: '', waId: '' })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
+          <Field label={t('p.site')} name="siteId" error={error}><select value={siteId} onChange={(e) => setF({ ...f, siteId: e.target.value, waId: '' })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-site"><option value="">{t('p.choose')}</option>{(o?.sites ?? []).map((s) => <option key={s.id} value={s.id}>{s.code} {s.name}</option>)}</select></Field>
+          <Field label={t('p.requiredBy')} name="requiredBy" error={error}><input type="date" value={f.requiredBy} min={o?.today} onChange={(e) => set('requiredBy', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-required" /></Field>
+          <Field label={t('p.priority')} name="priority" error={error}><select value={f.priority} onChange={(e) => set('priority', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-priority">{['LOW', 'NORMAL', 'HIGH', 'URGENT'].map((x) => <option key={x} value={x}>{t(`p.pri.${x}`)}</option>)}</select></Field>
+          <Field label={t('p.wa')} name="waId" error={error}><select value={f.waId} onChange={(e) => set('waId', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-wa"><option value="">{t('p.noWa')}</option>{was.map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}</select></Field>
+          <Field label={t('p.purpose')} name="purpose" error={error}><input value={f.purpose} maxLength={500} onChange={(e) => set('purpose', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-purpose" /></Field>
         </div>
         <h2>{t('p.lines')}</h2>
         {lines.length === 0 && <p className="muted" data-testid="mrn-no-lines">{t('p.noLines')}</p>}
@@ -59,21 +59,21 @@ export default function MaterialRequestNewPage() {
           <div key={l.itemId} className="mdm-panel" data-testid="mrn-line">
             <strong>{l.code} · {l.name}</strong>
             <div className="form-grid">
-              <Field label={t('p.qty')} name={`lines.${i}.qty`} error={error}><input type="number" inputMode="decimal" min="0" step="0.001" value={l.qty} onChange={(e) => setLine(i, 'qty', e.target.value)} style={{ minHeight: 44 }} data-testid="mrn-qty" /></Field>
-              <Field label={t('p.uom')} name={`lines.${i}.uom`} error={error}><select value={l.uom} onChange={(e) => setLine(i, 'uom', e.target.value)} style={{ minHeight: 44 }} data-testid="mrn-uom">{l.uoms.map((u) => <option key={u} value={u}>{u}</option>)}</select></Field>
-              <Field label={t('p.wbs')} name={`lines.${i}.wbsId`} error={error}><select value={l.wbsId} onChange={(e) => setLine(i, 'wbsId', e.target.value)} style={{ minHeight: 44 }} data-testid="mrn-wbs"><option value="">{t('p.none')}</option>{(o?.wbs ?? []).map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}</select></Field>
-              <Field label={t('p.costCode')} name={`lines.${i}.costCodeId`} error={error}><select value={l.costCodeId} onChange={(e) => setLine(i, 'costCodeId', e.target.value)} style={{ minHeight: 44 }} data-testid="mrn-code"><option value="">{t('p.none')}</option>{(o?.costCodes ?? []).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
+              <Field label={t('p.qty')} name={`lines.${i}.qty`} error={error}><input type="number" inputMode="decimal" min="0" step="0.001" value={l.qty} onChange={(e) => setLine(i, 'qty', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-qty" /></Field>
+              <Field label={t('p.uom')} name={`lines.${i}.uom`} error={error}><select value={l.uom} onChange={(e) => setLine(i, 'uom', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-uom">{l.uoms.map((u) => <option key={u} value={u}>{u}</option>)}</select></Field>
+              <Field label={t('p.wbs')} name={`lines.${i}.wbsId`} error={error}><select value={l.wbsId} onChange={(e) => setLine(i, 'wbsId', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-wbs"><option value="">{t('p.none')}</option>{(o?.wbs ?? []).map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}</select></Field>
+              <Field label={t('p.costCode')} name={`lines.${i}.costCodeId`} error={error}><select value={l.costCodeId} onChange={(e) => setLine(i, 'costCodeId', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrn-code"><option value="">{t('p.none')}</option>{(o?.costCodes ?? []).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
             </div>
             <Stock t={t} projectId={projectId} siteId={siteId} line={l} />
-            <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setLines(lines.filter((_, j) => j !== i))} data-testid="mrn-remove">{t('p.removeLine')}</button>
+            <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setLines(lines.filter((_, j) => j !== i))} data-testid="mrn-remove">{t('p.removeLine')}</button>
           </div>
         ))}
-        <button type="button" className="btn" style={{ minHeight: 48 }} onClick={() => setPicking(true)} data-testid="mrn-add">{t('p.addItems')}</button>
+        <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} onClick={() => setPicking(true)} data-testid="mrn-add">{t('p.addItems')}</button>
         <ItemSelector open={picking} onClose={() => setPicking(false)} onPick={pick} types={['MATERIAL', 'CONSUMABLE', 'SPARE', 'TOOL', 'RETURNABLE']} title={t('p.addItems')} />
         {error?.form && <p className="field-error" role="alert" data-testid="mrn-error">{error.form}</p>}
         <div className="actions-row">
-          <button type="submit" className="btn" style={{ minHeight: 48 }} disabled={busy || !projectId || !siteId || lines.length === 0} data-testid="mrn-save">{t('p.saveDraft')}</button>
-          <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !projectId || !siteId || lines.length === 0} onClick={() => save(true)} data-testid="mrn-send">{t('p.send')}</button>
+          <button type="submit" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || !projectId || !siteId || lines.length === 0} data-testid="mrn-save">{t('p.saveDraft')}</button>
+          <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || !projectId || !siteId || lines.length === 0} onClick={() => save(true)} data-testid="mrn-send">{t('p.send')}</button>
         </div>
       </form>
     </section>

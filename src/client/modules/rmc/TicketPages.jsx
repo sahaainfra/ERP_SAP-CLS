@@ -27,7 +27,7 @@ function TicketNew() {
         <Field label={t('tk.driver')} name="driver" error={fe.driver}><input value={v.driver} onChange={(e) => setV({ ...v, driver: e.target.value })} style={big} data-testid="rmc-tk-driver" /></Field>
         <Field label={t('tk.phone')} name="driverPhone" error={fe.driverPhone}><input value={v.driverPhone} inputMode="tel" onChange={(e) => setV({ ...v, driverPhone: e.target.value })} style={big} /></Field>
         <Field label={t('rq.qty')} name="qty" error={fe.qty}><input type="number" min="0" step="any" value={v.qty} onChange={(e) => setV({ ...v, qty: e.target.value })} style={big} data-testid="rmc-tk-qty" /></Field>
-        <label style={{ minHeight: 48 }}><input type="checkbox" checked={v.outsidePremises} onChange={(e) => setV({ ...v, outsidePremises: e.target.checked })} data-testid="rmc-tk-outside" /> {t('tk.outside')}</label>
+        <label style={{ minHeight: 'var(--erp-target-large)' }}><input type="checkbox" checked={v.outsidePremises} onChange={(e) => setV({ ...v, outsidePremises: e.target.checked })} data-testid="rmc-tk-outside" /> {t('tk.outside')}</label>
         {v.outsidePremises && <Field label={t('tk.eway')} name="ewayNo" error={fe.ewayNo}><input value={v.ewayNo} onChange={(e) => setV({ ...v, ewayNo: e.target.value })} maxLength={20} style={big} data-testid="rmc-tk-eway" /></Field>}</div>
         <div className="actions-row"><button type="button" className="btn btn-primary" style={big} disabled={busy || !v.requisitionId || !v.truckNo || !v.qty} onClick={save} data-testid="rmc-tk-save">{t('tk.dispatch')}</button></div></div>
     </section>

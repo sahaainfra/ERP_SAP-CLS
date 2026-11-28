@@ -15,7 +15,7 @@ import { LineEditor, blank } from './JournalEntryPage.jsx';
 
 // Part 23.01 FR-03: recurring journals. A template (lines, how often, the next date, an optional last date) makes a journal on each due date, sent for approval in
 // the owner's name by the morning job; it can be paused, resumed or ended. The journals it made are listed under it.
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const TONE = { ACTIVE: 'APPROVED', PAUSED: 'RETURNED', ENDED: 'CANCELLED' };
 const toBody = (lines) => lines.filter((l) => l.accountId).map((l) => Object.fromEntries(Object.entries(l).filter(([, v]) => v !== '' && v != null).map(([k, v]) => [k, ['debit', 'credit', 'narration'].includes(k) ? v : Number(v)])));
 

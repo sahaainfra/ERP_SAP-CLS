@@ -15,7 +15,7 @@ import { GlError, useGlRunner } from './JournalsPage.jsx';
 
 // Part 23.02: the pages of the posting engine — the rule matrix (versions, a change proposed and approved, the test against a sample event), the failed postings
 // (worklist: post again, put right by a journal, close), the replay of history (dry run, approval, result) and the sub-ledgers against the ledger.
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const PS_TONE = { POSTED: 'APPROVED', FAILED: 'REJECTED', SKIPPED: 'DRAFT', RESOLVED: 'APPROVED', IGNORED: 'CANCELLED' };
 const OPS = ['eq', 'ne', 'in', 'gt', 'gte', 'lt', 'lte', 'empty', 'notempty'];
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -216,7 +216,7 @@ export function ReplayPage() {
     <section aria-labelledby="rps-h" data-testid="pe-replay"><PageHeader id="rps-h" title={t('rp.title')} subtitle={t('rp.intro')} meta={<Link to="/finance/failed-postings">{t('fp.title')}</Link>} />
       {can(session.data, 'fin.replay.create') && <form className="mdm-panel" onSubmit={async (e) => { e.preventDefault(); const r = await run(() => pe.dryRun(f)); if (r) navigateTo(`/finance/posting-replay?id=${r.id}`); }}>
         <GlError error={error} />
-        <fieldset><legend>{t('rp.types')}</legend>{(cat.data ?? []).map((c) => <label key={c.type} style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 44 }}><input type="checkbox" checked={f.eventTypes.includes(c.type)} onChange={() => toggle(c.type)} data-testid={`pe-type-${c.type}`} />{c.label}</label>)}</fieldset>
+        <fieldset><legend>{t('rp.types')}</legend>{(cat.data ?? []).map((c) => <label key={c.type} style={{ display: 'flex', gap: 'var(--erp-space-3)', alignItems: 'center', minHeight: 'var(--erp-target-min)' }}><input type="checkbox" checked={f.eventTypes.includes(c.type)} onChange={() => toggle(c.type)} data-testid={`pe-type-${c.type}`} />{c.label}</label>)}</fieldset>
         <div className="form-grid"><Field label={t('rp.from')} name="from" error={error?.fields?.from}><input type="date" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} style={big} data-testid="pe-from-date" /></Field><Field label={t('rp.to')} name="to" error={error?.fields?.to}><input type="date" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} style={big} data-testid="pe-to-date" /></Field></div>
         <div className="actions-row"><button type="submit" className="btn btn-primary" style={big} disabled={busy || !f.eventTypes.length} data-testid="pe-dry-run">{t('rp.dryRun')}</button></div>
       </form>}

@@ -27,7 +27,7 @@ export default function MrpHeatmapPage() {
   return (
     <section aria-labelledby="hm-h" data-testid="proc-heatmap">
       <PageHeader id="hm-h" title={t('p.heatmapTitle')} subtitle={t('p.heatmapIntro')} />
-      <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('p.params')}><div className="form-grid"><Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => setProjectId(e.target.value)} disabled={Boolean(named)} style={{ minHeight: 44 }} data-testid="hm-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field></div></form>
+      <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('p.params')}><div className="form-grid"><Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => setProjectId(e.target.value)} disabled={Boolean(named)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="hm-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field></div></form>
       {!runId && !rq.isPending && <div className="mdm-panel" data-testid="hm-empty"><h2>{t('p.noRunYet')}</h2><p className="muted">{t('p.noRunYetBody')}</p><Link to="/proc/mrp">{t('p.mrpTitle')}</Link></div>}
       {hq.isPending && runId && <Skeleton label={t('p.heatmapTitle')} rows={5} />}{hq.isError && hq.error?.status !== 403 && <ErrorState error={hq.error} onRetry={hq.refetch} />}
       {h && (

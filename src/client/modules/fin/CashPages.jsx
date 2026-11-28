@@ -18,13 +18,13 @@ import { GlError, useGlRunner } from './JournalsPage.jsx';
 // Part 23.06: the pages of cash and bank — the bank reconciliation (import the statement, match what is left, the BRS and its sign-off), the site imprest on the phone
 // (a voucher with the photo of its bill, kept while offline and sent when the phone is back; replenishments; the cash count) and the daily cash and bank position
 // (with the contra entries).
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 const can = (session, p) => Boolean(session?.permissions?.includes(p));
 const transport = browserTransport(authHeaders);
 const guardOf = (q, what, permission) => (q.error?.status === 403 || q.error?.status === 404 ? <NoPermission what={what} permission={permission} /> : q.isPending ? <Skeleton label={what} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : null);
 const Tabs = ({ tabs, tab, setTab, label, prefix }) => (
-  <div className="actions-row" role="tablist" aria-label={label}>{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setTab(k)} data-testid={`${prefix}-${k}`}>{l}</button>)}</div>
+  <div className="actions-row" role="tablist" aria-label={label}>{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setTab(k)} data-testid={`${prefix}-${k}`}>{l}</button>)}</div>
 );
 function Decide({ x, run, busy, setError, ns = 'fin' }) {
   const t = useT(ns); const [comment, setComment] = useState('');
@@ -64,7 +64,7 @@ function MatchStep({ bankId }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}><strong>{l.date}</strong><span className="num">{l.debit ? `− ${money(l.debit)}` : `+ ${money(l.credit)}`}</span></div>
           <span>{l.description}{l.ref ? ` · ${l.ref}` : ''}{l.chequeNo ? ` · ${t('pm.cheque')} ${l.chequeNo}` : ''}</span>
           {open !== l.id ? <div className="actions-row"><button type="button" className="btn btn-primary" style={big} onClick={() => show(l)} data-testid={`cb-open-${l.id}`}>{t('cb.settle')}</button></div> : <>
-            {cand.length > 0 && <ul className="lp-list" aria-label={t('cb.candidates')}>{cand.map((c) => <li key={`${c.entity}${c.id}`} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}><span style={{ flex: '1 1 12rem' }}>{c.date} · {c.label} · {money(c.amount)}</span><button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy} onClick={() => run(() => cb.lineAct(l.id, 'match', { entity: c.entity, id: c.id }), t('cb.matched')).then(() => setOpen(null))}>{t('cb.thisOne')}</button></li>)}</ul>}
+            {cand.length > 0 && <ul className="lp-list" aria-label={t('cb.candidates')}>{cand.map((c) => <li key={`${c.entity}${c.id}`} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}><span style={{ flex: '1 1 12rem' }}>{c.date} · {c.label} · {money(c.amount)}</span><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} disabled={busy} onClick={() => run(() => cb.lineAct(l.id, 'match', { entity: c.entity, id: c.id }), t('cb.matched')).then(() => setOpen(null))}>{t('cb.thisOne')}</button></li>)}</ul>}
             <div className="form-grid">
               <Field label={t('cb.postTo')} name="accountId" error={error?.fields?.accountId}><select value={post.accountId} onChange={(e) => setPost({ ...post, accountId: e.target.value })} style={big}><option value="">—</option>{(opt.data?.accounts ?? []).filter((a) => !a.control && /^[45]/.test(a.code)).map((a) => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}</select></Field>
               <Field label={t('jn.narration')} name="narration" error={error?.fields?.narration}><input value={post.narration} onChange={(e) => setPost({ ...post, narration: e.target.value })} style={big} maxLength={200} /></Field>
@@ -124,7 +124,7 @@ function VoucherForm({ imp, onDone }) {
       <h2>{t('cb.newVoucher')}</h2><GlError error={error} />{note && <p className="mdm-banner" role="status" data-testid="cb-note">{note}</p>}
       {off?.online === false && <p className="mdm-banner" role="status">{t('cb.offline')}</p>}
       <Field label={t('pm.amount')} name="amount" error={fe.amount}><input inputMode="decimal" value={f.amount} onChange={set('amount')} style={{ ...big, fontSize: '1.5rem' }} data-testid="cb-v-amount" /></Field>
-      <div className="actions-row" role="group" aria-label={t('cb.category')}>{CATS.map((c) => <button key={c} type="button" className={`btn${f.category === c ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} aria-pressed={f.category === c} onClick={() => setF({ ...f, category: c })}>{t(`cb.c.${c}`)}</button>)}</div>
+      <div className="actions-row" role="group" aria-label={t('cb.category')}>{CATS.map((c) => <button key={c} type="button" className={`btn${f.category === c ? ' btn-primary' : ''}`} style={{ minHeight: 'var(--erp-target-min)' }} aria-pressed={f.category === c} onClick={() => setF({ ...f, category: c })}>{t(`cb.c.${c}`)}</button>)}</div>
       <Field label={t('cb.payee')} name="payee" error={fe.payee}><input value={f.payee} onChange={set('payee')} style={big} maxLength={100} data-testid="cb-v-payee" /></Field>
       <Field label={t('ap.for')} name="description" error={fe.description}><input value={f.description} onChange={set('description')} style={big} maxLength={300} data-testid="cb-v-desc" /></Field>
       <Field label={t('cb.head')} name="expenseAccountId" error={fe.expenseAccountId}><select value={f.expenseAccountId || String(imp.defaultHead ?? '')} onChange={set('expenseAccountId')} style={big}>{heads.length === 0 && <option value="">{t('cb.siteOverheads')}</option>}{heads.map((a) => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}</select></Field>
@@ -183,7 +183,7 @@ export function ImprestPage() {
               <p>{t('cb.replenishWhat', { n: x.vouchersToReplenish, amount: money(x.toReplenish) })}</p>
               <Field label={t('cb.fromBank')} name="bank" error={null}><select name="bank" style={big}>{(banks.data ?? []).map((b) => <option key={b.id} value={b.id}>{b.name} {b.account}</option>)}</select></Field>
               <div className="actions-row"><button type="submit" className="btn btn-primary" style={big} disabled={busy} data-testid="cb-replenish">{t('cb.askReplenish')}</button></div></form>}
-            {(repls.data ?? []).length === 0 ? <EmptyState compact title={t('cb.noRepl')} message={t('cb.noReplBody')} /> : <ul className="lp-list">{(repls.data ?? []).map((r) => <li key={r.id} style={{ minHeight: 44 }}><Link to={`/finance/imprest?replenishment=${r.id}`}>{r.docNo}</Link> · {t('cb.vouchersN', { n: r.vouchers })} · {money(r.amount)} · {t(`pm.st.${r.status}`)}</li>)}</ul>}
+            {(repls.data ?? []).length === 0 ? <EmptyState compact title={t('cb.noRepl')} message={t('cb.noReplBody')} /> : <ul className="lp-list">{(repls.data ?? []).map((r) => <li key={r.id} style={{ minHeight: 'var(--erp-target-min)' }}><Link to={`/finance/imprest?replenishment=${r.id}`}>{r.docNo}</Link> · {t('cb.vouchersN', { n: r.vouchers })} · {money(r.amount)} · {t(`pm.st.${r.status}`)}</li>)}</ul>}
           </div>}
           {tab === 'count' && <form className="mdm-panel" data-testid="cb-count" onSubmit={(e) => { e.preventDefault(); run(() => cb.count(x.id, { denominations: Object.fromEntries(Object.entries(den).filter(([, v]) => Number(v) > 0).map(([k, v]) => [k, Number(v)])) }), t('cb.counted')).then(() => one.refetch()); }}>
             <div className="form-grid">{['500', '200', '100', '50', '20', '10', '5', '2', '1'].map((dn) => <Field key={dn} label={`₹${dn} ×`} name={`d${dn}`} error={null}><input inputMode="numeric" value={den[dn] ?? ''} onChange={(e) => setDen({ ...den, [dn]: e.target.value })} style={big} /></Field>)}</div>
@@ -241,7 +241,7 @@ export function CashPositionPage() {
           {x.cash.map((c) => <li key={`c${c.id}`} className="mdm-panel" data-testid="cb-pos-cash" style={{ display: 'grid', gap: 4, padding: 12, margin: '8px 0' }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}><strong>{c.name}</strong><span className="num">{money(c.balance)}</span></div><span className="muted small">{c.custodian} · {t('cb.limit')} {money(c.limit)}{c.lastCount ? ` · ${t('cb.lastCount', { date: c.lastCount.date })}` : ''}</span></li>)}
         </ul>}
         <div className="ff-actionbar" data-testid="cb-pos-totals"><span>{t('cb.inBanks')} <strong>{money(x.totals.bank)}</strong></span><span>{t('cb.inCash')} <strong>{money(x.totals.cash)}</strong></span></div>
-        {(contras.data ?? []).length > 0 && <><h2>{t('cb.contras')}</h2><ul className="lp-list">{contras.data.map((k) => <li key={k.id} style={{ minHeight: 44 }}><Link to={`/finance/cash-position?contra=${k.id}`}>{k.docNo}</Link> · {k.kindLabel} · {money(k.amount)} · {t(`pm.st.${k.status}`)}</li>)}</ul></>}
+        {(contras.data ?? []).length > 0 && <><h2>{t('cb.contras')}</h2><ul className="lp-list">{contras.data.map((k) => <li key={k.id} style={{ minHeight: 'var(--erp-target-min)' }}><Link to={`/finance/cash-position?contra=${k.id}`}>{k.docNo}</Link> · {k.kindLabel} · {money(k.amount)} · {t(`pm.st.${k.status}`)}</li>)}</ul></>}
       </>}
     </section>
   );

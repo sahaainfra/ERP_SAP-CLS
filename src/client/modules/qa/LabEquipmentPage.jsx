@@ -21,8 +21,8 @@ function Equipment({ id }) {
     <div data-testid="qa-equipment-object" data-calibration={x.calibration}><PageHeader id="le-h" title={<>{x.code} {x.name} <StatusBadge status={CAL_TONE[x.calibration]} label={t(`cal.${x.calibration}`)} /></>} meta={<><Link to="/qa/lab-equipment">{t('le.title')}</Link> · {x.project ?? t('le.company')} · {x.serialNo ?? '—'} · {t('le.due')} {x.calibrationDue ? fmtDate(x.calibrationDue) : '—'}{x.daysToDue != null ? ` (${x.daysToDue})` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="le-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="le-note">{note}</p>}
       <div className="mdm-panel no-print" data-testid="le-calibrate"><h2>{t('le.calibrate')}</h2><div className="form-grid"><Field label={t('le.calibratedOn')} name="calibratedOn" error={error}><input type="date" max={today()} value={on} onChange={(e) => setOn(e.target.value)} style={sel} data-testid="le-date" /></Field>
-        <label className="btn" style={{ minHeight: 44 }}>{t('le.certificate')}<input type="file" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="le-file" /></label>{file && <span className="muted">{file.name}</span>}</div>
-        <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={calibrate} data-testid="le-go">{t('le.calibrate')}</button></div>
+        <label className="btn" style={{ minHeight: 'var(--erp-target-min)' }}>{t('le.certificate')}<input type="file" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="le-file" /></label>{file && <span className="muted">{file.name}</span>}</div>
+        <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={calibrate} data-testid="le-go">{t('le.calibrate')}</button></div>
     </div>
   );
 }
@@ -38,7 +38,7 @@ function NewEquipment() {
         <Field label={t('le.serial')} name="serialNo" error={error}><input value={f.serialNo} onChange={(e) => set('serialNo', e.target.value)} maxLength={80} style={sel} /></Field>
         <Field label={t('le.lastCalibrated')} name="lastCalibrated" error={error}><input type="date" max={today()} value={f.lastCalibrated} onChange={(e) => set('lastCalibrated', e.target.value)} style={sel} data-testid="len-last" /></Field>
         <Field label={t('le.interval')} name="intervalDays" error={error}><input type="number" min="1" value={f.intervalDays} onChange={(e) => set('intervalDays', e.target.value)} style={sel} /></Field></div>
-        <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={save} data-testid="len-save">{t('save')}</button></div></div>
+        <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={save} data-testid="len-save">{t('save')}</button></div></div>
     </section>
   );
 }

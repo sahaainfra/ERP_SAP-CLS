@@ -10,7 +10,7 @@ import { GlError, useGlRunner } from './JournalsPage.jsx';
 
 // Part 23.01, page "Manual Journal": the header (type, date, kind, narration), the lines in debit or credit with the dimensions each account asks for (its 06.05 rules:
 // needed, open or not allowed), the totals live at the bottom and the server's own check of the lines as they are typed; Save draft or Save and send for approval.
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 export const blank = () => ({ accountId: '', debit: '', credit: '', narration: '', ...Object.fromEntries(DIM_KEYS.map((k) => [k, ''])) });
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 const toPaise = (v) => (v === '' || v == null || Number.isNaN(Number(v)) ? 0 : Math.round(Number(v) * 100));

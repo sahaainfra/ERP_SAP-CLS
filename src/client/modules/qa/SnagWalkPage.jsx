@@ -10,7 +10,7 @@ import { PlanPins } from './SnagParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Snag Walk (part 18.06, FR-01, FR-02, on a phone): choose the room and the plan, tap the plan to pin the defect, describe it, take the photograph, and go to the next one; what is shared by the room stays filled in.
-const transport = browserTransport(authHeaders); const big = { minHeight: 48, fontSize: '1rem' };
+const transport = browserTransport(authHeaders); const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 export default function SnagWalkPage() {
   const t = useT('qa'); usePageTitle(t('walk.title')); const [projectId, setProjectId] = useState(''); const [common, setCommon] = useState({ locationId: '', drawingId: '', unitRef: '', responsibleType: 'OWN_CREW', responsibleId: '', dueDate: '' });

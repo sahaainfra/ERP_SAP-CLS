@@ -11,7 +11,7 @@ import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Perform Inspection (part 18.01, FR-04, on a phone): choose the checklist in force, answer large controls, take the photographs, sign, and send. Numbers show their tolerance but only the server judges the result.
 // With the offline engine (04.15) the whole inspection is one command and its photographs, named by question, follow it; without a signal it waits on the phone.
-const transport = browserTransport(authHeaders); const big = { minHeight: 48, fontSize: '1rem' };
+const transport = browserTransport(authHeaders); const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const inTol = (q, v) => { if (v === '' || v == null) return null; const n = Number(v); const lo = q.min != null ? q.min : q.target != null ? q.target - (q.tolMinus ?? 0) : null; const hi = q.max != null ? q.max : q.target != null ? q.target + (q.tolPlus ?? 0) : null; return (lo == null || n >= lo) && (hi == null || n <= hi); };
 export default function PerformPage() {
   const t = useT('qa'); usePageTitle(t('perf.title')); const offline = useOffline(); const online = offline.online !== false && navigator.onLine;

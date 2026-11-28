@@ -19,7 +19,7 @@ export async function filePhoto(file, entity, entityId) {
 }
 export function PhotoButton({ label, onPick, testId, done }) {
   return (
-    <label className="btn" style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center' }}>{done ? `✓ ${label}` : label}
+    <label className="btn" style={{ minHeight: 'var(--erp-target-large)', display: 'inline-flex', alignItems: 'center' }}>{done ? `✓ ${label}` : label}
       <input type="file" accept="image/*" capture="environment" className="sr-only" data-testid={testId} onChange={(e) => { const f = e.target.files?.[0]; if (f) onPick(f); e.target.value = ''; }} />
     </label>
   );

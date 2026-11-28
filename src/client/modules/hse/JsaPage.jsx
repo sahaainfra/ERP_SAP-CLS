@@ -44,7 +44,7 @@ function Jsa({ id }) {
       <ErrorLine error={error} id="hse-jsa-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-jsa-note">{note}</p>}
       <div className="actions-row no-print">
         {x.can.edit && <button type="button" className="btn" onClick={() => setEditing(!editing)} data-testid="hse-jsa-edit">{t('edit')}</button>}
-        {x.can.release && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => act('release', {}, t('jsa.released'))} data-testid="hse-jsa-release">{t('jsa.release')}</button>}
+        {x.can.release && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => act('release', {}, t('jsa.released'))} data-testid="hse-jsa-release">{t('jsa.release')}</button>}
         {x.can.complete && <button type="button" className="btn" disabled={busy} onClick={() => act('complete', {}, t('jsa.completed'))} data-testid="hse-jsa-complete">{t('jsa.complete')}</button>}
         {x.can.cancel && <button type="button" className="btn" disabled={busy} onClick={() => { const r = globalThis.prompt(t('why')); if (r) act('cancel', { reason: r }, t('cancelled')); }} data-testid="hse-jsa-cancel">{t('cancel')}</button>}
         {x.can.print && <button type="button" className="btn" onClick={() => hse.exportFile(`/jsa/${x.id}/print`, `${x.docNo}.pdf`).catch(() => globalThis.alert?.(t('exportFailed')))}>{t('print')}</button>}</div>

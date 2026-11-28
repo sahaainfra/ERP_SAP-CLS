@@ -20,8 +20,8 @@ export function ParamPanel({ t, value, onChange, children }) {
   const pq = useQuery({ queryKey: ['proc', 'an-projects'], queryFn: an.projects, retry: false }); const set = (k, v) => onChange({ ...value, [k]: v });
   return (
     <div className="mdm-panel no-print" data-testid="an-params"><div className="form-grid">
-      <label>{t('x.project')}<select value={value.projectId ?? ''} onChange={(ev) => set('projectId', ev.target.value)} style={{ minHeight: 44 }} data-testid="an-project"><option value="">{t('n.allProjects')}</option>{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></label>
-      <label>{t('n.from')}<input type="date" value={value.from ?? ''} onChange={(ev) => set('from', ev.target.value)} style={{ minHeight: 44 }} data-testid="an-from" /></label>
-      <label>{t('n.to')}<input type="date" value={value.to ?? ''} onChange={(ev) => set('to', ev.target.value)} style={{ minHeight: 44 }} data-testid="an-to" /></label>{children}</div></div>
+      <label>{t('x.project')}<select value={value.projectId ?? ''} onChange={(ev) => set('projectId', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="an-project"><option value="">{t('n.allProjects')}</option>{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></label>
+      <label>{t('n.from')}<input type="date" value={value.from ?? ''} onChange={(ev) => set('from', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="an-from" /></label>
+      <label>{t('n.to')}<input type="date" value={value.to ?? ''} onChange={(ev) => set('to', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="an-to" /></label>{children}</div></div>
   );
 }

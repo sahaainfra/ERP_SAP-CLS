@@ -44,8 +44,8 @@ function Quote({ t, id }) {
       </details>}
       <div className="actions-row no-print">
         {can.edit && <Link to={`/proc/quotation-entry?id=${r.id}&edit=1`}>{t('q.edit')}</Link>}
-        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => pc.quoteAct(r.id, 'submit'), t('q.recorded'))} data-testid="quote-submit">{t('q.record')}</button>}
-        {can.amend && <button type="button" className="btn" style={{ minHeight: 48 }} onClick={() => why('amend')} data-testid="quote-amend">{t('q.revise')}</button>}
+        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => run(() => pc.quoteAct(r.id, 'submit'), t('q.recorded'))} data-testid="quote-submit">{t('q.record')}</button>}
+        {can.amend && <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} onClick={() => why('amend')} data-testid="quote-amend">{t('q.revise')}</button>}
         {can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('q.withdrawnDone'))} data-testid="quote-withdraw">{t('q.withdraw')}</button>}
         {can.cancel && r.status !== 'RECEIVED' && <button type="button" className="btn" onClick={() => why('cancel', t('q.cancelled'))} data-testid="quote-cancel">{t('q.cancel')}</button>}
         {can.delete && <button type="button" className="btn" onClick={async () => { if (window.confirm(t('q.deleteAsk')) && await run(() => pc.quoteDelete(r.id))) navigateTo(`/proc/rfqs?id=${r.rfqId}`); }} data-testid="quote-delete">{t('q.delete')}</button>}
@@ -85,14 +85,14 @@ function Entry({ t, rfqId, vendorId, editId }) {
       <PageHeader id="qe-h" title={t('q.entryTitle')} subtitle={t('q.entryHelp')} meta={<Link to="/proc/quotation-entry">{t('q.backQuotes')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
         <div className="form-grid">
-          <Field label={t('q.rfq')} name="rfqId" error={error}><select value={rid ?? ''} disabled={Boolean(editId)} onChange={(ev) => navigateTo(`/proc/quotation-entry?rfq=${ev.target.value}`)} style={{ minHeight: 44 }} data-testid="qe-rfq"><option value="">{t('q.choose')}</option>{issued.map((x) => <option key={x.id} value={x.id}>{x.docNo} · {x.title}</option>)}</select></Field>
-          <Field label={t('q.vendor')} name="vendorId" error={error}><select value={form.vendorId} disabled={Boolean(editId)} onChange={(ev) => set('vendorId', ev.target.value)} style={{ minHeight: 44 }} data-testid="qe-vendor"><option value="">{t('q.choose')}</option>{(rfq?.vendors ?? []).map((v) => <option key={v.vendorId} value={v.vendorId}>{v.name}</option>)}</select></Field>
-          <Field label={t('q.quoteRef')} name="quoteRef" error={error}><input value={form.quoteRef} maxLength={60} onChange={(ev) => set('quoteRef', ev.target.value)} style={{ minHeight: 44 }} data-testid="qe-ref" /></Field>
-          <Field label={t('q.validUntil')} name="validUntil" error={error}><input type="date" value={form.validUntil} min={today()} onChange={(ev) => set('validUntil', ev.target.value)} style={{ minHeight: 44 }} data-testid="qe-valid" /></Field>
-          <Field label={t('q.deliveryDays')} name="deliveryDays" error={error}><input type="number" min="0" value={form.deliveryDays} onChange={(ev) => set('deliveryDays', ev.target.value)} style={{ minHeight: 44 }} data-testid="qe-days" /></Field>
-          <Field label={t('q.payment')} name="paymentTerms" error={error}><input value={form.paymentTerms} maxLength={300} onChange={(ev) => set('paymentTerms', ev.target.value)} style={{ minHeight: 44 }} /></Field>
+          <Field label={t('q.rfq')} name="rfqId" error={error}><select value={rid ?? ''} disabled={Boolean(editId)} onChange={(ev) => navigateTo(`/proc/quotation-entry?rfq=${ev.target.value}`)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="qe-rfq"><option value="">{t('q.choose')}</option>{issued.map((x) => <option key={x.id} value={x.id}>{x.docNo} · {x.title}</option>)}</select></Field>
+          <Field label={t('q.vendor')} name="vendorId" error={error}><select value={form.vendorId} disabled={Boolean(editId)} onChange={(ev) => set('vendorId', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="qe-vendor"><option value="">{t('q.choose')}</option>{(rfq?.vendors ?? []).map((v) => <option key={v.vendorId} value={v.vendorId}>{v.name}</option>)}</select></Field>
+          <Field label={t('q.quoteRef')} name="quoteRef" error={error}><input value={form.quoteRef} maxLength={60} onChange={(ev) => set('quoteRef', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="qe-ref" /></Field>
+          <Field label={t('q.validUntil')} name="validUntil" error={error}><input type="date" value={form.validUntil} min={today()} onChange={(ev) => set('validUntil', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="qe-valid" /></Field>
+          <Field label={t('q.deliveryDays')} name="deliveryDays" error={error}><input type="number" min="0" value={form.deliveryDays} onChange={(ev) => set('deliveryDays', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="qe-days" /></Field>
+          <Field label={t('q.payment')} name="paymentTerms" error={error}><input value={form.paymentTerms} maxLength={300} onChange={(ev) => set('paymentTerms', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} /></Field>
           <label><input type="checkbox" checked={form.gstInclusive} onChange={(ev) => set('gstInclusive', ev.target.checked)} data-testid="qe-incl" /> {t('q.gstInclusive')}</label>
-          <Field label={t('q.deviations')} name="deviations" error={error}><input value={form.deviations} maxLength={1000} onChange={(ev) => set('deviations', ev.target.value)} style={{ minHeight: 44 }} /></Field>
+          <Field label={t('q.deviations')} name="deviations" error={error}><input value={form.deviations} maxLength={1000} onChange={(ev) => set('deviations', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} /></Field>
         </div>
         {rfq && (
           <div className="table-scroll"><table className="data-table" data-testid="qe-grid"><caption>{t('q.lines')}</caption><thead><tr><th>{t('q.item')}</th><th>{t('q.offered')}</th><th>{t('q.rate')}</th><th>{t('q.discount')}</th><th>{t('q.gstPct')}</th><th>{t('q.freight')}</th><th>{t('q.loading')}</th><th>{t('q.other')}</th><th>{t('q.make')}</th><th>{t('q.deviation')}</th><th className="num">{t('q.landedRate')}</th></tr></thead>
@@ -103,7 +103,7 @@ function Entry({ t, rfqId, vendorId, editId }) {
             })}</tbody></table></div>)}
         {saved && <p className="mdm-banner" role="status" data-testid="qe-saved">{t('q.draftSaved', { no: saved.docNo })}{saved.canSeeRates ? ` ${t('q.totalLanded')}: ${fmtRs(saved.totalLanded)}` : ''}</p>}
         {error?.form && <p className="field-error" role="alert" data-testid="qe-error">{error.form}</p>}
-        <div className="actions-row"><button type="submit" className="btn" style={{ minHeight: 48 }} disabled={busy || !rid || !form.vendorId} data-testid="qe-save">{t('q.saveDraft')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !rid || !form.vendorId} onClick={() => save(true)} data-testid="qe-record">{t('q.record')}</button></div>
+        <div className="actions-row"><button type="submit" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || !rid || !form.vendorId} data-testid="qe-save">{t('q.saveDraft')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || !rid || !form.vendorId} onClick={() => save(true)} data-testid="qe-record">{t('q.record')}</button></div>
       </form>
     </section>
   );

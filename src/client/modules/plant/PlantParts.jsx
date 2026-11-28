@@ -15,8 +15,8 @@ export function FilterPanel({ value, onChange }) {
   const sites = (o?.sites ?? []).filter((s) => !value.projectId || String(s.projectId) === String(value.projectId));
   return (
     <div className="mdm-panel no-print" data-testid="pd-filters"><div className="form-grid">
-      <label>{t('project')}<select value={value.projectId ?? ''} onChange={(ev) => set('projectId', ev.target.value)} style={{ minHeight: 44 }} data-testid="pd-project"><option value="">{t('allProjects')}</option>{(o?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></label>
-      <label>{t('site')}<select value={value.siteId ?? ''} onChange={(ev) => set('siteId', ev.target.value)} style={{ minHeight: 44 }} data-testid="pd-site"><option value="">{t('allSites')}</option>{sites.map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></label></div></div>
+      <label>{t('project')}<select value={value.projectId ?? ''} onChange={(ev) => set('projectId', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="pd-project"><option value="">{t('allProjects')}</option>{(o?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></label>
+      <label>{t('site')}<select value={value.siteId ?? ''} onChange={(ev) => set('siteId', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="pd-site"><option value="">{t('allSites')}</option>{sites.map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></label></div></div>
   );
 }
 export function RecordTable({ rows, testId = 'pd-drill-table' }) {
@@ -27,5 +27,5 @@ export function RecordTable({ rows, testId = 'pd-drill-table' }) {
   );
 }
 export function ExportButton({ query, name, label, path, testId = 'pd-export' }) {
-  const t = useT('plant'); return <button type="button" className="btn" style={{ minHeight: 44 }} data-testid={testId} onClick={() => pl.exportFile(query, name, path).catch(() => globalThis.alert?.(t('exportFailed')))}>{label ?? t('export')}</button>;
+  const t = useT('plant'); return <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} data-testid={testId} onClick={() => pl.exportFile(query, name, path).catch(() => globalThis.alert?.(t('exportFailed')))}>{label ?? t('export')}</button>;
 }

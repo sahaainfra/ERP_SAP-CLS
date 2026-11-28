@@ -26,7 +26,7 @@ function Sample({ id }) {
         <Field label={t('cube.ageHeader')} name="ageDays" error={error}><select value={f.ageDays} onChange={(e) => setF({ ...f, ageDays: e.target.value })} style={sel} data-testid="cube-age"><option value="7">7</option><option value="28">28</option></select></Field>
         <Field label={t('cube.strengthsHint')} name="strengths" error={error}><input value={f.strengths} onChange={(e) => setF({ ...f, strengths: e.target.value })} style={sel} inputMode="decimal" data-testid="cube-strengths" /></Field>
         <Field label={t('cube.testedOn')} name="testedOn" error={error}><input type="date" max={today()} value={f.testedOn} onChange={(e) => setF({ ...f, testedOn: e.target.value })} style={sel} data-testid="cube-tested" /></Field></div>
-        <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !f.strengths} onClick={save} data-testid="cube-save">{t('save')}</button></div>}
+        <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || !f.strengths} onClick={save} data-testid="cube-save">{t('save')}</button></div>}
     </div>
   );
 }

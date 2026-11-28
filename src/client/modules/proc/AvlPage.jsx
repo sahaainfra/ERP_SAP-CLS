@@ -29,13 +29,13 @@ function Suspension({ t, id }) {
       {error?.form && <p className="field-error" role="alert" data-testid="su-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="su-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="su-entries"><caption>{t('v.entries')}</caption><thead><tr><th>{t('v.category')}</th><th>{t('v.region')}</th><th>{t('x.status')}</th></tr></thead><tbody>{r.entries.map((e) => <tr key={e.id}><td>{e.category}</td><td>{e.region}</td><td>{e.statusLabel}</td></tr>)}</tbody></table></div>
       <div className="actions-row no-print">
-        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => pv8.suspAct(r.id, 'submit'), t('x.submitted'))} data-testid="su-submit">{t('x.submit')}</button>}
+        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => run(() => pv8.suspAct(r.id, 'submit'), t('x.submitted'))} data-testid="su-submit">{t('x.submit')}</button>}
         {can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('x.withdrawn'))}>{t('x.withdraw')}</button>}
         {can.cancel && <button type="button" className="btn" onClick={() => why('cancel', t('x.cancelled'))} data-testid="su-cancel">{t('x.cancel')}</button>}
         {r.workflowInstanceId && <Link to={`/workflow/instance?id=${r.workflowInstanceId}`}>{t('x.approval')}</Link>}
       </div>
-      {r.taskId && <div className="mdm-panel no-print" data-testid="su-decide"><h2>{t('x.decide')}</h2><label>{t('x.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 44 }} data-testid="su-comment" /></label>
-        <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="su-approve">{t('x.approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')}>{t('x.return')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')}>{t('x.reject')}</button></div></div>}
+      {r.taskId && <div className="mdm-panel no-print" data-testid="su-decide"><h2>{t('x.decide')}</h2><label>{t('x.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="su-comment" /></label>
+        <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="su-approve">{t('x.approve')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')}>{t('x.return')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')}>{t('x.reject')}</button></div></div>}
       <History t={t} data={hq.data} testId="su-history" />
     </div>
   );

@@ -10,7 +10,7 @@ import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Approve WA / Close WA (part 14.01, FR-04) on a phone: large buttons, few words to type. What waits for my approval (with its checks), and the approved WAs of the day I can close
 // with the quantity done (the DPR quantity filled in) and what was used. Approval goes through the workflow engine's own task, so the chain cannot be bypassed.
-const big = { minHeight: 48, minWidth: 120, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', minWidth: 120, fontSize: '1rem' };
 
 function Approve({ t, w, onDone }) {
   const [comment, setComment] = useState(''); const [error, setError] = useState(null); const [busy, setBusy] = useState(false);
@@ -22,7 +22,7 @@ function Approve({ t, w, onDone }) {
       <p className="muted">{w.siteCode} · {w.workFront ?? '—'} · {fmtDate(w.planDate)} {w.startTime}–{w.endTime} · {w.supervisor}{w.emergency ? ` · ${t('wa.emergency')}: ${w.emergencyReason}` : ''}</p>
       <ul style={{ listStyle: 'none', padding: 0 }}>{w.checks.filter((c) => c.result !== 'NA').map((c) => <li key={c.code}><StatusBadge status={CHECK_TONE[c.result]} label={t(`ck.${c.code}`)} /> <span className="muted">{c.message}</span></li>)}</ul>
       <p className="muted">{w.resources.map((r) => `${r.label} ${fmtQty(r.plannedQty)} ${r.uom}`).join(' · ')}</p>
-      <Field label={t('mb.comment')} name={`c-${w.id}`}><input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 44 }} /></Field>
+      <Field label={t('mb.comment')} name={`c-${w.id}`}><input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 'var(--erp-target-min)' }} /></Field>
       {error?.form && <p className="field-error" role="alert" data-testid="mb-error">{error.form}</p>}
       <div className="actions-row"><button type="button" className="btn btn-primary" style={big} disabled={busy} onClick={() => act('approve')} data-testid="mb-approve-btn">{t('mb.approve')}</button><button type="button" className="btn" style={big} disabled={busy} onClick={() => act('return')} data-testid="mb-return-btn">{t('mb.return')}</button><button type="button" className="btn" style={big} disabled={busy} onClick={() => act('reject')} data-testid="mb-reject-btn">{t('mb.reject')}</button></div>
     </li>
@@ -40,7 +40,7 @@ export default function MobilePage() {
     <section aria-labelledby="mb-h" data-testid="site-mobile" style={{ maxWidth: 640 }}>
       <PageHeader id="mb-h" title={t('mb.title')} />
       {!online && <p className="mdm-banner" role="status" data-testid="mb-offline">{t('mb.offline')}</p>}
-      <Field label={t('f.date')} name="date"><input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} style={{ minHeight: 44 }} data-testid="mb-date" /></Field>
+      <Field label={t('f.date')} name="date"><input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mb-date" /></Field>
       {note && <p className="mdm-banner" role="status" data-testid="mb-note">{note}</p>}
       {q.isPending && <Skeleton label={t('mb.title')} rows={4} />}
       {q.isError && q.error?.status !== 403 && <ErrorState error={q.error} onRetry={q.refetch} />}

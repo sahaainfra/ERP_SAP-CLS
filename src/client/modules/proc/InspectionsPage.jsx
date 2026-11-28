@@ -35,13 +35,13 @@ function Insp({ t, id }) {
       <div className="table-scroll"><table className="data-table" data-testid="in-punch"><caption>{t('x.punch')} ({r.openPunch} {t('x.open')})</caption><thead><tr><th>#</th><th>{t('x.punchPoint')}</th><th>{t('x.severity')}</th><th>{t('x.status')}</th></tr></thead>
         <tbody>{r.punchPoints.length === 0 ? <tr><td colSpan={4} className="muted">{t('x.noPunch')}</td></tr> : r.punchPoints.map((p) => <tr key={p.no} data-testid="in-punch-row"><td>{p.no}</td><td>{p.point}</td><td>{p.severity}</td><td>{p.status}</td></tr>)}</tbody></table></div>
       {can.result && <div className="mdm-panel no-print" data-testid="in-record"><h2>{t('x.recordResult')}</h2>
-        <div className="form-grid"><Field label={t('x.inspectedOn')} name="inspectionDate" error={error}><input type="date" max={today()} value={rf.inspectionDate} onChange={(ev) => setRes({ ...rf, inspectionDate: ev.target.value })} style={{ minHeight: 44 }} data-testid="in-date" /></Field>
-          <Field label={t('x.result')} name="result" error={error}><select value={rf.result} onChange={(ev) => setRes({ ...rf, result: ev.target.value })} style={{ minHeight: 44 }} data-testid="in-result-select">{['PASSED', 'PASSED_WITH_PUNCH', 'FAILED'].map((x) => <option key={x} value={x}>{t(`x.r.${x}`)}</option>)}</select></Field></div>
+        <div className="form-grid"><Field label={t('x.inspectedOn')} name="inspectionDate" error={error}><input type="date" max={today()} value={rf.inspectionDate} onChange={(ev) => setRes({ ...rf, inspectionDate: ev.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="in-date" /></Field>
+          <Field label={t('x.result')} name="result" error={error}><select value={rf.result} onChange={(ev) => setRes({ ...rf, result: ev.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="in-result-select">{['PASSED', 'PASSED_WITH_PUNCH', 'FAILED'].map((x) => <option key={x} value={x}>{t(`x.r.${x}`)}</option>)}</select></Field></div>
         <label>{t('x.newPunch')}<textarea rows={3} value={pp} maxLength={2000} onChange={(ev) => setPp(ev.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} data-testid="in-punch-text" /></label>
-        <div className="actions-row"><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={record} data-testid="in-record-save">{t('x.saveResult')}</button></div></div>}
+        <div className="actions-row"><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={record} data-testid="in-record-save">{t('x.saveResult')}</button></div></div>}
       <div className="actions-row no-print">
         {can.edit && <Link to={`/proc/inspections?new=1&edit=${r.id}`}>{t('x.edit')}</Link>}
-        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => px.inspAct(r.id, 'submit'), t('x.submittedIrn'))} data-testid="in-submit">{t('x.submitIrn')}</button>}
+        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => run(() => px.inspAct(r.id, 'submit'), t('x.submittedIrn'))} data-testid="in-submit">{t('x.submitIrn')}</button>}
         {can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('x.withdrawn'))}>{t('x.withdraw')}</button>}
         {can.amend && <button type="button" className="btn" onClick={() => why('amend')} data-testid="in-amend">{t('x.reinspect')}</button>}
         {can.cancel && <button type="button" className="btn" onClick={() => why('cancel', t('x.cancelled'))} data-testid="in-cancel">{t('x.cancel')}</button>}
@@ -50,8 +50,8 @@ function Insp({ t, id }) {
         {(r.shipments ?? []).map((s) => <Link key={s.id} to={`/proc/shipments?id=${s.id}`}>{s.docNo}</Link>)}
         {r.workflowInstanceId && <Link to={`/workflow/instance?id=${r.workflowInstanceId}`}>{t('x.approval')}</Link>}
       </div>
-      {r.taskId && <div className="mdm-panel no-print" data-testid="in-decide"><h2>{t('x.decideIrn')}</h2><label>{t('x.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 44 }} data-testid="in-comment" /></label>
-        <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="in-approve">{t('x.release')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')}>{t('x.return')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')}>{t('x.reject')}</button></div></div>}
+      {r.taskId && <div className="mdm-panel no-print" data-testid="in-decide"><h2>{t('x.decideIrn')}</h2><label>{t('x.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="in-comment" /></label>
+        <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="in-approve">{t('x.release')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')}>{t('x.return')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')}>{t('x.reject')}</button></div></div>}
       <History t={t} data={hq.data} testId="in-history" />
     </div>
   );
@@ -70,15 +70,15 @@ function InspForm({ t, editId, project0, po0 }) {
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
         <div className="form-grid">
           {editId ? <p>{e.poNo} · {e.vendor}</p> : <ProjectOrder t={t} projectId={projectId} setProjectId={setProjectId} orderId={orderId} setOrderId={setOrderId} error={error} prefix="inn" />}
-          <Field label={t('x.type')} name="itype" error={error}><select value={form.itype} onChange={(ev) => set('itype', ev.target.value)} style={{ minHeight: 44 }} data-testid="inn-type">{['STAGE', 'FINAL', 'TPI'].map((x) => <option key={x} value={x}>{t(`x.t.${x}`)}</option>)}</select></Field>
-          <Field label={t('x.callDate')} name="callDate" error={error}><input type="date" value={form.callDate} onChange={(ev) => set('callDate', ev.target.value)} style={{ minHeight: 44 }} data-testid="inn-call" /></Field>
-          <Field label={t('x.inspector')} name="inspector" error={error}><input value={form.inspector} maxLength={80} onChange={(ev) => set('inspector', ev.target.value)} style={{ minHeight: 44 }} data-testid="inn-inspector" /></Field>
-          <Field label={t('x.agency')} name="agency" error={error}><input value={form.agency} maxLength={120} onChange={(ev) => set('agency', ev.target.value)} style={{ minHeight: 44 }} /></Field>
-          <Field label={t('x.location')} name="location" error={error}><input value={form.location} maxLength={160} onChange={(ev) => set('location', ev.target.value)} style={{ minHeight: 44 }} data-testid="inn-location" /></Field></div>
+          <Field label={t('x.type')} name="itype" error={error}><select value={form.itype} onChange={(ev) => set('itype', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="inn-type">{['STAGE', 'FINAL', 'TPI'].map((x) => <option key={x} value={x}>{t(`x.t.${x}`)}</option>)}</select></Field>
+          <Field label={t('x.callDate')} name="callDate" error={error}><input type="date" value={form.callDate} onChange={(ev) => set('callDate', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="inn-call" /></Field>
+          <Field label={t('x.inspector')} name="inspector" error={error}><input value={form.inspector} maxLength={80} onChange={(ev) => set('inspector', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="inn-inspector" /></Field>
+          <Field label={t('x.agency')} name="agency" error={error}><input value={form.agency} maxLength={120} onChange={(ev) => set('agency', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} /></Field>
+          <Field label={t('x.location')} name="location" error={error}><input value={form.location} maxLength={160} onChange={(ev) => set('location', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="inn-location" /></Field></div>
         <label><input type="checkbox" checked={form.mandatory} onChange={(ev) => set('mandatory', ev.target.checked)} data-testid="inn-mandatory" /> {t('x.mandatory')}</label>
         <label>{t('x.scope')}<textarea rows={3} value={form.scope} maxLength={1000} onChange={(ev) => set('scope', ev.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} /></label>
         {error?.form && <p className="field-error" role="alert" data-testid="inn-error">{error.form}</p>}
-        <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || (!editId && !orderId)} data-testid="inn-save">{t('x.save')}</button></div></form></section>
+        <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || (!editId && !orderId)} data-testid="inn-save">{t('x.save')}</button></div></form></section>
   );
 }
 

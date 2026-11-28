@@ -15,7 +15,7 @@ import { GlError, useGlRunner } from './JournalsPage.jsx';
 
 // Part 23.03: the pages of accounts payable — AP bills (List Report; one bill with its TDS, holds, what is set against it; the direct expense bill and its
 // approval), debit notes, and the vendor ledger with the payables reports (ageing, MSME due, TDS deducted).
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 const can = (session, p) => Boolean(session?.permissions?.includes(p));
 const guardOf = (q, what, permission) => (q.error?.status === 403 || q.error?.status === 404 ? <NoPermission what={what} permission={permission} /> : q.isPending ? <Skeleton label={what} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : null);
@@ -232,7 +232,7 @@ export function PayablesPage() {
   if (session.data && !can(session.data, 'fin.bill.view')) return <NoPermission what={t('py.title')} permission="fin.bill.view" />;
   return (
     <section aria-labelledby="py-h" data-testid="ap-payables"><PageHeader id="py-h" title={t('py.title')} subtitle={t('py.intro')} meta={<Link to="/finance/ap-bills">{t('ap.title')}</Link>} />
-      <div className="actions-row" role="tablist">{['ledger', 'ageing', 'msme', 'tds'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setTab(k)} data-testid={`ap-tab-${k}`}>{t(`py.tab.${k}`)}</button>)}</div>
+      <div className="actions-row" role="tablist">{['ledger', 'ageing', 'msme', 'tds'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setTab(k)} data-testid={`ap-tab-${k}`}>{t(`py.tab.${k}`)}</button>)}</div>
       {tab === 'ledger' && <VendorLedger session={session.data} />}{tab === 'ageing' && <Ageing />}{tab === 'msme' && <Msme />}{tab === 'tds' && <Tds />}
     </section>
   );

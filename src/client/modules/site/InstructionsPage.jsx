@@ -25,10 +25,10 @@ function Recipient({ t, d, a, busy, run, onUp }) {
       <strong>{a.partyName}</strong> <span className="muted">({t(`cnd.ins.pt.${a.partyType}`)})</span> <StatusBadge status={a.state === 'COMPLIED' ? 'COMPLETED' : a.state === 'ACKNOWLEDGED' ? 'IN_REVIEW' : 'DRAFT'} label={t(`cnd.ins.as.${a.state}`)} />
       <div className="muted small">{a.acknowledgedAt ? `${t('cnd.ins.acknowledged')}: ${String(a.acknowledgedAt).slice(0, 16).replace('T', ' ')} · ${a.acknowledgedBy}` : t('cnd.ins.notAcknowledged')}{a.closedAt ? ` · ${t('cnd.ins.complied')}: ${String(a.closedAt).slice(0, 16).replace('T', ' ')}` : ''}</div>
       {a.complianceNote && <p>{a.complianceNote}</p>}
-      {a.can.acknowledge && <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={busy} onClick={() => run(() => st.insAck(d.id, a.id, 'acknowledge'), t('cnd.ins.ackDone'))} data-testid="ins-ack-go">{t('cnd.ins.acknowledge')}</button>}
+      {a.can.acknowledge && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-min)' }} disabled={busy} onClick={() => run(() => st.insAck(d.id, a.id, 'acknowledge'), t('cnd.ins.ackDone'))} data-testid="ins-ack-go">{t('cnd.ins.acknowledge')}</button>}
       {a.can.attach && a.acknowledgedAt && <FileUploader entity="site_instruction_ack" entityId={a.id} onDone={() => { setUp((n) => n + 1); onUp(); }} />}
       {(a.evidence > 0 || a.can.attach) && <AttachmentList key={up} entity="site_instruction_ack" entityId={a.id} canEdit={a.can.attach} />}
-      {a.can.comply && <div className="actions-row"><input aria-label={t('cnd.ins.complianceNote')} placeholder={t('cnd.ins.complianceNote')} value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} style={{ minHeight: 44 }} data-testid="ins-comply-note" /><button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={busy} onClick={() => run(() => st.insAck(d.id, a.id, 'comply', { note: note.trim() }), t('cnd.ins.complyDone'))} data-testid="ins-comply-go">{t('cnd.ins.comply')}</button></div>}
+      {a.can.comply && <div className="actions-row"><input aria-label={t('cnd.ins.complianceNote')} placeholder={t('cnd.ins.complianceNote')} value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="ins-comply-note" /><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-min)' }} disabled={busy} onClick={() => run(() => st.insAck(d.id, a.id, 'comply', { note: note.trim() }), t('cnd.ins.complyDone'))} data-testid="ins-comply-go">{t('cnd.ins.comply')}</button></div>}
     </li>
   );
 }
@@ -86,8 +86,8 @@ function Instruction({ t, id, onGone }) {
       )}
       {d.taskId && (
         <div className="mdm-panel no-print" data-testid="ins-decide"><h2>{t('dpr.decide')}</h2>
-          <label>{t('mb.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 44 }} data-testid="ins-comment" /></label>
-          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="ins-approve">{t('mb.approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')}>{t('mb.return')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')}>{t('mb.reject')}</button></div>
+          <label>{t('mb.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="ins-comment" /></label>
+          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="ins-approve">{t('mb.approve')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')}>{t('mb.return')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')}>{t('mb.reject')}</button></div>
         </div>
       )}
       {talk && <div className="mdm-panel"><DiscussionTab entity="site_instruction" id={d.id} /></div>}

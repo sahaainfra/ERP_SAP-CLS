@@ -13,7 +13,7 @@ import { JN_TONE, gl, money } from './api.js';
 import { todayIst } from '../../platform/forms/dates.js';
 
 // Part 23.01: the journals of the book (List Report) and one journal (its lines with their dimensions, its source document, its reversal, its approval).
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 
 /** The call runner of the general ledger pages: the error (form and fields), a note when done, and the lists refreshed. */
 export function useGlRunner() {

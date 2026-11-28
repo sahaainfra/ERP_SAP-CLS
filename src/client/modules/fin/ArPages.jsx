@@ -15,13 +15,13 @@ import { GlError, useGlRunner } from './JournalsPage.jsx';
 // Part 23.05: the pages of receivables — the receivables with their ageing (List Report; a receivable with what settled it, its credit notes, write-offs and
 // follow-ups), the receipt entry with its allocation, other-income invoices, credit notes and write-offs; and the collections worklist with the client statement,
 // the ageing and DSO, and the TDS deducted by clients.
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 const can = (session, p) => Boolean(session?.permissions?.includes(p));
 const SLA_TONE = { RED: 'REJECTED', AMBER: 'RETURNED', YELLOW: 'IN_REVIEW', GREEN: 'APPROVED' };
 const guardOf = (q, what, permission) => (q.error?.status === 403 || q.error?.status === 404 ? <NoPermission what={what} permission={permission} /> : q.isPending ? <Skeleton label={what} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : null);
 const Tabs = ({ tabs, tab, setTab, label, prefix }) => (
-  <div className="actions-row" role="tablist" aria-label={label}>{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setTab(k)} data-testid={`${prefix}-${k}`}>{l}</button>)}</div>
+  <div className="actions-row" role="tablist" aria-label={label}>{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setTab(k)} data-testid={`${prefix}-${k}`}>{l}</button>)}</div>
 );
 function Decide({ x, run, busy, setError }) {
   const t = useT('fin'); const [comment, setComment] = useState('');
@@ -65,7 +65,7 @@ function ReceiptForm({ partnerId: startPartner }) {
         <Field label={t('ar.retention')} name="retention" error={fe.retention}><input inputMode="decimal" value={f.retention} onChange={set('retention')} style={big} data-testid="ar-retention" /></Field>
       </div>
       <h2>{t('ar.allocation')}</h2>
-      <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 48 }}><input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} style={{ width: 24, height: 24 }} data-testid="ar-auto" />{t('ar.oldestFirst')}</label>
+      <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 'var(--erp-target-large)' }}><input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} style={{ width: 24, height: 24 }} data-testid="ar-auto" />{t('ar.oldestFirst')}</label>
       {!f.partnerId ? <p className="muted">{t('ar.pickClient')}</p> : open.isPending ? <Skeleton label={t('ar.allocation')} rows={3} /> : plan.length === 0 ? <EmptyState compact title={t('ar.noOpen')} message={t('ar.noOpenBody')} /> : (
         <ul className="lp-list" aria-label={t('ar.allocation')} data-testid="ar-alloc">{plan.map((i) => (
           <li key={i.id} style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', padding: '8px 0' }} data-testid="ar-alloc-row">
@@ -215,7 +215,7 @@ function AgeingTiles() {
 }
 function CreditNoteList() {
   const t = useT('fin'); const q = useQuery({ queryKey: ['gl', 'ar-cns'], queryFn: ar.creditNotes, retry: false }); const g = guardOf(q, t('ar.creditNotes'), 'fin.credit_note.view'); if (g) return g;
-  return q.data.length === 0 ? <EmptyState compact title={t('ar.noCreditNotes')} message={t('ar.noCreditNotesBody')} /> : <ul className="lp-list" aria-label={t('ar.creditNotes')}>{q.data.map((n) => <li key={n.id} style={{ minHeight: 44 }}><Link to={`/finance/receivables?cn=${n.id}`}>{n.docNo}</Link> · {n.client} · {t(`ar.r.${n.reason}`)} · {money(n.total)} · {t(`pm.st.${n.status}`)}</li>)}</ul>;
+  return q.data.length === 0 ? <EmptyState compact title={t('ar.noCreditNotes')} message={t('ar.noCreditNotesBody')} /> : <ul className="lp-list" aria-label={t('ar.creditNotes')}>{q.data.map((n) => <li key={n.id} style={{ minHeight: 'var(--erp-target-min)' }}><Link to={`/finance/receivables?cn=${n.id}`}>{n.docNo}</Link> · {n.client} · {t(`ar.r.${n.reason}`)} · {money(n.total)} · {t(`pm.st.${n.status}`)}</li>)}</ul>;
 }
 export function ReceivablesPage() {
   const t = useT('fin'); usePageTitle(t('ar.title')); const sp = useSearch(); const session = useSession(); const [tab, setTab] = useState(sp.get('tab') ?? 'invoices');

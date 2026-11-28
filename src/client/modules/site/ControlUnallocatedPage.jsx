@@ -49,8 +49,8 @@ function Alloc({ t, id }) {
       </div>
       {a.taskId && (
         <div className="mdm-panel no-print" data-testid="alloc-decide"><h2>{t('dpr.decide')}</h2>
-          <label>{t('mb.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 44 }} data-testid="alloc-comment" /></label>
-          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="alloc-approve">{t('mb.approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')} data-testid="alloc-return">{t('mb.return')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')} data-testid="alloc-reject">{t('mb.reject')}</button></div>
+          <label>{t('mb.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="alloc-comment" /></label>
+          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="alloc-approve">{t('mb.approve')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')} data-testid="alloc-return">{t('mb.return')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')} data-testid="alloc-reject">{t('mb.reject')}</button></div>
         </div>
       )}
       {hq.data && (hq.data.approvals.length > 0 || hq.data.audit.length > 0) && (

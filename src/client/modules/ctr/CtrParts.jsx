@@ -19,7 +19,7 @@ export function useRecord(kind, id, what, permission) {
   return { q, guard };
 }
 export function Status({ x, ns = 'st' }) { const t = useT('ctr'); return <StatusBadge status={CTR_TONE[x.status]} label={t(`${ns}.${x.status}`)} />; }
-export const sel = { minHeight: 44 }; export const big = { minHeight: 48, fontSize: '1rem' };
+export const sel = { minHeight: 'var(--erp-target-min)' }; export const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 export const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 export function ErrorLine({ error, id }) { return error?.form ? <p className="field-error" role="alert" data-testid={id}>{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p> : null; }
 /** The actions of an approval document: what the server says the person can do, the decision panel for an approver, and the history. */
@@ -32,7 +32,7 @@ export function DocBar({ kind, x, printName, extra = null }) {
     <>
       <ErrorLine error={error} id="ctr-error" />{note && <p className="mdm-banner" role="status" data-testid="ctr-note">{note}</p>}
       <div className="actions-row no-print">
-        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => ctr.act(kind, x.id, 'submit'), t('submitted'))} data-testid="ctr-submit">{t('sendForApproval')}</button>}
+        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => run(() => ctr.act(kind, x.id, 'submit'), t('submitted'))} data-testid="ctr-submit">{t('sendForApproval')}</button>}
         {can.withdraw && <button type="button" className="btn" disabled={busy} onClick={() => why('withdraw', t('withdrawn'))} data-testid="ctr-withdraw">{t('withdraw')}</button>}
         {can.cancel && <button type="button" className="btn" disabled={busy} onClick={() => why('cancel', t('cancelled'))} data-testid="ctr-cancel">{t('cancel')}</button>}
         {can.amend && <button type="button" className="btn" disabled={busy} onClick={() => why('amend', t('amended'))} data-testid="ctr-amend">{t('amend')}</button>}
@@ -42,7 +42,7 @@ export function DocBar({ kind, x, printName, extra = null }) {
       {x.approve && x.taskId && (
         <div className="mdm-panel no-print" data-testid="ctr-decide"><h2>{t('decision')}</h2>
           <label>{t('comment')}<textarea value={comment} onChange={(ev) => setComment(ev.target.value)} rows={2} style={{ width: '100%' }} data-testid="ctr-comment" /></label>
-          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="ctr-approve">{t('approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')} data-testid="ctr-return">{t('returnIt')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')} data-testid="ctr-reject">{t('reject')}</button></div>
+          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="ctr-approve">{t('approve')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')} data-testid="ctr-return">{t('returnIt')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')} data-testid="ctr-reject">{t('reject')}</button></div>
         </div>
       )}
       {hq.data && (

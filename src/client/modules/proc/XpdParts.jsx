@@ -30,8 +30,8 @@ export function ProjectOrder({ t, projectId, setProjectId, orderId, setOrderId, 
   const order = (oq.data?.orders ?? []).find((o) => String(o.id) === String(orderId)) ?? null;
   return (
     <>
-      <Field label={t('x.project')} name="projectId" error={error}><select value={projectId} disabled={lockOrder} onChange={(ev) => { setProjectId(ev.target.value); setOrderId(''); }} style={{ minHeight: 44 }} data-testid={`${prefix}-project`}><option value="">{t('x.choose')}</option>{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
-      <Field label={t('x.order')} name="poId" error={error}><select value={orderId} disabled={lockOrder || !projectId} onChange={(ev) => setOrderId(ev.target.value)} style={{ minHeight: 44 }} data-testid={`${prefix}-order`}><option value="">{t('x.choose')}</option>{(oq.data?.orders ?? []).map((o) => <option key={o.id} value={o.id}>{o.docNo} · {o.vendor}</option>)}</select></Field>
+      <Field label={t('x.project')} name="projectId" error={error}><select value={projectId} disabled={lockOrder} onChange={(ev) => { setProjectId(ev.target.value); setOrderId(''); }} style={{ minHeight: 'var(--erp-target-min)' }} data-testid={`${prefix}-project`}><option value="">{t('x.choose')}</option>{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
+      <Field label={t('x.order')} name="poId" error={error}><select value={orderId} disabled={lockOrder || !projectId} onChange={(ev) => setOrderId(ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid={`${prefix}-order`}><option value="">{t('x.choose')}</option>{(oq.data?.orders ?? []).map((o) => <option key={o.id} value={o.id}>{o.docNo} · {o.vendor}</option>)}</select></Field>
       {children?.(order)}
     </>
   );

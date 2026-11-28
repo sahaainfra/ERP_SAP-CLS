@@ -34,7 +34,7 @@ async function stampedPhotos(files) {
 // and goes when the signal returns. The server checks every rule again.
 const transport = browserTransport(authHeaders);
 const STEPS = ['day', 'work', 'labour', 'materials', 'notes', 'photos', 'send'];
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const num = (v) => (v === '' || v == null ? 0 : Number(v));
 const fromPrefill = (p) => ({
   weatherCode: '', rainMm: '', summary: '', nextDay: p.nextDay ?? '',
@@ -169,7 +169,7 @@ export default function DprEntryPage() {
         <div className="mdm-panel" data-testid="dpr-day">
           <h2 ref={stepHeading} tabIndex={-1}>{t('dpr.s.day')}</h2>
           <SiteDay siteId={siteId} date={date} onSite={onSite} onDate={setDate} testId="dpr" />
-          <fieldset><legend>{t('dpr.scope')}</legend>{['SITE', 'SUPERVISOR'].map((k) => <label key={k} className="check" style={{ marginRight: 16, minHeight: 44 }}><input type="radio" name="scope" checked={scope === k} onChange={() => setScope(k)} data-testid={`dpr-scope-${k}`} /> {t(`dpr.scope.${k}`)}</label>)}</fieldset>
+          <fieldset><legend>{t('dpr.scope')}</legend>{['SITE', 'SUPERVISOR'].map((k) => <label key={k} className="check" style={{ marginRight: 16, minHeight: 'var(--erp-target-min)' }}><input type="radio" name="scope" checked={scope === k} onChange={() => setScope(k)} data-testid={`dpr-scope-${k}`} /> {t(`dpr.scope.${k}`)}</label>)}</fieldset>
           {existing && <p className="mdm-banner" data-testid="dpr-existing">{t('dpr.existing', { n: existing.docNo })} <Link to={['DRAFT', 'RETURNED'].includes(existing.status) ? `/site/dpr-entry?id=${existing.id}` : `/site/dprs?id=${existing.id}`}>{t('dpr.open')}</Link></p>}
           <div className="actions"><button type="button" className="btn btn-primary" style={big} disabled={!siteId || busy} onClick={start} data-testid="dpr-start">{t('dpr.start')}</button></div>
           <p className="muted">{t('dpr.startHelp')}</p>
@@ -276,7 +276,7 @@ export default function DprEntryPage() {
 function AddLabour({ t, contractors, onAdd }) {
   const [c, setC] = useState({ category: 'CONTRACT', contractorId: '', trade: '' });
   return (
-    <details className="mdm-panel"><summary style={{ minHeight: 44 }}>{t('dpr.addLabour')}</summary>
+    <details className="mdm-panel"><summary style={{ minHeight: 'var(--erp-target-min)' }}>{t('dpr.addLabour')}</summary>
       <div className="form-grid">
         <Field label={t('dpr.category')} name="category"><select value={c.category} onChange={(e) => setC({ ...c, category: e.target.value })} style={big}>{['STAFF', 'CONTRACT'].map((k) => <option key={k} value={k}>{t(`dpr.cat.${k}`)}</option>)}</select></Field>
         {c.category === 'CONTRACT' && <Field label={t('dpr.contractor')} name="contractor"><select value={c.contractorId} onChange={(e) => setC({ ...c, contractorId: e.target.value })} style={big}><option value="">—</option>{contractors.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>}
@@ -289,7 +289,7 @@ function AddLabour({ t, contractors, onAdd }) {
 function AddMaterial({ t, items, onAdd }) {
   const [id, setId] = useState('');
   return (
-    <details className="mdm-panel"><summary style={{ minHeight: 44 }}>{t('dpr.addMaterial')}</summary>
+    <details className="mdm-panel"><summary style={{ minHeight: 'var(--erp-target-min)' }}>{t('dpr.addMaterial')}</summary>
       <Field label={t('dpr.item')} name="item"><select value={id} onChange={(e) => setId(e.target.value)} style={big}><option value="">—</option>{items.map((x) => <option key={x.id} value={x.id}>{x.code} {x.name}</option>)}</select></Field>
       <button type="button" className="btn" style={big} disabled={!id} onClick={() => { const x = items.find((i) => String(i.id) === id); onAdd({ itemId: x.id, item: `${x.code} ${x.name}`, uom: x.uom, waId: null, issueRef: null, offerQty: null, qty: '0', reason: '' }); setId(''); }}>{t('dpr.add')}</button>
     </details>
@@ -298,7 +298,7 @@ function AddMaterial({ t, items, onAdd }) {
 function AddEquipment({ t, onAdd }) {
   const [label, setLabel] = useState('');
   return (
-    <details className="mdm-panel"><summary style={{ minHeight: 44 }}>{t('dpr.addEquipment')}</summary>
+    <details className="mdm-panel"><summary style={{ minHeight: 'var(--erp-target-min)' }}>{t('dpr.addEquipment')}</summary>
       <Field label={t('dpr.equipment')} name="equipment"><input value={label} onChange={(e) => setLabel(e.target.value)} style={big} maxLength={120} /></Field>
       <button type="button" className="btn" style={big} disabled={label.trim().length < 2} onClick={() => { onAdd({ equipmentKey: null, label: label.trim(), logRef: null, offerHours: null, hoursWorked: '0', hoursIdle: '0', hoursBreakdown: '0', reason: '' }); setLabel(''); }}>{t('dpr.add')}</button>
     </details>

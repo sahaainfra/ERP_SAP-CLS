@@ -30,7 +30,7 @@ function Run({ t, id }) {
       {r.warnings.length > 0 && <ul className="mdm-banner" role="status" data-testid="run-warnings">{r.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
       {error?.form && <p className="field-error" role="alert" data-testid="run-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="run-note">{note}</p>}
       <div className="actions-row no-print">
-        {can.run && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => pc.runMake(r.id), t('p.runDone'))} data-testid="run-make">{t('p.runMrp')}</button>}
+        {can.run && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => run(() => pc.runMake(r.id), t('p.runDone'))} data-testid="run-make">{t('p.runMrp')}</button>}
         {can.amend && <button type="button" className="btn" onClick={() => why('amend')} data-testid="run-amend">{t('p.runAgain')}</button>}
         {can.cancel && <button type="button" className="btn" onClick={() => why('cancel', t('p.cancelled'))} data-testid="run-cancel">{t('p.cancel')}</button>}
         {can.print && <button type="button" className="btn" onClick={() => download(`/runs/${r.id}/print`, `${r.docNo.replaceAll('/', '-')}.pdf`).catch(() => setError({ form: t('p.fileFailed') }))} data-testid="run-print">{t('p.print')}</button>}
@@ -72,14 +72,14 @@ export default function MrpPage() {
       {projects.length === 0 ? <div className="mdm-panel" data-testid="mrp-none"><h2>{t('p.noProject')}</h2><p className="muted">{t('p.noProjectBody')}</p></div> : (
         <form className="mdm-panel" onSubmit={(e) => { e.preventDefault(); go(); }} noValidate aria-label={t('p.params')}>
           <div className="form-grid">
-            <Field label={t('p.project')} name="projectId" error={error}><select value={projectId} onChange={(e) => setF({ ...f, projectId: e.target.value })} style={{ minHeight: 44 }} data-testid="mrp-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
-            <Field label={t('p.horizon')} name="horizonWeeks" error={error}><input type="number" min="1" max="52" value={f.horizonWeeks} onChange={(e) => setF({ ...f, horizonWeeks: e.target.value })} style={{ minHeight: 44 }} data-testid="mrp-horizon" /></Field>
-            <Field label={t('p.buffer')} name="bufferDays" error={error}><input type="number" min="0" max="60" value={f.bufferDays} onChange={(e) => setF({ ...f, bufferDays: e.target.value })} style={{ minHeight: 44 }} data-testid="mrp-buffer" /></Field>
+            <Field label={t('p.project')} name="projectId" error={error}><select value={projectId} onChange={(e) => setF({ ...f, projectId: e.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrp-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
+            <Field label={t('p.horizon')} name="horizonWeeks" error={error}><input type="number" min="1" max="52" value={f.horizonWeeks} onChange={(e) => setF({ ...f, horizonWeeks: e.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrp-horizon" /></Field>
+            <Field label={t('p.buffer')} name="bufferDays" error={error}><input type="number" min="0" max="60" value={f.bufferDays} onChange={(e) => setF({ ...f, bufferDays: e.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mrp-buffer" /></Field>
             <label><input type="checkbox" checked={f.includeMto} onChange={(e) => setF({ ...f, includeMto: e.target.checked })} data-testid="mrp-mto" /> {t('p.includeMto')}</label>
           </div>
           {sel && !sel.hasSchedule && <p className="mdm-banner" role="status" data-testid="mrp-no-schedule">{t('p.noSchedule')}</p>}
           {error?.form && <p className="field-error" role="alert" data-testid="mrp-error">{error.form}</p>}
-          <button type="submit" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !projectId} data-testid="mrp-go">{t('p.runMrp')}</button>
+          <button type="submit" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || !projectId} data-testid="mrp-go">{t('p.runMrp')}</button>
         </form>
       )}
       <div className="mdm-panel" data-testid="mrp-runs"><h2>{t('p.earlierRuns')}</h2>

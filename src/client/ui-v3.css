@@ -330,10 +330,10 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .cv-figure { position: relative; margin: 0; }
 .cv-figure img { display: block; width: 100%; height: auto; border-radius: var(--erp-radius-md); }
 .cv-figure svg { position: absolute; left: 0; top: 0; width: 100%; height: calc(100% - 2rem); pointer-events: none; }
-.cv-box { fill: none; stroke-width: 3px; stroke: var(--erp-color-status-info-solid, #2563eb); }
-.cv-box-ppe { stroke: var(--erp-color-status-success-solid, #15803d); }
-.cv-box-defect { stroke: var(--erp-color-status-error-solid, #b91c1c); }
-.cv-box-progress, .cv-box-material { stroke: var(--erp-color-status-warning-solid, #b45309); }
+.cv-box { fill: none; stroke-width: 3px; stroke: var(--erp-color-status-info-solid); }
+.cv-box-ppe { stroke: var(--erp-color-status-success-solid); }
+.cv-box-defect { stroke: var(--erp-color-status-error-solid); }
+.cv-box-progress, .cv-box-material { stroke: var(--erp-color-status-warning-solid); }
 .cv-sugs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-3); }
 .cv-sug { padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
 .cv-sug textarea, .cv-sug input { font-size: var(--erp-font-size-body-lg); }

@@ -13,7 +13,7 @@ import { GlError, useGlRunner } from './JournalsPage.jsx';
 
 // Part 23.01 FR-05: the ledger of one account (running balance, drill to the voucher and its source document) and the trial balance on any date and by
 // dimension (drill to the account's ledger), with the export of each and, on the trial balance, the carry-forward of a year's balances (FR-06).
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const FILTER_DIMS = [['projectId', 'projects'], ['siteId', 'sites'], ['branchId', 'branches'], ['costCentreId', 'costCentres']];
 const pick = (sp, keys) => Object.fromEntries(keys.map((k) => [k, sp.get(k) ?? '']).filter(([, v]) => v !== ''));
 const toUrl = (path, f) => `${path}?${gl.q(f)}`;

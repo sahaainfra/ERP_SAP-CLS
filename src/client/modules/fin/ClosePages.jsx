@@ -30,12 +30,12 @@ function TaskCard({ x, t, tk, run, busy }) {
     {tk.waitingFor.length > 0 && <p className="muted small" style={{ margin: 0 }}>{t('pc.waitingFor', { list: tk.waitingFor.join(', ') })}</p>}
     {tk.evidence && <p className="muted small" style={{ margin: 0 }}>{t('pc.evidence')}: {tk.evidence} · {tk.doneBy}</p>}
     <div className="actions-row">
-      {tk.can.complete && tk.status === 'OPEN' && <button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy} onClick={() => run(() => pc.updateTask(x.id, tk.id, { started: true }), t('pc.started'))}>{t('pc.start')}</button>}
-      {tk.can.complete && <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} onClick={() => setOpen(!open)} data-testid={`pc-done-${tk.code}`}>{t('pc.markDone')}</button>}
-      {tk.can.reopen && <button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy} onClick={() => { const r = globalThis.prompt?.(t('pc.whyReopen')); if (r && r.trim().length >= 5) run(() => pc.reopenTask(x.id, tk.id, r.trim()), t('pc.taskReopened')); }}>{t('pc.reopenTask')}</button>}
+      {tk.can.complete && tk.status === 'OPEN' && <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} disabled={busy} onClick={() => run(() => pc.updateTask(x.id, tk.id, { started: true }), t('pc.started'))}>{t('pc.start')}</button>}
+      {tk.can.complete && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setOpen(!open)} data-testid={`pc-done-${tk.code}`}>{t('pc.markDone')}</button>}
+      {tk.can.reopen && <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} disabled={busy} onClick={() => { const r = globalThis.prompt?.(t('pc.whyReopen')); if (r && r.trim().length >= 5) run(() => pc.reopenTask(x.id, tk.id, r.trim()), t('pc.taskReopened')); }}>{t('pc.reopenTask')}</button>}
     </div>
     {open && <div style={{ display: 'grid', gap: 8, marginTop: 8 }}><label>{t('pc.evidenceNote')}<textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} style={{ width: '100%', fontSize: '1rem' }} data-testid={`pc-note-${tk.code}`} /></label>
-      {!tk.mandatory && <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 44 }}><input type="checkbox" checked={na} onChange={(e) => setNa(e.target.checked)} />{t('pc.notApplicable')}</label>}
+      {!tk.mandatory && <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 'var(--erp-target-min)' }}><input type="checkbox" checked={na} onChange={(e) => setNa(e.target.checked)} />{t('pc.notApplicable')}</label>}
       <button type="button" className="btn btn-primary" style={big} disabled={busy} onClick={() => run(() => pc.completeTask(x.id, tk.id, { note: note.trim() || null, notApplicable: na || undefined }), t('pc.done')).then((r) => r && setOpen(false))} data-testid={`pc-save-${tk.code}`}>{t('pc.save')}</button></div>}
   </li>);
 }
@@ -47,7 +47,7 @@ function Reopen({ id }) {
     <p><Link to={`/finance/close?id=${x.closeId}`}>{t('pc.backClose')}</Link></p><GlError error={error} />{note && <p className="mdm-banner" role="status">{note}</p>}
     <div className="mdm-panel"><Rows rows={[[t('pc.modules'), x.modules.join(', ')], [t('pc.reopenAs'), x.targetStatus], [t('pc.requestedBy'), x.requestedBy]]} /></div>
     <Decide x={x} run={run} busy={busy} t={t} p="pc" testid="ro-decide" />
-    <div className="mdm-panel"><h2>{t('pc.history')}</h2><ul className="lp-list">{(x.history?.approvals ?? []).map((h, i) => <li key={i} style={{ minHeight: 44 }}>{String(h.at).slice(0, 16).replace('T', ' ')} · {h.event}{h.step_code ? ` (${h.step_code})` : ''} · {h.actor}</li>)}</ul></div></section>);
+    <div className="mdm-panel"><h2>{t('pc.history')}</h2><ul className="lp-list">{(x.history?.approvals ?? []).map((h, i) => <li key={i} style={{ minHeight: 'var(--erp-target-min)' }}>{String(h.at).slice(0, 16).replace('T', ' ')} · {h.event}{h.step_code ? ` (${h.step_code})` : ''} · {h.actor}</li>)}</ul></div></section>);
 }
 
 function Close({ id }) {
@@ -66,7 +66,7 @@ function Close({ id }) {
     <div data-testid="pc-board" style={{ display: 'grid', gridTemplateColumns: phone ? '1fr' : 'repeat(3, minmax(0, 1fr))', gap: 12 }}>{phone ? column(col) : COLS.map(column)}</div>
     {c.addTask && <div className="mdm-panel"><h3>{t('pc.addTask')}</h3><div className="form-grid"><Field label={t('pc.taskName')} name="tname" error={null}><input value={name} onChange={(e) => setName(e.target.value)} style={big} /></Field><button type="button" className="btn" style={big} disabled={busy || name.trim().length < 3} onClick={() => run(() => pc.addTask(x.id, { name: name.trim(), mandatory: false }), t('pc.taskAdded')).then(() => setName(''))}>{t('pc.add')}</button></div></div>}
     <Decide x={x} run={run} busy={busy} t={t} p="pc" testid="pc-decide" />
-    {x.reopens.length > 0 && <div className="mdm-panel"><h2>{t('pc.reopens')}</h2><ul className="lp-list">{x.reopens.map((r) => <li key={r.id} style={{ minHeight: 44 }}><Link to={`/finance/close?reopen=${r.id}`}>{r.docNo}</Link> · {t(`pc.st.${r.status}`)} · {r.reason}</li>)}</ul></div>}
+    {x.reopens.length > 0 && <div className="mdm-panel"><h2>{t('pc.reopens')}</h2><ul className="lp-list">{x.reopens.map((r) => <li key={r.id} style={{ minHeight: 'var(--erp-target-min)' }}><Link to={`/finance/close?reopen=${r.id}`}>{r.docNo}</Link> · {t(`pc.st.${r.status}`)} · {r.reason}</li>)}</ul></div>}
     <div className="actions-row ff-actionbar">
       {c.submit && <button type="button" className="btn btn-primary" style={big} disabled={busy} onClick={() => run(() => pc.act(x.id, 'submit'), t('pc.sent'))} data-testid="pc-submit">{t('pc.submit')}</button>}
       {c.reopen && <button type="button" className="btn" style={big} disabled={busy} onClick={() => { const r = globalThis.prompt?.(t('pc.whyReopenMonth')); if (r && r.trim().length >= 10) run(() => pc.reopen(x.id, { reason: r.trim(), modules: ['finance'] }), t('pc.reopenSent')); }} data-testid="pc-reopen-btn">{t('pc.askReopen')}</button>}
@@ -92,7 +92,7 @@ export function ClosePage() {
 function Lines({ rows, stmt, from, to }) {
   const [open, setOpen] = useState(null); let section = null;
   return (<ul className="lp-list" data-testid={`st-${stmt}`}>{rows.map((r) => { const head = r.section !== section ? (section = r.section) : null; return (<li key={r.code} style={{ padding: '4px 0' }}>{head && <h3 className="small" style={{ margin: '12px 0 4px' }}>{head}</h3>}
-    <button type="button" className="btn-link" style={{ ...row, width: '100%', minHeight: 44, alignItems: 'center', background: 'none', border: 0, color: 'inherit', textAlign: 'left' }} onClick={() => setOpen(open === r.code ? null : r.code)} disabled={!r.accounts.length}>
+    <button type="button" className="btn-link" style={{ ...row, width: '100%', minHeight: 'var(--erp-target-min)', alignItems: 'center', background: 'none', border: 0, color: 'inherit', textAlign: 'left' }} onClick={() => setOpen(open === r.code ? null : r.code)} disabled={!r.accounts.length}>
       <span>{r.label}</span><span className="num">{money(r.amount)} <span className="muted small">· {money(r.previous)} · {money(r.lastYear)}</span></span></button>
     {open === r.code && <ul className="lp-list small" style={{ paddingLeft: 12 }} data-testid={`st-note-${r.code}`}>{r.accounts.map((a) => <li key={a.accountId} style={{ ...row, minHeight: 36 }}><Link to={`/finance/ledger?accountId=${a.accountId}&from=${from}&to=${to}`}>{a.code} {a.name}</Link><span className="num">{money(a.amount)}</span></li>)}</ul>}</li>); })}</ul>);
 }
@@ -130,8 +130,8 @@ export function FinanceDashboardPage() {
       <p className="small" data-testid="db-reconciled">{x.reconciled.tbBalanced && x.reconciled.balanceSheetBalances ? t('db.reconciled', { dr: money(x.reconciled.tbDebit), cr: money(x.reconciled.tbCredit) }) : t('db.notReconciled')}</p>
       {x.trend.length > 0 && <div className="mdm-panel"><Chart type="bar" data={{ categories: x.trend.map((r) => r.month), series: [{ name: t('pc.revenue'), values: x.trend.map((r) => Math.round(r.revenue)) }, { name: t('db.ebitda'), values: x.trend.map((r) => Math.round(r.ebitda)) }], unit: '₹' }} title={t('db.trend')} exportName={`finance-trend-${period}`} tableSwitch /></div>}
       <div className="mdm-panel"><Chart type="bar" data={{ categories: x.receivablesAgeing.buckets.map((b) => t(`db.age.${b.bucket}`)), series: [{ name: t('db.receivables'), values: x.receivablesAgeing.buckets.map((b) => Math.round(b.amount)) }, { name: t('db.payables'), values: x.payablesAgeing.buckets.map((b) => Math.round(b.amount)) }], unit: '₹' }} title={t('db.ageing')} exportName={`ageing-${period}`} tableSwitch /></div>
-      <div className="mdm-panel" data-testid="db-exceptions"><h2>{t('db.exceptions')}</h2>{x.exceptions.length === 0 ? <p className="muted">{t('db.noExceptions')}</p> : <ul className="lp-list">{x.exceptions.map((e, i) => <li key={i} style={{ minHeight: 44 }}>{e.link ? <Link to={e.link}>{e.text}</Link> : e.text}</li>)}</ul>}<p><Link to="/finance/close">{t('db.viewAll')} ›</Link></p></div>
-      <div className="mdm-panel"><h2>{t('db.pending')}</h2>{x.pending.length === 0 ? <p className="muted">{t('db.noPending')}</p> : <ul className="lp-list">{x.pending.map((e, i) => <li key={i} style={{ minHeight: 44 }}><Link to={e.link}>{e.text}</Link> · {e.due}</li>)}</ul>}</div>
+      <div className="mdm-panel" data-testid="db-exceptions"><h2>{t('db.exceptions')}</h2>{x.exceptions.length === 0 ? <p className="muted">{t('db.noExceptions')}</p> : <ul className="lp-list">{x.exceptions.map((e, i) => <li key={i} style={{ minHeight: 'var(--erp-target-min)' }}>{e.link ? <Link to={e.link}>{e.text}</Link> : e.text}</li>)}</ul>}<p><Link to="/finance/close">{t('db.viewAll')} ›</Link></p></div>
+      <div className="mdm-panel"><h2>{t('db.pending')}</h2>{x.pending.length === 0 ? <p className="muted">{t('db.noPending')}</p> : <ul className="lp-list">{x.pending.map((e, i) => <li key={i} style={{ minHeight: 'var(--erp-target-min)' }}><Link to={e.link}>{e.text}</Link> · {e.due}</li>)}</ul>}</div>
     </>}</section>);
 }
 
@@ -146,7 +146,7 @@ export function YearEndPage() {
       <Field label={t('ye.year')} name="fy" error={null}><select value={fyId || x.fy.id} onChange={(e) => setFyId(e.target.value)} style={big} data-testid="ye-fy">{x.years.map((y) => <option key={y.id} value={y.id}>{y.code} · {y.status}</option>)}</select></Field>
       <ol className="lp-list" data-testid="ye-steps">{x.steps.map((s, i) => <li key={s.code} className="mdm-panel" style={{ padding: 12, margin: '6px 0' }}><div style={row}><strong>{i + 1}. {t(`ye.step.${s.code}`)}</strong><span>{s.done ? '✓' : '…'}</span></div><span className="muted small">{s.detail}</span></li>)}</ol>
       <KpiRow label={x.fy.code}><KpiTile label={t('st.pbt')} value={money(x.profit.pbt)} amount={x.profit.pbt} kind="money" /><KpiTile label={t('pc.pat')} value={money(x.profit.pat)} amount={x.profit.pat} kind="money" /><KpiTile label={t('ye.monthsClosed')} value={`${x.periods.filter((p) => p.closed).length} / ${x.periods.length}`} /></KpiRow>
-      <ul className="lp-list">{x.periods.map((p) => <li key={p.id} style={{ ...row, minHeight: 44, alignItems: 'center' }}><span>{p.name}</span>{p.close ? <Link to={`/finance/close?id=${p.close.id}`}>{p.close.docNo} · {t(`pc.state.${p.close.state}`)}</Link> : <span className="muted">{t('ye.notStarted')}</span>}</li>)}</ul>
+      <ul className="lp-list">{x.periods.map((p) => <li key={p.id} style={{ ...row, minHeight: 'var(--erp-target-min)', alignItems: 'center' }}><span>{p.name}</span>{p.close ? <Link to={`/finance/close?id=${p.close.id}`}>{p.close.docNo} · {t(`pc.state.${p.close.state}`)}</Link> : <span className="muted">{t('ye.notStarted')}</span>}</li>)}</ul>
       <div className="actions-row ff-actionbar">
         {x.can.carryForward && <button type="button" className="btn btn-primary" style={big} disabled={busy} onClick={() => run(() => pc.carryForward(x.fy.id), t('ye.carried'))}>{t('ye.carryForward')}</button>}
         {x.carryForward && <Link to={`/finance/journals?id=${x.carryForward.id}`} className="btn" style={big}>{x.carryForward.ref}</Link>}

@@ -20,12 +20,12 @@ function Modify({ t, id, onDone, onCancel }) {
   return (
     <form className="mdm-panel" onSubmit={save} data-testid="prop-modify" aria-label={t('p.modify')} noValidate><h2>{t('p.modifyOf', { i: p.itemCode })}</h2>
       <div className="form-grid">
-        <Field label={t('p.qty')} name="qty" error={error}><input type="number" min="0" step="0.001" value={form.qty} onChange={(e) => setF({ ...form, qty: e.target.value })} style={{ minHeight: 44 }} data-testid="prop-qty" /></Field>
-        <Field label={t('p.requiredBy')} name="requiredBy" error={error}><input type="date" value={form.requiredBy} onChange={(e) => setF({ ...form, requiredBy: e.target.value })} style={{ minHeight: 44 }} data-testid="prop-required" /></Field>
-        <Field label={t('p.substitute')} name="substituteItemId" error={error}><select value={form.substituteItemId} onChange={(e) => setF({ ...form, substituteItemId: e.target.value })} style={{ minHeight: 44 }} data-testid="prop-sub"><option value="">{t('p.noSubstitute')}</option>{p.alternates.map((a) => <option key={a.itemId} value={a.itemId}>{a.code} · {a.name} ({t('p.freeN', { n: fmtQty(a.freeQty) })})</option>)}</select></Field>
+        <Field label={t('p.qty')} name="qty" error={error}><input type="number" min="0" step="0.001" value={form.qty} onChange={(e) => setF({ ...form, qty: e.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="prop-qty" /></Field>
+        <Field label={t('p.requiredBy')} name="requiredBy" error={error}><input type="date" value={form.requiredBy} onChange={(e) => setF({ ...form, requiredBy: e.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="prop-required" /></Field>
+        <Field label={t('p.substitute')} name="substituteItemId" error={error}><select value={form.substituteItemId} onChange={(e) => setF({ ...form, substituteItemId: e.target.value })} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="prop-sub"><option value="">{t('p.noSubstitute')}</option>{p.alternates.map((a) => <option key={a.itemId} value={a.itemId}>{a.code} · {a.name} ({t('p.freeN', { n: fmtQty(a.freeQty) })})</option>)}</select></Field>
       </div>
       {error?.form && <p className="field-error" role="alert" data-testid="prop-error">{error.form}</p>}
-      <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} data-testid="prop-save">{t('p.save')}</button><button type="button" className="btn" style={{ minHeight: 48 }} onClick={onCancel}>{t('p.cancel')}</button></div>
+      <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} data-testid="prop-save">{t('p.save')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} onClick={onCancel}>{t('p.cancel')}</button></div>
     </form>
   );
 }
@@ -48,9 +48,9 @@ export default function MrpProposalsPage() {
       <PageHeader id="prop-h" title={t('p.proposals')} subtitle={t('p.proposalsIntro')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('p.params')}>
         <div className="form-grid">
-          <Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => { setProjectId(e.target.value); setSel(new Set()); }} style={{ minHeight: 44 }} data-testid="prop-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
-          <Field label={t('p.decision')} name="decision"><select value={decision} onChange={(e) => { setDecision(e.target.value); setSel(new Set()); }} style={{ minHeight: 44 }} data-testid="prop-decision">{['OPEN', 'ACCEPTED', 'REJECTED', 'SUPERSEDED', ''].map((x) => <option key={x} value={x}>{x ? t(`p.dec.${x}`) : t('p.all')}</option>)}</select></Field>
-          {canDecide && <Field label={t('p.deliverTo')} name="siteId"><select value={siteId} onChange={(e) => setSiteId(e.target.value)} style={{ minHeight: 44 }} data-testid="prop-site"><option value="">{t('p.none')}</option>{(oq.data?.sites ?? []).map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></Field>}
+          <Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => { setProjectId(e.target.value); setSel(new Set()); }} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="prop-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
+          <Field label={t('p.decision')} name="decision"><select value={decision} onChange={(e) => { setDecision(e.target.value); setSel(new Set()); }} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="prop-decision">{['OPEN', 'ACCEPTED', 'REJECTED', 'SUPERSEDED', ''].map((x) => <option key={x} value={x}>{x ? t(`p.dec.${x}`) : t('p.all')}</option>)}</select></Field>
+          {canDecide && <Field label={t('p.deliverTo')} name="siteId"><select value={siteId} onChange={(e) => setSiteId(e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="prop-site"><option value="">{t('p.none')}</option>{(oq.data?.sites ?? []).map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></Field>}
         </div>
       </form>
       {runId && <p className="muted">{t('p.ofRun')} <Link to={`/proc/mrp?id=${runId}`}>#{runId}</Link></p>}
@@ -64,7 +64,7 @@ export default function MrpProposalsPage() {
             <td>{p.decision === 'OPEN' && canDecide && <><button type="button" className="btn" onClick={() => setEditing(p.id)} data-testid="prop-modify-open">{t('p.modify')}</button> <button type="button" className="btn" onClick={() => reject(p)} data-testid="prop-reject">{t('p.reject')}</button></>}</td></tr>)}</tbody></table></div>
       ))}
       {editing && <Modify key={editing} t={t} id={editing} onDone={reload} onCancel={() => setEditing(null)} />}
-      {canDecide && <div className="actions-row no-print"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || sel.size === 0} onClick={accept} data-testid="prop-accept">{t('p.acceptN', { n: sel.size })}</button></div>}
+      {canDecide && <div className="actions-row no-print"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || sel.size === 0} onClick={accept} data-testid="prop-accept">{t('p.acceptN', { n: sel.size })}</button></div>}
     </section>
   );
 }

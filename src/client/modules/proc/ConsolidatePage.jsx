@@ -25,7 +25,7 @@ export default function ConsolidatePage() {
     <section aria-labelledby="con-h" data-testid="proc-consolidate">
       <PageHeader id="con-h" title={t('p.consolidate')} subtitle={t('p.consolidateHelp')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('p.params')}>
-        <Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => { setProjectId(e.target.value); setSel(new Set()); setPrev(null); }} style={{ minHeight: 44 }} data-testid="con-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
+        <Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => { setProjectId(e.target.value); setSel(new Set()); setPrev(null); }} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="con-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
       </form>
       {projects.length === 0 && <div className="mdm-panel"><h2>{t('p.noProject')}</h2><p className="muted">{t('p.noProjectBody')}</p></div>}
       {mq.isPending && pid && <Skeleton label={t('p.mrTitle')} rows={3} />}
@@ -34,13 +34,13 @@ export default function ConsolidatePage() {
           <tbody>{mrs.map((m) => <tr key={m.id} data-testid="con-mr"><td><input type="checkbox" checked={sel.has(m.id)} onChange={() => toggle(m.id)} aria-label={m.docNo} style={{ minHeight: 24, minWidth: 24 }} data-testid="con-check" /></td><td><Link to={`/proc/material-requests?id=${m.id}`}>{m.docNo}</Link></td><td>{m.site}</td><td>{fmtDate(m.requiredBy)}</td><td>{t(`p.pri.${m.priority}`)}</td><td>{m.fulfilment ? t(`p.f.${m.fulfilment}`) : ''}</td></tr>)}</tbody></table></div>
       ))}
       {error?.form && <p className="field-error" role="alert" data-testid="con-error">{error.form}</p>}
-      <div className="actions-row no-print"><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy || sel.size === 0} onClick={preview} data-testid="con-preview">{t('p.preview', { n: sel.size })}</button></div>
+      <div className="actions-row no-print"><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || sel.size === 0} onClick={preview} data-testid="con-preview">{t('p.preview', { n: sel.size })}</button></div>
       {prev && (
         <div className="mdm-panel" data-testid="con-preview-panel"><h2>{t('p.willMake', { n: prev.lineCount, k: prev.sourceCount })}</h2>
           {prev.skipped.length > 0 && <p className="muted" data-testid="con-skipped">{t('p.skipped')}: {prev.skipped.map((s) => `${s.docNo ?? s.mrId} (${s.reason})`).join('; ')}</p>}
           <div className="table-scroll"><table className="data-table"><caption className="sr-only">{t('p.lines')}</caption><thead><tr><th>{t('p.item')}</th><th className="num">{t('p.qty')}</th><th>{t('p.site')}</th><th>{t('p.requiredBy')}</th>{prev.canCost && <th className="num">{t('p.estAmount')}</th>}<th>{t('p.freeStock')}</th><th>{t('p.fromRequests')}</th></tr></thead>
             <tbody>{prev.groups.map((g) => <tr key={g.key} data-testid="con-group"><td>{g.itemCode} · {g.itemName}</td><td className="num">{fmtQty(g.qty)} {g.uom}</td><td>{g.site}</td><td>{fmtDate(g.requiredBy)}</td>{prev.canCost && <td className="num">{fmtRs(g.estAmount)}</td>}<td>{fmtQty(g.freeStock)} {g.stockCovers && <StatusBadge status="AT_RISK" label={t('p.covers')} />}</td><td>{g.sources.map((s) => <div key={s.mrLineId}>{s.mrNo} ({fmtQty(s.qty)})</div>)}</td></tr>)}</tbody></table></div>
-          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={create} data-testid="con-create">{t('p.createPr')}</button></div>
+          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={create} data-testid="con-create">{t('p.createPr')}</button></div>
         </div>
       )}
     </section>

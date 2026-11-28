@@ -8,7 +8,7 @@ import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Issue Instruction (part 14.04, mobile form): a received instruction is registered, an internal instruction or memo is issued to subcontractors and crews; with a back-charge it goes for approval. The server
 // checks every rule again; the form only mirrors the ones that need no data (a back-charge needs a subcontractor, an internal instruction needs recipients).
-const big = { minHeight: 44 };
+const big = { minHeight: 'var(--erp-target-min)' };
 const blank = (siteId) => ({ siteId, type: 'ISI', date: today(), theirRef: '', fromParty: '', toParty: '', subject: '', description: '', dueDate: '', locationId: '', activityId: '', costImplication: false, timeImplication: false, backcharge: false, backchargeAmount: '', backchargePartnerId: '', letterId: '', subs: [], crews: [], person: '' });
 const fromRecord = (d) => ({ siteId: d.siteId, type: d.type, date: d.date, theirRef: d.theirRef ?? '', fromParty: d.fromParty, toParty: d.toParty ?? '', subject: d.subject, description: d.description ?? '', dueDate: d.dueDate ?? '', locationId: d.locationId ?? '', activityId: d.activityId ?? '', costImplication: d.costImplication, timeImplication: d.timeImplication, backcharge: d.backcharge, backchargeAmount: d.backchargeAmount ?? '', backchargePartnerId: d.backchargePartnerId ?? '', letterId: d.letterId ?? '',
   subs: (d.partiesPlanned ?? []).filter((p) => p.type === 'SUBCONTRACTOR').map((p) => p.id), crews: (d.partiesPlanned ?? []).filter((p) => p.type === 'CREW').map((p) => p.id), person: (d.partiesPlanned ?? []).find((p) => p.type === 'PERSON')?.name ?? '' });
@@ -57,8 +57,8 @@ export function InstructionForm({ t, editing, onSaved, onCancel }) {
           <Field label={t('cnd.ins.due')} name="dueDate" error={error}><input style={big} type="date" value={form.dueDate} onChange={(e) => set('dueDate', e.target.value)} data-testid="ins-due" /></Field>
           <Field label={t('cnd.hin.letter')} name="letterId" error={error}><select style={big} value={form.letterId} onChange={(e) => set('letterId', e.target.value)} data-testid="ins-letter"><option value="">{t('cnd.hin.noLetter')}</option>{(o?.letters ?? []).map((l) => <option key={l.id} value={l.id}>{l.letterNo} · {l.subject}</option>)}</select></Field>
         </div>
-        <label className="field" style={{ minHeight: 44 }}><input type="checkbox" checked={form.costImplication} onChange={(e) => set('costImplication', e.target.checked)} data-testid="ins-cost" /> <span>{t('cnd.ins.cost')}</span></label>
-        <label className="field" style={{ minHeight: 44 }}><input type="checkbox" checked={form.timeImplication} onChange={(e) => set('timeImplication', e.target.checked)} data-testid="ins-time" /> <span>{t('cnd.ins.time')}</span></label>
+        <label className="field" style={{ minHeight: 'var(--erp-target-min)' }}><input type="checkbox" checked={form.costImplication} onChange={(e) => set('costImplication', e.target.checked)} data-testid="ins-cost" /> <span>{t('cnd.ins.cost')}</span></label>
+        <label className="field" style={{ minHeight: 'var(--erp-target-min)' }}><input type="checkbox" checked={form.timeImplication} onChange={(e) => set('timeImplication', e.target.checked)} data-testid="ins-time" /> <span>{t('cnd.ins.time')}</span></label>
         {rec && (form.costImplication || form.timeImplication) && <p className="muted" data-testid="ins-notice-help">{t('cnd.ins.noticeHelp', { n: o?.noticeDays ?? 7 })}</p>}
       </fieldset>
       {!rec && (
@@ -70,7 +70,7 @@ export function InstructionForm({ t, editing, onSaved, onCancel }) {
       )}
       {form.type === 'ISI' && (
         <fieldset><legend>{t('cnd.ins.backcharge')}</legend>
-          <label className="field" style={{ minHeight: 44 }}><input type="checkbox" checked={form.backcharge} onChange={(e) => set('backcharge', e.target.checked)} data-testid="ins-bc" /> <span>{t('cnd.ins.backchargeTick')}</span></label>
+          <label className="field" style={{ minHeight: 'var(--erp-target-min)' }}><input type="checkbox" checked={form.backcharge} onChange={(e) => set('backcharge', e.target.checked)} data-testid="ins-bc" /> <span>{t('cnd.ins.backchargeTick')}</span></label>
           {form.backcharge && <div className="form-grid">
             <Field label={t('cnd.ins.chargeTo')} name="backchargePartnerId" error={error}><select style={big} value={form.backchargePartnerId} onChange={(e) => set('backchargePartnerId', e.target.value)} data-testid="ins-bc-partner"><option value="">—</option>{(o?.subcontractors ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
             {(o?.canCost ?? true) && <Field label={t('cnd.ins.amount')} name="backchargeAmount" error={error}><input style={big} type="number" min="0" step="0.01" inputMode="decimal" value={form.backchargeAmount} onChange={(e) => set('backchargeAmount', e.target.value)} data-testid="ins-bc-amount" /></Field>}
@@ -80,9 +80,9 @@ export function InstructionForm({ t, editing, onSaved, onCancel }) {
       )}
       {error?.form && <p className="field-error" role="alert" data-testid="ins-error">{error.form}{error.correlationId ? ` (${error.correlationId})` : ''}</p>}
       <div className="actions-row">
-        <button type="submit" className="btn" style={{ minHeight: 48 }} disabled={busy} data-testid="ins-save">{t('cnd.ins.saveDraft')}</button>
-        <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => save(true)} data-testid="ins-send">{sendLabel}</button>
-        <button type="button" className="btn" style={{ minHeight: 48 }} onClick={onCancel}>{t('cnd.close')}</button>
+        <button type="submit" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} data-testid="ins-save">{t('cnd.ins.saveDraft')}</button>
+        <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => save(true)} data-testid="ins-send">{sendLabel}</button>
+        <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} onClick={onCancel}>{t('cnd.close')}</button>
       </div>
     </form>
   );

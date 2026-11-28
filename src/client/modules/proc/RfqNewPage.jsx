@@ -36,14 +36,14 @@ export default function RfqNewPage() {
       <PageHeader id="rfn-h" title={editId ? t('q.edit') : t('q.new')} subtitle={t('q.newHelp')} meta={<Link to="/proc/rfqs">{t('q.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
         <div className="form-grid">
-          <Field label={t('q.project')} name="projectId" error={error}><select value={projectId} disabled={Boolean(editId)} onChange={(ev) => { setF({ ...form, projectId: ev.target.value }); setPick({}); setVend({}); }} style={{ minHeight: 44 }} data-testid="rfn-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
-          <Field label={t('q.rfqTitle')} name="title" error={error}><input value={form.title} maxLength={200} onChange={(ev) => set('title', ev.target.value)} style={{ minHeight: 44 }} data-testid="rfn-title" /></Field>
-          <Field label={t('q.dueDate')} name="dueDate" error={error}><input type="date" value={form.dueDate} min={o ? undefined : undefined} onChange={(ev) => set('dueDate', ev.target.value)} style={{ minHeight: 44 }} data-testid="rfn-due" /></Field>
-          <Field label={t('q.delivery')} name="terms.delivery" error={error}><input value={form.delivery} maxLength={300} onChange={(ev) => set('delivery', ev.target.value)} style={{ minHeight: 44 }} data-testid="rfn-delivery" /></Field>
-          <Field label={t('q.payment')} name="terms.payment" error={error}><input value={form.payment} maxLength={300} onChange={(ev) => set('payment', ev.target.value)} style={{ minHeight: 44 }} /></Field>
-          <Field label={t('q.validity')} name="terms.validityDays" error={error}><input type="number" min="1" max="365" value={form.validityDays} onChange={(ev) => set('validityDays', ev.target.value)} style={{ minHeight: 44 }} /></Field>
-          <Field label={t('q.techSpecs')} name="terms.technicalSpecs" error={error}><input value={form.technicalSpecs} maxLength={2000} onChange={(ev) => set('technicalSpecs', ev.target.value)} style={{ minHeight: 44 }} /></Field>
-          <Field label={t('q.makes')} name="terms.approvedMakes" error={error}><input value={form.approvedMakes} maxLength={500} onChange={(ev) => set('approvedMakes', ev.target.value)} style={{ minHeight: 44 }} /></Field>
+          <Field label={t('q.project')} name="projectId" error={error}><select value={projectId} disabled={Boolean(editId)} onChange={(ev) => { setF({ ...form, projectId: ev.target.value }); setPick({}); setVend({}); }} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="rfn-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
+          <Field label={t('q.rfqTitle')} name="title" error={error}><input value={form.title} maxLength={200} onChange={(ev) => set('title', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="rfn-title" /></Field>
+          <Field label={t('q.dueDate')} name="dueDate" error={error}><input type="date" value={form.dueDate} min={o ? undefined : undefined} onChange={(ev) => set('dueDate', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="rfn-due" /></Field>
+          <Field label={t('q.delivery')} name="terms.delivery" error={error}><input value={form.delivery} maxLength={300} onChange={(ev) => set('delivery', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="rfn-delivery" /></Field>
+          <Field label={t('q.payment')} name="terms.payment" error={error}><input value={form.payment} maxLength={300} onChange={(ev) => set('payment', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} /></Field>
+          <Field label={t('q.validity')} name="terms.validityDays" error={error}><input type="number" min="1" max="365" value={form.validityDays} onChange={(ev) => set('validityDays', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} /></Field>
+          <Field label={t('q.techSpecs')} name="terms.technicalSpecs" error={error}><input value={form.technicalSpecs} maxLength={2000} onChange={(ev) => set('technicalSpecs', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} /></Field>
+          <Field label={t('q.makes')} name="terms.approvedMakes" error={error}><input value={form.approvedMakes} maxLength={500} onChange={(ev) => set('approvedMakes', ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} /></Field>
         </div>
         <h2>{t('q.pickLines')}</h2>
         {oq.isPending && projectId && <Skeleton label={t('q.pickLines')} rows={2} />}
@@ -61,7 +61,7 @@ export default function RfqNewPage() {
         {o && count < o.minVendors && count > 0 && <p className="mdm-banner" role="status" data-testid="rfn-few">{t('q.fewVendors', { n: o.minVendors })}</p>}
         {count > 0 && o && count < o.minVendors && <Field label={t('q.justification')} name="justification" error={error} hint={t('q.justHint')}><textarea value={form.justification} maxLength={1000} rows={3} onChange={(ev) => set('justification', ev.target.value)} style={{ width: '100%' }} data-testid="rfn-justification" /></Field>}
         {error?.form && <p className="field-error" role="alert" data-testid="rfn-error">{error.form}</p>}
-        <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !projectId || ids.length === 0 || !form.title.trim()} data-testid="rfn-save">{t('q.saveDraft')}</button></div>
+        <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || !projectId || ids.length === 0 || !form.title.trim()} data-testid="rfn-save">{t('q.saveDraft')}</button></div>
       </form>
     </section>
   );

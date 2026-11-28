@@ -28,7 +28,7 @@ export default function GateExitPage() {
         {result && <div className="mdm-banner" role="status" data-testid="gx-ok" style={{ fontSize: 18 }}><strong>✅ {t('g.openGate')}</strong><br />{result.docNo} · {result.typeLabel} · {result.destination}{result.expectedReturn ? ` · ${t('g.backBy')} ${result.expectedReturn}` : ''}<ul>{result.items.map((l, i) => <li key={i}>{l.description}: {l.qty} {l.uom}</li>)}</ul></div>}</div>
       <h2>{t('g.readyToLeave')}</h2>
       {wq.isPending ? <Skeleton label={t('g.readyToLeave')} rows={2} /> : wq.isError ? <ErrorState error={wq.error} onRetry={wq.refetch} /> : (wq.data ?? []).length === 0 ? <p className="muted" data-testid="gx-none">{t('g.noneReady')}</p>
-        : <ul className="plain-list" data-testid="gx-ready">{wq.data.map((r) => <li key={r.id} className="mdm-panel"><strong>{r.vehicle}</strong> · {r.docNo} · {r.vendor ?? '—'} · {t('g.timeIn')} {fmtTime(r.timeIn)} <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => leave(r.id)} data-testid={`gx-leave-${r.id}`}>{t('g.recordExit')}</button></li>)}</ul>}
+        : <ul className="plain-list" data-testid="gx-ready">{wq.data.map((r) => <li key={r.id} className="mdm-panel"><strong>{r.vehicle}</strong> · {r.docNo} · {r.vendor ?? '—'} · {t('g.timeIn')} {fmtTime(r.timeIn)} <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => leave(r.id)} data-testid={`gx-leave-${r.id}`}>{t('g.recordExit')}</button></li>)}</ul>}
     </section>
   );
 }

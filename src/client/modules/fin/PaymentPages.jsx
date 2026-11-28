@@ -15,14 +15,14 @@ import { GlError, useGlRunner } from './JournalsPage.jsx';
 // Part 23.04: the pages of payments — the payment proposal (a three-step form: the bank and the mode, the bills and advances to pay, the review), the payment run
 // (the proposal as an object page: its lines, the approval with its evidence, the release with the bank file or the cheques, the bank's confirmation), the payments
 // with the cheque register, and the company's bank accounts.
-const big = { minHeight: 48, fontSize: '1rem' };
+const big = { minHeight: 'var(--erp-target-large)', fontSize: '1rem' };
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 const can = (session, p) => Boolean(session?.permissions?.includes(p));
 const RUN_TONE = { NONE: 'DRAFT', RELEASED: 'IN_REVIEW', PART_CONFIRMED: 'IN_REVIEW', CONFIRMED: 'APPROVED' };
 const PAY_TONE = { PENDING: 'IN_REVIEW', PAID: 'APPROVED', FAILED: 'REJECTED', CANCELLED: 'CANCELLED' };
 const guardOf = (q, what, permission) => (q.error?.status === 403 || q.error?.status === 404 ? <NoPermission what={what} permission={permission} /> : q.isPending ? <Skeleton label={what} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : null);
 const Tabs = ({ tabs, tab, setTab, label, prefix }) => (
-  <div className="actions-row" role="tablist" aria-label={label}>{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setTab(k)} data-testid={`${prefix}-${k}`}>{l}</button>)}</div>
+  <div className="actions-row" role="tablist" aria-label={label}>{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setTab(k)} data-testid={`${prefix}-${k}`}>{l}</button>)}</div>
 );
 
 // ---- the proposal form (FR-01): the bank and the mode, the lines, the review ----
@@ -69,7 +69,7 @@ function ProposalForm({ existing }) {
       {step === 2 && <div data-testid="pm-candidates">
         <div className="form-grid">
           <Field label={t('pm.dueBy')} name="dueBy" error={null}><input type="date" value={filt.dueBy} onChange={(e) => setFilt({ ...filt, dueBy: e.target.value })} style={big} /></Field>
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 48 }}><input type="checkbox" checked={filt.msmeOnly} onChange={(e) => setFilt({ ...filt, msmeOnly: e.target.checked })} style={{ width: 24, height: 24 }} />{t('pm.msmeOnly')}</label>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 'var(--erp-target-large)' }}><input type="checkbox" checked={filt.msmeOnly} onChange={(e) => setFilt({ ...filt, msmeOnly: e.target.checked })} style={{ width: 24, height: 24 }} />{t('pm.msmeOnly')}</label>
         </div>
         <h2>{t('py.bills')}</h2>
         {c.bills.length === 0 ? <EmptyState compact title={t('pm.noBills')} message={t('pm.noBillsBody')} /> : <ul className="lp-list" aria-label={t('py.bills')}>{c.bills.map((b) => { const k = `b${b.billId}`; const on = Boolean(sel[k]); const off = Boolean(b.blocked || (f.payMode !== 'CHEQUE' && b.bankProblem)); return (
@@ -97,7 +97,7 @@ function ProposalForm({ existing }) {
       </div>}
       {step === 3 && <div data-testid="pm-review">
         {lines.length === 0 ? <EmptyState compact title={t('pm.noLines')} message={t('pm.noLinesBody')} /> : <div className="table-scroll"><table className="data-table" aria-label={t('jn.lines')}><thead><tr><th scope="col">#</th><th scope="col">{t('pm.payee')}</th><th scope="col">{t('pm.for')}</th><th scope="col" className="num">{t('pm.amount')}</th><th scope="col"><span className="sr-only">{t('pm.remove')}</span></th></tr></thead>
-          <tbody>{Object.entries(sel).map(([k, l], i) => <tr key={k} data-testid="pm-review-line"><td>{i + 1}</td><td>{l.payee}{lineErr(i, 'partnerId') || lineErr(i, 'billId') || lineErr(i, 'amount') ? <><br /><span className="small" role="alert">{lineErr(i, 'partnerId') ?? lineErr(i, 'billId') ?? lineErr(i, 'amount')}</span></> : null}</td><td>{t(`pm.k.${l.kind}`)} · {l.ref}</td><td className="num">{money(l.amount)}</td><td><button type="button" className="btn btn-small" style={{ minHeight: 44 }} onClick={() => toggle(k)} aria-label={t('pm.removeLine', { n: i + 1 })}>{t('pm.remove')}</button></td></tr>)}</tbody></table></div>}
+          <tbody>{Object.entries(sel).map(([k, l], i) => <tr key={k} data-testid="pm-review-line"><td>{i + 1}</td><td>{l.payee}{lineErr(i, 'partnerId') || lineErr(i, 'billId') || lineErr(i, 'amount') ? <><br /><span className="small" role="alert">{lineErr(i, 'partnerId') ?? lineErr(i, 'billId') ?? lineErr(i, 'amount')}</span></> : null}</td><td>{t(`pm.k.${l.kind}`)} · {l.ref}</td><td className="num">{money(l.amount)}</td><td><button type="button" className="btn btn-small" style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => toggle(k)} aria-label={t('pm.removeLine', { n: i + 1 })}>{t('pm.remove')}</button></td></tr>)}</tbody></table></div>}
         <p className="mdm-banner" role="status" data-testid="pm-band">{t(`pm.band.${band}`)}</p>
         {bank && total > bank.balance && <p className="mdm-banner" role="note">{t('pm.overBalance', { balance: money(bank.balance) })}</p>}
       </div>}
@@ -175,7 +175,7 @@ function Proposal({ id }) {
       <Tabs tabs={[['lines', t('jn.lines')], ['payments', t('pm.payments')], ['approvals', t('pm.evidence')]]} tab={tab} setTab={setTab} label={t('pm.run')} prefix="pm-tab" />
       {tab === 'lines' && <div className="table-scroll"><table className="data-table" aria-label={t('jn.lines')}><thead><tr><th scope="col">#</th><th scope="col">{t('pm.payee')}</th><th scope="col">{t('pm.for')}</th><th scope="col">{t('pm.payeeBank')}</th><th scope="col" className="num">{t('pm.amount')}</th><th scope="col">{t('pm.lineStatus')}</th><th scope="col"><span className="sr-only">{t('pm.actions')}</span></th></tr></thead>
         <tbody>{x.lines.map((l) => <tr key={l.id} data-testid="pm-line"><td>{l.lineNo}</td><td>{l.payee}</td><td>{t(`pm.k.${l.kind}`)} · {l.billId ? <Link to={`/finance/ap-bills?id=${l.billId}`}>{l.billDoc}</Link> : l.advanceDoc ?? l.purpose}{l.msmeDue ? ' · MSME' : ''}</td><td>{l.bank ?? (x.payMode === 'CHEQUE' ? t('pm.m.CHEQUE') : '—')}{l.nameMatch === 'OK' ? ` · ${t('pm.nameOk')}` : ''}</td><td className="num">{money(l.amount)}</td><td>{t(`pm.ls.${l.status}`)}{l.removedReason ? ` · ${l.removedReason}` : ''}</td>
-          <td>{(c.release || c.releaseBlocked) && l.status === 'PROPOSED' && x.status === 'APPROVED' && x.runStatus === 'NONE' && <button type="button" className="btn btn-small" style={{ minHeight: 44 }} onClick={() => drop(l)}>{t('pm.drop')}</button>}</td></tr>)}</tbody></table></div>}
+          <td>{(c.release || c.releaseBlocked) && l.status === 'PROPOSED' && x.status === 'APPROVED' && x.runStatus === 'NONE' && <button type="button" className="btn btn-small" style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => drop(l)}>{t('pm.drop')}</button>}</td></tr>)}</tbody></table></div>}
       {tab === 'payments' && (x.payments.length === 0 ? <EmptyState compact title={t('pm.noPayments')} message={t('pm.noPaymentsBody')} /> : <div className="table-scroll"><table className="data-table" aria-label={t('pm.payments')}><thead><tr><th scope="col">{t('pm.payment')}</th><th scope="col">{t('pm.payee')}</th><th scope="col">UTR / {t('pm.cheque')}</th><th scope="col" className="num">{t('pm.amount')}</th><th scope="col">{t('pm.status')}</th></tr></thead>
         <tbody>{x.payments.map((p) => <tr key={p.id} data-testid="pm-payment"><td><Link to={`/finance/payments?id=${p.id}`}>{p.docNo}</Link></td><td>{p.payee}</td><td>{p.utr ?? p.chequeNo ?? '—'}</td><td className="num">{money(p.amount)}</td><td><StatusBadge status={PAY_TONE[p.status]} label={t(`pm.ps.${p.status}`)} /></td></tr>)}</tbody></table></div>)}
       {tab === 'approvals' && <div data-testid="pm-evidence">
@@ -286,7 +286,7 @@ function BankForm({ x, onDone }) {
         <Field label={t('pm.fileFormat')} name="fileFormat" error={fe.fileFormat ?? fe.template}><select value={f.fileFormat} onChange={set('fileFormat')} style={big}>{fmts.data.map((m) => <option key={m.code} value={m.code}>{m.label}</option>)}</select></Field>
         <Field label={t('pm.chequeFrom')} name="chequeFrom" error={fe.chequeFrom}><input inputMode="numeric" value={f.chequeFrom} onChange={set('chequeFrom')} style={big} /></Field>
         <Field label={t('pm.chequeTo')} name="chequeTo" error={fe.chequeTo}><input inputMode="numeric" value={f.chequeTo} onChange={set('chequeTo')} style={big} /></Field>
-        {x && <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 48 }}><input type="checkbox" checked={f.blocked} onChange={(e) => setF({ ...f, blocked: e.target.checked })} style={{ width: 24, height: 24 }} />{t('pm.blocked')}</label>}
+        {x && <label style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 'var(--erp-target-large)' }}><input type="checkbox" checked={f.blocked} onChange={(e) => setF({ ...f, blocked: e.target.checked })} style={{ width: 24, height: 24 }} />{t('pm.blocked')}</label>}
       </div>
       <div className="actions-row"><button type="submit" className="btn btn-primary" style={big} disabled={busy}>{t('act.save')}</button><button type="button" className="btn" style={big} onClick={onDone}>{t('act.close')}</button></div>
     </form>
@@ -303,7 +303,7 @@ export function BankAccountsPage() {
         <li key={b.id} data-testid="pm-bank-row" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', padding: '8px 0' }}>
           <span style={{ flex: '1 1 16rem', minWidth: 0 }}><strong>{b.name}</strong> · {b.code} {b.status === 'BLOCKED' && <StatusBadge status="CANCELLED" label={t('pm.blocked')} />}<br /><span className="muted small">{b.bankName} · {b.ifsc} · {b.account} · {b.glAccount?.code} {b.glAccount?.name} · {b.fileFormatLabel}{b.chequeNext != null ? ` · ${t('pm.chequesLeft', { n: b.chequesLeft })}` : ''}</span></span>
           <span className="num">{money(b.balance)}</span>
-          {manage && <button type="button" className="btn btn-small" style={{ minHeight: 44 }} onClick={() => setEdit(b)}>{t('act.edit')}</button>}
+          {manage && <button type="button" className="btn btn-small" style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setEdit(b)}>{t('act.edit')}</button>}
         </li>))}</ul>)}
     </section>
   );

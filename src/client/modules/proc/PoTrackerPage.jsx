@@ -21,7 +21,7 @@ export default function PoTrackerPage() {
   const d = q.data;
   return (
     <section aria-labelledby="trk-h" data-testid="proc-po-tracker"><PageHeader id="trk-h" title={t('o.trackerTitle')} subtitle={t('o.trackerIntro')} />
-      <div className="actions-row no-print"><label>{t('o.project')} <select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={{ minHeight: 44 }} data-testid="trk-project"><option value="">{t('o.all')}</option>{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label>
+      <div className="actions-row no-print"><label>{t('o.project')} <select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="trk-project"><option value="">{t('o.all')}</option>{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label>
         <label><input type="checkbox" checked={overdue} onChange={(e) => setOverdue(e.target.checked)} data-testid="trk-overdue" /> {t('o.overdueOnly')}</label><Link to="/proc/purchase-orders">{t('o.title')}</Link></div>
       <KpiRow data-testid="trk-summary"><Tile label={t('o.openDeliveries')} value={String(d.summary.open)} testId="trk-open" /><Tile label={t('o.overdueDeliveries')} value={String(d.summary.overdue)} status={d.summary.overdue ? 'bad' : 'neutral'} testId="trk-overdue-n" /><Tile label={t('o.openOrders')} value={String(d.summary.orders)} /><Tile label={t('o.unacknowledged')} value={String(d.summary.unacknowledged)} status={d.summary.unacknowledged ? 'warn' : 'neutral'} /></KpiRow>
       {d.rows.length === 0 ? <p className="muted" data-testid="trk-empty">{t('o.trackerEmpty')}</p> : (

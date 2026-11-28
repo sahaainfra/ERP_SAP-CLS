@@ -52,7 +52,7 @@ function PeriodForm({ t, editing, onSaved, onCancel }) {
         <button type="button" className="btn" disabled={!projectId} onClick={() => set('adjustments', [...form.adjustments, blankAdj()])} data-testid="per-adj-add">{t('cnd.per.addAdj')}</button>
       </fieldset>
       {error?.form && <p className="field-error" role="alert" data-testid="per-error">{error.form}{error.correlationId ? ` (${error.correlationId})` : ''}</p>}
-      <div className="actions-row"><button type="submit" className="btn" style={{ minHeight: 44 }} disabled={busy} data-testid="per-save">{t('cnd.ins.saveDraft')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={busy} onClick={() => save(true)} data-testid="per-send">{t('act.submit')}</button><button type="button" className="btn" style={{ minHeight: 44 }} onClick={onCancel}>{t('cnd.close')}</button></div>
+      <div className="actions-row"><button type="submit" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} disabled={busy} data-testid="per-save">{t('cnd.ins.saveDraft')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-min)' }} disabled={busy} onClick={() => save(true)} data-testid="per-send">{t('act.submit')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} onClick={onCancel}>{t('cnd.close')}</button></div>
     </form>
   );
 }
@@ -94,8 +94,8 @@ function Period({ t, id, onGone }) {
       </div>
       {d.taskId && (
         <div className="mdm-panel no-print" data-testid="per-decide"><h2>{t('dpr.decide')}</h2>
-          <label>{t('mb.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 44 }} data-testid="per-comment" /></label>
-          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="per-approve">{t('cnd.per.close')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')}>{t('mb.return')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')}>{t('mb.reject')}</button></div>
+          <label>{t('mb.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="per-comment" /></label>
+          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="per-approve">{t('cnd.per.close')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')}>{t('mb.return')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')}>{t('mb.reject')}</button></div>
         </div>
       )}
       {talk && <div className="mdm-panel"><DiscussionTab entity="prs_period" id={d.id} /></div>}

@@ -39,7 +39,7 @@ function Editor({ id }) {
             <td><input aria-label={t('itp.frequency')} value={s.frequency} onChange={(e) => setStep(i, 'frequency', e.target.value)} maxLength={120} style={sel} /></td>
             <td><input aria-label={t('itp.responsibility')} value={s.responsibility} onChange={(e) => setStep(i, 'responsibility', e.target.value)} maxLength={60} style={sel} /></td>
             <td><button type="button" className="btn" disabled={form.steps.length < 2} onClick={() => set('steps', form.steps.filter((_, j) => j !== i))}>{t('remove')}</button></td></tr>))}</tbody></table></div>
-      <div className="actions-row"><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => set('steps', [...form.steps, blank(form.steps.length + 1)])} data-testid="itp-add-step">{t('itp.addStep')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={save} data-testid="itp-save">{t('save')}</button></div>
+      <div className="actions-row"><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => set('steps', [...form.steps, blank(form.steps.length + 1)])} data-testid="itp-add-step">{t('itp.addStep')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={save} data-testid="itp-save">{t('save')}</button></div>
     </section>
   );
 }
@@ -51,14 +51,14 @@ function Apply({ x }) {
       {error?.form && <p className="field-error" role="alert" data-testid="apply-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="apply-note">{note}</p>}
       <Field label={t('project')} name="projectId" error={error}><select value={projectId} onChange={(e) => { setProjectId(e.target.value); setPicked([]); }} style={sel} data-testid="apply-project"><option value="">—</option>{(oq.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></Field>
       {(aq.data ?? []).length > 0 && <fieldset><legend>{t('itp.activities')}</legend>{aq.data.map((a) => <label key={a.id} style={{ display: 'flex', gap: 8, minHeight: 36, alignItems: 'center' }}><input type="checkbox" checked={picked.includes(a.id)} onChange={() => toggle(a.id)} data-testid="apply-activity" />{a.code} {a.name}</label>)}</fieldset>}
-      <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !picked.length} onClick={() => run(() => qa.post(`/itps/${x.id}/apply`, { projectId: Number(projectId), activityIds: picked }).then((d) => d), t('itp.applied'))} data-testid="apply-go">{t('itp.apply')}</button></div>
+      <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy || !picked.length} onClick={() => run(() => qa.post(`/itps/${x.id}/apply`, { projectId: Number(projectId), activityIds: picked }).then((d) => d), t('itp.applied'))} data-testid="apply-go">{t('itp.apply')}</button></div>
   );
 }
 function Itp({ id }) {
   const t = useT('qa'); const { q, guard } = useRecord('/itps', id, t('itp.title'), 'qa.itp.view'); usePageTitle(t('itp.title')); if (guard) return guard; const x = q.data;
   return (
     <div data-testid="qa-itp-object" data-status={x.status}><PageHeader id="itp-h" title={<>{x.code} <small>v{x.versionNo}</small> <Status x={x} /></>} meta={<><Link to="/qa/itps">{t('itp.title')}</Link> · {x.title} · {t(`act.${x.activityType}`)}{x.standardRef ? ` · ${x.standardRef}` : ''}</>} />
-      <DocBar kind="/itps" x={x} printName={`${x.code}-v${x.versionNo}.pdf`} extra={x.can.edit ? <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => navigateTo(`/qa/itps?edit=${x.id}`)} data-testid="itp-edit">{t('edit')}</button> : null} />
+      <DocBar kind="/itps" x={x} printName={`${x.code}-v${x.versionNo}.pdf`} extra={x.can.edit ? <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => navigateTo(`/qa/itps?edit=${x.id}`)} data-testid="itp-edit">{t('edit')}</button> : null} />
       <div className="table-scroll"><table className="data-table" data-testid="itp-steps-view"><caption>{t('itp.steps')}</caption><thead><tr><th>#</th><th>{t('code')}</th><th>{t('itp.check')}</th><th>{t('itp.point')}</th><th>{t('itp.criteria')}</th><th>{t('itp.standard')}</th><th>{t('itp.frequency')}</th><th>{t('itp.responsibility')}</th></tr></thead>
         <tbody>{x.steps.map((s) => <tr key={s.code}><td>{s.seq}</td><td>{s.code}</td><td>{s.description}</td><td>{t(`pt.${s.pointType}`)}</td><td>{s.criteria}</td><td>{s.standardRef}</td><td>{s.frequency}</td><td>{s.responsibility}</td></tr>)}</tbody></table></div>
       <p className="muted">{t('itp.pointsPlanned', { n: x.points ?? 0 })}</p>{x.can.apply && <Apply x={x} />}

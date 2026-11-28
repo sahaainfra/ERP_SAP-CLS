@@ -82,8 +82,8 @@ function Dpr({ t, id, onGone }) {
       </div>
       {d.taskId && (
         <div className="mdm-panel no-print" data-testid="dpr-decide"><h2>{t('dpr.decide')}</h2>
-          <label>{t('mb.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 44 }} data-testid="dpr-comment" /></label>
-          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="dpr-approve">{t('mb.approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')} data-testid="dpr-return">{t('mb.return')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')} data-testid="dpr-reject">{t('mb.reject')}</button></div>
+          <label>{t('mb.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="dpr-comment" /></label>
+          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="dpr-approve">{t('mb.approve')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')} data-testid="dpr-return">{t('mb.return')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')} data-testid="dpr-reject">{t('mb.reject')}</button></div>
         </div>
       )}
       {talk && <div className="mdm-panel"><DiscussionTab entity="site_dpr" id={d.id} /></div>}

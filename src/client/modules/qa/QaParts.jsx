@@ -29,7 +29,7 @@ export function DocBar({ kind, x, printName, extra = null, beforeDecide = null }
     <>
       {error?.form && <p className="field-error" role="alert" data-testid="qa-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="qa-note">{note}</p>}
       <div className="actions-row no-print">
-        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => qa.act(kind, x.id, 'submit'), t('submitted'))} data-testid="qa-submit">{t('sendForApproval')}</button>}
+        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => run(() => qa.act(kind, x.id, 'submit'), t('submitted'))} data-testid="qa-submit">{t('sendForApproval')}</button>}
         {can.withdraw && <button type="button" className="btn" disabled={busy} onClick={() => why('withdraw', t('withdrawn'))} data-testid="qa-withdraw">{t('withdraw')}</button>}
         {can.cancel && <button type="button" className="btn" disabled={busy} onClick={() => why('cancel', t('cancelled'))} data-testid="qa-cancel">{t('cancel')}</button>}
         {can.amend && <button type="button" className="btn" disabled={busy} onClick={() => why('amend', t('amended'))} data-testid="qa-amend">{t('amend')}</button>}
@@ -39,7 +39,7 @@ export function DocBar({ kind, x, printName, extra = null, beforeDecide = null }
       {x.approve && x.taskId && (
         <div className="mdm-panel no-print" data-testid="qa-decide"><h2>{t('decision')}</h2>
           <label>{t('comment')}<textarea value={comment} onChange={(ev) => setComment(ev.target.value)} rows={2} style={{ width: "100%" }} data-testid="qa-comment" /></label>
-          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="qa-approve">{t('approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')} data-testid="qa-return">{t('returnIt')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')} data-testid="qa-reject">{t('reject')}</button></div>
+          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="qa-approve">{t('approve')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')} data-testid="qa-return">{t('returnIt')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')} data-testid="qa-reject">{t('reject')}</button></div>
         </div>
       )}
       {hq.data && (
@@ -50,4 +50,4 @@ export function DocBar({ kind, x, printName, extra = null, beforeDecide = null }
   );
 }
 export function Back({ to, label }) { return <Link to={to}>{label}</Link>; }
-export const sel = { minHeight: 44 };
+export const sel = { minHeight: 'var(--erp-target-min)' };

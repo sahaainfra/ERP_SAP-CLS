@@ -30,13 +30,13 @@ function Induct() {
           <div className="mdm-panel" data-testid="hse-ind-body"><h2>{content.title}</h2><p style={{ whiteSpace: 'pre-wrap' }}>{content.body}</p><p className="muted">{t('ind.passMark', { n: content.passPct })} · {t('ind.validity', { n: content.validityDays })}</p></div>
           {content.questions.map((qn, i) => (
             <fieldset key={i} className="mdm-panel" data-testid="hse-ind-question"><legend>{i + 1}. {qn.q}</legend>
-              {qn.options.map((opt, j) => <label key={j} style={{ display: 'block', minHeight: 44 }}><input type="radio" name={`q${i}`} checked={answers[i] === j} onChange={() => setAnswers((a) => { const n = [...a]; n[i] = j; for (let k = 0; k < content.questions.length; k += 1) if (n[k] === undefined) n[k] = -1; return n; })} data-testid={`hse-ind-q${i}-o${j}`} /> {opt}</label>)}</fieldset>
+              {qn.options.map((opt, j) => <label key={j} style={{ display: 'block', minHeight: 'var(--erp-target-min)' }}><input type="radio" name={`q${i}`} checked={answers[i] === j} onChange={() => setAnswers((a) => { const n = [...a]; n[i] = j; for (let k = 0; k < content.questions.length; k += 1) if (n[k] === undefined) n[k] = -1; return n; })} data-testid={`hse-ind-q${i}-o${j}`} /> {opt}</label>)}</fieldset>
           ))}
           <div className="actions-row"><button type="button" className={`btn ${mode === 'scan' ? 'btn-primary' : ''}`} onClick={() => setMode('scan')} data-testid="hse-ind-mode-scan">{t('ind.scan')}</button><button type="button" className={`btn ${mode === 'search' ? 'btn-primary' : ''}`} onClick={() => setMode('search')} data-testid="hse-ind-mode-search">{t('ind.search')}</button></div>
           {mode === 'scan' ? <Field label={t('ind.badge')} name="badge" error={error}><input value={badge} onChange={(e) => setBadge(e.target.value)} placeholder="LAB:…" autoComplete="off" style={big} data-testid="hse-ind-badge" /></Field> : (
             <>
               <Field label={t('ind.person')} name="personId" error={error}><input value={text} onChange={(e) => setText(e.target.value)} style={big} data-testid="hse-ind-search" /></Field>
-              <ul data-testid="hse-ind-people">{(pq.data ?? []).map((p) => <li key={`${p.type}${p.id}`}><button type="button" className={`btn ${person?.id === p.id && person?.type === p.type ? 'btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setPerson(p)}>{p.name} · {p.code} · {t(`ind.${p.type}`)}</button></li>)}</ul>
+              <ul data-testid="hse-ind-people">{(pq.data ?? []).map((p) => <li key={`${p.type}${p.id}`}><button type="button" className={`btn ${person?.id === p.id && person?.type === p.type ? 'btn-primary' : ''}`} style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setPerson(p)}>{p.name} · {p.code} · {t(`ind.${p.type}`)}</button></li>)}</ul>
             </>)}
           <div className="actions-row"><button type="button" className="btn btn-primary" style={big} disabled={busy || !complete} onClick={submit} data-testid="hse-ind-submit">{t('ind.record')}</button></div>
         </>)}

@@ -24,12 +24,12 @@ function Fulfil({ t, m, onDone, run }) {
       {m.lines.filter((l) => l.openQty > 0).map((l) => { const r = rows[l.id] ?? { mode: 'ISSUE', qty: '', storeCode: '' }; const stores = l.availability?.stores ?? [];
         return (
           <div key={l.id} className="form-grid" data-testid="mr-fulfil-line"><strong>{l.itemCode} · {t('p.openQty', { n: fmtQty(l.openQty), u: l.uom })}</strong>
-            <label>{t('p.mode')}<select value={r.mode} onChange={(e) => set(l.id, 'mode', e.target.value)} style={{ minHeight: 44 }} data-testid="mr-fulfil-mode"><option value="ISSUE">{t('p.mode.ISSUE')}</option><option value="TRANSFER">{t('p.mode.TRANSFER')}</option></select></label>
-            <label>{t('p.store')}<select value={r.storeCode} onChange={(e) => set(l.id, 'storeCode', e.target.value)} style={{ minHeight: 44 }} data-testid="mr-fulfil-store"><option value="">{t('p.choose')}</option>{stores.filter((s) => (r.mode === 'ISSUE' ? s.relation === 'SAME_SITE' : s.relation !== 'SAME_SITE')).map((s) => <option key={s.storeCode} value={s.storeCode}>{s.storeName} ({fmtQty(s.freeQty)})</option>)}</select></label>
-            <label>{t('p.qty')}<input type="number" min="0" step="0.001" value={r.qty} onChange={(e) => set(l.id, 'qty', e.target.value)} style={{ minHeight: 44 }} data-testid="mr-fulfil-qty" /></label>
+            <label>{t('p.mode')}<select value={r.mode} onChange={(e) => set(l.id, 'mode', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mr-fulfil-mode"><option value="ISSUE">{t('p.mode.ISSUE')}</option><option value="TRANSFER">{t('p.mode.TRANSFER')}</option></select></label>
+            <label>{t('p.store')}<select value={r.storeCode} onChange={(e) => set(l.id, 'storeCode', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mr-fulfil-store"><option value="">{t('p.choose')}</option>{stores.filter((s) => (r.mode === 'ISSUE' ? s.relation === 'SAME_SITE' : s.relation !== 'SAME_SITE')).map((s) => <option key={s.storeCode} value={s.storeCode}>{s.storeName} ({fmtQty(s.freeQty)})</option>)}</select></label>
+            <label>{t('p.qty')}<input type="number" min="0" step="0.001" value={r.qty} onChange={(e) => set(l.id, 'qty', e.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mr-fulfil-qty" /></label>
           </div>
         ); })}
-      <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} onClick={go} data-testid="mr-fulfil-go">{t('p.fulfilGo')}</button><Link to={`/proc/consolidate?mr=${m.id}`}>{t('p.toPr')}</Link></div>
+      <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} onClick={go} data-testid="mr-fulfil-go">{t('p.fulfilGo')}</button><Link to={`/proc/consolidate?mr=${m.id}`}>{t('p.toPr')}</Link></div>
     </div>
   );
 }
@@ -59,7 +59,7 @@ function Mr({ t, id }) {
           <td>{t(`p.mode.${l.mode}`)}{l.issueQty > 0 && <div className="small">{t('p.issued', { n: fmtQty(l.issueQty) })}</div>}{l.transferQty > 0 && <div className="small">{t('p.transferred', { n: fmtQty(l.transferQty) })}</div>}{l.prQty > 0 && <div className="small">{t('p.purchased', { n: fmtQty(l.prQty) })}</div>}</td>
           <td>{l.requisitions.map((x) => <Link key={x.id} to={`/proc/requisitions?id=${x.id}`}>{x.docNo} </Link>)}</td></tr>)}</tbody></table></div>
       <div className="actions-row no-print">
-        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => pc.mrAct(m.id, 'submit'), t('p.sent'))} data-testid="mr-submit">{t('p.send')}</button>}
+        {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => run(() => pc.mrAct(m.id, 'submit'), t('p.sent'))} data-testid="mr-submit">{t('p.send')}</button>}
         {can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('p.withdrawn'))} data-testid="mr-withdraw">{t('p.withdraw')}</button>}
         {can.amend && <button type="button" className="btn" onClick={() => why('amend')} data-testid="mr-amend">{t('p.amend')}</button>}
         {can.cancel && <button type="button" className="btn" onClick={() => why('cancel', t('p.cancelled'))} data-testid="mr-cancel">{t('p.cancel')}</button>}
@@ -69,8 +69,8 @@ function Mr({ t, id }) {
       </div>
       {m.taskId && (
         <div className="mdm-panel no-print" data-testid="mr-decide"><h2>{t('p.decide')}</h2>
-          <label>{t('p.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 44 }} data-testid="mr-comment" /></label>
-          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="mr-approve">{t('p.approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')} data-testid="mr-return">{t('p.return')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')} data-testid="mr-reject">{t('p.reject')}</button></div>
+          <label>{t('p.comment')}<input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="mr-comment" /></label>
+          <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('approve')} data-testid="mr-approve">{t('p.approve')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('return')} data-testid="mr-return">{t('p.return')}</button><button type="button" className="btn" style={{ minHeight: 'var(--erp-target-large)' }} disabled={busy} onClick={() => decide('reject')} data-testid="mr-reject">{t('p.reject')}</button></div>
         </div>
       )}
       {can.process && m.lines.some((l) => l.openQty > 0) && <Fulfil t={t} m={m} onDone={() => q.refetch()} run={run} />}

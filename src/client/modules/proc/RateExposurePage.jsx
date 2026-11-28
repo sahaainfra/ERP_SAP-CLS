@@ -19,7 +19,7 @@ export default function RateExposurePage() {
   const d = q.data;
   return (
     <section aria-labelledby="re-h" data-testid="proc-re"><PageHeader id="re-h" title={t('i.exposureTitle')} subtitle={t('i.exposureIntro')} />
-      <div className="mdm-panel no-print" data-testid="re-params"><label>{t('x.project')}<select value={projectId} onChange={(ev) => setProjectId(ev.target.value)} style={{ minHeight: 44 }} data-testid="re-project"><option value="">{t('x.choose')}</option>{pq.data.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></label></div>
+      <div className="mdm-panel no-print" data-testid="re-params"><label>{t('x.project')}<select value={projectId} onChange={(ev) => setProjectId(ev.target.value)} style={{ minHeight: 'var(--erp-target-min)' }} data-testid="re-project"><option value="">{t('x.choose')}</option>{pq.data.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></label></div>
       {!projectId ? <p className="muted" data-testid="re-pick">{t('i.pickProject')}</p> : q.isPending ? <Skeleton label={t('i.exposureTitle')} rows={3} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} />
         : !d.run ? <div data-testid="re-empty"><h2>{t('i.noRunTitle')}</h2><p className="muted">{t('i.noRunBody')}</p><Link to="/proc/mrp">{t('i.runMrp')}</Link></div>
           : <>
