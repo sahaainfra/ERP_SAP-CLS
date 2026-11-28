@@ -1,0 +1,29 @@
+ERMHDR	8.3	2026-04-01	Project	admin	dbxDatabaseNoName	Project Management	INR
+%T	PROJECT
+%F	proj_id	proj_short_name	plan_start_date	last_recalc_date	clndr_id
+%R	7	XER-TOWER	2026-04-06 00:00	2026-04-06 00:00	31
+%T	CALENDAR
+%F	clndr_id	default_flag	clndr_name	proj_id	day_hr_cnt	clndr_data
+%R	31	Y	SIX Six-day week		8	(0||CalendarData()( (0||DaysOfWeek()( (0||1()()) (0||2()( (0||0(s|08:00|f|16:00)()) )) (0||3()( (0||0(s|08:00|f|16:00)()) )) (0||4()( (0||0(s|08:00|f|16:00)()) )) (0||5()( (0||0(s|08:00|f|16:00)()) )) (0||6()( (0||0(s|08:00|f|16:00)()) )) (0||7()( (0||0(s|08:00|f|16:00)()) )) )) (0||VIEW(ShowTotal|Y)()) (0||Exceptions()( (0||0(d|46126)()) (0||1(d|46131)( (0||0(s|08:00|f|16:00)()) )) )) ))
+%T	PROJWBS
+%F	wbs_id	proj_id	parent_wbs_id	wbs_short_name	wbs_name	proj_node_flag
+%R	100	7		XER-TOWER	Tower	Y
+%R	101	7	100	1	Substructure	N
+%R	102	7	101	1.1	Footings	N
+%T	TASK
+%F	task_id	proj_id	wbs_id	clndr_id	task_code	task_name	task_type	target_drtn_hr_cnt	remain_drtn_hr_cnt	phys_complete_pct	act_start_date	act_end_date	target_start_date	target_end_date	cstr_type	cstr_date
+%R	501	7	102	31	X100	Site clearance	TT_Task	40	40	0			2026-04-06 08:00	2026-04-10 16:00		
+%R	502	7	102	31	X110	Setting out	TT_Task	20	20	0			2026-04-11 08:00	2026-04-14 16:00	CS_MSOA	2026-04-11 08:00
+%R	503	7	101	31	X900	Ready for footings	TT_FinMile	0	0	0			2026-04-14 16:00	2026-04-14 16:00	CS_MANDFIN	2026-04-30 16:00
+%R	504	7	101	31	X-SUM	Substructure summary	TT_WBS	0	0	0						
+%T	TASKPRED
+%F	task_pred_id	task_id	pred_task_id	proj_id	pred_type	lag_hr_cnt
+%R	1	502	501	7	PR_FS	0
+%R	2	503	502	7	PR_FF	8
+%T	RSRC
+%F	rsrc_id	rsrc_name	rsrc_short_name	rsrc_type
+%R	9	Surveyor	SURV	RT_Labor
+%T	TASKRSRC
+%F	taskrsrc_id	task_id	proj_id	rsrc_id	target_qty
+%R	1	502	7	9	16
+%E

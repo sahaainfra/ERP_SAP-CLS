@@ -12,6 +12,7 @@ import { todayIST } from '../../../shared/dates.js';
 import { issueNumber } from '../core/numbering/service.js';
 import { findCycle, makeCalendar, ordOf } from './cpm.js';
 import { ExchangeError, FORMATS, parseFile, toMspXml, toP6Xml } from './exchange.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 import { QUALITY, VARIANCE_STATUS, changeOf, qualityOf, varianceOf } from './analysis.js';
 import { keyOf } from './gantt.js';
 
@@ -43,7 +44,7 @@ const ITEM_TYPES = { LABOUR: ['LABOUR'], PLANT: ['EQUIPMENT', 'TOOL'], MATERIAL:
 const CODE_OK = /^[A-Za-z0-9._-]{1,30}$/;
 const NOTE_LIMIT = 300;
 const ERROR_CODES = new Set(['NO_ACTIVITIES', 'MAPPING_CALENDAR', 'MAPPING_WBS', 'MAPPING_RESOURCE', 'CODE_MISSING', 'CODE_INVALID', 'CODE_DUPLICATE', 'NAME_MISSING', 'DURATION_RANGE', 'LAG_RANGE', 'LOOP']);
-const INFO_CODES = new Set(['MERGE', 'START', 'MANUAL', 'RESOURCE_COST']);
+const INFO_CODES = new Set(['MERGE', 'START', 'MANUAL', 'RESOURCE_COST', 'BASELINE_IN_FILE']);
 
 export const baselineList = defineList({
   code: 'plan.baselines', label: 'Baselines', permission: 'plan.baseline.view',
@@ -342,8 +343,13 @@ export function createBaselineService({ db, plan }) {
     let snap; let docNo; let entity; let id; let companyId;
     if (baselineId) { const r = row(actor, baselineId, 'plan.baseline.export'); snap = snapOf(r.id); docNo = r.doc_no; entity = 'plan_baselines'; id = r.id; companyId = r.company_id; snap.schedule.docNo = r.doc_no; snap.schedule.name = r.name; }
     else { const s = schedule(actor, scheduleId); need(actor, 'plan.schedule.export', 'export this schedule', s.org_project_id); snap = snapshotOf(s); docNo = s.doc_no; entity = 'plan_schedules'; id = s.id; companyId = s.company_id; }
+    // PACK-21 (ff.plan.pack21): a schedule written as MS Project XML carries the current approved baseline of its project as baseline 0, by activity code
+    let withBaseline = null;
+    if (!baselineId && format !== 'p6' && isEnabled(db, 'ff.plan.pack21', { companyId }) && may(actor, 'plan.baseline.view', schedRow(id).org_project_id)) {
+      const cur = currentOf(schedRow(id).org_project_id); if (cur) { const by = new Map(snapOf(cur.id).activities.map((a) => [lower(a.code), a])); let n = 0; for (const a of snap.activities) { const b = by.get(lower(a.code)); if (b?.start && b?.finish) { a.baselineStart = b.start; a.baselineFinish = b.finish; a.baselineDuration = b.duration; n += 1; } } withBaseline = { docNo: cur.doc_no, activities: n }; }
+    }
     const buffer = format === 'p6' ? toP6Xml(snap) : toMspXml(snap);
-    audit(actor, entity, id, 'export', companyId, { newValues: { file: format === 'p6' ? 'Primavera P6 XML' : 'MS Project XML', activities: snap.activities.length, links: snap.links.length } });
+    audit(actor, entity, id, 'export', companyId, { newValues: { file: format === 'p6' ? 'Primavera P6 XML' : 'MS Project XML', activities: snap.activities.length, links: snap.links.length, ...(withBaseline ? { baseline: withBaseline.docNo, baselineActivities: withBaseline.activities } : {}) } });
     return { buffer, contentType: 'application/xml; charset=utf-8', fileName: `${slug(docNo)}-${format === 'p6' ? 'p6' : 'msp'}.xml`, rows: snap.activities.length };
   }
 
@@ -432,7 +438,7 @@ export function createBaselineService({ db, plan }) {
     const summaries = new Set(fm.summaryKeys ?? []); const links = []; const pairs = new Set(); let lagRounded = 0;
     for (const l of fm.links) {
       const p = byKey.get(l.predKey); const q = byKey.get(l.succKey);
-      if (!p || !q) { say('warning', summaries.has(l.predKey) || summaries.has(l.succKey) ? 'LINK_SUMMARY' : 'LINK_DANGLING', summaries.has(l.predKey) || summaries.has(l.succKey) ? `A link on a summary task (${l.predKey} → ${l.succKey}) is left out: link the activities themselves` : `A link to an activity that is not read (${l.predKey} → ${l.succKey}) is left out`); continue; }
+      if (!p || !q) { say('warning', summaries.has(l.predKey) || summaries.has(l.succKey) ? 'LINK_SUMMARY' : 'LINK_DANGLING', summaries.has(l.predKey) || summaries.has(l.succKey) ? `A link on a summary task (${l.predKey} → ${l.succKey}) is left out: link the activities themselves` : `A link to an activity that is not read (${l.predKey} → ${l.succKey}) is left out`, l.succKey); continue; } // PACK-21: the row of the link (its successor) is named
       if (p === q) { say('warning', 'LINK_SELF', `Activity ${p.code} is linked to itself: left out`); continue; }
       const pk = `${p.key}>${q.key}`; if (pairs.has(pk)) { say('warning', 'LINK_DUPLICATE', `${p.code} → ${q.code} is linked twice: the first link is kept`); continue; } pairs.add(pk);
       const lag = Math.round(l.lagDays); if (Math.abs(l.lagDays - lag) > 0.01) lagRounded += 1; if (Math.abs(lag) > 3650) { say('error', 'LAG_RANGE', `The lag of ${p.code} → ${q.code} is ${lag} days: at most 3650`); continue; }
@@ -457,6 +463,7 @@ export function createBaselineService({ db, plan }) {
     const updates = acts.filter((a) => have.has(lower(a.code))).length; const kept = existing.filter((e) => !inFile.has(lower(e.code)));
     if (m.mode === 'REPLACE' && existing.length) say('warning', 'REPLACE_REMOVES', `The ${existing.length} activit${existing.length === 1 ? 'y' : 'ies'} of ${s.doc_no} are replaced by the file${existing.some((e) => e.actual_start) ? ' (some have progress)' : ''}`);
     if (m.mode === 'MERGE' && existing.length) say('info', 'MERGE', `${updates} activit${updates === 1 ? 'y is' : 'ies are'} updated by their code, ${acts.length - updates} added, ${kept.length} of ${s.doc_no} left as they are`);
+    { const bl = fm.activities.filter((a) => a.baselineStart && a.baselineFinish).length; if (bl) say('info', 'BASELINE_IN_FILE', `${bl} activit${bl === 1 ? 'y carries' : 'ies carry'} a baseline in the file: kept for comparison only; a baseline of this project is made and approved here`); }
     if (fm.start && fm.start !== s.start_date) say('info', 'START', m.useFileStart ? `The start of ${s.doc_no} becomes ${fm.start} (it is ${s.start_date})` : `The file starts on ${fm.start}; ${s.doc_no} keeps its start ${s.start_date}`);
     const report = {
       summary: { format: fm.format, name: fm.name, start: fm.start, finish: fm.finish, dataDate: fm.dataDate, activities: acts.length, milestones: acts.filter((a) => a.type === 'MILESTONE').length, links: links.length, calendars: calUse.size, wbsNodes: fm.wbs.length, wbsMatched: Object.values(m.wbs ?? {}).filter(Boolean).length, resources: new Set(res.map((r) => `${r.type}|${r.key}`)).size, assignments: res.length, withProgress: acts.filter((a) => a.actualStart).length, toUpdate: m.mode === 'MERGE' ? updates : 0, toAdd: m.mode === 'MERGE' ? acts.length - updates : acts.length, toRemove: m.mode === 'REPLACE' ? existing.length : 0 },
