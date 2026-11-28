@@ -710,6 +710,8 @@ kbd { font: var(--erp-type-caption); border: 1px solid var(--erp-color-border-co
   .sh-nav li a, .sh-group h2 button { min-height: 44px; }
   input[type='checkbox'], input[type='radio'] { width: 24px; height: 24px; }
   .lr-card > input[type='checkbox'] { margin: 10px; }
+  /* PACK-13: links that act like buttons on the back-office pages (page header actions, a widget's "View all") are 44 px tall too */
+  .ph-actions a, .wd-foot a { display: inline-flex; align-items: center; min-height: var(--erp-target-min); }
   .lr-card-link { min-height: 44px; }
 }
 
