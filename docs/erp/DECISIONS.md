@@ -1009,3 +1009,12 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   HIGH/CRITICAL findings that have a fixed version (`--ignore-unfixed`) and lists the rest in a second, non-blocking scan. The runtime image
   takes Debian's published fixes at build and no longer ships npm/npx/corepack (the HIGH undici and brace-expansion findings were inside
   the base image's npm, not the application's dependencies). The unfixed list and its review date are D-834.
+
+- **ADR-778 Telugu is read into Latin for search the same way as Devanagari, and Telugu keeps its final vowel (PACK-08).** The search
+  text helpers (`src/shared/search/text.js`) transliterate Telugu as well as Devanagari, keep Telugu letters in words and codes, and give
+  Telugu names the same phonetic key as their English spelling (కాకినాడ and Kakinada, శ్రీనివాస and Srinivasa). Unlike Hindi, the
+  inherent a is kept at the end of a Telugu word, because Telugu words end in a vowel as they are typed. A query whose words are partly too
+  short for a sound key ("srinivasa rao") is still matched by sound on the longer words when they are at least half of the words. Not
+  behind a flag: the keys are written into the index row for every company, so a per-company flag cannot switch them; the change only
+  adds matches, and rollback is a revert plus a rebuild. Rows written before the change get the Telugu keys only after the index is rebuilt
+  for `user` and `project` (Administration, Search, Rebuild; permission `ui.search.reindex`).
