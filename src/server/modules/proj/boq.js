@@ -446,6 +446,12 @@ export function createBoqService({ db }) {
       });
     },
     /** One row of the Excel import (04.13): a line added to a draft version (give the version number). */
+    /** PACK-18 (ff.bill.pack18): the checks of importRow before the commit, as row errors of the Excel preview ({ column, message }). */
+    checkImportRow(actor, { versionNo, row }) {
+      const v = db.prepare('SELECT * FROM proj_boq_versions WHERE company_id = ? AND doc_no = ? AND deleted_at IS NULL').get(actor.companyId, versionNo); if (!v) return [{ column: 'versionNo', message: `BOQ version ${versionNo} does not exist` }];
+      if (!editable(v)) return [{ column: 'versionNo', message: lockedMsg(v).message }];
+      const c = checkRows([{ ...row, parentCode: '' }], new Set(lines(v.id).map((l) => l.item_code.toLowerCase()))); return c.errors.map((e) => ({ column: e.field, message: e.message }));
+    },
     importRow(actor, { versionNo, row }) {
       const v = db.prepare('SELECT * FROM proj_boq_versions WHERE company_id = ? AND doc_no = ? AND deleted_at IS NULL').get(actor.companyId, versionNo); if (!v) throw unprocessable(`BOQ version ${versionNo} does not exist`);
       const vv = vrow(actor, v.id, 'proj.boq.import'); mustEdit(vv);
