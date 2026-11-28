@@ -1,0 +1,183 @@
+{
+ "reviewedByPayrollOwner": "PENDING",
+ "ratesConfirmedByPart65": "PENDING",
+ "note": "Monthly amounts in rupees",
+ "states": {
+  "AP": {
+   "params": {
+    "PF": "SYS/PF/ALL/2014-09-01",
+    "ESI": "SYS/ESI/ALL/2019-07-01",
+    "PT": "SYS/PT/AP/2013-04-01",
+    "LWF": null
+   },
+   "rows": [
+    {
+     "month": "2026-10",
+     "employee": "E12",
+     "gross": 12000,
+     "PF_EE": 960,
+     "EPS_ER": 666,
+     "PF_ER": 294,
+     "ESI_EE": 90,
+     "ESI_ER": 390,
+     "PT": 0,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    },
+    {
+     "month": "2026-10",
+     "employee": "E18",
+     "gross": 18000,
+     "PF_EE": 1296,
+     "EPS_ER": 900,
+     "PF_ER": 396,
+     "ESI_EE": 135,
+     "ESI_ER": 585,
+     "PT": 150,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    },
+    {
+     "month": "2026-10",
+     "employee": "E30",
+     "gross": 30000,
+     "PF_EE": 1800,
+     "EPS_ER": 1250,
+     "PF_ER": 550,
+     "ESI_EE": 0,
+     "ESI_ER": 0,
+     "PT": 200,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    },
+    {
+     "month": "2027-01",
+     "employee": "E12",
+     "gross": 12000,
+     "PF_EE": 960,
+     "EPS_ER": 666,
+     "PF_ER": 294,
+     "ESI_EE": 90,
+     "ESI_ER": 390,
+     "PT": 0,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    },
+    {
+     "month": "2027-01",
+     "employee": "E18",
+     "gross": 18000,
+     "PF_EE": 1296,
+     "EPS_ER": 900,
+     "PF_ER": 396,
+     "ESI_EE": 135,
+     "ESI_ER": 585,
+     "PT": 150,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    },
+    {
+     "month": "2027-01",
+     "employee": "E30",
+     "gross": 30000,
+     "PF_EE": 1800,
+     "EPS_ER": 1250,
+     "PF_ER": 550,
+     "ESI_EE": 0,
+     "ESI_ER": 0,
+     "PT": 200,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    }
+   ]
+  },
+  "TS": {
+   "params": {
+    "PF": "SYS/PF/ALL/2014-09-01",
+    "ESI": "SYS/ESI/ALL/2019-07-01",
+    "PT": "SYS/PT/TS/2014-06-02",
+    "LWF": "SYS/LWF/TS/2020-01-01"
+   },
+   "rows": [
+    {
+     "month": "2026-10",
+     "employee": "E12",
+     "gross": 12000,
+     "PF_EE": 960,
+     "EPS_ER": 666,
+     "PF_ER": 294,
+     "ESI_EE": 90,
+     "ESI_ER": 390,
+     "PT": 0,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    },
+    {
+     "month": "2026-10",
+     "employee": "E18",
+     "gross": 18000,
+     "PF_EE": 1296,
+     "EPS_ER": 900,
+     "PF_ER": 396,
+     "ESI_EE": 135,
+     "ESI_ER": 585,
+     "PT": 150,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    },
+    {
+     "month": "2026-10",
+     "employee": "E30",
+     "gross": 30000,
+     "PF_EE": 1800,
+     "EPS_ER": 1250,
+     "PF_ER": 550,
+     "ESI_EE": 0,
+     "ESI_ER": 0,
+     "PT": 200,
+     "LWF_EE": 0,
+     "LWF_ER": 0
+    },
+    {
+     "month": "2027-01",
+     "employee": "E12",
+     "gross": 12000,
+     "PF_EE": 960,
+     "EPS_ER": 666,
+     "PF_ER": 294,
+     "ESI_EE": 90,
+     "ESI_ER": 390,
+     "PT": 0,
+     "LWF_EE": 2,
+     "LWF_ER": 5
+    },
+    {
+     "month": "2027-01",
+     "employee": "E18",
+     "gross": 18000,
+     "PF_EE": 1296,
+     "EPS_ER": 900,
+     "PF_ER": 396,
+     "ESI_EE": 135,
+     "ESI_ER": 585,
+     "PT": 150,
+     "LWF_EE": 2,
+     "LWF_ER": 5
+    },
+    {
+     "month": "2027-01",
+     "employee": "E30",
+     "gross": 30000,
+     "PF_EE": 1800,
+     "EPS_ER": 1250,
+     "PF_ER": 550,
+     "ESI_EE": 0,
+     "ESI_ER": 0,
+     "PT": 200,
+     "LWF_EE": 2,
+     "LWF_ER": 5
+    }
+   ]
+  }
+ }
+}
