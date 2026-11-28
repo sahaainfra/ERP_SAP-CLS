@@ -1,6 +1,6 @@
 import { authzOf } from '../authz/index.js';
 import { hasPermissionAnywhere } from '../auth/index.js';
-import { codeKey, ftsPhrase, fuzzyHit, hasDevanagari, normalise, phoneticKey, transliterate, words } from '../../../shared/search/text.js';
+import { codeKey, ftsPhrase, fuzzyHit, hasIndic, normalise, phoneticKey, transliterate, words } from '../../../shared/search/text.js';
 import { searchEntities } from './registry.js';
 
 const CAP = 500; // the most hits one query keeps per way of matching: a search is for finding, a list is for browsing
@@ -88,7 +88,7 @@ export function createSearchService({ db }) {
     const shortSql = short.map((_, n) => `(instr(i.title_lc, :sh${n}) > 0 OR instr(COALESCE(i.code_key, ''), :sh${n}) > 0 OR instr(lower(i.body), :sh${n}) > 0)`).join(' AND ');
     const shortParams = Object.fromEntries(short.map((t, n) => [`sh${n}`, t]));
     const ftsTerm = (t) => {
-      const alt = hasDevanagari(t) ? normalise(transliterate(t)).replace(/[^a-z0-9]/g, '') : '';
+      const alt = hasIndic(t) ? normalise(transliterate(t)).replace(/[^a-z0-9]/g, '') : '';
       return alt.length >= 3 ? `(${ftsPhrase(t)} OR ${ftsPhrase(alt)})` : ftsPhrase(t);
     };
     const bm = 'bm25(core_search_fts, 10.0, 6.0, 3.0, 1.0, 0.5)';
@@ -106,8 +106,9 @@ export function createSearchService({ db }) {
     }
 
     // the sound of a name (शर्मा, Sharma and Sarma are one)
+    // PACK-08: a word whose sound key is too short to match on its own ("rao", "ram") does not stop the others from matching
     const keys = tokens.map(phoneticKey).filter((k) => k.length >= 3);
-    if (keys.length === tokens.length && keys.length) {
+    if (keys.length && keys.length * 2 >= tokens.length) {
       const m = `phon : (${keys.map(ftsPhrase).join(' AND ')})`;
       bump(hits, run(`SELECT i.*, ${bm} AS rank FROM core_search_fts JOIN core_search_index i ON i.id = core_search_fts.rowid WHERE core_search_fts MATCH :m AND ${f.where} ORDER BY rank LIMIT ${CAP}`, { m }), TIERS.sound);
     }

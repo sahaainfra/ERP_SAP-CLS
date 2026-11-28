@@ -1,5 +1,5 @@
 import { transaction } from '../db/index.js';
-import { codeKey, hasDevanagari, normalise, phoneticText, transliterate } from '../../../shared/search/text.js';
+import { codeKey, hasIndic, normalise, phoneticText, transliterate } from '../../../shared/search/text.js';
 import { searchEntities } from './registry.js';
 
 export { commandRegistry, searchEntities } from './registry.js';
@@ -23,7 +23,7 @@ export function createSearchIndex({ db, now = () => new Date() }) {
     const subtitle = doc.subtitle ? String(doc.subtitle).replace(/\s+/g, ' ').trim().slice(0, 300) : null;
     const body = [...(doc.body ?? [])].filter(Boolean).map(String).join(' · ').slice(0, MAX_BODY);
     const readable = [title, subtitle ?? '', body, doc.code ?? ''].join(' ');
-    const extra = hasDevanagari(readable) ? ` ${transliterate(readable).replace(/[ऀ-ॿ]/g, '')}` : '';
+    const extra = hasIndic(readable) ? ` ${transliterate(readable).replace(/[\p{Script=Devanagari}\p{Script=Telugu}]/gu, '')}` : '';
     return {
       company_id: doc.companyId, entity: def.type, entity_id: id, project_id: doc.projectId ?? null, site_id: doc.siteId ?? null, branch_id: doc.branchId ?? null,
       department_id: doc.departmentId ?? null, owner_user_id: doc.ownerUserId ?? null, code: doc.code ? String(doc.code) : null, code_key: codeKey(doc.code) || null,

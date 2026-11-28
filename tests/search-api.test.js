@@ -158,6 +158,22 @@ test('FR-04 names are found by sound (Hindi and Latin), by typing mistakes, and 
   await api.close();
 });
 
+test('PACK-08 Telugu names are found as people type them in English, and Telugu script finds a Latin name', async () => {
+  const api = await startApi();
+  await world(api);
+  await api.call('POST', `${I}/users`, { ...sys, headers: key('t1'), body: { username: 'srao', displayName: 'శ్రీనివాస రావు', email: 'sr@example.com' } });
+  await api.call('POST', `${I}/users`, { ...sys, headers: key('t2'), body: { username: 'vlakshmi', displayName: 'వెంకట లక్ష్మి', email: 'vl@example.com' } });
+  await api.call('POST', `${I}/users`, { ...sys, headers: key('t3'), body: { username: 'gbabu', displayName: 'Gopal Babu', email: 'gb@example.com' } });
+  drain(api);
+  const people = async (text) => flat(await find(api, sys, { q: text })).filter((i) => i.entity === 'user').map((i) => i.title);
+  assert.deepEqual(await people('srinivasa rao'), ['శ్రీనివాస రావు'], 'a short second word does not stop the match');
+  assert.deepEqual(await people('srinivas'), ['శ్రీనివాస రావు'], 'the short spelling');
+  assert.deepEqual(await people('venkata lakshmi'), ['వెంకట లక్ష్మి']);
+  assert.deepEqual(await people('శ్రీనివాస'), ['శ్రీనివాస రావు'], 'Telugu still finds Telugu');
+  assert.deepEqual(await people('గోపాల్'), ['Gopal Babu'], 'Telugu script finds the Latin name');
+  await api.close();
+});
+
 test('FR-05 filters narrow the results, pages are stable, and a bad parameter is refused', async () => {
   const api = await startApi();
   const w = await world(api, { extraProject: true });

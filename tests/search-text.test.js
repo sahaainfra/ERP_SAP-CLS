@@ -24,6 +24,18 @@ test('Devanagari is read as Latin and names that sound alike share one key', () 
   assert.equal(phoneticText('Rajesh Sharma 2026'), 'rajas sarma', 'digits and short keys are not kept');
 });
 
+test('PACK-08 Telugu is read as Latin, keeps its final vowel, and meets the English spelling people type', () => {
+  assert.equal(transliterate('కాకినాడ'), 'kaakinaada');
+  assert.equal(transliterate('శ్రీనివాస'), 'shreenivaasa');
+  assert.equal(transliterate('రమేష్'), 'ramesh', 'a virama at the end leaves no vowel');
+  assert.equal(transliterate('౧౨౩'), '123');
+  assert.equal(transliterate('राम'), 'raam', 'Hindi still drops the final a');
+  for (const [a, b] of [['కాకినాడ', 'Kakinada'], ['విజయవాడ', 'Vijayawada'], ['శ్రీనివాస', 'Srinivasa'], ['వెంకట', 'Venkata'], ['లక్ష్మి', 'Lakshmi'], ['రమేష్', 'Ramesh'], ['కుమార్', 'Kumar'], ['గోదావరి', 'Godavari']]) assert.equal(phoneticKey(a), phoneticKey(b), `${a} and ${b}`);
+  assert.deepEqual(words('శ్రీనివాస రావు, KP4'), ['శ్రీనివాస', 'రావు', 'kp4'], 'Telugu words are kept whole');
+  assert.equal(codeKey('KP-౪'), 'kp౪');
+  assert.equal(phoneticText('కాకినాడ పోర్ట్ జెట్టీ'), 'kakanada part jata');
+});
+
 test('typing mistakes: one edit in a short word, two in a long one, a swap counts as one', () => {
   assert.equal(distance('footing', 'fotting'), 1);
   assert.equal(distance('footing', 'fooitng'), 1);

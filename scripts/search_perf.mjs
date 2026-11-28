@@ -1,7 +1,7 @@
 // npm run erp:search-perf -- [--rows 100000] [--queries 300] [--save]
 // Part 03.08: fills the search index with synthetic records (default 100 000 over 50 projects) and times the search API (the palette's
 // grouped query and the Advanced Search page) for the shapes of query people type: a whole document number, part of a number, a word,
-// two words, a Hindi name, a typing mistake and a word that matches nothing. Also prints the query plan of the index lookups.
+// two words, a Hindi name, a Telugu name typed in English (PACK-08), a typing mistake and a word that matches nothing. Also prints the query plan of the index lookups.
 // The standard is p95 <= 400 ms for the palette (AC-01).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -41,7 +41,7 @@ db.prepare("INSERT OR IGNORE INTO org_companies (id, code, legal_name, short_nam
 const projects = [];
 for (let p = 1; p <= 50; p += 1) projects.push(Number(db.prepare("INSERT INTO org_projects (company_id, code, name, type, status, created_by, source_type) VALUES (1, ?, ?, 'ROAD', 'ACTIVE', 'perf', 'perf')").run(`P${String(p).padStart(2, '0')}`, `Project ${p}`).lastInsertRowid));
 const words = ['cement', 'steel', 'tmt bar', 'shuttering', 'excavator', 'aggregate', 'bitumen', 'formwork', 'footing', 'girder', 'culvert', 'hume pipe', 'binding wire', 'curing', 'anchor bolt', 'diesel', 'sand', 'plywood'];
-const names = ['Rajesh Sharma', 'Suresh Kumar', 'Anil Verma', 'सुरेश कुमार', 'Mohan Das', 'Priya Nair', 'Vikas Singh', 'Deepak Gupta'];
+const names = ['Rajesh Sharma', 'Suresh Kumar', 'Anil Verma', 'सुरेश कुमार', 'Mohan Das', 'Priya Nair', 'Vikas Singh', 'Deepak Gupta', 'శ్రీనివాస రావు'];
 const insert = db.prepare("INSERT INTO core_search_index (company_id, entity, entity_id, project_id, code, code_key, title, title_lc, subtitle, body, phon, record_status, doc_date, permission_key, route, created_by, source_type) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'perf', 'perf')");
 const t0 = Date.now();
 db.exec('BEGIN');
@@ -67,6 +67,7 @@ const shapes = {
   'two words': () => `${words[Math.floor(Math.random() * words.length)].split(' ')[0]} lot`,
   'a Hindi name': () => 'सुरेश',
   'a Latin name by sound': () => 'Sarma',
+  'a Telugu name typed in English': () => 'srinivasa rao',
   'a typing mistake': () => 'shutering',
   'matches nothing': () => `zzq${Math.floor(Math.random() * 1000)}x`,
 };
