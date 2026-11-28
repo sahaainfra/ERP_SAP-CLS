@@ -1,4 +1,5 @@
 import { transaction } from '../../platform/db/index.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 import { toPdf } from '../../platform/export/index.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
@@ -45,6 +46,13 @@ export function createPlantService({ db, base, flags }) {
       can: { ...can, maintain: may(actor, 'rmc.silo.edit', r.org_project_id, r.org_site_id) } };
     if (detail) Object.assign(o, flow.approveInfo(actor, r), { cancelReason: r.cancel_reason, amendedFrom: r.source_type === 'amend' ? Number(r.source_id) : null, silos: db.prepare("SELECT * FROM bp_silos WHERE plant_id = ? AND deleted_at IS NULL ORDER BY code").all(root).map(siloView), scales: db.prepare('SELECT * FROM bp_scales WHERE plant_id = ? AND deleted_at IS NULL ORDER BY code').all(root).map((s) => scaleView(r.company_id, s)),
       equipment: r.equipment_id ? db.prepare('SELECT asset_code AS assetCode, make, model FROM plt_equipment WHERE id = ?').get(r.equipment_id) : null, servedProjects: json(r.project_ids_json, []).map((id) => ({ id, code: pcode(id) })) });
+    // PACK-26 (ff.rmc.pack26): the downtime log of the plant: the breakdowns of its machine (17.03), when, what, how long it was down and how it was put right
+    if (detail && r.equipment_id && isEnabled(db, 'ff.rmc.pack26', { companyId: r.company_id })) {
+      const hrs = (a, b) => (a && b ? Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / 36_000)) / 100 : null);
+      o.downtime = db.prepare('SELECT b.*, j.downtime_hrs AS jh FROM plt_breakdowns b LEFT JOIN plt_job_cards j ON j.breakdown_id = b.id AND j.deleted_at IS NULL WHERE b.company_id = ? AND b.equipment_id = ? AND b.deleted_at IS NULL ORDER BY b.reported_at DESC LIMIT 50').all(r.company_id, r.equipment_id)
+        .map((b) => ({ id: b.id, docNo: b.doc_no, category: b.category, description: b.description, reportedAt: b.reported_at ?? b.reported_on, status: b.breakdown_status, resolvedOn: b.resolved_on, resolution: b.resolution, jobCard: b.job_card_ref, hoursDown: b.jh != null ? b.jh / 1000 : (b.breakdown_status === 'OPEN' ? hrs(b.reported_at, new Date().toISOString()) : null) }));
+      o.downtimeHours = Math.round(o.downtime.reduce((n, x) => n + (x.hoursDown ?? 0), 0) * 100) / 100;
+    }
     return o;
   };
   const check = (actor, b, current = null) => {

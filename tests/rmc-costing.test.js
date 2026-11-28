@@ -52,3 +52,19 @@ test('AC-03 roles, scope and the flag for costing', async () => {
   assert.equal((await r.call(U.plmX, 'GET', '/costing')).json.data.tiles[0].value, null, 'another company has nothing'); assert.equal((await r.call(U.plm, 'POST', '/transfer-rates', { plantId: 1, grade: 'M25', rate: 9, effectiveFrom: '2030-01-01' })).status, 403, 'the plant in-charge approves rates, accounts propose them');
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.rmc.p2003'").run(); assert.equal((await r.call(U.acc, 'GET', '/costing')).status, 404);
 });
+
+test('PACK-26 the month of a plant: cost per m3 against the budget per m3, and the cement drawn against what the mix designs called for', async () => {
+  const r = await ready(opened); const { plant, mix, it } = await readyPlant(r, { levels: { cement: 100_000, flyAsh: 50_000, sand: 300_000, agg20: 300_000, agg10: 300_000, adm: 5_000 } });
+  for (const [k, paise] of Object.entries({ cement: 700, flyAsh: 300, sand: 100, agg20: 120, agg10: 120, adm: 6000 })) r.d.prepare('UPDATE mdm_items SET standard_amount = ? WHERE id = ?').run(paise, it[k]);
+  await deliver(r, plant, mix, r.A, 6, 'MH12AA2601'); shift(r);
+  const cp = (await r.call(U.acc, 'POST', '/cost-periods', { plantId: plant.rootId, period: lastMonth })).json.data; assert.equal((await r.call(U.acc, 'POST', `/cost-periods/${cp.id}/collect`)).status, 200);
+  await r.call(U.acc, 'PUT', '/budgets', { plantId: plant.rootId, period: lastMonth, volume: 12, lines: [{ category: 'MATERIAL', amount: 40_000 }, { category: 'LABOUR', amount: 20_000 }] });
+  const get = async () => (await r.call(U.acc, 'GET', `/cost-periods/${cp.id}`)).json.data;
+  assert.equal((await get()).pack26, undefined, 'flag off: as before');
+  r.d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.rmc.pack26', 1, 'test', 0, 1)").run();
+  const v = await get(); const x = v.pack26;
+  assert.equal(x.budgetPerM3, 5000, '₹ 60,000 budget for 12 m3 = ₹ 5,000 a m3'); assert.equal(Math.round((v.perM3 - x.budgetPerM3) * 100), Math.round(x.perM3VsBudget * 100));
+  // the cement of the batches of the month, read independently
+  let th = 0; let ac = 0; for (const b of r.d.prepare("SELECT theoretical_json AS t, actual_weights_json AS a FROM bp_batches WHERE plant_id = ? AND substr(batch_time, 1, 7) = ? AND batch_status = 'ACTIVE'").all(plant.rootId, lastMonth)) { th += JSON.parse(b.t).find((y) => y.component === 'CEMENT').kgMilli; ac += JSON.parse(b.a).find((y) => y.component === 'CEMENT')?.kgMilli ?? 0; }
+  assert.ok(th > 0, 'cement was called for'); assert.deepEqual([x.cement.theoreticalKg, x.cement.actualKg, x.cement.varianceKg], [th / 1000, ac / 1000, (ac - th) / 1000]);
+});

@@ -9,6 +9,7 @@ import { nowIso, rid } from '../proc/base.js';
 import { qaHelpers } from '../qa/common.js';
 import { STATUS, createFlow } from '../qa/flow.js';
 import { CATEGORIES, GRADES } from './validators.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 
 // Batching plant costing (part 20.03). Each month a plant has a cost period: the cost lines are collected from what the system already holds (the materials of the batches at the item rates, the fuel and maintenance of the plant machine from the plant module, electricity from
 // the environment readings, an overhead percentage) and the rest (labour, depreciation or rent, power not metered) is entered with a basis. Closing a period (BR-01) needs the month to have ended and every source to be settled: all tickets of the month approved, the fuel
@@ -156,6 +157,16 @@ export function createCostingService({ db, base, flags, plants }) {
     if (detail) { o.lines = db.prepare('SELECT * FROM bp_cost_lines WHERE period_id = ? AND deleted_at IS NULL ORDER BY category, grade, id').all(r.id).map((l) => ({ id: l.id, category: l.category, label: CAT_LABEL[l.category], grade: l.grade, amount: rs(l.amount_paise), origin: l.line_origin, basis: l.basis })); o.grades = db.prepare('SELECT * FROM bp_cost_grades WHERE period_id = ? ORDER BY grade').all(r.id).map((g) => ({ grade: g.grade, volume: f3(g.volume_milli), material: rs(g.material_paise), conversion: rs(g.conversion_paise), total: rs(g.total_paise), perM3: rs(g.per_m3_paise), rate: rs(g.rate_paise), revenue: rs(g.revenue_paise), margin: rs(g.rate_paise - g.per_m3_paise) }));
       o.charges = db.prepare('SELECT * FROM bp_charges WHERE period_id = ? ORDER BY org_project_id, grade').all(r.id).map((c) => ({ id: c.id, projectId: c.org_project_id, project: pcode(c.org_project_id), grade: c.grade, volume: f3(c.volume_milli), rate: rs(c.rate_paise), amount: rs(c.amount_paise), costAllocated: rs(c.cost_alloc_paise), variance: rs(c.variance_paise) }));
       o.blockers = r.period_status === 'OPEN' ? periods.blockers(r) : []; o.budget = ['MATERIAL', 'POWER', 'FUEL', 'LABOUR', 'MAINTENANCE', 'DEPRECIATION', 'OVERHEAD'].map((c) => { const b = db.prepare('SELECT amount_paise FROM bp_budgets WHERE plant_id = ? AND period = ? AND category = ? AND deleted_at IS NULL').get(r.plant_id, r.period, c); return { category: c, label: CAT_LABEL[c], budget: b ? rs(b.amount_paise) : null, actual: rs(cat[c]), variance: b ? rs(cat[c] - b.amount_paise) : null, variancePct: b && b.amount_paise ? Math.round(((cat[c] - b.amount_paise) * 1000) / b.amount_paise) / 10 : null }; }); }
+    // PACK-26 (ff.rmc.pack26): the cost per m3 against the budget per m3 of the month, and the cement drawn against the cement the mix designs called for
+    if (detail && isEnabled(db, 'ff.rmc.pack26', { companyId: r.company_id })) {
+      const bud = db.prepare('SELECT COALESCE(SUM(amount_paise), 0) AS a, MAX(volume_milli) AS v FROM bp_budgets WHERE plant_id = ? AND period = ? AND deleted_at IS NULL').get(r.plant_id, r.period);
+      const budgetPerM3 = bud.v > 0 ? Math.round((bud.a * 1000) / bud.v) : null;
+      let th = 0; let ac = 0; let n = 0; const jsonOf = (t) => { try { return JSON.parse(t || '[]'); } catch { return []; } };
+      for (const b of db.prepare("SELECT theoretical_json, actual_weights_json FROM bp_batches WHERE company_id = ? AND plant_id = ? AND substr(batch_time, 1, 7) = ? AND batch_status = 'ACTIVE' AND deleted_at IS NULL").all(r.company_id, r.plant_id, r.period)) {
+        const t = jsonOf(b.theoretical_json).find((x) => x.component === 'CEMENT'); const a = jsonOf(b.actual_weights_json).find((x) => x.component === 'CEMENT'); if (!t) continue; th += t.kgMilli; ac += a?.kgMilli ?? 0; n += 1; }
+      o.pack26 = { budgetPerM3: budgetPerM3 == null ? null : rs(budgetPerM3), perM3VsBudget: budgetPerM3 == null ? null : rs(r.per_m3_paise - budgetPerM3), perM3VsBudgetPct: budgetPerM3 ? Math.round(((r.per_m3_paise - budgetPerM3) * 1000) / budgetPerM3) / 10 : null,
+        cement: { batches: n, theoreticalKg: f3(th), actualKg: f3(ac), varianceKg: f3(ac - th), variancePct: th ? Math.round(((ac - th) * 10000) / th) / 100 : null } };
+    }
     return o;
   }
   const budgets = {

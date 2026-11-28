@@ -1,6 +1,6 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { U, ready, items, plantBody, approvedPlant, mixBody, M25 } from './rmc-helpers.js';
+import { U, ready, readyPlant, items, plantBody, approvedPlant, mixBody, M25 } from './rmc-helpers.js';
 import { computeMix, targetMean, fckOf } from '../src/server/modules/rmc/mix.js';
 
 // Part 20.01: the plant master with silos, scales and calibration; reassignment only by approval; mix designs with proportions that must add up to 1 m3 (T-01), trials, approval by quality and versions with effective dates (BR-01).
@@ -69,4 +69,21 @@ test('AC-03 consultant approval when the company asks; self-approval blocked; im
   assert.equal((await r.call(U.plmX, 'GET', `/plants/${plant.id}`)).status, 404, 'another company sees nothing'); assert.equal((await r.call(U.plmX, 'GET', '/plants')).json.data.length, 0);
   assert.equal((await r.call(U.plm, 'POST', '/plants', plantBody(r, { code: 'SAME', name: 'Same' }), { 'content-type': 'application/json' })).status, 400, 'an idempotency key is required');
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.rmc.p2001'").run(); assert.equal((await r.call(U.plm, 'GET', '/plants')).status, 404);
+});
+
+test('PACK-26 the downtime log of a batching plant: the breakdowns of its machine with the hours it was down, closed and open (ff.rmc.pack26)', async () => {
+  const { fill } = await import('./qa-helpers.js');
+  const r = await ready(opened); const { plant } = await readyPlant(r); const d = r.d;
+  const eq = fill(d, 'plt_equipment', { company_id: 1, asset_code: 'BP-EQ-1', make: 'Schwing', model: 'CP30', equip_state: 'DEPLOYED' });
+  d.prepare('UPDATE bp_plants SET equipment_id = ? WHERE id = ?').run(eq, plant.id);
+  const b1 = fill(d, 'plt_breakdowns', { company_id: 1, doc_no: 'BD/P26/1', equipment_id: eq, category: 'ELECTRICAL', description: 'Mixer motor tripped', reported_on: '2026-11-20', reported_at: '2026-11-20T09:00:00.000Z', reported_by: 'test', breakdown_status: 'RESOLVED', resolved_on: '2026-11-20', resolution: 'Motor rewound' });
+  fill(d, 'plt_job_cards', { company_id: 1, doc_no: 'JC/P26/1', equipment_id: eq, job_type: 'BREAKDOWN', breakdown_id: b1, downtime_hrs: 6000, complaint: 'Motor', requested_by: 'test', status: 'APPROVED', job_status: 'CLOSED' });
+  fill(d, 'plt_breakdowns', { company_id: 1, doc_no: 'BD/P26/2', equipment_id: eq, category: 'HYDRAULIC', description: 'Skip hoist cable', reported_on: '2026-11-27', reported_at: new Date(Date.now() - 2 * 3600_000).toISOString(), reported_by: 'test', breakdown_status: 'OPEN' });
+  const get = async () => (await r.call(U.plm, 'GET', `/plants/${plant.id}`)).json.data;
+  assert.equal((await get()).downtime, undefined, 'flag off: as before');
+  d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.rmc.pack26', 1, 'test', 0, 1)").run();
+  const v = await get(); assert.equal(v.downtime.length, 2);
+  const closed = v.downtime.find((x) => x.docNo === 'BD/P26/1'); const open = v.downtime.find((x) => x.docNo === 'BD/P26/2');
+  assert.deepEqual([closed.status, closed.hoursDown, closed.jobCard ?? null, closed.resolution], ['RESOLVED', 6, null, 'Motor rewound'], 'the hours from its job card');
+  assert.equal(open.status, 'OPEN'); assert.ok(open.hoursDown >= 1.9 && open.hoursDown <= 2.2, `open for about 2 h: ${open.hoursDown}`); assert.ok(v.downtimeHours >= 7.9);
 });

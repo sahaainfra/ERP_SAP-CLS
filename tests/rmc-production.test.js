@@ -70,3 +70,23 @@ test('AC-03 roles, scope and the flag; import and export of requisitions', async
   assert.equal((await r.call(U.plmX, 'GET', '/requisitions')).json.data.length, 0); assert.equal((await r.call(U.plmX, 'GET', '/batches')).json.data.length, 0);
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.rmc.p2002'").run(); assert.equal((await r.call(U.se, 'GET', '/requisitions')).status, 404); assert.equal((await r.call(U.plm, 'GET', '/plants')).status, 200, 'plants stay on part 20.01');
 });
+
+test('PACK-26 traceability from a batch to its cube results: batch → delivery ticket → pour card → cubes cast from that truck → 7- and 28-day results, searched by the batch number', async () => {
+  const r = await ready(opened); const { plant, mix } = await readyPlant(r); const pc = pourCard(r); const rq = await scheduledReq(r, plant, { pourCardId: pc, qty: 10 });
+  const bt = (await batch(r, plant, mix, { qty: 6, weights: weights(6), requisitionId: rq.id })).json.data;
+  const t = (await r.call(U.op, 'POST', '/delivery-tickets', { requisitionId: rq.id, plantId: plant.rootId, batchId: bt.id, truckNo: 'MH12AB2601', driver: 'Ravi', driverPhone: '9000000009', qty: 6 })).json.data;
+  assert.equal((await r.call(U.se, 'POST', `/delivery-tickets/${t.id}/arrive`, {})).status, 200);
+  assert.equal((await r.call(U.se, 'POST', `/delivery-tickets/${t.id}/receive`, { unloadStart: stamp(0), unloadEnd: stamp(0), slumpMm: 100, temperatureC: 31, returnedM3: 0, wastedM3: 0 })).status, 200);
+  const pt = r.d.prepare('SELECT id, batch_ref FROM qa_pour_tickets WHERE ticket_no = ?').get(t.ticketNo); assert.equal(pt.batch_ref, bt.docNo, 'the pour ticket carries the batch number');
+  const h = () => ({ 'content-type': 'application/json', 'idempotency-key': `p26-${Math.random()}` });
+  const qa = (who, method, path, body) => r.api.call(method, `/api/v1/qa${path}`, { ...who, headers: h(), body });
+  const cast = await qa(U.qce, 'POST', `/pour-cards/${pc}/samples`, { ticketId: pt.id, cubes: 6, castDate: stamp(0).slice(0, 10) }); assert.equal(cast.status, 201, JSON.stringify(cast.json)); const sample = cast.json.data;
+  for (const [age, s] of [[7, [18.1, 17.6, 18.4]], [28, [31.2, 30.5, 32.0]]]) assert.equal((await qa(U.qce, 'POST', `/cube-samples/${sample.id}/results`, { ageDays: age, strengths: s, testedOn: stamp(0).slice(0, 10) })).status, 201);
+  const find = async () => (await qa(U.qce, 'GET', `/concrete-traceability?q=${encodeURIComponent(bt.docNo)}`)).json.data;
+  const off = await find(); assert.equal(off.pours.length, 1, 'the batch number finds its pour'); assert.equal(off.pours[0].tickets[0].batch, undefined, 'flag off: as before');
+  r.d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.rmc.pack26', 1, 'test', 0, 1)").run();
+  const on = await find(); const p = on.pours[0]; const tk = p.tickets.find((x) => x.ticketNo === t.ticketNo);
+  assert.equal(p.pourCardId, pc); assert.deepEqual([tk.batch.batchNo, tk.batch.mix, tk.batch.qty, tk.batch.varianceFlag], [bt.docNo, mix.code, 6, false], 'the batch with its plant and mix design');
+  assert.deepEqual(tk.samples, [sample.sampleNo]); assert.deepEqual(tk.cubeResults.map((x) => [x.sampleNo, x.ageDays]).sort((a, b) => a[1] - b[1]), [[sample.sampleNo, 7], [sample.sampleNo, 28]], 'both ages, on the ticket of that truck');
+  const r28 = tk.cubeResults.find((x) => x.ageDays === 28); assert.ok(Math.abs(Number(r28.mean) - 31.23) < 0.01, `the 28-day mean ${r28.mean}`);
+});
