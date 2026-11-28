@@ -1036,3 +1036,11 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   see are reported as "does not exist", never named. For phone cards, one shell-level observer (`useTableCardLabels`, below 640 px only)
   copies each column's header text into body cells that have no `data-label`, for every table on the page. This is cheaper and safer than
   editing 346 page files, and it never overwrites a label a page set. Both are behind `ff.list.pack10`.
+
+- **ADR-781 Actions that cannot be reversed ask for the document number to be typed; native dialogs are the modal standard (PACK-11).**
+  `ConfirmDialog` takes `typeToConfirm`: its confirm button stays off until the person types that word or number (case and spaces
+  ignored). It is for actions that cannot be called back from the screen, first a salary transfer released to the bank (behind
+  `ff.ui.pack11`). Dialogs stay native `<dialog>` opened with `showModal()`: the browser makes the page behind inert, closes on Escape and
+  gives focus back to the opener. Tab past the last control goes to the browser's own toolbar and comes back, which the platform allows; focus
+  never reaches the page behind. Every `.dialog` becomes a full-screen sheet below 768 px. Custom overlays that are not `<dialog>` (the
+  List Report's filter sheet) manage focus and Escape themselves (D-851).
