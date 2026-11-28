@@ -4,7 +4,7 @@
 // Telugu clipping), and every control whose text does not fit: a button, link, input, select, chip, label, table cell or heading whose
 // content is wider or taller than its box while its overflow is hidden or clipped, or ends in an ellipsis. Results:
 // pack-reports/clip320.json; screenshots of pages with clipping in pack-reports/clip320/ (ignored by git).
-/* global document, getComputedStyle */ // measure() runs in the page
+/* global document, getComputedStyle, NodeFilter */ // measure() runs in the page
 import { test, expect } from '@playwright/test';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
@@ -47,16 +47,21 @@ test('PACK-06 clipped Telugu and Hindi text at 320 px on the top 50 pages', asyn
   for (const { key } of db.prepare('SELECT DISTINCT key FROM core_feature_flags WHERE company_id IS NULL').all()) db.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES (?, ?, 'PACK-06 clipping check', 1, 1)").run(key, company);
   db.close();
   const results = [];
-  for (const lang of ['te', 'hi']) {
+  for (const [lang, pseudo] of [['te', false], ['hi', false], ['te-pseudo', true]]) {
     const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 320, height: 700 }, hasTouch: true, isMobile: true });
-    await context.addInitScript(([v, language]) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: 'light', density: 'comfortable', language })); }, [{ user: `clip-${lang}`, roles: ROLES, company: String(company) }, lang]);
+    await context.addInitScript(([v, language]) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: 'light', density: 'comfortable', language: language === 'te-pseudo' ? 'te' : language })); }, [{ user: `clip-${lang}`, roles: ROLES, company: String(company) }, lang]);
     const page = await context.newPage();
     for (const [i, route] of routes.entries()) {
       try {
         const settle = async () => { await page.locator('main').waitFor({ timeout: 15_000 }); await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {}); await page.waitForTimeout(400); };
         await page.goto(route); await settle();
         if (await page.getByText(/Too many requests/).count()) { await page.waitForTimeout(11_000); await page.goto(route); await settle(); }
-        const m = await page.evaluate(measure, lang);
+        if (pseudo) await page.evaluate(() => { // pseudo-localise: every Latin word becomes Telugu about 30 % longer (labels, buttons, cells, headings)
+          const fill = 'ప్రాజెక్ట్నివేదికసమర్పించండి'; const walker = document.createTreeWalker(document.querySelector('main') ?? document.body, NodeFilter.SHOW_TEXT);
+          for (let n = walker.nextNode(); n; n = walker.nextNode()) n.nodeValue = n.nodeValue.replace(/[A-Za-z]{2,}/g, (w) => fill.slice(0, Math.min(fill.length, Math.ceil(w.length * 1.3))));
+          for (const el of document.querySelectorAll('main input[placeholder]')) el.placeholder = el.placeholder.replace(/[A-Za-z]{2,}/g, (w) => fill.slice(0, Math.ceil(w.length * 1.3)));
+        });
+        const m = await page.evaluate(measure, pseudo ? 'te' : lang);
         if (m.clippedCount) await page.screenshot({ path: `${OUT}/${lang}-${String(i + 1).padStart(2, '0')}-${route.replace(/^\//, '').replace(/[/?=&]/g, '_')}.png` });
         results.push({ lang, route, ...m });
       } catch (e) { results.push({ lang, route, error: String(e.message).slice(0, 160) }); }
