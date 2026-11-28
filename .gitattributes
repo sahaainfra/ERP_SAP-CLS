@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# PACK-21: an XER sample keeps its CRLF line ends, byte for byte, as Primavera writes them
+tests/plan-exchange-fixtures/*.xer -text
