@@ -80,7 +80,8 @@ export function useShellMode(enabled = true) {
 // one request with the sign-in check, and each flag's query (the same key as useFlag) shares it. With ff.perf.p16604 OFF, or when the batch fails,
 // every flag is asked for on its own as before. Home's insight cards (166.5) and the List Report and document flow (166.7) read their flags on
 // the first screen too, so they are in the batch, and so is the AI assistant's flag (28.02), which the shell reads for every signed-in person.
-const SHELL_FLAGS = ['ff.iam.p0202', 'ff.ui.p0305', 'ff.ui.p0301', 'ff.ui.p0306', 'ff.ui.p0308', 'ff.ui.p0309', 'ff.ui.p0310', 'ff.ui.p16602', 'ff.eng.p0415', 'ff.msg.p0501', 'ff.field.p16603', 'ff.perf.p16604', 'ff.ui.p16605', 'ff.ui.p16607', 'ff.ai.p2802'];
+// PACK-07, PACK-10 and PACK-12: the context switcher, the shell's table captions and the charts on Home read theirs on the first screen too.
+const SHELL_FLAGS = ['ff.iam.p0202', 'ff.ui.p0305', 'ff.ui.p0301', 'ff.ui.p0306', 'ff.ui.p0308', 'ff.ui.p0309', 'ff.ui.p0310', 'ff.ui.p16602', 'ff.eng.p0415', 'ff.msg.p0501', 'ff.field.p16603', 'ff.perf.p16604', 'ff.ui.p16605', 'ff.ui.p16607', 'ff.ai.p2802', 'ff.ui.pack07', 'ff.list.pack10', 'ff.charts.pack12'];
 const evaluateOne = async (key) => (await api.get(`/core/feature-flags/evaluate?keys=${encodeURIComponent(key)}`)).data;
 export function primeShellFlags(qc) {
   const batch = api.get(`/core/feature-flags/evaluate?keys=${SHELL_FLAGS.map(encodeURIComponent).join(',')}`).then((r) => r.data);
