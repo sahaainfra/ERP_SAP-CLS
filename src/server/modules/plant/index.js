@@ -29,7 +29,10 @@ registerProject360Widget('plant', (ctx) => {
   const s = plantOf(ctx.db); const pid = ctx.project.project_id;
   if (!s || !s.flags.isOn(ctx.actor, 'ff.plant.p1701')) return { figures: [], rows: [], note: 'The equipment register is not enabled for your company yet.' };
   if (!s.base.may(ctx.actor, 'plant.equipment.view', pid)) return { figures: [], rows: [], note: 'You have no right to see the equipment of this project.' };
-  return s.svc.projectWidget(ctx.actor, pid);
+  // PACK-16: each figure opens the equipment register filtered to this project (the dashboard has no project filter of its own), not every machine
+  const w = s.svc.projectWidget(ctx.actor, pid);
+  const register = `/plant/equipment?filter[project]=${encodeURIComponent(ctx.project.code ?? '')}`;
+  return { ...w, figures: (w.figures ?? []).map((f) => (f.drill === '/plant/equipment' || f.drill === '/plant/dashboard' ? { ...f, drill: register } : f)) };
 });
 
 /** @type {any} */

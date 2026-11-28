@@ -5,6 +5,7 @@ import { forbidden, notFound } from '../../platform/http/errors.js';
 import { createParameterStore, parameterRegistry } from '../../platform/parameters/index.js';
 import { widgetRegistry } from '../../platform/widgets/index.js';
 import { todayIST } from '../../../shared/dates.js';
+import { stateName } from '../../../shared/gst.js';
 import { collabOf } from '../eng/collab.js';
 import { gisOf } from './gis.js';
 import { meetingsOf } from './meetings.js';
@@ -59,7 +60,19 @@ export function createP360Service({ db }) {
   // ---- the live widgets of the parts that exist --------------------------------------------------------------------------------------------------------
   // the widgets of the parts that exist belong to this service (they read its database); a later module registers its own in the shared registry above
   const builtins = new Map(); const builtin = (code, fn) => builtins.set(code, fn);
-  const drill = (tpl, ctx) => (tpl ? tpl.replace('{projectId}', String(ctx.project.project_id)) : null);
+  // a link template names the project by id ({projectId}) or, for a register filtered by the project's code, by code ({projectCode}, PACK-16)
+  // PACK-16: a link to one of these List Reports that does not say the project gets the project's filter, so the tile opens the project's own
+  // records, not the company's. Only lists that have a `project` (code) column are named here: an unknown filter is refused by the list (400).
+  const PROJECT_LISTS = ['/bill/client-bills', '/hse/incidents', '/hse/observations', '/proc/material-requests', '/proc/purchase-orders', '/proc/requisitions', '/proj/action-tracker', '/proj/meetings', '/qa/ncrs'];
+  const PROJECT_PARAM_PAGES = ['/bill/qty-recon']; // pages that read ?projectId= themselves
+  const scopedLink = (link, ctx) => {
+    if (!link) return link;
+    const [path, query = ''] = link.split('?');
+    if (PROJECT_PARAM_PAGES.includes(path) && !/(^|&)projectId=/.test(query)) return `${path}?${query ? `${query}&` : ''}projectId=${ctx.project.project_id}`;
+    if (!PROJECT_LISTS.includes(path) || /(^|&)(filter\[project(Id)?\]|projectId|id)=/.test(query)) return link;
+    return `${path}?${query ? `${query}&` : ''}filter[project]=${encodeURIComponent(ctx.project.code ?? '')}`;
+  };
+  const drill = (tpl, ctx) => (tpl ? scopedLink(tpl.replace('{projectId}', String(ctx.project.project_id)).replace('{projectCode}', encodeURIComponent(ctx.project.code ?? '')), ctx) : null);
   const T = { good: 'green', warn: 'amber', bad: 'red' };
   builtin('milestones', (ctx) => {
     const id = ctx.project.project_id; const today = todayIST();
@@ -171,20 +184,38 @@ export function createP360Service({ db }) {
       return { buffer: writeExport(format, { columns: [{ key: 'tab', label: 'Tab', type: 'text' }, { key: 'widget', label: 'Widget', type: 'text' }, { key: 'figure', label: 'Figure', type: 'text' }, { key: 'value', label: 'Value', type: 'text' }], rows, footer: [`Period ${d.period.period}; health ${d.health}`], title: `Project 360: ${d.code} ${d.name}`, sheetName: 'Project 360' }), contentType: FORMATS[format], fileName: `project-360-${d.code}-${d.period.period}.${format}` };
     },
     /** FR-05: the projects the person may see, each with its health and the figures that matter first. */
-    portfolio(actor, { q, health: only } = /** @type {{ q?: string, health?: string }} */ ({})) {
+    portfolio(actor, { q, health: only, state, clientId, type, stage } = /** @type {{ q?: string, health?: string, state?: string, clientId?: number, type?: string, stage?: string }} */ ({})) {
       if (!may(actor, 'proj.p360.view')) throw forbidden('You may not see the portfolio (permission proj.p360.view).');
       const f = authz.scopeFilter(actor, 'proj.p360.view', { project: 'x.project_id' }); const t = thresholdsOf(actor.companyId);
-      const rows = db.prepare(`SELECT x.*, p.code, p.name FROM proj_projects x JOIN org_projects p ON p.id = x.project_id WHERE x.company_id = :c AND x.deleted_at IS NULL AND ${f.sql} ORDER BY p.code LIMIT 300`).all({ c: actor.companyId, ...(f.params ?? {}) });
+      // PACK-16: a project's states are those of its registrations (branches) and locations; a project may work in more than one
+      const statesSql = `SELECT DISTINCT state_code FROM (SELECT state_code FROM org_branches WHERE project_id = x.project_id AND deleted_at IS NULL AND state_code IS NOT NULL
+        UNION SELECT state_code FROM org_locations WHERE project_id = x.project_id AND deleted_at IS NULL AND state_code IS NOT NULL)`;
+      const extra = [state ? `EXISTS (SELECT 1 FROM (${statesSql}) WHERE state_code = :state)` : null, clientId ? 'x.client_partner_id = :clientId' : null,
+        type ? 'p.type = :type' : null, stage ? 'x.lifecycle_state = :stage' : null].filter(Boolean).map((w) => ` AND ${w}`).join('');
+      const scopeParams = { c: actor.companyId, ...(f.params ?? {}) };
+      const allRows = db.prepare(`SELECT x.*, p.code, p.name, p.type AS org_type, (SELECT COALESCE(mp.trade_name, mp.legal_name) FROM mdm_partners mp WHERE mp.id = x.client_partner_id) AS client_name,
+        (SELECT GROUP_CONCAT(state_code) FROM (${statesSql})) AS states FROM proj_projects x JOIN org_projects p ON p.id = x.project_id WHERE x.company_id = :c AND x.deleted_at IS NULL AND ${f.sql} ORDER BY p.code LIMIT 300`).all(scopeParams);
+      const rows = !extra ? allRows : db.prepare(`SELECT x.*, p.code, p.name, p.type AS org_type, (SELECT COALESCE(mp.trade_name, mp.legal_name) FROM mdm_partners mp WHERE mp.id = x.client_partner_id) AS client_name,
+        (SELECT GROUP_CONCAT(state_code) FROM (${statesSql})) AS states FROM proj_projects x JOIN org_projects p ON p.id = x.project_id WHERE x.company_id = :c AND x.deleted_at IS NULL AND ${f.sql}${extra} ORDER BY p.code LIMIT 300`)
+        .all({ ...scopeParams, ...(state ? { state } : {}), ...(clientId ? { clientId } : {}), ...(type ? { type } : {}), ...(stage ? { stage } : {}) });
+      // the choices offered are those of the projects the person may see (not of the whole company)
+      const uniq = (xs) => [...new Map(xs.filter((o) => o.value != null && o.value !== '').map((o) => [String(o.value), o])).values()].sort((a, b) => String(a.label).localeCompare(String(b.label)));
+      const options = {
+        states: uniq(allRows.flatMap((x) => (x.states ? x.states.split(',') : []).map((code) => ({ value: code, label: stateName(code) ?? code })))),
+        clients: uniq(allRows.map((x) => ({ value: x.client_partner_id, label: x.client_name ?? `#${x.client_partner_id}` }))),
+        types: uniq(allRows.map((x) => ({ value: x.org_type, label: x.org_type }))),
+        stages: uniq(allRows.map((x) => ({ value: x.lifecycle_state, label: STATES[x.lifecycle_state] ?? x.lifecycle_state }))),
+      };
       const today = todayIST();
       const list = rows.filter((x) => !q || `${x.code} ${x.name}`.toLowerCase().includes(String(q).toLowerCase())).map((x) => {
         const h = health(x, t); const n = (sql, ...a) => db.prepare(sql).get(...a).n; const can = (k) => may(actor, k, x.project_id);
-        return { projectId: x.project_id, code: x.code, name: x.name, lifecycleState: x.lifecycle_state, lifecycleLabel: STATES[x.lifecycle_state] ?? x.lifecycle_state, pm: x.pm_user, startDate: x.start_date, scheduledCompletion: x.scheduled_completion, health: h.level, healthItems: h.items.map((i) => ({ code: i.code, label: i.label, level: i.level })),
+        return { projectId: x.project_id, code: x.code, name: x.name, client: x.client_name ?? null, clientId: x.client_partner_id ?? null, type: x.org_type ?? null, states: x.states ? x.states.split(',').sort() : [], lifecycleState: x.lifecycle_state, lifecycleLabel: STATES[x.lifecycle_state] ?? x.lifecycle_state, pm: x.pm_user, startDate: x.start_date, scheduledCompletion: x.scheduled_completion, health: h.level, healthItems: h.items.map((i) => ({ code: i.code, label: i.label, level: i.level })),
           overdueMilestones: n("SELECT COUNT(*) AS n FROM proj_milestones WHERE project_id = ? AND deleted_at IS NULL AND milestone_status = 'PLANNED' AND planned_date < ?", x.project_id, today),
           criticalRisks: can('proj.risk.view') ? n("SELECT COUNT(*) AS n FROM proj_risks WHERE org_project_id = ? AND deleted_at IS NULL AND rtype = 'RISK' AND status = 'OPEN' AND level = 'CRITICAL'", x.project_id) : null,
           openIssues: can('proj.issue.view') ? n("SELECT COUNT(*) AS n FROM proj_risk_issues WHERE org_project_id = ? AND deleted_at IS NULL AND status IN ('OPEN', 'IN_PROGRESS')", x.project_id) : null };
       }).filter((p) => !only || p.health === only).sort((a, b) => WORST[b.health] - WORST[a.health] || a.code.localeCompare(b.code));
       const count = (l) => list.filter((p) => p.health === l).length;
-      return { projects: list, summary: { total: list.length, red: count('RED'), amber: count('AMBER'), green: count('GREEN'), none: count('NONE') } };
+      return { projects: list, summary: { total: list.length, red: count('RED'), amber: count('AMBER'), green: count('GREEN'), none: count('NONE') }, options };
     },
   };
 
