@@ -1078,3 +1078,13 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   (`baselineStart`, `baselineFinish`). The import report says how many activities carry one (info `BASELINE_IN_FILE`). Applying a file
   never creates or changes a `plan_baselines` row. A baseline is prepared by planning and approved by the project manager and the project
   director (13.03 FR-02), and a file cannot stand in for that approval. P6 XML and XER carry no baseline here (D-876).
+
+- **ADR-786 An approved stock adjustment is posted to the ledger by the net value it moved (PACK-23).** A physical count's adjustment, or
+  a revaluation, changes the stock ledger. Before this decision, nothing told the ledger, so the inventory control account drifted from the
+  stock value with every write-off. With `ff.inv.pack23`, the approval publishes `inv.adjustment.posted` carrying the net value the
+  adjustment wrote in the stock ledger (`SUM(value)` of its rows, where an outgoing value is negative), as kind LOSS or GAIN.
+  - The default rules post a LOSS as Dr `560040` Inventory shortage and write-off on verification, Cr `130001` Inventory.
+  - They post a GAIN as Dr `130001`, Cr `420021` Inventory excess found on verification. The store's project and site are the dimensions.
+  - One journal per adjustment, by its net, because the engine posts one journal per source document.
+
+  The accounts and rules are reference data. A company changes them through the posting-rule maker-checker of 23.02.
