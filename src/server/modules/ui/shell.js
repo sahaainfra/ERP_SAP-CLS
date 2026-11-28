@@ -21,6 +21,7 @@ export const FIELD_FLAG = 'ff.field.p16603';
 export const NAV_CHAIN = ['SYSADM'];
 export const SELF = 'self'; // the explicit key for "any signed-in person" (BR-01: an entry without a key is not allowed, except Home and Profile)
 const NO_KEY_OK = new Set(['home', 'profile']);
+const RECENT_CONTEXTS = 5; // PACK-07: recent working contexts kept per person
 const PROTECTED = new Set(['admin-navigation']); // the page that edits the registry keeps its permission and stays active, so the registry cannot lock itself out
 const MAX_FAVOURITES = 30;
 const MAX_RECENT = 30;
@@ -396,7 +397,12 @@ export function createShellService({ db, flags, approvals }) {
     const saved = db.prepare('SELECT context_project_id, context_site_id FROM ui_user_context WHERE company_id = ? AND user_ref = ?').get(actor.companyId, user(actor));
     const project = opts.projects.find((p) => p.id === saved?.context_project_id)?.id ?? null;
     const site = project ? opts.sites.find((s) => s.id === saved?.context_site_id && s.projectId === project)?.id ?? null : null;
-    return { ...opts, selected: { companyId: actor.companyId, projectId: project, siteId: site } };
+    // PACK-07: the contexts chosen most recently, newest first, that are still in the person's scope (a project that closed or left
+    // their scope drops out); "All projects" (no project) is not a recent context
+    const recent = db.prepare('SELECT context_project_id AS projectId, context_site_id AS siteId FROM ui_context_recent WHERE company_id = ? AND user_ref = ? AND context_project_id IS NOT NULL AND deleted_at IS NULL ORDER BY used_at DESC, id DESC LIMIT ?').all(actor.companyId, user(actor), RECENT_CONTEXTS)
+      .filter((r) => opts.projects.some((p) => p.id === r.projectId) && (r.siteId == null || opts.sites.some((x) => x.id === r.siteId && x.projectId === r.projectId)))
+      .map((r) => ({ projectId: r.projectId, siteId: r.siteId ?? null }));
+    return { ...opts, selected: { companyId: actor.companyId, projectId: project, siteId: site }, recent };
   }
 
   function setContext(actor, { projectId, siteId }) {
@@ -407,6 +413,15 @@ export function createShellService({ db, flags, approvals }) {
     db.prepare(`INSERT INTO ui_user_context (company_id, user_ref, context_project_id, context_site_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, 'user_context')
       ON CONFLICT (company_id, user_ref) DO UPDATE SET context_project_id = excluded.context_project_id, context_site_id = excluded.context_site_id, updated_by = excluded.created_by, updated_at = ?, version = version + 1`)
       .run(actor.companyId, user(actor), projectId, siteId, user(actor), nowIso());
+    if (projectId) {
+      const at = nowIso();
+      db.prepare(`INSERT INTO ui_context_recent (company_id, user_ref, context_project_id, context_site_id, used_at, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, 'user_context')
+        ON CONFLICT (company_id, user_ref, COALESCE(context_project_id, 0), COALESCE(context_site_id, 0)) DO UPDATE SET used_at = excluded.used_at, updated_by = excluded.created_by, updated_at = excluded.used_at, deleted_at = NULL`)
+        .run(actor.companyId, user(actor), projectId, siteId ?? null, at, user(actor));
+      // keep the newest RECENT_CONTEXTS per person
+      db.prepare('DELETE FROM ui_context_recent WHERE company_id = ? AND user_ref = ? AND id NOT IN (SELECT id FROM ui_context_recent WHERE company_id = ? AND user_ref = ? ORDER BY used_at DESC, id DESC LIMIT ?)')
+        .run(actor.companyId, user(actor), actor.companyId, user(actor), RECENT_CONTEXTS);
+    }
     return contextOptions(actor);
   }
 

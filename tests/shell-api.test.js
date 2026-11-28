@@ -239,3 +239,32 @@ test('FR-06 the launchpad gathers tiles by role, favourites, recent records and 
   assert.deepEqual([again.favourites.map((f) => f.navCode), again.recent.map((x) => x.title)], [['admin-sample-bills'], [sent.docNo]]);
   await api.close();
 });
+
+test('PACK-07 recent working contexts: newest first, at most five, a repeat moves up, per person and company, and only what is still in scope', async (t) => {
+  const api = await startApi(); t.after(() => api.close());
+  const w = await world(api);
+  const ids = [w.project.id];
+  for (let i = 2; i <= 6; i += 1) ids.push((await api.call('POST', '/api/v1/iam/org/projects', { ...pm, headers: key(`p${i}`), body: { code: `NH${i}`, name: `Package ${i}`, type: 'ROAD' } })).json.data.id);
+  const put = (who, body) => api.call('PUT', `${U}/context`, { ...who, headers: json, body });
+  const recentOf = async (who) => (await api.call('GET', `${U}/context-options`, who)).json.data.recent;
+  assert.deepEqual(await recentOf(pm), [], 'nothing chosen yet');
+  assert.equal((await put(pm, { projectId: w.project.id, siteId: w.site.id })).status, 200);
+  for (const id of ids.slice(1)) assert.equal((await put(pm, { projectId: id, siteId: null })).status, 200);
+  assert.equal((await put(pm, { projectId: null, siteId: null })).status, 200); // "All projects" is not a recent context
+  let r = await recentOf(pm);
+  assert.deepEqual(r.map((x) => x.projectId), [ids[5], ids[4], ids[3], ids[2], ids[1]], 'the five newest, newest first; the oldest (NH1/S1) dropped');
+  assert.equal(api.db.prepare("SELECT COUNT(*) AS n FROM ui_context_recent WHERE user_ref = 'pm1'").get().n, 5, 'only five are kept');
+  // choosing an older one again moves it to the top without a duplicate
+  await put(pm, { projectId: ids[2], siteId: null });
+  r = await recentOf(pm);
+  assert.deepEqual(r.map((x) => x.projectId), [ids[2], ids[5], ids[4], ids[3], ids[1]]);
+  // per person: another person has their own list
+  assert.deepEqual(await recentOf(as('PM', 'pm2')), []);
+  // another company sees nothing of company 1
+  assert.deepEqual(await recentOf({ roles: 'PM', user: 'pm1', company: '2' }), []);
+  // a project that is closed leaves the list (it is no longer in scope)
+  api.db.prepare("UPDATE org_projects SET status = 'CLOSED' WHERE id = ?").run(ids[5]);
+  r = await recentOf(pm);
+  assert.ok(!r.some((x) => x.projectId === ids[5]), 'a closed project is not offered');
+  assert.equal(r.length, 4);
+});

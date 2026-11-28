@@ -36691,6 +36691,42 @@ Indexes:
 - ix_ui_bottom_bar_nav_code: nav_code
 - ux_ui_bottom_bar_slot (unique): , , slot
 
+## ui_context_recent
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| context_project_id | INTEGER |  |  |  |
+| context_site_id | INTEGER |  |  |  |
+| used_at | TEXT | yes |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: context_site_id -> org_sites(id), context_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_context_recent_person_used: company_id, user_ref, used_at
+- ux_ui_context_recent_person_context (unique): company_id, user_ref, , 
+- ix_ui_context_recent_project: project_id
+- ix_ui_context_recent_context_site_id: context_site_id
+- ix_ui_context_recent_context_project_id: context_project_id
+- ix_ui_context_recent_company_status: company_id, status
+
 ## ui_dashboards
 
 | Column | Type | Not null | Key | Default |

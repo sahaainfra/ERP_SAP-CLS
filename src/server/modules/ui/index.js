@@ -119,7 +119,7 @@ export const ui = {
   routePrefix: '/api/v1/ui',
   ownerPart: '03.x',
   status: 'Design tokens, themes, typography and iconography (03.01); form components and data-entry framework (03.02); data table and List Report (03.03)',
-  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries', 'ui_navigation_labels', 'ui_field_tile_rules', 'ui_bottom_bar'],
+  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_context_recent', 'ui_push_subscriptions', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries', 'ui_navigation_labels', 'ui_field_tile_rules', 'ui_bottom_bar'],
   resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr', 'widgets', 'dashboards', 'search', 'translations', 'locale-preferences', 'page-migration'],
 
   mount(api, { db, config, storagePath }) {
