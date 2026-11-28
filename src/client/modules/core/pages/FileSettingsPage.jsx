@@ -126,7 +126,7 @@ export default function FileSettingsPage({ session }) {
             {overview.data.clamAvConnected ? 'ClamAV is connected.' : 'Only the built-in test-signature scanner is active: it catches test files, not real malware. Set CLAMAV_HOST to connect a ClamAV daemon before real use.'}
           </p>
           {overview.data.byCategory.length > 0 && (
-            <div className="table-wrap">
+            <div className="table-wrap" tabIndex={0} role="region" aria-label="Stored files by category">
               <table>
                 <caption className="sr-only">Stored files by category</caption>
                 <thead><tr><th>Category</th><th className="num">Files</th><th className="num">Size</th></tr></thead>
@@ -136,7 +136,7 @@ export default function FileSettingsPage({ session }) {
           )}
           <h2>Files needing attention</h2>
           {overview.data.attention.length === 0 ? <p className="muted">No quarantined files, failed scans or files waiting for more than five minutes.</p> : (
-            <div className="table-wrap">
+            <div className="table-wrap" tabIndex={0} role="region" aria-label="Quarantined, failed or stuck files">
               <table>
                 <caption className="sr-only">Quarantined, failed or stuck files</caption>
                 <thead><tr><th>File</th><th>Record</th><th>Result</th><th>Uploaded by</th><th>When (IST)</th><th /></tr></thead>
@@ -161,7 +161,7 @@ export default function FileSettingsPage({ session }) {
       {s && (
         <div data-testid="current-settings">
           <p className="muted small">{settings.data.custom ? `Customised (version ${settings.data.version}).` : 'Defaults: no change has been approved yet.'} Download links last <strong>{s.urlTtlSeconds} seconds</strong>.</p>
-          <div className="table-wrap">
+          <div className="table-wrap" tabIndex={0} role="region" aria-label="Size limit and retention class by category">
             <table>
               <caption className="sr-only">Size limit and retention class by category</caption>
               <thead><tr><th>Category</th><th className="num">Size limit (MB)</th><th>Retention class</th><th>Allowed types</th></tr></thead>

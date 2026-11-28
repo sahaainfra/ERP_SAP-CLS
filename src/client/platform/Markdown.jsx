@@ -19,7 +19,7 @@ export default function Markdown({ source }) {
           return <Tag key={i} id={slug(headingText(b))}><Inline nodes={b.children} /></Tag>;
         }
         if (b.t === 'paragraph') return <p key={i}><Inline nodes={b.children} /></p>;
-        if (b.t === 'code') return <pre key={i}><code>{b.v}</code></pre>;
+        if (b.t === 'code') return <pre key={i} tabIndex={0}><code>{b.v}</code></pre>; // PACK-14: a code block that scrolls can be reached by keyboard (axe scrollable-region-focusable)
         if (b.t === 'list') {
           const Tag = b.ordered ? 'ol' : 'ul';
           return <Tag key={i}>{b.items.map((it, j) => <li key={j}><Inline nodes={it} /></li>)}</Tag>;

@@ -72,9 +72,10 @@ function Board({ t, d, refresh }) {
     {narrow && <PillTabs label={t('gl.columns')} tabs={COLUMNS.map((c) => [c, `${t(`gl.st.${c}`)} (${items.filter((i) => i.status === c).length})`])} value={col} onChange={setCol} testid="gl-columns" />}
     {set.error && <ErrorState error={set.error} />}
     <div className="board" data-testid="gl-board" style={{ display: 'grid', gap: 'var(--erp-space-3, 12px)', gridTemplateColumns: narrow ? '1fr' : 'repeat(4, minmax(0, 1fr))' }}>
-      {shown.map((c) => <div key={c} data-testid="gl-column" data-status={c} role="list" aria-label={t(`gl.st.${c}`)}>
+      {shown.map((c) => <div key={c} data-testid="gl-column" data-status={c}>
         <h2 className="small">{t(`gl.st.${c}`)} · {items.filter((i) => i.status === c).length}</h2>
-        {items.filter((i) => i.status === c).map((i) => <Card key={i.id} title={i.title} level={3} testid="gl-item" role="listitem">
+        {/* PACK-14: only the items are in the list (a heading inside a list, or an empty list, is not allowed: axe aria-required-children) */}
+        {items.some((i) => i.status === c) && <div role="list" aria-label={t(`gl.st.${c}`)}>{items.filter((i) => i.status === c).map((i) => <Card key={i.id} title={i.title} level={3} testid="gl-item" role="listitem">
           <div data-criterion={i.criterion} data-testid={`gl-item-${i.criterion}`}>
             <StatusBadge status={TONE[i.status]} label={t(`gl.st.${i.status}`)} size="sm" /> <span className="small muted">{t(`gl.cat.${i.category}`)} · {i.mandatory ? t('gl.mandatory') : t('gl.optional')} · {i.ownerRole}{i.evaluation === 'AUTO' ? ` · ${t('gl.auto')}` : ''}</span>
             {i.detail && <p className="small">{i.detail}</p>}
@@ -92,7 +93,7 @@ function Board({ t, d, refresh }) {
               </form>
             </details>}
           </div>
-        </Card>)}
+        </Card>)}</div>}
         {!items.some((i) => i.status === c) && <p className="muted small">{t('gl.emptyColumn')}</p>}
       </div>)}
     </div>

@@ -1317,6 +1317,7 @@ label.btn { position: relative; overflow: hidden; }
 @media (max-width: 767px) {
   .trn-cal { display: block; background: none; border: 0; }
   .trn-week { display: block; }
+  .trn-week:not(:has(.trn-has)) { display: none; } /* PACK-14: a week with nothing shown on a phone is not left as an empty row */
   .trn-dow, .trn-blank, .trn-day:not(.trn-has) { display: none; }
   .trn-day { margin-block-end: var(--erp-space-2); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); min-block-size: 0; }
   .trn-chip { white-space: normal; padding: var(--erp-space-2); }
