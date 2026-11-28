@@ -370,3 +370,41 @@ test('AC-05 FR-01 FR-08 FR-09 the registry is changed by request and approval: a
     await restore();
   }
 });
+
+test('PACK-07 the context switcher by keyboard alone: type and Enter, arrows over the recent contexts, Escape gives focus back; recent contexts follow the person', async ({ browser, request }, info) => {
+  test.setTimeout(150_000);
+  const w = await world(request, pick(info, 'SHKD', 'SHKM'));
+  const flag = await request.patch('/api/v1/core/feature-flags/ff.ui.pack07', { headers: H('SYSADM', w.company, 'e2e-setup'), data: { scope: { level: 'company', companyId: w.company }, enabled: true, reason: 'e2e: PACK-07 switcher' } });
+  expect(flag.status(), await flag.text()).toBe(200);
+  const user = pick(info, 'e2e-kbd-d', 'e2e-kbd-m');
+  const page = await as(browser, info, w.company, 'PM', user, '/admin/sample-requests');
+  const errors = watch(page);
+  const button = page.getByTestId('context-button');
+  await expect(button).toContainText('All projects');
+  // open with the keyboard; the search box has focus; type a code and press Enter: the first match is chosen and focus is back on the button
+  await button.focus(); await page.keyboard.press('Enter');
+  await expect(page.getByLabel('Find a project or site')).toBeFocused();
+  await page.keyboard.type(`${w.code}-B`); await page.keyboard.press('Enter');
+  await expect(button).toContainText(`${w.code}-B`);
+  await expect(button).toBeFocused();
+  await page.keyboard.press('Enter'); await page.keyboard.type(`${w.code}-A`); await page.keyboard.press('Enter');
+  await expect(button).toContainText(`${w.code}-A`);
+  // the recent contexts, newest first; ArrowDown from the search box walks them, Enter on one chooses it
+  await page.keyboard.press('Enter');
+  const recent = page.getByTestId('context-recent');
+  await expect(recent.getByRole('option')).toHaveText([new RegExp(`^${w.code}-A`), new RegExp(`^${w.code}-B`)]);
+  await page.keyboard.press('ArrowDown'); await expect(recent.getByRole('option').first()).toBeFocused();
+  await page.keyboard.press('ArrowDown'); await expect(recent.getByRole('option').nth(1)).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(button).toContainText(`${w.code}-B`);
+  // Escape closes the panel and gives focus back
+  await page.keyboard.press('Enter'); await expect(page.getByLabel('Find a project or site')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByLabel('Find a project or site')).toHaveCount(0);
+  await expect(button).toBeFocused();
+  // the recent contexts are kept on the server for the person: another browser shows them
+  const other = await as(browser, info, w.company, 'PM', user, '/home');
+  await other.getByTestId('context-button').click();
+  await expect(other.getByTestId('context-recent').getByRole('option')).toHaveText([new RegExp(`^${w.code}-B`), new RegExp(`^${w.code}-A`)]);
+  expect(errors).toEqual([]);
+});

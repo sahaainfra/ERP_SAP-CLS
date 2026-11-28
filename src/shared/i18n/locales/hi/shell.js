@@ -1,5 +1,6 @@
 // हिन्दी पाठ of the area "shell" (part 03.09; one file per area since audit AUD-DEF-014, so no chunk of the Hindi text passes the bundle budget).
 export default {
+  'context.recent': 'हाल के', 'context.recentAria': 'हाल के कार्य संदर्भ',
   "page.loading": "पेज खुल रहा है",
   "page.loadFailedTitle": "यह पेज नहीं खुल सका",
   "page.loadFailedBody": "एप्लिकेशन का यह भाग लाया नहीं जा सका। शायद नया संस्करण आ गया है: इस्तेमाल करने के लिए रीलोड करें।",
