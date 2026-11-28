@@ -1299,6 +1299,11 @@ label.btn { position: relative; overflow: hidden; }
 /* Part 07.10: training calendar, skill matrix, compliance bars, sign-in code */
 .trn-legend { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); list-style: none; padding: 0; margin: var(--erp-space-2) 0; }
 .trn-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--erp-color-border-subtle); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); overflow: hidden; margin: var(--erp-space-3) 0; }
+/* PACK-14: the rows of the calendar grid are real boxes (a row with display: contents leaves the accessibility tree, so the grid had no rows) that
+   share the calendar's seven columns */
+.trn-week { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; gap: inherit; }
+/* PACK-14: a tab list inside an action row keeps its own box (display: contents took it out of the accessibility tree) and the row's spacing */
+.tab-set { display: inline-flex; flex-wrap: wrap; align-items: center; gap: inherit; }
 .trn-dow { background: var(--erp-color-bg-surface); font: var(--erp-type-caption); color: var(--erp-color-text-secondary); padding: var(--erp-space-1) var(--erp-space-2); text-align: center; }
 .trn-blank, .trn-day { background: var(--erp-color-bg-surface); min-block-size: 5.5rem; padding: var(--erp-space-1); }
 .trn-day[data-over] { outline: 2px solid var(--erp-color-border-focus); }
@@ -1311,6 +1316,7 @@ label.btn { position: relative; overflow: hidden; }
 .trn-rejected, .trn-cancelled { background: var(--erp-color-status-error-bg); color: var(--erp-color-status-error-fg); }
 @media (max-width: 767px) {
   .trn-cal { display: block; background: none; border: 0; }
+  .trn-week { display: block; }
   .trn-dow, .trn-blank, .trn-day:not(.trn-has) { display: none; }
   .trn-day { margin-block-end: var(--erp-space-2); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); min-block-size: 0; }
   .trn-chip { white-space: normal; padding: var(--erp-space-2); }

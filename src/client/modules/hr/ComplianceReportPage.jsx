@@ -32,7 +32,7 @@ export default function ComplianceReportPage() {
     <section aria-labelledby="cp-title" data-testid="compliance">
       <PageHeader id="cp-title" title={t('comp.title')} />
       <div className="actions-row no-print">
-        <div role="tablist" aria-label={t('comp.title')} style={{ display: 'contents' }}>
+        <div role="tablist" aria-label={t('comp.title')} className="tab-set">
         <button type="button" role="tab" aria-selected={tab === 'compliance'} className={`btn${tab === 'compliance' ? ' btn-primary' : ''}`} onClick={() => setTab('compliance')} data-testid="cp-tab-compliance">{t('comp.tabCompliance')}</button>
         <button type="button" role="tab" aria-selected={tab === 'cost'} className={`btn${tab === 'cost' ? ' btn-primary' : ''}`} onClick={() => setTab('cost')} data-testid="cp-tab-cost">{t('comp.tabCost')}</button></div>
         <button type="button" className="btn" onClick={() => window.print()}>{t('cal.print')}</button>

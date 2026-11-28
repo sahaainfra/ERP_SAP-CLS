@@ -56,8 +56,8 @@ export default function TrainingCalendarPage() {
       {q.isPending ? <Skeleton label={t('cal.title')} rows={6} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : (
         <>
           <div className="trn-cal" role="grid" aria-label={month} data-testid="tcal-grid">
-            <div role="row" style={{ display: 'contents' }}>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => <div key={d} className="trn-dow" role="columnheader">{t(`dow.${d}`)}</div>)}</div>
-            {weeks(firstDow, days).map((week, w) => <div key={`w${w}`} role="row" style={{ display: 'contents' }}>{week.map((d, i) => d === null ? <div key={`b${w}-${i}`} className="trn-blank" role="gridcell" /> : (
+            <div role="row" className="trn-week">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => <div key={d} className="trn-dow" role="columnheader">{t(`dow.${d}`)}</div>)}</div>
+            {weeks(firstDow, days).map((week, w) => <div key={`w${w}`} role="row" className="trn-week">{week.map((d, i) => d === null ? <div key={`b${w}-${i}`} className="trn-blank" role="gridcell" /> : (
               <div key={d} className={`trn-day${bySession(d).length ? ' trn-has' : ''}`} role="gridcell" data-day={d} onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => { e.preventDefault(); const s = rows.find((x) => x.id === Number(e.dataTransfer.getData('text/plain'))); if (s) move(s, d); }}>
                 <span className="trn-date">{Number(d.slice(8))}</span>
