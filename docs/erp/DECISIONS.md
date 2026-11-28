@@ -1044,3 +1044,11 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   gives focus back to the opener. Tab past the last control goes to the browser's own toolbar and comes back, which the platform allows; focus
   never reaches the page behind. Every `.dialog` becomes a full-screen sheet below 768 px. Custom overlays that are not `<dialog>` (the
   List Report's filter sheet) manage focus and Escape themselves (D-851).
+
+- **ADR-782 Charts say what they show, long lines have no mark per point, and tables are built when opened (PACK-12).** With `ff.charts.pack12`
+  the summary of every chart drawn by `Chart` (the SVG `<title>` it is labelled by) gives the span of the categories and, for each series, the
+  first, last and highest value with where it is; for a donut, the largest part; for a gauge, its value and target (`chartSummary` in
+  `charts/scale.js`, text in en/hi/te). A line or area of more than 400 points is drawn as its lines with one transparent pointer layer
+  (`nearestIndex`) for the tooltip, unless a point is a link (drill). With a mark per point, a 5,000-point S-curve was 37,045 nodes and blocked
+  the main thread for about 0.3–0.45 s, and its tooltip was hard to hit. The "View as table" rows are built when the person opens it. The table
+  stays the full accessible alternative, with every point.
