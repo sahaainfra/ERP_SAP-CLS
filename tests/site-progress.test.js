@@ -142,3 +142,19 @@ test('AC-03 AC-04 roles and isolation: who sees and does what; another company g
   assert.deepEqual((await t.call(plan1, 'GET', '/progress/projects')).json.data.map((x) => x.code), ['PRG']); assert.equal((await t.call(plan1, 'GET', `/progress/report?projectId=${t.pid}&asOf=${isoOf(ordOf(TODAY) + 3)}`)).status, 400);
   t.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.site.p1405'").run(); assert.equal((await t.call(plan1, 'GET', '/periods')).status, 404); assert.equal((await t.call(plan1, 'GET', `/progress/dashboard?projectId=${t.pid}`)).status, 404); assert.notEqual((await t.api.call('GET', `${S}/weather`, { ...cm })).status, 404);
 });
+
+test('PACK-20 the S-curve carries planned (PV), earned (EV) and the actual cost (AC) of the closed periods, for those who see cost', async () => {
+  const t = await boot(); t.dpr({ work: [['A10', 50]] }); t.dpr({ work: [['A20', 5]] }); t.forecast();
+  const per = (await t.call(plan1, 'POST', '/periods', { projectId: t.pid, periodType: 'MONTH', periodEnd: TODAY, actualCost: 420000 }, key())).json.data;
+  const s = (await t.call(plan1, 'POST', `/periods/${per.id}/submit`, undefined, key())).json.data; assert.equal((await t.act(pm, s.workflowInstanceId)).status, 200);
+  const curve = async (who) => (await t.call(who, 'GET', `/progress/scurve?projectId=${t.pid}`)).json.data;
+  const off = await curve(plan1); assert.equal(off.actualCost, undefined, 'flag off: as before'); assert.ok(off.planned.financial, 'planning sees cost');
+  t.d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.plan.pack20', 1, 'test', 0, 1)").run();
+  const c = await curve(plan1); const i = c.dates.indexOf(TODAY); assert.ok(i > 0);
+  assert.deepEqual(c.earned.financial, c.actual.financial, 'earned is the actual financial line (EV)');
+  assert.equal(c.actualCost.financial[i], 420000, 'AC of the period closed today'); assert.ok(c.actualCost.financial.slice(0, i).every((x) => x === null), 'no AC before the first closed period');
+  assert.ok(c.actualCost.financial.slice(i + 1).every((x) => x === null), 'nothing after the as-of date');
+  const evm = t.d.prepare('SELECT ev, ac FROM prs_evm WHERE period_id = ? AND wbs_id IS NULL').get(per.id); assert.equal(c.earned.financial[i], evm.ev / 100, 'EV on the curve = EV of the closed period'); assert.equal(evm.ac / 100, 420000);
+  assert.deepEqual(c.periodsClosed, [{ periodEnd: TODAY, ac: 420000 }]);
+  const blind = await curve(cm); assert.equal(blind.actualCost, undefined, 'the construction manager sees no cost'); assert.equal(JSON.stringify(blind).includes('420000'), false);
+});

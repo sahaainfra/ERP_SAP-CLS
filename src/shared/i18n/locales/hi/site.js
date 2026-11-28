@@ -935,4 +935,8 @@ export default {
   "cnd.una.title": "अनावंटित लागत",
   "cnd.una.vendor": "विक्रेता",
   "cnd.una.why": "अनावंटित क्यों",
+  // PACK-20: the three lines of earned value
+  "cnd.prg.pv": "नियोजित मूल्य (PV)",
+  "cnd.prg.ev": "अर्जित मूल्य (EV)",
+  "cnd.prg.ac": "वास्तविक लागत (AC)",
 };

@@ -13,6 +13,7 @@ import { todayIST } from '../../../shared/dates.js';
 import { issueNumber } from '../core/numbering/service.js';
 import { isoOf, ordOf } from '../plan/cpm.js';
 import { metrics, plannedFraction, rollup } from './evm.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 
 // Progress measurement, earned value and S-curves (part 14.05).
 // - Physical progress of an activity is the quantity executed in the approved DPRs over its total quantity (FR-01, BR-01); the project and each WBS node are weighted by the budget of the activity (the approved
@@ -163,6 +164,13 @@ export function createProgressService({ db, planOf = () => null }) {
       const t = totals(cx, cx.items, d); out.planned.physical.push(pc(t.planned)); out.planned.financial.push(rs(Math.round(cx.items.reduce((n, a) => n + a.bac * planned(a, d), 0))));
       if (d <= asOf) { out.actual.physical.push(pc(t.physical)); out.actual.financial.push(rs(t.ev)); } else { out.actual.physical.push(null); out.actual.financial.push(null); }
       if (d >= asOf) { out.forecast.physical.push(pc(t.forecast)); out.forecast.financial.push(rs(Math.round(cx.items.reduce((n, a) => n + a.bac * forecast(cx, a, d), 0)))); } else { out.forecast.physical.push(null); out.forecast.financial.push(null); }
+    }
+    // PACK-20 (ff.plan.pack20): the three lines of earned value on one curve: planned (PV, above), earned (EV, the actual financial line) and
+    // the actual cost (AC) of the closed periods: the AC of the latest approved period ending on or before each date, a step, nothing after the as-of date
+    if (cost && isEnabled(db, 'ff.plan.pack20', { companyId: actor.companyId })) {
+      const acs = db.prepare("SELECT p.period_end AS d, e.ac FROM prs_periods p JOIN prs_evm e ON e.period_id = p.id AND e.wbs_id IS NULL AND e.deleted_at IS NULL WHERE p.org_project_id = ? AND p.status = 'APPROVED' AND p.deleted_at IS NULL AND e.ac IS NOT NULL ORDER BY p.period_end").all(p.id);
+      out.earned = { financial: out.actual.financial }; out.actualCost = { financial: dates.map((d) => { if (d > asOf) return null; const x = acs.filter((a) => a.d <= d).at(-1); return x ? rs(x.ac) : null; }) };
+      out.periodsClosed = acs.map((a) => ({ periodEnd: a.d, ac: rs(a.ac) }));
     }
     if (!cost) { delete out.planned.financial; delete out.actual.financial; delete out.forecast.financial; out.planned = { physical: out.planned.physical }; }
     const last = dates.indexOf(asOf); return { projectId: p.id, asOf, canSeeCost: cost, baselineMissing: cx.baselineMissing, ...out, today: last >= 0 ? last : null };

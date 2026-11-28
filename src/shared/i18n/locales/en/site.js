@@ -935,4 +935,8 @@ export default {
   "cnd.una.title": "Unallocated Costs",
   "cnd.una.vendor": "Vendor",
   "cnd.una.why": "Why it is unallocated",
+  // PACK-20: the three lines of earned value
+  "cnd.prg.pv": "Planned value (PV)",
+  "cnd.prg.ev": "Earned value (EV)",
+  "cnd.prg.ac": "Actual cost (AC)",
 };

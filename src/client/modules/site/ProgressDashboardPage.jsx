@@ -21,7 +21,8 @@ export default function ProgressDashboardPage() {
   const q = useQuery({ queryKey: ['site', 'prg-dashboard', projectId, asOf], queryFn: () => st.prgDashboard(`projectId=${projectId}&asOf=${asOf}`), enabled: Boolean(projectId), retry: false });
   if (pq.error?.status === 403 || q.error?.status === 403) return <NoPermission what={t('cnd.prg.title')} permission="site.period.view" />;
   const d = q.data; const base = `projectId=${projectId}&asOf=${asOf}`;
-  const curve = d && (() => { const c = d.curve; const fin = mode === 'financial' && c.planned.financial; const pick = (o) => (fin ? o.financial : o.physical); return { categories: c.dates.map((x) => x.slice(2)), series: [{ name: t('cnd.prg.planned'), values: pick(c.planned) }, { name: t('cnd.prg.actual'), values: pick(c.actual) }, { name: t('cnd.prg.forecast'), values: pick(c.forecast) }] }; })();
+  const curve = d && (() => { const c = d.curve; const fin = mode === 'financial' && c.planned.financial; const pick = (o) => (fin ? o.financial : o.physical); return { categories: c.dates.map((x) => x.slice(2)), series: fin && c.actualCost ? [{ name: t('cnd.prg.pv'), values: c.planned.financial }, { name: t('cnd.prg.ev'), values: c.earned.financial }, { name: t('cnd.prg.ac'), values: c.actualCost.financial }, { name: t('cnd.prg.forecast'), values: c.forecast.financial }] // PACK-20: PV, EV and AC on one curve
+    : [{ name: t('cnd.prg.planned'), values: pick(c.planned) }, { name: t('cnd.prg.actual'), values: pick(c.actual) }, { name: t('cnd.prg.forecast'), values: pick(c.forecast) }] }; })();
   return (
     <section aria-labelledby="prg-h" data-testid="site-progress">
       <PageHeader id="prg-h" title={t('cnd.prg.title')} />

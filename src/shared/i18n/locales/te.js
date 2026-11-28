@@ -152,6 +152,10 @@ export default {
     'amount.label': 'మొత్తం అక్షరాలలో',
   },
   site: {
+    // PACK-20: the three lines of earned value
+    "cnd.prg.pv": "ప్రణాళిక విలువ (PV)",
+    "cnd.prg.ev": "సంపాదించిన విలువ (EV)",
+    "cnd.prg.ac": "వాస్తవ ఖర్చు (AC)",
     'dpr.add': 'జోడించండి', 'dpr.addEquipment': 'యంత్రం జోడించండి', 'dpr.addLabour': 'కూలీల వరుస జోడించండి', 'dpr.addMaterial': 'మెటీరియల్ జోడించండి', 'dpr.addNote': 'గమనిక జోడించండి', 'dpr.allSites': 'అన్ని సైట్లు', 'dpr.amend': 'సవరించండి', 'dpr.amendmentOf': '{n} యొక్క సవరణ',
     'dpr.attendance': 'హాజరు (మనుషులు / పని దినాలు)', 'dpr.authorised': 'అనుమతించినది', 'dpr.back': 'వెనుకకు', 'dpr.bySite': 'సైట్ వారీగా', 'dpr.caption': 'శీర్షిక', 'dpr.cat.CONTRACT': 'కాంట్రాక్ట్ కూలీలు', 'dpr.cat.STAFF': 'సొంత సిబ్బంది', 'dpr.category': 'వర్గం',
     'dpr.chartDays': 'రోజు వారీగా సైట్ దినాలు', 'dpr.chartManDays': 'రోజుకు పని దినాలు', 'dpr.clearMarks': 'లేబుళ్ళు తీసివేయండి', 'dpr.compliance': 'పాటింపు', 'dpr.complianceEmpty': 'ఈ కాలంలో ఏ సైట్ దినానికీ వర్క్ ఆథరైజేషన్ లేదా హాజరు లేదు.', 'dpr.complianceTitle': 'DPR పాటింపు',

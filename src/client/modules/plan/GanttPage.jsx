@@ -10,12 +10,15 @@ import { SchedulePicker, useSearch } from './parts.jsx';
 import ResourcesPanel from './ResourcesPanel.jsx';
 import { fmtDateTime } from '../../../shared/dates.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
 
 // Gantt Planner (part 13.02, FR-01, FR-02, FR-05): the schedule as bars grouped by WBS node, with the critical path, progress, links, the data date and today, zoom, collapse, filters and chosen columns.
 // The planner drags a bar to move it, its right edge to stretch it, its end dot onto another bar to link them, or edits the selected activity in the panel; every change is tried on the server first
 // (the CPM pass there says what moves and what conflicts with the logic or a constraint), conflicts are shown before anything is saved, and the last edits can be undone. Others see it read-only.
 const ZOOM = { day: 26, week: 9, month: 3, quarter: 1.1 };
-const ROW = 28; const HEAD = 40;
+// PACK-20 (ff.plan.pack20): on a touch screen (a tablet on site) the rows are 44 px, the size of a finger target; 28 px otherwise
+const ROW_FINE = 28; const ROW_TOUCH = 44; const HEAD = 40;
+const touchScreen = () => typeof window !== 'undefined' && ((navigator.maxTouchPoints ?? 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches === true);
 const COLS = [{ key: 'code', w: 76 }, { key: 'name', w: 210 }, { key: 'duration', w: 46, num: true }, { key: 'start', w: 92 }, { key: 'finish', w: 92 }, { key: 'tf', w: 44, num: true }, { key: 'pct', w: 46, num: true }];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const store = { get: (k, d) => { try { return JSON.parse(localStorage.getItem(k) ?? 'null') ?? d; } catch { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* a private window */ } } };
@@ -55,6 +58,7 @@ export default function GanttPage() {
   const t = useT('plan');
   usePageTitle(t('g.title'));
   const qc = useQueryClient(); const sp = useSearch(); const narrow = useNarrow();
+  const pack20 = useFlagOn('ff.plan.pack20'); const [touch] = useState(touchScreen); const ROW = pack20 && touch ? ROW_TOUCH : ROW_FINE;
   const [projectId, setProjectId] = useState(null); const [scheduleId, setScheduleId] = useState(Number(sp.get('scheduleId')) || null);
   const [zoom, setZoom] = useState(() => store.get('plan.gantt.zoom', 'week')); const [filter, setFilter] = useState(sp.get('filter') ?? 'all'); const [q, setQ] = useState('');
   const [cols, setCols] = useState(() => store.get('plan.gantt.cols', COLS.map((c) => c.key))); const [collapsed, setCollapsed] = useState(new Set()); const [showLinks, setShowLinks] = useState(true); const [showBase, setShowBase] = useState(true);
@@ -158,7 +162,7 @@ export default function GanttPage() {
                     const a = r.a;
                     return (
                       <div key={a.id} role="row" aria-selected={selected === a.id} style={{ position: 'absolute', top, height: ROW, width: leftW, display: 'flex', alignItems: 'center', background: selected === a.id ? 'var(--erp-color-bg-selected)' : undefined, borderBottom: '1px solid var(--erp-color-border-subtle)' }} data-testid="pgt-row" data-code={a.code}>
-                        {shownCols.map((c, ci) => <span key={c.key} role="gridcell" style={{ width: c.w, padding: '0 6px', paddingLeft: ci === 0 ? 6 + (r.level - 2) * 12 : 6, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: c.num ? 'right' : 'left', fontWeight: c.key === 'code' && a.critical ? 600 : undefined, color: c.key === 'tf' && a.totalFloat < 0 ? 'var(--erp-color-status-error-fg)' : undefined }}>{ci === 0 ? <button type="button" className="btn-link" onClick={() => setSelected(a.id)} aria-label={`${a.code} ${a.name}`} data-testid="pgt-select">{a.code}</button> : cell(c, a)}</span>)}
+                        {shownCols.map((c, ci) => <span key={c.key} role="gridcell" style={{ width: c.w, padding: '0 6px', paddingLeft: ci === 0 ? 6 + (r.level - 2) * 12 : 6, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: c.num ? 'right' : 'left', fontWeight: c.key === 'code' && a.critical ? 600 : undefined, color: c.key === 'tf' && a.totalFloat < 0 ? 'var(--erp-color-status-error-fg)' : undefined }}>{ci === 0 ? <button type="button" className="btn-link" onClick={() => setSelected(a.id)} aria-label={`${a.code} ${a.name}`} data-testid="pgt-select" style={ROW === ROW_TOUCH ? { minHeight: 'var(--erp-target-min)', minWidth: 'var(--erp-target-min)', textAlign: 'left' } : undefined}>{a.code}</button> : cell(c, a)}</span>)}
                       </div>
                     );
                   })}
