@@ -14,4 +14,11 @@ export default {
   'draft.kept': 'Draft kept {when}.',
   'draft.saving': 'Keeping a draft...',
   'draft.failed': 'The draft could not be kept; your changes are still on this page.',
+  // PACK-10: the preview before a bulk action (src/client/platform/list/ListReport.jsx)
+  'bulk.checking': 'Checking what you may do with the selected rows...',
+  'bulk.canDo': '{action}: {n} of the {total} selected rows can be done.',
+  'bulk.skipped': 'These will be left as they are:',
+  'bulk.go': 'Do it for {n} row(s)',
+  'bulk.none': 'None of them can be done',
+  'bulk.cancel': 'Cancel',
 };

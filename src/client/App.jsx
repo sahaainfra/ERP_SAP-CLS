@@ -12,7 +12,8 @@ import { APPEARANCE_EVENT, THEMES, announceAppearance, applyAppearance, storedAp
 import { confirmLeave } from './platform/forms/guard.js';
 import { FeedbackProvider } from './platform/feedback/Feedback.jsx';
 import AppShell from './platform/shell/AppShell.jsx';
-import { useFlag, useShellMode } from './platform/shell/api.js';
+import { useFlag, useFlagOn, useShellMode } from './platform/shell/api.js';
+import { useTableCardLabels } from './platform/list/tableCardLabels.js';
 import { landsOnField } from '../shared/device/breakpoints.js';
 import { pwa } from './platform/device/pwa.js';
 import { Skeleton } from './platform/feedback/states.jsx';
@@ -62,6 +63,7 @@ function Shell({ iam, user }) {
   const [identity, setIdentity] = useState(loadIdentity);
   const [path, setPath] = useState(currentPath);
   const session = useSession();
+  useTableCardLabels(useFlagOn('ff.list.pack10')); // PACK-10: phone cards with captions for plain tables too
   const firstIdentity = useRef(true);
   const lastWho = useRef(null);
 

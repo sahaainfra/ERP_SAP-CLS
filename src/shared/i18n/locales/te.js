@@ -18,6 +18,13 @@ export default {
     'draft.kept': 'డ్రాఫ్ట్ {when}న ఉంచబడింది.',
     'draft.saving': 'డ్రాఫ్ట్ ఉంచుతోంది...',
     'draft.failed': 'డ్రాఫ్ట్ ఉంచలేకపోయాము; మీ మార్పులు ఇంకా ఈ పేజీలోనే ఉన్నాయి.',
+    // PACK-10: the preview before a bulk action
+    'bulk.checking': 'ఎంచుకున్న వరుసలతో మీరు ఏమి చేయవచ్చో చూస్తోంది...',
+    'bulk.canDo': '{action}: ఎంచుకున్న {total} వరుసలలో {n} చేయవచ్చు.',
+    'bulk.skipped': 'ఇవి ఉన్నట్లే ఉంటాయి:',
+    'bulk.go': '{n} వరుస(ల)కు చేయండి',
+    'bulk.none': 'వీటిలో ఏదీ చేయలేము',
+    'bulk.cancel': 'రద్దు చేయండి',
   },
   shell: {
     'context.recent': 'ఇటీవలి', 'context.recentAria': 'ఇటీవలి పని సందర్భాలు',

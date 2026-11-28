@@ -36,4 +36,11 @@ export default {
   'draft.kept': 'ड्राफ़्ट {when} को रखा गया।',
   'draft.saving': 'ड्राफ़्ट रखा जा रहा है...',
   'draft.failed': 'ड्राफ़्ट नहीं रखा जा सका; आपके बदलाव अभी भी इस पेज पर हैं।',
+  // PACK-10: the preview before a bulk action (src/client/platform/list/ListReport.jsx)
+  'bulk.checking': 'चुनी गई पंक्तियों के साथ आप क्या कर सकते हैं, यह जाँचा जा रहा है...',
+  'bulk.canDo': '{action}: चुनी गई {total} में से {n} पंक्तियों पर यह किया जा सकता है।',
+  'bulk.skipped': 'ये जैसी हैं वैसी ही रहेंगी:',
+  'bulk.go': '{n} पंक्ति(यों) के लिए करें',
+  'bulk.none': 'इनमें से किसी पर नहीं किया जा सकता',
+  'bulk.cancel': 'रद्द करें',
 };

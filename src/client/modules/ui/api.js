@@ -55,4 +55,6 @@ export function useSampleRequestActions() {
 export function useSampleRequestBulk() {
   return (action, ids, { reason, reasonCode } = {}) => unwrap(api.post('/ui/sample-requests/bulk', { action, ids, ...(reason ? { reason } : {}), ...(reasonCode ? { reasonCode } : {}) }, idem()));
 }
+/** PACK-10: which selected requests this person may submit or cancel, and why not, before anything runs. */
+export const sampleRequestBulkPreview = (action, ids) => unwrap(api.post('/ui/sample-requests/bulk/preview', { action, ids }));
 export const useMyExports = () => useQuery({ queryKey: ['ui', 'exports'], queryFn: () => unwrap(api.get('/ui/exports')), retry: false, refetchInterval: (q) => ((q.state.data ?? []).some((e) => ['QUEUED', 'RUNNING'].includes(e.status)) ? 3000 : false) });

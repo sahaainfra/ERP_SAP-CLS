@@ -1,6 +1,6 @@
 import { contextFiltersFor, useWorkContext } from '../../platform/shell/useWorkContext.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createFromSource, useFormDefinition, useSampleRequest, useSampleRequestActions, useSampleRequestBulk } from './api.js';
+import { createFromSource, useFormDefinition, useSampleRequest, useSampleRequestActions, sampleRequestBulkPreview, useSampleRequestBulk } from './api.js';
 import ObjectPage from '../../platform/object/ObjectPage.jsx';
 import { Banner, useToast } from '../../platform/feedback/Feedback.jsx';
 import { navigateTo, QueryState, usePageTitle } from '../core/pages/ui.jsx';
@@ -276,8 +276,8 @@ function RequestList({ onOpen, onNew, notice, session }) {
         newAction={{ label: 'New request', onClick: onNew, permission: 'core.sample.use' }}
         empty={{ title: 'No sample material requests yet', text: 'Start one to see context auto-fill, dependent lookups, the line grid and drafts working.' }}
         bulkActions={[
-          { id: 'submit', label: 'Submit selected', permission: 'core.sample.use', confirm: (n) => `Submit ${n} request(s)? Each draft gets its number; requests that are not drafts are left as they are.`, run: (ids) => bulk('submit', ids) },
-          { id: 'cancel', label: 'Cancel selected', permission: 'core.sample.use', reasonFor: 'cancel', confirm: (n) => `Cancel ${n} request(s)? Only the person who raised a request can cancel it; numbered requests keep their numbers.`, run: (ids, p) => bulk('cancel', ids, p) },
+          { id: 'submit', label: 'Submit selected', permission: 'core.sample.use', confirm: (n) => `Submit ${n} request(s)? Each draft gets its number; requests that are not drafts are left as they are.`, run: (ids) => bulk('submit', ids), preview: (ids) => sampleRequestBulkPreview('submit', ids) },
+          { id: 'cancel', label: 'Cancel selected', permission: 'core.sample.use', reasonFor: 'cancel', confirm: (n) => `Cancel ${n} request(s)? Only the person who raised a request can cancel it; numbered requests keep their numbers.`, run: (ids, p) => bulk('cancel', ids, p), preview: (ids) => sampleRequestBulkPreview('cancel', ids) },
         ]}
         rowActions={(r) => [
           { label: 'Open', onSelect: () => onOpen(r.id) },

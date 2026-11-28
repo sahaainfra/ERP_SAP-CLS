@@ -1,6 +1,7 @@
 import { useSwipe, usePullToRefresh } from '../device/gestures.js';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useFlagOn } from '../shell/api.js';
+import { useT } from '../i18n/index.js';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, authHeaders, authMode, refreshSession } from '../api/index.js';
 import Icon from '../design/Icon.jsx';
@@ -145,6 +146,7 @@ function ColumnChooser({ all, order, hidden, onChange, onReset }) {
  *   cardFields={['docNo', 'title', 'status', 'total']}      what a phone shows
  *   statusKey="status" mineFilter={{ key: 'createdBy' }} dateKey="docDate"
  *   bulkActions={[{ id, label, permission, confirm, reasonFor?: 'cancel', run: async (ids, { reasonCode, reason }) => ({ results: [{ id, ok, message }] }) }]}
+ *     preview?: async (ids) => ({ rows: [{ id, label, ok, message }] })   PACK-10 (ff.list.pack10): who may act on each row, shown first
  *   rowActions={(row) => [{ label, onSelect }]} newAction={{ label, onClick }} session={session} empty={{ title, text }} />
  */
 /** A row of the phone's card list: swipe it left (or press Actions) to show what can be done with it, swipe right to hide them. */
@@ -177,6 +179,11 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
   const [notice, setNotice] = useState('');
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkAsk, setBulkAsk] = useState(null); // the bulk action waiting for confirmation
+  const [bulkPreview, setBulkPreview] = useState(null); // PACK-10: { action, rows, allowed, refused } or { action, loading } before a bulk action runs
+  const [bulkIds, setBulkIds] = useState(null); // PACK-10: the rows the confirmed action runs on (the allowed ones), or null for all selected
+  const pack10 = useFlagOn('ff.list.pack10');
+  const tc = useT('common');
+  const previewHeading = useRef(null);
   const [scrollTop, setScrollTop] = useState(0);
   const resizing = useRef(null);
   const columns = desc.data?.columns ?? [];
@@ -238,9 +245,10 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
   const allOnPage = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const offPage = [...selected].filter((id) => !rows.some((r) => r.id === id)).length;
   const togglePage = () => setSelected((s0) => { const n = new Set(s0); for (const r of rows) { if (allOnPage) n.delete(r.id); else n.add(r.id); } return n; });
-  const runBulk = async (a, payload = {}) => {
-    const ids = [...selected];
+  const runBulk = async (a, payload = {}, only = null) => {
+    const ids = only ?? [...selected];
     setBulkResult(null);
+    setBulkPreview(null);
     try {
       const out = await a.run(ids, payload);
       const ok = out.results.filter((r) => r.ok).length;
@@ -250,6 +258,26 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
     } catch (err) {
       setBulkResult({ label: a.label, ok: 0, failed: [{ id: '-', message: `${err.message}${err.correlationId ? ` (Correlation ID ${err.correlationId})` : ''}` }] });
     }
+  };
+
+  // PACK-10: before a bulk action runs, the server says which selected rows this person may act on and why not the others; the action
+  // then runs on the allowed rows only (the server still checks each one, so the run's own result stays the final word)
+  const startPreview = async (a) => {
+    const ids = [...selected];
+    setBulkResult(null);
+    setBulkPreview({ action: a, loading: true });
+    try {
+      const out = await a.preview(ids);
+      setBulkPreview({ action: a, rows: out.rows, allowed: out.rows.filter((r) => r.ok).length });
+    } catch (err) {
+      setBulkPreview({ action: a, rows: [], allowed: 0, error: `${err.message}${err.correlationId ? ` (Correlation ID ${err.correlationId})` : ''}` });
+    }
+  };
+  useEffect(() => { if (bulkPreview && !bulkPreview.loading) previewHeading.current?.focus(); }, [bulkPreview]);
+  const goAfterPreview = () => {
+    const a = bulkPreview.action; const only = bulkPreview.rows.filter((r) => r.ok).map((r) => r.id);
+    setBulkPreview(null);
+    if (a.confirm || a.reasonFor) { setBulkIds(only); setBulkAsk(a); } else runBulk(a, {}, only);
   };
 
   const [exporting, setExporting] = useState('');
@@ -399,7 +427,7 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
       {selectable && selected.size > 0 && (
         <div className="toolbar lr-bulk" role="group" aria-label="Actions for the selected rows" data-testid="bulk-bar">
           <strong data-testid="selected-count">{selected.size} selected{offPage > 0 ? ` (${offPage} on other pages)` : ''}</strong>
-          {actions.map((a) => <button key={a.id} type="button" className="btn" disabled={selected.size > MAX_BULK} onClick={() => (a.confirm || a.reasonFor ? setBulkAsk(a) : runBulk(a))}>{a.label}</button>)}
+          {actions.map((a) => <button key={a.id} type="button" className="btn" disabled={selected.size > MAX_BULK || Boolean(bulkPreview?.loading)} onClick={() => (pack10 && a.preview ? startPreview(a) : a.confirm || a.reasonFor ? setBulkAsk(a) : runBulk(a))}>{a.label}</button>)}
           {actions.length > 0 && selected.size > MAX_BULK && <span className="muted small" data-testid="bulk-limit">An action takes at most {MAX_BULK} rows at a time; clear some of the {selected.size} selected.</span>}
           {canExport && (selected.size <= MAX_EXPORT_SELECTED
             ? ['xlsx', 'csv'].map((f) => <button key={f} type="button" className="btn" disabled={Boolean(exporting)} onClick={() => exportAs(f, [...selected])} data-testid={`export-selected-${f}`}>Export selected ({f.toUpperCase()})</button>)
@@ -407,8 +435,21 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
           <button type="button" className="btn" onClick={() => setSelected(new Set())}>Clear selection</button>
         </div>
       )}
-      <ConfirmDialog open={Boolean(bulkAsk)} title={bulkAsk ? `${bulkAsk.label}?` : ''} text={bulkAsk ? (typeof bulkAsk.confirm === 'function' ? bulkAsk.confirm(selected.size) : bulkAsk.confirm) : ''} confirmLabel={bulkAsk?.label} danger={Boolean(bulkAsk?.reasonFor)} reasonFor={bulkAsk?.reasonFor ?? null}
-        onCancel={() => setBulkAsk(null)} onConfirm={async (payload) => { const a = bulkAsk; setBulkAsk(null); await runBulk(a, payload); }} />
+      {bulkPreview && (
+        <section className="state" aria-labelledby="bulk-preview-h" data-testid="bulk-preview" aria-busy={bulkPreview.loading ? 'true' : undefined}>
+          <h2 id="bulk-preview-h" ref={previewHeading} tabIndex={-1} className="small">{bulkPreview.loading ? tc('bulk.checking') : bulkPreview.error ? bulkPreview.error : tc('bulk.canDo', { action: bulkPreview.action.label, n: bulkPreview.allowed, total: bulkPreview.rows.length })}</h2>
+          {bulkPreview.rows?.some((r) => !r.ok) && (<>
+            <p>{tc('bulk.skipped')}</p>
+            <ul data-testid="bulk-preview-refused">{bulkPreview.rows.filter((r) => !r.ok).map((r) => <li key={r.id} data-id={r.id}>{r.label ?? `#${r.id}`}: {r.message}</li>)}</ul>
+          </>)}
+          <div className="actions">
+            <button type="button" className="btn" onClick={() => setBulkPreview(null)} data-testid="bulk-preview-cancel">{tc('bulk.cancel')}</button>
+            {!bulkPreview.loading && !bulkPreview.error && <button type="button" className="btn btn-primary" disabled={bulkPreview.allowed === 0} onClick={() => goAfterPreview()} data-testid="bulk-preview-go">{bulkPreview.allowed === 0 ? tc('bulk.none') : tc('bulk.go', { n: bulkPreview.allowed })}</button>}
+          </div>
+        </section>
+      )}
+      <ConfirmDialog open={Boolean(bulkAsk)} title={bulkAsk ? `${bulkAsk.label}?` : ''} text={bulkAsk ? (typeof bulkAsk.confirm === 'function' ? bulkAsk.confirm(bulkIds?.length ?? selected.size) : bulkAsk.confirm) : ''} confirmLabel={bulkAsk?.label} danger={Boolean(bulkAsk?.reasonFor)} reasonFor={bulkAsk?.reasonFor ?? null}
+        onCancel={() => { setBulkAsk(null); setBulkIds(null); }} onConfirm={async (payload) => { const a = bulkAsk; const only = bulkIds; setBulkAsk(null); setBulkIds(null); await runBulk(a, payload, only); }} />
       {bulkResult && (
         <div className={`state ${bulkResult.failed.length ? 'state-error' : ''}`} role="status" data-testid="bulk-result">
           <strong>{bulkResult.label}: {bulkResult.ok} done{bulkResult.failed.length ? `, ${bulkResult.failed.length} not done` : ''}.</strong>
