@@ -65,3 +65,21 @@ test('FR-03 FR-04 FR-05 FR-06 insurance policies, claims and renewals; expiry al
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.ctr.p2102'").run(); assert.equal((await r.call(U.com, 'GET', '/bank-guarantees')).status, 404); assert.equal((await r.call(U.com, 'GET', '/contracts')).status, 200, 'contracts stay on part 21.01');
 });
 const ib2 = (r, k) => ({ projectId: r.A, contractId: k.id, policyType: 'CAR', policyNo: 'CAR/RN', insurer: 'New India Assurance', sumInsured: 500_000_000, premium: 1_000_000, validFrom: plus(-334), validTo: plus(30), coverage: 'Works' });
+
+test('PACK-17 guarantee expiry alerts reach the notification centre once per offset (60, 30, 15) and after expiry; what leaves by e-mail or WhatsApp waits on Part 60', async () => {
+  const r = await ready(opened); const k = await approvedContract(r); const sc = ctrOf(r.d).svc;
+  const g = await approvedBg(r, k, { bgNo: 'P17-EXP', expiryDate: plus(61), claimExpiry: plus(61) });
+  const rows = () => r.d.prepare("SELECT n.id, n.user_ref, n.title, n.event_key FROM ntf_notifications n WHERE n.template_code = 'ctr.security.alert' AND n.title LIKE '%P17-EXP%' ORDER BY n.id").all();
+  const at = (d) => { sc.securitySweep(1, plus(d)); return rows(); };
+  assert.equal(at(0).length, 0, '61 days left: outside every offset');
+  const n60 = at(1).length; assert.ok(n60 >= 1, '60 days left: told'); assert.equal(at(2).length, n60, 'the next morning (59 days): the 60-day alert is not repeated');
+  const n30 = at(31).length; assert.ok(n30 > n60, '30 days left: told again'); assert.equal(at(40).length, n30, 'nothing new between offsets');
+  const n15 = at(46).length; assert.ok(n15 > n30, '15 days left'); const n0 = at(60).length; assert.equal(n0, n15, 'inside 15 days: the 15-day alert is not repeated each morning');
+  const recipients = [...new Set(rows().map((x) => x.user_ref))]; assert.ok(recipients.length >= 1, `recipients ${recipients}`);
+  assert.equal(r.d.prepare("SELECT bg_state FROM ctr_bank_guarantees WHERE id = ?").get(g.id).bg_state, 'ACTIVE');
+  sc.securitySweep(1, plus(62)); assert.equal(r.d.prepare("SELECT bg_state FROM ctr_bank_guarantees WHERE id = ?").get(g.id).bg_state, 'EXPIRED', 'past its claim period it is closed');
+  const ch = r.d.prepare("SELECT d.channel, d.status, COUNT(*) AS n FROM ntf_deliveries d JOIN ntf_notifications n ON n.id = d.notification_id WHERE n.template_code = 'ctr.security.alert' GROUP BY d.channel, d.status").all();
+  assert.deepEqual([n60, n30 - n60, n15 - n30], [recipients.length, recipients.length, recipients.length], 'each recipient once per offset');
+  assert.ok(ch.some((x) => x.channel === 'IN_APP' && x.status === 'DELIVERED'), 'in the notification centre');
+  assert.deepEqual([...new Set(ch.map((x) => x.channel))], ['IN_APP'], 'only the in-app template is seeded: no e-mail, SMS or WhatsApp message is even queued (D-867, Part 60)');
+});
