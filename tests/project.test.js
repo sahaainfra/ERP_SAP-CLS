@@ -1002,3 +1002,67 @@ test('BR-02 the contract terms of a live project change only by an approved amen
   assert.equal((await t.call(pcm, 'POST', `/projects/${c.id}/cancel`, { reason: 'the client withdrew the order' })).json.data.status, 'CANCELLED');
   assert.equal((await t.call(pcm, 'POST', `/projects/${p.id}/cancel`, { reason: 'a live project is not cancelled' })).status, 422);
 });
+
+// PACK-15: every record-based KPI reconciles with an independent query of its source register: the value the BI layer gives for a project
+// equals what this test reads from the source table by the KPI's own rule (latest approved period, latest approved forecast version,
+// latest frozen P&L), for two projects, with newer drafts, a second forecast version in the same month and an approved but unfrozen P&L
+// that must all be ignored. (project-count is reconciled with the projects list in the 27.02 test above.)
+test('PACK-15 SPI, CPI, EAC, gross margin and revenue to date reconcile with an independent query of their source registers', async () => {
+  const t = await setup();
+  const { api } = t;
+  const { db } = api;
+  const get = (who, code, id) => api.call('GET', `/api/v1/bi/metrics/domains/${code}?projectId=${id}`, who);
+  const reviewer = as('CFO', 'recon-cfo');
+  const flags = db.prepare('INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES (?, 1, ?, 0, 1)');
+  for (const code of ['ff.bi.p2701', 'ff.bi.p2702', 'ff.bi.p2703', 'ff.bi.p2704', 'ff.site.p1405', 'ff.fin.p2311', 'ff.fin.p2312', 'ff.proj.p1008']) flags.run(code, 'Reconciliation fixture');
+  db.exec(`INSERT INTO hr_gates (company_id, code, name, status, catalogue_version, passed_at)
+    VALUES (1,'G1','Platform','PASSED','test',CURRENT_TIMESTAMP),(1,'G2','Workforce','PASSED','test',CURRENT_TIMESTAMP)`);
+  const ids = [];
+  for (const code of ['RECON-A', 'RECON-B']) {
+    const p = await t.call(pcm, 'POST', '/projects', t.wizard({ basics: { code }, contract: { contractNo: code }, sites: [{ code: `${code}-S`, name: 'Site', siteType: 'SITE' }] }));
+    assert.equal(p.status, 201, JSON.stringify(p.json));
+    ids.push(p.json.data.projectId);
+  }
+  const [a, b] = ids;
+  const period = db.prepare("INSERT INTO prs_periods (company_id, doc_no, org_project_id, period_type, period_start, period_end, status) VALUES (1, ?, ?, 'MONTH', ?, ?, ?)");
+  const evm = db.prepare('INSERT INTO prs_evm (company_id, org_project_id, period_id, period_end, spi, cpi) VALUES (1, ?, ?, ?, ?, ?)');
+  for (const [id, doc, end, status, spi, cpi] of [
+    [a, 'RA-1', '2025-04-30', 'APPROVED', 9300, 9800], [a, 'RA-2', '2025-05-31', 'APPROVED', 9120, 10340], [a, 'RA-3', '2025-06-30', 'DRAFT', 5000, 5000],
+    [b, 'RB-1', '2025-05-31', 'APPROVED', 10550, 8875], [b, 'RB-2', '2025-06-30', 'SUBMITTED', 1, 1],
+  ]) evm.run(id, period.run(doc, id, `${end.slice(0, 8)}01`, end, status).lastInsertRowid, end, spi, cpi);
+  const fc = db.prepare('INSERT INTO fc_forecasts (company_id, doc_no, org_project_id, period, version_no, eac_total_paise, status) VALUES (1, ?, ?, ?, ?, ?, ?)');
+  for (const row of [['FA-1', a, '2025-04', 1, 50000000000, 'APPROVED'], ['FA-2', a, '2025-05', 1, 51234567800, 'APPROVED'], ['FA-3', a, '2025-05', 2, 52000000099, 'APPROVED'],
+    ['FA-4', a, '2025-06', 1, 99999999999, 'DRAFT'], ['FB-1', b, '2025-05', 1, 7777777700, 'APPROVED']]) fc.run(...row);
+  const pl = db.prepare('INSERT INTO pl_snapshots (company_id, doc_no, org_project_id, period, revenue_paise, gross_profit_paise, revenue_cum_paise, status, frozen_at) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)');
+  for (const row of [['PA-1', a, '2025-04', 40000000, 9000000, 40000000, 'APPROVED', '2025-05-02T00:00:00Z'], ['PA-2', a, '2025-05', 33333333, 7000001, 73333333, 'APPROVED', '2025-06-02T00:00:00Z'],
+    ['PA-3', a, '2025-06', 50000000, 1, 123333333, 'APPROVED', null], ['PB-1', b, '2025-05', 12500000, -1250000, 12500000, 'APPROVED', '2025-06-02T00:00:00Z'], ['PB-2', b, '2025-06', 1, 1, 1, 'DRAFT', null]]) pl.run(...row);
+
+  // the reconciliation queries: the KPI's rule written again, straight against the source tables
+  const evmOf = (id) => db.prepare(`SELECT e.spi, e.cpi FROM prs_periods p LEFT JOIN prs_evm e ON e.period_id = p.id
+    WHERE p.company_id = 1 AND p.org_project_id = ? AND p.status = 'APPROVED' ORDER BY p.period_end DESC, p.id DESC LIMIT 1`).get(id);
+  const eacOf = (id) => db.prepare(`SELECT eac_total_paise AS v FROM fc_forecasts WHERE company_id = 1 AND org_project_id = ? AND status = 'APPROVED'
+    ORDER BY period DESC, version_no DESC, id DESC LIMIT 1`).get(id)?.v;
+  const plOf = (id) => db.prepare(`SELECT revenue_paise AS rev, gross_profit_paise AS gp, revenue_cum_paise AS cum FROM pl_snapshots
+    WHERE company_id = 1 AND org_project_id = ? AND status = 'APPROVED' AND frozen_at IS NOT NULL ORDER BY period DESC, id DESC LIMIT 1`).get(id);
+  const expected = {
+    spi: (id) => evmOf(id).spi / 10000,
+    cpi: (id) => evmOf(id).cpi / 10000,
+    eac: (id) => eacOf(id) / 100,
+    'gross-margin': (id) => { const r = plOf(id); return r.rev ? Math.round((r.gp * 10000) / r.rev) / 100 : null; },
+    'revenue-to-date': (id) => plOf(id).cum / 100,
+  };
+  for (const [code, rule] of Object.entries(expected)) {
+    for (const id of ids) {
+      const who = code === 'gross-margin' || code === 'revenue-to-date' ? reviewer : pcm;
+      const res = await get(who, code, id);
+      assert.equal(res.status, 200, `${code} ${id}: ${JSON.stringify(res.json).slice(0, 200)}`);
+      assert.equal(res.json.data.live?.value, rule(id), `${code} for project ${id === a ? 'RECON-A' : 'RECON-B'} equals its source register`);
+    }
+  }
+  // and the drafts, the newer unfrozen P&L and the lower forecast version were what the rule had to skip
+  assert.equal(expected.spi(a), 0.912);
+  assert.equal(expected.eac(a), 520000000.99);
+  assert.equal(expected['revenue-to-date'](a), 733333.33);
+  assert.equal(expected['gross-margin'](b), -10);
+  await api.close();
+});
