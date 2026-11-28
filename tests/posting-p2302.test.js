@@ -119,3 +119,16 @@ test('FR-01 BR-01 a rule change is a new version, approved by the CFO, in force 
   assert.equal((await w.call(U.se, 'GET', '/postings')).status, 403); assert.equal((await w.call(U.se, 'GET', '/posting-rules')).status, 403); assert.equal((await w.call(U.fin, 'GET', '/reconciliation')).status, 200);
   assert.equal((await w.call(U.aud, 'GET', '/gl/integrity')).json.data.ok, true);
 });
+
+test('PACK-23 stock ledger = GL inventory: a receipt and an issue post by the default rules and the inventory row reconciles to the paisa (an outgoing value is negative in the stock ledger)', async () => {
+  const w = await world(); const d = w.d;
+  const g = w.grn('2026-06-10', 100000); w.emit('inv.grn.posted', 'inv_grns', g); await w.drain();
+  // an issue of ₹ 30,000.50 to the project out of the store: the stock ledger keeps it as a negative value
+  const issue = fill(d, 'inv_issues', { company_id: 1, doc_no: 'ISS/T/1', issue_date: '2026-06-15', org_project_id: w.A, store_id: w.store, issue_type: 'OWN_CREW', issued_to_type: 'CREW', issued_to_name: 'Masons gang', requested_by: 'test', status: 'APPROVED', total_value: 3_000_050 });
+  fill(d, 'inv_stock_ledger', { company_id: 1, doc_no: 'ISS/T/1', store_id: w.store, item_id: 1, txn_type: 'ISSUE', txn_date: '2026-06-15', qty_in: 0, qty_out: 300, rate: 10_000_17, value: -3_000_050, balance_qty: 700, balance_value: 6_999_950, source_type: 'inv_issue', source_id: String(issue) });
+  const e = w.emit('inv.issue.posted', 'inv_issues', { id: issue, data: { issueId: issue, docNo: 'ISS/T/1', issueDate: '2026-06-15', type: 'OWN_CREW', storeId: w.store, projectId: w.A, totalValue: 3_000_050, recoverableValue: 0 } }); await w.drain();
+  assert.equal(d.prepare('SELECT log_status FROM fin_posting_log WHERE event_id = ?').get(e.eventId).log_status, 'POSTED');
+  const rec = (await w.call(U.acc, 'GET', '/reconciliation?asOf=2026-06-30')).json.data; const inv = rec.rows.find((x) => x.code === 'INVENTORY');
+  assert.deepEqual([inv.subledger, inv.gl, inv.difference], [69_999.5, 69_999.5, 0], '₹ 1,00,000 received less ₹ 30,000.50 issued, in both');
+  const stockValue = d.prepare('SELECT SUM(value) AS v FROM inv_stock_ledger WHERE company_id = 1').get().v; assert.equal(stockValue, 6_999_950, 'the stock ledger running value');
+});

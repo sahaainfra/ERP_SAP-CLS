@@ -5,6 +5,7 @@ import { workflowOf } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
 import { json, nowIso, rid, same } from '../proc/base.js';
 import { STORE_TYPES, TXN_TYPES, createStockEngine } from './stock.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 
 // Stores, bins, balances, the item card, valuation, reservations, adjustments and the dashboard of the stock module (part 16.01). Posting goes through the stock engine; this layer checks who may do it, in which store, and what the person may see.
 export const INV_STORE_DOC = 'INV_STORE'; export const INV_CHG_DOC = 'INV_STORE_CHG'; export const INV_ADJ_DOC = 'INV_ADJ';
@@ -321,6 +322,11 @@ export function createInvService({ db, base }) {
           else stock.postOut(actor, { store, itemId: l.itemId, binId: l.binId ?? undefined, batchNo: l.binId ? l.batchNo : undefined, serialNo: l.binId ? l.serialNo : undefined, type: 'ADJUSTMENT', direction: 'OUT', qty: -l.qtyDelta, date: todayIST(), ownerProjectId: l.ownerProjectId, sourceType: 'inv_adjustment', sourceId: String(a.id), reason: a.reason });
         }
         db.prepare("UPDATE inv_adjustments SET status = 'APPROVED', approved_by = ?, approved_at = ?, posted_at = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, now, now, actor.user, now, a.id); audit(actor, 'inv_adjustments', a.id, 'approve', a.company_id); if (a.source_type === 'inv_count_plan') db.prepare("UPDATE inv_count_plans SET status = 'CLOSED', updated_at = ?, version = version + 1 WHERE id = ? AND status = 'ADJUSTED'").run(now, Number(a.source_id));
+        // PACK-23 (ff.inv.pack23): the net value the adjustment moved in the stock ledger (an outgoing value is kept negative) goes to the ledger: a loss or a gain
+        if (isEnabled(db, 'ff.inv.pack23', { companyId: a.company_id })) {
+          const net = db.prepare("SELECT COALESCE(SUM(value), 0) AS v FROM inv_stock_ledger WHERE company_id = ? AND source_type = 'inv_adjustment' AND source_id = ?").get(a.company_id, String(a.id)).v;
+          if (net !== 0) evt('inv.adjustment.posted', actor, a.company_id, 'inv_adjustments', a.id, { adjustmentId: a.id, docNo: a.doc_no, adjType: a.adj_type, kind: net < 0 ? 'LOSS' : 'GAIN', value: Math.abs(net), storeId: store.id, projectId: store.org_project_id ?? null, postedOn: todayIST(), source: a.source_type ?? null }, store.org_project_id);
+        }
         notify(a.company_id, 'inv.adjustment.decided', [`user:${a.requested_by}`], a.doc_no, 'approved', `${a.doc_no} is approved and posted to the stock ledger.`, `/inv/adjustments?id=${a.id}`, a.id, { projectId: store.org_project_id ?? undefined }); return;
       }
       const withdrawn = outcome === 'CANCELLED' && instance.status === 'WITHDRAWN'; const to = outcome === 'RETURNED' ? 'RETURNED' : outcome === 'REJECTED' ? 'REJECTED' : withdrawn ? 'DRAFT' : 'CANCELLED'; db.prepare('UPDATE inv_adjustments SET status = ?, workflow_instance_id = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(to, withdrawn ? null : a.workflow_instance_id, actor.user, now, a.id); audit(actor, 'inv_adjustments', a.id, outcome.toLowerCase(), a.company_id, { reason: comment });

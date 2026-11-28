@@ -39,6 +39,7 @@ registerProject360Widget('stores', (ctx) => {
 const schema = { type: 'object', properties: {}, required: [] };
 for (const [type, description] of [
   ['inv.stock.moved', 'Stock moved in a store (part 16.01): data { ledgerId, storeId, storeCode, storeName, storeType, siteId, itemId, txnType, qty (signed, base unit), value (signed, paise), rate, batchNo, serialNo, ownerProjectId, sourceType, sourceId, freeQty, onHand, date }. For finance posting (23.02), project cost (14.07) and the stock the requisition sees (15.01).'],
+  ['inv.adjustment.posted', 'An approved stock adjustment changed the value of the stock (PACK-23, ff.inv.pack23): data { adjustmentId, docNo, adjType, kind (LOSS or GAIN), value (paise, > 0), storeId, projectId, postedOn, source }. Posted to the ledger by the default rules ADJ-LOSS and ADJ-GAIN.'],
   ['inv.stock.transferred', 'Stock changed owner between projects in a transfer (part 16.01, FR-07): data { itemId, qty, value, fromStoreId, toStoreId, fromProjectId, toProjectId, outIds, inIds, reason }. The financial transfer between the projects.'],
   ['inv.stock.reserved', 'Stock was reserved or a reservation was released (part 16.01): data { reservationId, storeId, itemId, qty, sourceType, sourceId, freeQty }.'],
   ['inv.store.activated', 'A store was approved and is active (part 16.01): data { storeId, code, type, projectId, siteId }.'],

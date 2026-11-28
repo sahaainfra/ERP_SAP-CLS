@@ -126,3 +126,33 @@ test('a count without the freeze reads the live book of each serial-numbered uni
   assert.equal((await r.call(mgr, 'GET', `/adjustments/${adj.json.data.adjustment.id}`)).json.data.status, 'APPROVED', 'the loss posts to serial SN2');
   assert.equal(r.d.prepare("SELECT COALESCE(SUM(qty_on_hand), 0) AS q FROM inv_balances WHERE store_id = ? AND item_id = ?").get(st.id, r.pump).q, 0);
 });
+
+test('PACK-23 a count write-off is posted to the ledger: the inventory control account moves by the stock ledger value, so stock = GL stays true; flag off it did not', async () => {
+  const run = async (flagOn) => {
+    const r = await ready(); const d = r.d; d.prepare("INSERT OR IGNORE INTO iam_users (company_id, username, display_name, roles_json, email) VALUES (1, 'iacc1', 'iacc1', '[\"ACCMGR\"]', 'iacc1@example.com')").run(); const acc = { roles: 'ACCMGR', user: 'iacc1', company: '1' };
+    const fin = (method, path) => r.api.call(method, `/api/v1/fin${path}`, { ...acc, headers: { 'content-type': 'application/json', 'idempotency-key': `f-${Math.random()}` } });
+    assert.equal((await fin('GET', '/journals/options')).status, 200); // the company's chart
+    for (const k of ['ff.fin.p2302', ...(flagOn ? ['ff.inv.pack23'] : [])]) d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES (?, 1, 'test', 0, 1)").run(k);
+    const st = await r.store(`CN-G${flagOn ? 1 : 0}`); await r.stockIn(st, r.cement, 100, 40);
+    const p = await r.plan(sk, st); await r.approvePlan(p); assert.equal((await r.call(mgr, 'POST', `/count-plans/${p.id}/start`)).status, 200);
+    const sheet = (await r.call(sk, 'GET', `/count-plans/${p.id}/sheet`)).json.data; const lc = sheet.lines.find((l) => l.itemCode === 'CN-CEM');
+    assert.equal((await r.call(sk, 'POST', `/count-plans/${p.id}/counts`, { lines: sheet.lines.map((l) => ({ lineId: l.id, qty: l.id === lc.id ? 98 : 0 })) })).status, 200);
+    assert.equal((await r.call(sk, 'POST', `/count-plans/${p.id}/close`)).status, 200);
+    const rec = async () => (await fin('GET', `/reconciliation?asOf=${TODAY}`)).json.data.rows.find((x) => x.code === 'INVENTORY');
+    await r.drain(); const before = await rec();
+    assert.equal((await r.call(mgr, 'POST', `/count-plans/${p.id}/review`, { reasons: [{ lineId: lc.id, reason: 'Bags torn and swept' }] })).status, 200);
+    const adj = await r.call(mgr, 'POST', `/count-plans/${p.id}/adjustment`); assert.equal(adj.status, 201, JSON.stringify(adj.json)); const aid = adj.json.data.adjustment.id;
+    const sub = await r.call(mgr, 'POST', `/adjustments/${aid}/submit`); assert.equal(sub.status, 202, JSON.stringify(sub.json)); assert.equal((await r.act(mgr2, sub.json.data.workflowInstanceId)).status, 200);
+    await r.drain(); await r.drain(); const after = await rec();
+    const journals = d.prepare("SELECT id FROM fin_journals WHERE source_type = 'inv_adjustments' AND source_id = ?").all(String(aid));
+    return { before, after, journals, d, aid };
+  };
+  const on = await run(true);
+  assert.equal(on.after.subledger - on.before.subledger, -80, 'two bags of ₹ 40 written off the stock ledger');
+  assert.equal(on.after.gl - on.before.gl, -80, 'and off the inventory control account');
+  assert.equal(on.after.difference, on.before.difference, 'stock ledger and GL move together: the write-off opens no difference');
+  assert.equal(on.journals.length, 1); const lines = on.d.prepare('SELECT a.code, l.debit_paise AS dr, l.credit_paise AS cr FROM fin_journal_lines l JOIN fin_accounts a ON a.id = l.account_id WHERE l.journal_id = ? ORDER BY a.code').all(on.journals[0].id);
+  assert.deepEqual(lines.map((x) => [x.code, x.dr, x.cr]), [['130001', 0, 8000], ['560040', 8000, 0]], 'Dr shortage and write-off, Cr inventory');
+  const off = await run(false);
+  assert.equal(off.after.subledger - off.before.subledger, -80); assert.equal(off.after.gl - off.before.gl, 0, 'flag off: the ledger is not told'); assert.equal(off.after.difference - off.before.difference, -80, 'which is the difference the pack closes'); assert.equal(off.journals.length, 0);
+});
