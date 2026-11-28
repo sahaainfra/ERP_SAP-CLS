@@ -819,4 +819,16 @@ export default {
   "rc.var.BILLED_BEYOND_CERTIFIED": "प्रमाणित से अधिक बिल",
   "rc.var.CERTIFIED_NOT_BILLED": "प्रमाणित, बिल नहीं",
   "rc.var.MB_BILL_MISMATCH": "माप पुस्तिका और बिल में अंतर",
+  // PACK-18: the measurement book on a phone
+  "rec.dedLines": "कटौतियाँ",
+  "rec.dedLinesHint": "हर खुला भाग या ओवरलैप प्रविष्टि के समान आयामों से मापा जाता है; कटौती उनका योग है।",
+  "rec.dedWhat": "कटौती {n}: क्या",
+  "rec.dedRemove": "यह कटौती हटाएँ",
+  "rec.dedAdd": "कटौती जोड़ें",
+  "rec.dedTotal": "कटौतियाँ: {qty} {uom}",
+  "rec.position": "स्थान",
+  "rec.offline": "आप ऑफ़लाइन हैं। माप इस फ़ोन पर रखा गया है; ऑनलाइन होने पर इसे सहेजें।",
+  "rec.localFound": "{when} को इस फ़ोन पर रखा गया एक माप सहेजा नहीं गया।",
+  "rec.localResume": "इसे जारी रखें",
+  "rec.localDiscard": "इसे हटाएँ",
 };

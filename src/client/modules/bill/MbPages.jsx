@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
@@ -15,15 +15,46 @@ import { useFlagOn } from '../../platform/shell/api.js';
 import { useLongFormDraft } from '../../platform/forms/useLongFormDraft.js';
 import { DraftBanner } from '../../platform/forms/layout.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import { GpsField } from '../../platform/forms/capture.jsx';
 
 // The measurement book (part 22.01): Record Measurement (a mobile form), the Measurement Book list with the entry and its checks, the MB Abstract and the book in print.
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const day = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 const CHECK_TONE = { NOT_CHECKED: 'DRAFT', CHECKED: 'APPROVED', DIFFERENCE: 'RETURNED' };
 const DIMS = { QTY: [], NOS: ['nos'], LENGTH: ['nos', 'length'], AREA: ['nos', 'length', 'breadth'], VOLUME: ['nos', 'length', 'breadth', 'depth'] };
-const blank = { projectId: '', boqLineId: '', locationId: '', waId: '', activityId: '', irId: '', dprWorkId: '', drawingRef: '', description: '', template: 'VOLUME', nos: '1', length: '', breadth: '', depth: '', deduction: '0', qty: '', measuredOn: day() };
+const blank = { projectId: '', boqLineId: '', locationId: '', waId: '', activityId: '', irId: '', dprWorkId: '', drawingRef: '', description: '', template: 'VOLUME', nos: '1', length: '', breadth: '', depth: '', deduction: '0', qty: '', measuredOn: day(), deductions: [], geo: null };
 const num = (s) => (s === '' || s == null ? null : Number(s));
 const payload = (v) => ({ projectId: Number(v.projectId), boqLineId: Number(v.boqLineId), locationId: v.locationId ? Number(v.locationId) : null, waId: v.waId ? Number(v.waId) : null, activityId: v.activityId ? Number(v.activityId) : null, irId: v.irId ? Number(v.irId) : null, dprWorkId: v.dprWorkId ? Number(v.dprWorkId) : null, drawingRef: v.drawingRef || null, description: v.description, template: v.template,
-  nos: DIMS[v.template].includes('nos') ? num(v.nos) : null, length: DIMS[v.template].includes('length') ? num(v.length) : null, breadth: DIMS[v.template].includes('breadth') ? num(v.breadth) : null, depth: DIMS[v.template].includes('depth') ? num(v.depth) : null, deduction: Number(v.deduction || 0), qty: v.template === 'QTY' ? num(v.qty) : null, measuredOn: v.measuredOn });
+  nos: DIMS[v.template].includes('nos') ? num(v.nos) : null, length: DIMS[v.template].includes('length') ? num(v.length) : null, breadth: DIMS[v.template].includes('breadth') ? num(v.breadth) : null, depth: DIMS[v.template].includes('depth') ? num(v.depth) : null, deduction: Number(v.deduction || 0), qty: v.template === 'QTY' ? num(v.qty) : null, measuredOn: v.measuredOn,
+  ...withCapture(v) });
+// PACK-18 (ff.bill.pack18): deduction lines measured like the entry, the position where it was measured, and a copy of the form kept on this
+// device so a measurement typed without a connection is not lost (the server draft of PACK-09 needs one).
+const dedLine = { description: '', nos: '1', length: '', breadth: '', depth: '', qty: '' };
+const withCapture = (v) => {
+  if (!v.pack18) return {}; const out = {}; const lines = (v.deductions ?? []).filter((l) => l.description.trim());
+  if (lines.length) { out.deduction = 0; out.deductions = lines.map((l) => (v.template === 'QTY' ? { description: l.description, qty: num(l.qty) } : { description: l.description, ...Object.fromEntries(DIMS[v.template].map((k) => [k, num(l[k])])) })); }
+  if (v.geo?.lat) out.geo = { lat: Number(v.geo.lat), lng: Number(v.geo.lng), accuracyM: v.geo.accuracy ? Math.round(Number(v.geo.accuracy)) : null };
+  return out;
+};
+const LOCAL = 'erp.bill.mb.local';
+const readLocal = () => { try { const x = JSON.parse(localStorage.getItem(LOCAL) ?? 'null'); return x?.values ? x : null; } catch { return null; } };
+const writeLocal = (values) => { try { localStorage.setItem(LOCAL, JSON.stringify({ at: new Date().toISOString(), values })); } catch { /* storage full or blocked: the form still holds the values */ } };
+const dropLocal = () => { try { localStorage.removeItem(LOCAL); } catch { /* nothing kept */ } };
+function useOnline() { const [on, setOn] = useState(typeof navigator === 'undefined' ? true : navigator.onLine); useEffect(() => { const a = () => setOn(true); const b = () => setOn(false); window.addEventListener('online', a); window.addEventListener('offline', b); return () => { window.removeEventListener('online', a); window.removeEventListener('offline', b); }; }, []); return on; }
+function DeductionLines({ v, setV, fe }) {
+  const t = useT('bill'); const dims = v.template === 'QTY' ? ['qty'] : DIMS[v.template]; const labels = { nos: t('rec.nos'), length: t('rec.length'), breadth: t('rec.breadth'), depth: t('rec.depth'), qty: t('rec.qty') };
+  const lines = v.deductions ?? []; const put = (i, k, x) => setV({ ...v, deductions: lines.map((l, n) => (n === i ? { ...l, [k]: x } : l)) });
+  return (
+    <fieldset className="mdm-panel" data-testid="bill-mb-deductions"><legend>{t('rec.dedLines')}</legend><p className="muted">{t('rec.dedLinesHint')}</p>
+      {fe.deductions && <p className="field-error" role="alert">{fe.deductions}</p>}
+      {lines.map((l, i) => <div key={i} className="form-grid" data-testid="bill-mb-deduction-line">
+        <Field label={t('rec.dedWhat', { n: i + 1 })} name={`deductions.${i}.description`} error={fe[`deductions.${i}.description`]}><input value={l.description} onChange={(e) => put(i, 'description', e.target.value)} style={big} maxLength={160} data-testid="bill-mb-ded-description" /></Field>
+        {dims.map((k) => <Field key={k} label={labels[k]} name={`deductions.${i}.${k}`} error={fe[`deductions.${i}.${k}`]}><input type="number" inputMode="decimal" min="0" step="any" value={l[k]} onChange={(e) => put(i, k, e.target.value)} style={big} data-testid={`bill-mb-ded-${k}`} /></Field>)}
+        <div className="actions-row"><button type="button" className="btn" style={big} onClick={() => setV({ ...v, deductions: lines.filter((_, n) => n !== i) })} data-testid="bill-mb-ded-remove">{t('rec.dedRemove')}</button></div>
+      </div>)}
+      <div className="actions-row"><button type="button" className="btn" style={big} onClick={() => setV({ ...v, deductions: [...lines, { ...dedLine }] })} data-testid="bill-mb-ded-add">{t('rec.dedAdd')}</button></div>
+    </fieldset>
+  );
+}
 const ready = (v) => v.projectId && v.boqLineId && v.description.trim().length >= 3 && (v.template === 'QTY' ? v.qty !== '' : DIMS[v.template].every((k) => v[k] !== ''));
 
 function Issues({ issues }) {
@@ -38,10 +69,12 @@ function Cumulative({ c, uom }) {
 function MeasureForm({ onSaved }) {
   const t = useT('bill'); const { error, run, busy } = useRunner(); const [v, setV] = useState(blank); const fe = error?.fields ?? {};
   const o = useQuery({ queryKey: ['bill', 'mb-options'], queryFn: () => bill.get('/mb-entries/options'), retry: false });
-  const body = ready(v) ? payload(v) : null;
+  const pack18 = useFlagOn('ff.bill.pack18'); const online = useOnline(); const [local, setLocal] = useState(() => readLocal());
+  const body = ready(v) ? payload({ ...v, pack18 }) : null;
   const pv = useQuery({ queryKey: ['bill', 'mb-preview', JSON.stringify(body)], queryFn: () => bill.post('/mb-entries/preview', body), enabled: Boolean(body), retry: false, placeholderData: (p) => p });
   // PACK-09: a draft of the measurement on the server and a question before leaving with unsaved changes
   const pack09 = useFlagOn('ff.forms.pack09');
+  useEffect(() => { if (pack18 && v.projectId) writeLocal(v); }, [pack18, v]);
   const ld = useLongFormDraft({ formCode: 'bill.mb_entry', values: v, enabled: pack09, title: v.description, projectId: v.projectId });
   const sg = useQuery({ queryKey: ['bill', 'mb-suggestions', v.projectId], queryFn: () => bill.get(`/mb-entries/suggestions${qs({ projectId: v.projectId })}`), enabled: Boolean(v.projectId), retry: false });
   if (o.error?.status === 403) return <NoPermission what={t('rec.title')} permission="bill.mb_entry.create" />; if (o.isPending) return <Skeleton label={t('rec.title')} rows={4} />; if (o.isError) return <ErrorState error={o.error} onRetry={o.refetch} />; const d = o.data;
@@ -50,8 +83,10 @@ function MeasureForm({ onSaved }) {
   const dims = DIMS[v.template]; const labels = { nos: t('rec.nos'), length: t('rec.length'), breadth: t('rec.breadth'), depth: t('rec.depth') };
   const use = (s) => setV({ ...v, description: v.description || s.activity, locationId: s.locationId ? String(s.locationId) : v.locationId, waId: s.waId ? String(s.waId) : v.waId, activityId: String(s.activityId), dprWorkId: String(s.id), ...(v.template === 'QTY' ? { qty: String(s.qty) } : {}) });
   return (
-    <form className="mdm-panel" data-testid="bill-mb-form" onBlur={pack09 ? ld.onBlur : undefined} onSubmit={async (e) => { e.preventDefault(); const r = await run(() => bill.post('/mb-entries', body)); if (r) { if (pack09) await ld.done().catch(() => null); onSaved(r); } }}>
+    <form className="mdm-panel" data-testid="bill-mb-form" onBlur={pack09 ? ld.onBlur : undefined} onSubmit={async (e) => { e.preventDefault(); const r = await run(() => bill.post('/mb-entries', body)); if (r) { if (pack09) await ld.done().catch(() => null); if (pack18) { dropLocal(); setLocal(null); } onSaved(r); } }}>
       <ErrorLine error={error} id="bill-error" />
+      {pack18 && !online && <p className="mdm-banner" role="status" data-testid="bill-mb-offline">{t('rec.offline')}</p>}
+      {pack18 && local && !v.projectId && <div className="mdm-banner" role="status" data-testid="bill-mb-local"><span>{t('rec.localFound', { when: fmtDate(local.at.slice(0, 10)) })}</span> <button type="button" className="btn" style={big} onClick={() => { setV({ ...blank, ...local.values }); setLocal(null); }} data-testid="bill-mb-local-resume">{t('rec.localResume')}</button> <button type="button" className="btn" style={big} onClick={() => { dropLocal(); setLocal(null); }} data-testid="bill-mb-local-discard">{t('rec.localDiscard')}</button></div>}
       {pack09 && <DraftBanner draft={ld.draft} onResume={() => { const p = ld.resume(); if (p) setV({ ...blank, ...p }); }} onDiscard={ld.discard} />}
       <div className="form-grid">
         <Field label={t('project')} name="projectId" error={fe.projectId}><select value={v.projectId} onChange={(e) => setV({ ...blank, projectId: e.target.value, measuredOn: v.measuredOn })} style={big} data-testid="bill-mb-project"><option value="">—</option>{d.projects.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field>
@@ -65,10 +100,12 @@ function MeasureForm({ onSaved }) {
         <Field label={t('rec.template')} name="template" error={fe.template}><select value={v.template} onChange={set('template')} style={big} data-testid="bill-mb-template">{d.templates.map((x) => <option key={x.id} value={x.id}>{t(`tpl.${x.id}`)}</option>)}</select></Field>
         {v.template === 'QTY' ? <Field label={t('rec.qty')} name="qty" error={fe.qty}><input type="number" inputMode="decimal" min="0" step="any" value={v.qty} onChange={set('qty')} style={big} data-testid="bill-mb-qty" /></Field>
           : dims.map((k) => <Field key={k} label={labels[k]} name={k} error={fe[k]}><input type="number" inputMode="decimal" min="0" step="any" value={v[k]} onChange={set(k)} style={big} data-testid={`bill-mb-${k}`} /></Field>)}
-        <Field label={t('rec.deduction')} name="deduction" error={fe.deduction}><input type="number" inputMode="decimal" min="0" step="any" value={v.deduction} onChange={set('deduction')} style={big} data-testid="bill-mb-deduction" /></Field>
+        {!(pack18 && v.deductions?.length) && <Field label={t('rec.deduction')} name="deduction" error={fe.deduction}><input type="number" inputMode="decimal" min="0" step="any" value={v.deduction} onChange={set('deduction')} style={big} data-testid="bill-mb-deduction" /></Field>}
+        {pack18 && <GpsField id="bill-mb-geo" label={t('rec.position')} value={v.geo} onChange={(g) => setV({ ...v, geo: g })} error={fe.geo} />}
       </div>
+      {pack18 && <DeductionLines v={v} setV={setV} fe={fe} />}
       <div className="mdm-panel" data-testid="bill-mb-result"><div className="muted">{t('rec.computed')}</div><strong style={{ fontSize: '1.5rem' }} data-testid="bill-mb-computed">{pv.data ? `${nf.format(pv.data.qty)} ${pv.data.uom ?? ''}` : '—'}</strong>{pv.isError && <p className="field-error" role="alert">{pv.error?.message}</p>}
-        {pv.data && <><Cumulative c={pv.data.cumulative} uom={pv.data.uom} /><Issues issues={pv.data.issues} /></>}{item && !pv.data && <p className="muted">{t('rec.boqQty', { qty: nf.format(item.qty), uom: item.uom })}</p>}</div>
+        {pack18 && pv.data?.deductions && <p className="muted" data-testid="bill-mb-ded-total">{t('rec.dedTotal', { qty: nf.format(pv.data.deduction), uom: pv.data.uom ?? '' })}</p>}{pv.data && <><Cumulative c={pv.data.cumulative} uom={pv.data.uom} /><Issues issues={pv.data.issues} /></>}{item && !pv.data && <p className="muted">{t('rec.boqQty', { qty: nf.format(item.qty), uom: item.uom })}</p>}</div>
       <div className="actions-row"><button type="submit" className="btn btn-primary" style={big} disabled={busy || !body} data-testid="bill-mb-save">{t('rec.save')}</button></div>
       {sg.data?.length > 0 && <div data-testid="bill-mb-suggestions"><h2>{t('rec.suggest')}</h2><p className="muted">{t('rec.suggestNote')}</p>
         <div className="table-scroll"><table className="data-table"><thead><tr><th>{t('rec.dpr')}</th><th>{t('rec.description')}</th><th>{t('rec.location')}</th><th className="num">{t('rec.reported')}</th><th /></tr></thead>
@@ -106,7 +143,7 @@ function Entry({ id }) {
       <Issues issues={x.issues} /><Cumulative c={x.cumulative} uom={x.uom} />
       {x.can.check && <CheckForm x={x} run={run} busy={busy} error={error} />}
       <div className="actions-row no-print" role="tablist">{['values', 'check', 'documents'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-mb-tab-${k}`}>{t(`mb.tab.${k}`)}</button>)}</div>
-      {tab === 'values' && <div className="table-scroll" data-testid="bill-mb-tab-values-body"><table className="data-table"><tbody>{row('rec.description', x.description)}{row('rec.template', t(`tpl.${x.template}`))}{x.nos != null && row('rec.nos', nf.format(x.nos))}{x.length != null && row('rec.length', nf.format(x.length))}{x.breadth != null && row('rec.breadth', nf.format(x.breadth))}{x.depth != null && row('rec.depth', nf.format(x.depth))}{row('rec.deduction', nf.format(x.deduction))}{row('rec.drawing', x.drawingRef ?? '—')}{row('mb.measuredBy', `${x.measuredBy} · ${fmtDate(x.measuredOn)}`)}{row('mb.clientCheck', x.clientCheckRequired ? t('yes') : t('no'))}{x.period && row('mb.period', x.period)}</tbody></table></div>}
+      {tab === 'values' && <div className="table-scroll" data-testid="bill-mb-tab-values-body"><table className="data-table"><tbody>{row('rec.description', x.description)}{row('rec.template', t(`tpl.${x.template}`))}{x.nos != null && row('rec.nos', nf.format(x.nos))}{x.length != null && row('rec.length', nf.format(x.length))}{x.breadth != null && row('rec.breadth', nf.format(x.breadth))}{x.depth != null && row('rec.depth', nf.format(x.depth))}{row('rec.deduction', nf.format(x.deduction))}{x.deductions?.length > 0 && row('rec.dedLines', <ul data-testid="bill-mb-ded-list">{x.deductions.map((l, n) => <li key={n}>{l.description}: {nf.format(l.qty)}</li>)}</ul>)}{x.geo && row('rec.position', <span data-testid="bill-mb-geo-shown">{x.geo.lat}, {x.geo.lng}{x.geo.accuracyM != null ? ` (±${x.geo.accuracyM} m)` : ''}</span>)}{row('rec.drawing', x.drawingRef ?? '—')}{row('mb.measuredBy', `${x.measuredBy} · ${fmtDate(x.measuredOn)}`)}{row('mb.clientCheck', x.clientCheckRequired ? t('yes') : t('no'))}{x.period && row('mb.period', x.period)}</tbody></table></div>}
       {tab === 'check' && <div className="table-scroll" data-testid="bill-mb-tab-check-body">{x.checkStatus === 'NOT_CHECKED' ? <p className="muted">{t('chk.none')}</p> : <table className="data-table"><tbody>{row('chk.name', `${x.checkerName}${x.checkerOrg ? `, ${x.checkerOrg}` : ''}`)}{row('chk.date', fmtDate(x.checkedOn))}{row('chk.pct', `${x.checkPct}%`)}{row('chk.signature', x.signatureRef ?? '—')}{x.checkNote && row('chk.note', x.checkNote)}</tbody></table>}</div>}
       {tab === 'documents' && <AttachmentPanel type="bill_mb_entries" id={x.id} entity="bill_mb_entries" canEdit={x.can.edit} />}
       <DocBar kind="/mb-entries" x={x} printName={`${x.docNo.replaceAll('/', '-')}.pdf`} />

@@ -87,3 +87,30 @@ test('roles, scope, import, export and the flag', async () => {
   const l = (await w.bc(U.qs, 'GET', '/mb-entries')).json; assert.ok(l.data.length >= 2);
   w.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.bill.p2201'").run(); assert.equal((await w.bc(U.qs, 'GET', '/mb-entries')).status, 404);
 });
+
+test('PACK-18 a measurement on a phone: deduction lines measured like the entry, the position where it was measured; flag, validation, scope, stale version and replay', async () => {
+  const w = await world();
+  const lines = [{ description: 'Pedestal opening P1', nos: 2, length: 0.5, breadth: 0.5, depth: 0.6 }, { description: 'Sump', length: 1, breadth: 1, depth: 0.2 }];
+  const geo = { lat: 17.385044, lng: 78.486671, accuracyM: 8 };
+  const off = await w.bc(U.mse, 'POST', '/mb-entries', body(w, { deduction: 0, deductions: lines, geo })); assert.equal(off.status, 400, 'flag off: refused'); assert.match(JSON.stringify(off.json), /not turned on/);
+  w.d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.bill.pack18', 1, 'test', 0, 1)").run();
+  // preview: 22.5 less (2 x 0.5 x 0.5 x 0.6 = 0.3) and (1 x 1 x 1 x 0.2 = 0.2)
+  const pv = await w.bc(U.mse, 'POST', '/mb-entries/preview', body(w, { deduction: 0, deductions: lines })); assert.equal(pv.status, 200, JSON.stringify(pv.json)); assert.deepEqual([pv.json.data.qty, pv.json.data.deduction, pv.json.data.deductions.map((l) => l.qty)], [22, 0.5, [0.3, 0.2]]);
+  // validation: a missing dimension, a deduction that is not the sum of the lines, a position off the globe
+  assert.equal((await w.bc(U.mse, 'POST', '/mb-entries', body(w, { deduction: 0, deductions: [{ description: 'Opening', length: 1, breadth: 1 }] }))).status, 400);
+  const mis = await w.bc(U.mse, 'POST', '/mb-entries', body(w, { deduction: 0.4, deductions: lines })); assert.equal(mis.status, 400); assert.match(JSON.stringify(mis.json), /sum of its lines: 0.5/);
+  assert.equal((await w.bc(U.mse, 'POST', '/mb-entries', body(w, { deduction: 0, geo: { lat: 95, lng: 78 } }))).status, 400);
+  assert.equal((await w.bc(U.mse, 'POST', '/mb-entries', body(w, { deduction: 0, deductions: [{ description: 'x', length: 1, breadth: 1, depth: 1 }] }))).status, 400, 'a line needs a description');
+  // success, with an idempotent replay
+  const k = key(); const c1 = await w.api.call('POST', `${B}/mb-entries`, { ...U.mse, headers: k, body: body(w, { deduction: 0, deductions: lines, geo }) }); assert.equal(c1.status, 201, JSON.stringify(c1.json));
+  const c2 = await w.api.call('POST', `${B}/mb-entries`, { ...U.mse, headers: k, body: body(w, { deduction: 0, deductions: lines, geo }) }); assert.equal(c2.json.data.id, c1.json.data.id, 'the same key gives the same entry');
+  assert.equal(w.d.prepare('SELECT COUNT(*) AS n FROM bill_mb_entries').get().n, 1);
+  const e = c1.json.data; assert.deepEqual([e.qty, e.deduction, e.deductions.length, e.deductions[1].nos, e.geo], [22, 0.5, 2, 1, geo]);
+  // 403: a role that may not measure; 404: another company
+  assert.equal((await w.bc(U.xcon, 'POST', '/mb-entries', body(w, { deduction: 0, deductions: lines }))).status, 403);
+  assert.equal((await w.bc({ ...U.mse, company: '2' }, 'PATCH', `/mb-entries/${e.id}`, { deductions: [] })).status, 404);
+  // edit: a changed depth recomputes the stored lines; a stale version is 409
+  const u = await w.bc(U.mse, 'PATCH', `/mb-entries/${e.id}`, { depth: 0.5, rowVersion: e.version }); assert.equal(u.status, 200, JSON.stringify(u.json)); assert.equal(u.json.data.qty, 18.75 - 0.5, 'the lines keep their own depths; 6 x 2.5 x 2.5 x 0.5 = 18.75');
+  assert.equal((await w.bc(U.mse, 'PATCH', `/mb-entries/${e.id}`, { depth: 0.4, rowVersion: e.version })).status, 409);
+  const cleared = await w.bc(U.mse, 'PATCH', `/mb-entries/${e.id}`, { deductions: null, deduction: 0.25, geo: null }); assert.equal(cleared.status, 200, JSON.stringify(cleared.json)); assert.deepEqual([cleared.json.data.deductions, cleared.json.data.deduction, cleared.json.data.geo, cleared.json.data.qty], [[], 0.25, null, 18.5]);
+});

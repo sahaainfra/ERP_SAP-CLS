@@ -3357,6 +3357,38 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ux_bill_ic_key (unique): company_id, gstin, fy
 
+## bill_mb_capture
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| mb_entry_id | INTEGER | yes |  |  |
+| deductions_json | TEXT | yes |  | '[]' |
+| geo_lat_e6 | INTEGER |  |  |  |
+| geo_lng_e6 | INTEGER |  |  |  |
+| geo_accuracy_m | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: mb_entry_id -> bill_mb_entries(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_mb_capture_project: project_id
+- ix_bill_mb_capture_company: company_id
+- ux_bill_mb_capture_entry (unique): mb_entry_id
+
 ## bill_mb_entries
 
 | Column | Type | Not null | Key | Default |

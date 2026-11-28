@@ -10,6 +10,7 @@ import { assertProjectPeriodOpen } from '../../platform/locks/index.js';
 import { nowIso, rid } from '../proc/base.js';
 import { qaHelpers } from '../qa/common.js';
 import { STATUS, createFlow } from '../qa/flow.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 
 // The measurement book (part 22.01): an entry measures a BOQ item at a location from the dimensions (nos x length x breadth x depth less deductions, by formula template), is checked for eligibility (the hold-point inspections approved, the item in the contract BOQ or an approved variation, the
 // cumulative quantity against the limit), is checked by the QS lead and, where required, by the client or the consultant, and is certified by the project manager; a certified entry is locked, takes its page and line in the book and feeds the abstract of the bill period. Quantities are x1000.
@@ -78,18 +79,41 @@ export function createMbService({ db, base, flags }) {
     const b = boqOf(r.boq_line_id); const c0 = flow.can(actor, r); const w = { pid: r.org_project_id, sid: r.org_site_id };
     const o = { id: r.id, docNo: r.doc_no, projectId: r.org_project_id, project: pcode(r.org_project_id), boqLineId: r.boq_line_id, item: b?.item_code, itemDescription: b?.description, locationId: r.location_id, location: locName(r.location_id), waId: r.wa_id, activityId: r.activity_id, irId: r.ir_id, dprWorkId: r.dpr_work_id, drawingId: r.drawing_id, drawingRef: r.drawing_ref, description: r.description, template: r.template, templateLabel: TEMPLATE_LABEL[r.template], nos: d3(r.nos_th), length: d3(r.length_th), breadth: d3(r.breadth_th), depth: d3(r.depth_th), deduction: d3(r.deduction_th), qty: d3(r.qty_th), uom: r.uom ?? b?.uom, measuredBy: r.measured_by, measuredOn: r.measured_on,
       clientCheckRequired: r.client_check_required === 1, checkStatus: r.check_status, checkLabel: CHECK_STATUS[r.check_status], checkedQty: d3(r.checked_qty_th), checkPct: r.check_pct_bp / 100, checkDiff: d3(r.check_diff_th), checkerName: r.checker_name, checkerOrg: r.checker_org, checkedOn: r.checked_on, certifiedQty: d3(r.certified_qty_th), certifiedOn: r.certified_on, period: r.bill_period, book: r.mb_book, page: r.mb_page, line: r.mb_line, billRef: r.bill_ref, status: r.status, statusLabel: STATUS[r.status], version: r.version, requestedBy: r.requested_by,
+      ...((cp) => ({ deductions: JSON.parse(cp?.deductions_json || '[]').map((l) => ({ description: l.description, nos: l.nos ?? null, length: l.length ?? null, breadth: l.breadth ?? null, depth: l.depth ?? null, qty: d3(l.qtyTh) })), geo: cp?.geo_lat_e6 == null ? null : { lat: cp.geo_lat_e6 / 1e6, lng: cp.geo_lng_e6 / 1e6, accuracyM: cp.geo_accuracy_m } }))(capOf(r.id)),
       can: { ...c0, check: r.status === 'SUBMITTED' && r.measured_by !== actor.user && may(actor, 'bill.mb_entry.check', w.pid, w.sid) } };
     if (detail) Object.assign(o, flow.approveInfo(actor, r), { signatureRef: r.signature_ref, checkNote: r.check_note, cancelReason: r.cancel_reason, issues: ['DRAFT', 'RETURNED'].includes(r.status) ? eligibility(r, b) : JSON.parse(r.eligibility_json || '[]'), cumulative: (() => { const c = cumulative(r, b); return { limit: d3(c.limit), others: d3(c.other), total: d3(c.total) }; })() });
     return o;
   };
+  /** PACK-18: the capture row of an entry (deduction lines, position) and its writing; the keys are split off the entry's columns. */
+  const CAP = ['deductions_json', 'geo_lat_e6', 'geo_lng_e6', 'geo_accuracy_m'];
+  const capOf = (id) => db.prepare('SELECT * FROM bill_mb_capture WHERE mb_entry_id = ? AND deleted_at IS NULL').get(id);
+  const split = (c) => { const cap = {}; for (const k of CAP) if (k in c) { cap[k] = c[k]; delete c[k]; } return cap; };
+  const saveCap = (actor, entry, cap) => {
+    if (!Object.keys(cap).length) return; const prev = capOf(entry.id);
+    if (prev) { const k = Object.keys(cap); db.prepare(`UPDATE bill_mb_capture SET ${k.map((x) => `${x} = ?`).join(', ')}, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...Object.values(cap), actor.user, nowIso(), prev.id); return; }
+    const k = Object.keys(cap); db.prepare(`INSERT INTO bill_mb_capture (company_id, mb_entry_id, project_id, site_id, ${k.join(', ')}, created_by, source_type) VALUES (?, ?, ?, ?, ${k.map(() => '?').join(', ')}, ?, 'pack18')`).run(entry.company_id, entry.id, entry.org_project_id, entry.org_site_id ?? null, ...Object.values(cap), actor.user);
+  };
+  /** PACK-18: deduction lines and the position are taken only where the company has turned them on (ff.bill.pack18). */
+  const pack18 = (actor, b) => { if ((b.deductions != null || b.geo != null) && !isEnabled(db, 'ff.bill.pack18', { companyId: actor.companyId })) fail([{ field: b.deductions != null ? 'deductions' : 'geo', message: 'Deduction lines and the position are not turned on for this company' }]); };
+  /** PACK-18: each deduction line measured with the factors of the entry's template (a missing number of pieces is one); thousandths. */
+  const dedLines = (template, lines) => lines.map((l, i) => {
+    const th = (x) => (x == null ? null : q3(x)); const f = FACTORS[template];
+    if (template === 'QTY') { if (l.qty == null) fail([{ field: `deductions.${i}.qty`, message: 'Give the quantity of this deduction' }]); return { description: l.description, qtyTh: th(l.qty) }; }
+    const v = { nosTh: f.includes('nos') ? th(l.nos ?? 1) : null, lengthTh: f.includes('length') ? th(l.length) : null, breadthTh: f.includes('breadth') ? th(l.breadth) : null, depthTh: f.includes('depth') ? th(l.depth) : null };
+    for (const [k, x] of Object.entries(v)) if (f.includes(k.replace('Th', '')) && x == null) fail([{ field: `deductions.${i}.${k.replace('Th', '')}`, message: 'Give every dimension of this deduction' }]);
+    return { description: l.description, nos: d3(v.nosTh), length: d3(v.lengthTh), breadth: d3(v.breadthTh), depth: d3(v.depthTh), qtyTh: mbQty({ template, ...v }).grossTh };
+  });
   /** The columns and the quantity of an entry from its inputs (server side, always). */
   function cols(b, r = {}) {
     const get = (k, rk, conv = q3) => (k in b ? conv(b[k]) : r[rk]); const template = b.template ?? r.template ?? 'VOLUME';
-    const nosTh = get('nos', 'nos_th'); const lengthTh = get('length', 'length_th'); const breadthTh = get('breadth', 'breadth_th'); const depthTh = get('depth', 'depth_th'); const dedTh = 'deduction' in b ? q3(b.deduction) : (r.deduction_th ?? 0); const qtyIn = 'qty' in b ? q3(b.qty) : (template === 'QTY' ? r.qty_th : null);
+    const nosTh = get('nos', 'nos_th'); const lengthTh = get('length', 'length_th'); const breadthTh = get('breadth', 'breadth_th'); const depthTh = get('depth', 'depth_th'); const stored = JSON.parse(r.deductions_json || '[]'); const raw = Array.isArray(b.deductions) ? b.deductions : (b.deductions === null ? [] : stored.length ? stored.map((l) => ({ ...l, qty: l.qtyTh != null && template === 'QTY' ? l.qtyTh / 1000 : l.qty })) : null); const lines = raw ? dedLines(template, raw) : null; const lineSum = lines ? lines.reduce((n, l) => n + l.qtyTh, 0) : null;
+    if (lines && lines.length && Array.isArray(b.deductions) && 'deduction' in b && q3(b.deduction) !== 0 && q3(b.deduction) !== lineSum) fail([{ field: 'deduction', message: `The deduction is the sum of its lines: ${d3(lineSum)}` }]);
+    const dedTh = lines && lines.length ? lineSum : 'deduction' in b ? q3(b.deduction) : (r.deduction_th ?? 0); const qtyIn = 'qty' in b ? q3(b.qty) : (template === 'QTY' ? r.qty_th : null);
     const t = mbQty({ template, nosTh, lengthTh, breadthTh, depthTh, deductionTh: dedTh, qtyTh: qtyIn }); if (t.negative) fail([{ field: 'deduction', message: 'The deduction is more than the measured quantity' }]);
     const keep = (k) => FACTORS[template].includes(k);
     return { boq_line_id: b.boqLineId ?? r.boq_line_id, location_id: 'locationId' in b ? b.locationId : r.location_id, wa_id: 'waId' in b ? b.waId : r.wa_id, activity_id: 'activityId' in b ? b.activityId : r.activity_id, ir_id: 'irId' in b ? b.irId : r.ir_id, dpr_work_id: 'dprWorkId' in b ? b.dprWorkId : r.dpr_work_id, drawing_id: 'drawingId' in b ? b.drawingId : r.drawing_id, drawing_ref: 'drawingRef' in b ? b.drawingRef : r.drawing_ref, description: b.description ?? r.description, template,
-      nos_th: keep('nos') ? nosTh : null, length_th: keep('length') ? lengthTh : null, breadth_th: keep('breadth') ? breadthTh : null, depth_th: keep('depth') ? depthTh : null, deduction_th: dedTh, qty_th: t.netTh, uom: 'uom' in b ? b.uom : r.uom, measured_on: b.measuredOn ?? r.measured_on };
+      nos_th: keep('nos') ? nosTh : null, length_th: keep('length') ? lengthTh : null, breadth_th: keep('breadth') ? breadthTh : null, depth_th: keep('depth') ? depthTh : null, deduction_th: dedTh, qty_th: t.netTh, uom: 'uom' in b ? b.uom : r.uom, measured_on: b.measuredOn ?? r.measured_on,
+      ...(lines ? { deductions_json: JSON.stringify(lines) } : {}), ...('geo' in b ? { geo_lat_e6: b.geo ? Math.round(b.geo.lat * 1e6) : null, geo_lng_e6: b.geo ? Math.round(b.geo.lng * 1e6) : null, geo_accuracy_m: b.geo?.accuracyM ?? null } : {}) };
   }
   const links = (actor, pj, c) => {
     const boq = boqOf(c.boq_line_id); if (!boq || boq.pj !== pj) fail([{ field: 'boqLineId', message: 'Not an item of the BOQ of this project' }]);
@@ -118,21 +142,22 @@ export function createMbService({ db, base, flags }) {
     },
     /** What the quantity would be and what the checks say, before anything is saved (the mobile form). */
     preview(actor, b) {
-      const pj = projectOk(actor, b.projectId, 'bill.mb_entry.create'); const c = cols(b); const boq = links(actor, pj.id, c); const probe = { id: 0, company_id: actor.companyId, org_project_id: pj.id, ...c }; const cum = cumulative(probe, boq);
-      return { qty: d3(c.qty_th), uom: c.uom ?? boq.uom, issues: eligibility(probe, boq), cumulative: { limit: d3(cum.limit), others: d3(cum.other), total: d3(cum.total) } };
+      const pj = projectOk(actor, b.projectId, 'bill.mb_entry.create'); pack18(actor, b); const c = cols(b); const capP = split(c); const boq = links(actor, pj.id, c); const probe = { id: 0, company_id: actor.companyId, org_project_id: pj.id, ...c }; const cum = cumulative(probe, boq);
+      return { qty: d3(c.qty_th), deduction: d3(c.deduction_th), ...(capP.deductions_json ? { deductions: JSON.parse(capP.deductions_json).map((l) => ({ ...l, qty: d3(l.qtyTh) })) } : {}), uom: c.uom ?? boq.uom, issues: eligibility(probe, boq), cumulative: { limit: d3(cum.limit), others: d3(cum.other), total: d3(cum.total) } };
     },
     create(actor, b) {
-      const pj = projectOk(actor, b.projectId, 'bill.mb_entry.create');
+      const pj = projectOk(actor, b.projectId, 'bill.mb_entry.create'); pack18(actor, b);
       // part 30.01 (D-777): the monthly lock of the project (27.07) reaches the measurement book too
       assertProjectPeriodOpen(db, { companyId: actor.companyId, projectId: pj.id, date: b.measuredOn ?? todayIST(), what: 'measurement' });
       const c = cols(b); const boq = links(actor, pj.id, c); if (b.value != null && q3(b.value) !== c.qty_th) fail([{ field: 'value', message: `The quantity is worked out by the server: ${d3(c.qty_th)}` }]);
       const cc = b.clientCheckRequired ?? (param(actor.companyId, 'bill.mb.client_check_required') === true);
+      const cap = split(c);
       return transaction(db, () => { const no = flow.next(actor); const k = Object.keys(c); const id = Number(db.prepare(`INSERT INTO bill_mb_entries (company_id, doc_no, org_project_id, org_site_id, ${k.join(', ')}, measured_by, client_check_required, created_by, source_type) VALUES (?, ?, ?, ?, ${k.map(() => '?').join(', ')}, ?, ?, ?, ?)`).run(actor.companyId, no, pj.id, b.siteId ?? null, ...Object.values(c).map((v) => (v === undefined ? null : v)), actor.user, cc ? 1 : 0, actor.user, b.dprWorkId ? 'dpr' : 'manual').lastInsertRowid);
-        if (!c.uom && boq.uom) db.prepare('UPDATE bill_mb_entries SET uom = ? WHERE id = ?').run(boq.uom, id); audit(actor, 'bill_mb_entries', id, 'create', actor.companyId); return mbs.get(actor, id); });
+        if (!c.uom && boq.uom) db.prepare('UPDATE bill_mb_entries SET uom = ? WHERE id = ?').run(boq.uom, id); saveCap(actor, { id, company_id: actor.companyId, org_project_id: pj.id, org_site_id: b.siteId ?? null }, cap); audit(actor, 'bill_mb_entries', id, 'create', actor.companyId); return mbs.get(actor, id); });
     },
     update(actor, id, b) {
       const r = flow.row(actor, id, 'bill.mb_entry.edit'); if (!flow.EDITABLE.includes(r.status)) throw conflict('A certified measurement is locked: change it by an amendment.'); if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this; reload it.'); if (r.measured_by !== actor.user && !may(actor, 'bill.mb_entry.approve', r.org_project_id, r.org_site_id)) throw conflict('Only the person who measured changes the entry.');
-      const c = cols(b, r); links(actor, r.org_project_id, c); assertProjectPeriodOpen(db, { companyId: r.company_id, projectId: r.org_project_id, date: c.measured_on ?? r.measured_on ?? todayIST(), what: 'measurement' }); const k = Object.keys(c); db.prepare(`UPDATE bill_mb_entries SET ${k.map((x) => `${x} = ?`).join(', ')}, client_check_required = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...Object.values(c).map((v) => (v === undefined ? null : v)), b.clientCheckRequired == null ? r.client_check_required : b.clientCheckRequired ? 1 : 0, actor.user, nowIso(), r.id); audit(actor, 'bill_mb_entries', r.id, 'update', r.company_id); return mbs.get(actor, r.id);
+      pack18(actor, b); const c = cols(b, { ...r, deductions_json: capOf(r.id)?.deductions_json ?? '[]' }); const cap = split(c); links(actor, r.org_project_id, c); assertProjectPeriodOpen(db, { companyId: r.company_id, projectId: r.org_project_id, date: c.measured_on ?? r.measured_on ?? todayIST(), what: 'measurement' }); const k = Object.keys(c); db.prepare(`UPDATE bill_mb_entries SET ${k.map((x) => `${x} = ?`).join(', ')}, client_check_required = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...Object.values(c).map((v) => (v === undefined ? null : v)), b.clientCheckRequired == null ? r.client_check_required : b.clientCheckRequired ? 1 : 0, actor.user, nowIso(), r.id); saveCap(actor, r, cap); audit(actor, 'bill_mb_entries', r.id, 'update', r.company_id); return mbs.get(actor, r.id);
     },
     remove: (actor, id) => flow.remove(actor, id), submit(actor, id) { const r0 = db.prepare('SELECT company_id, org_project_id, measured_on FROM bill_mb_entries WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (r0) assertProjectPeriodOpen(db, { companyId: r0.company_id, projectId: r0.org_project_id, date: r0.measured_on ?? todayIST(), what: 'measurement' }); flow.submit(actor, id); return mbs.get(actor, id); }, withdraw: (actor, id, b) => { flow.withdraw(actor, id, b); return mbs.get(actor, id); }, cancel: (actor, id, b) => { flow.cancel(actor, id, b); return mbs.get(actor, id); }, history: (actor, id) => flow.history(actor, id),
     amend(actor, id) { flow.row(actor, id, 'bill.mb_entry.amend'); throw unprocessable('A certified measurement is locked. Measure the difference as a new entry (a negative correction is a deduction in a new entry), or ask for the entry to be cancelled before certification.'); },

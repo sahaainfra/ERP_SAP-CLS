@@ -819,4 +819,16 @@ export default {
   "rc.var.BILLED_BEYOND_CERTIFIED": "Billed beyond certified",
   "rc.var.CERTIFIED_NOT_BILLED": "Certified, not billed",
   "rc.var.MB_BILL_MISMATCH": "Measurement book and bill differ",
+  // PACK-18: the measurement book on a phone
+  "rec.dedLines": "Deductions",
+  "rec.dedLinesHint": "Each opening or overlap measured with the same dimensions as the entry; the deduction is their sum.",
+  "rec.dedWhat": "Deduction {n}: what",
+  "rec.dedRemove": "Remove this deduction",
+  "rec.dedAdd": "Add a deduction",
+  "rec.dedTotal": "Deductions: {qty} {uom}",
+  "rec.position": "Position",
+  "rec.offline": "You are offline. The measurement is kept on this phone; save it when you are back online.",
+  "rec.localFound": "A measurement kept on this phone on {when} was not saved.",
+  "rec.localResume": "Continue it",
+  "rec.localDiscard": "Discard it",
 };
