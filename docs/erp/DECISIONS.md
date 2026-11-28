@@ -1062,3 +1062,13 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   document already approved, and a refusal there is dead-lettered (D-833). A block, where wanted, belongs at the document's own approval.
   Actual costs (payroll, issues) keep posting to the project they are allocated to, as the owner decided in D-833. A cost head whose check
   is OFF gets no set-up warning either.
+
+- **ADR-784 What a phone adds to a measurement lives in a side table, and the entry's deduction stays one number (PACK-18).** Deduction lines
+  and the position where an entry was measured are kept in `bill_mb_capture`, one row per entry, not as new columns of `bill_mb_entries`. The
+  repository's migrations must apply twice without error, and SQLite has no `ADD COLUMN IF NOT EXISTS`. Its other column changes rebuild the
+  table, which is a large, risky change for the measurement book that bills depend on. The entry's `deduction_th` remains the deduction every
+  reader uses (the quantity, the reconciliation, the bill): with lines it is their sum, worked out by the server with the entry's own
+  formula template, and a typed deduction that differs from the sum is refused. Photos stay files of the entry (file entity
+  `bill_mb_entries`, camera input, EXIF time and position kept). The offline copy of the form is kept in the browser's local storage on the
+  device, and the server draft of PACK-09 is unchanged. It keeps no personal data beyond what the form holds, and is removed when the entry
+  is saved. Everything is behind `ff.bill.pack18`.
