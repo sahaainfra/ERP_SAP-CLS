@@ -117,6 +117,8 @@
   --erp-grid-gutter: 16px;
   --erp-grid-row-unit: 112px;
   --erp-content-max-reading: 880px;
+  --erp-target-min: 44px;
+  --erp-target-large: 48px;
   --erp-breakpoint-xs: 0px;
   --erp-breakpoint-sm: 600px;
   --erp-breakpoint-md: 900px;

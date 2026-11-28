@@ -346,7 +346,9 @@
   "grid.columns.mobile": 4,
   "grid.gutter": 16,
   "grid.row-unit": 112,
-  "content.max-reading": 880
+  "content.max-reading": 880,
+  "target.min": 44,
+  "target.large": 48
  },
  "motion": {
   "duration.fast": "120ms",
