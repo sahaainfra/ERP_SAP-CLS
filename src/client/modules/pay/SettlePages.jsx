@@ -11,6 +11,8 @@ import { money } from '../fin/api.js';
 import { GlError, useGlRunner } from '../fin/JournalsPage.jsx';
 import { Decide, Pills, Rows, big, guardOf, istToday } from '../fin/finparts.jsx';
 import { TONE, file, settle } from './api.js';
+import { ConfirmDialog } from '../../platform/feedback/Dialogs.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
 
 // Part 24.05: the end of the payroll cycle.
 //  Post Payroll & Create Payment (a wizard: 1 post the approved run to the ledger, 2 pay the net pay through a checked bank file and confirm it, 3 the payslips
@@ -27,6 +29,8 @@ function PostingChip({ p, t }) { return p ? <StatusBadge status={PT[p.status] ??
 
 function Transfer({ tr, t, run, busy }) {
   const [open, setOpen] = useState(false); const [rows, setRows] = useState({});
+  // PACK-11: releasing a salary transfer sends it to the bank and cannot be called back from here: the person types its number first
+  const pack11 = useFlagOn('ff.ui.pack11'); const [ask, setAsk] = useState(false); const tc = useT('common');
   const q = useQuery({ queryKey: ['gl', 'pp-transfer', tr.id], queryFn: () => settle.transfer(tr.id), retry: false, enabled: open });
   const set = (id, k, v) => setRows({ ...rows, [id]: { status: 'PAID', paidOn: istToday(), ...rows[id], [k]: v } });
   const ready = Object.entries(rows).filter(([, r]) => (r.status === 'PAID' ? (r.utr ?? '').trim().length >= 12 : (r.reason ?? '').trim().length >= 3));
@@ -35,7 +39,9 @@ function Transfer({ tr, t, run, busy }) {
     <span className="small">{t('pp.trLine', { n: tr.lines, mode: tr.mode, date: tr.payDate, bank: tr.bank?.name ?? '' })} · {money(tr.total)}{tr.voucher ? ` · ${tr.voucher}` : ''}</span>
     {tr.can.releaseBlocked && <span className="small muted">{tr.can.releaseBlocked}</span>}
     <div className="actions-row">
-      {tr.can.release && <button type="button" className="btn btn-primary" style={big} disabled={busy} onClick={() => run(() => settle.release(tr.id), t('pp.released'))} data-testid={`pp-release-${tr.id}`}>{t('pp.release')}</button>}
+      {tr.can.release && <button type="button" className="btn btn-primary" style={big} disabled={busy} onClick={() => (pack11 ? setAsk(true) : run(() => settle.release(tr.id), t('pp.released')))} data-testid={`pp-release-${tr.id}`}>{t('pp.release')}</button>}
+      {pack11 && <ConfirmDialog open={ask} title={tc('confirm.releaseTitle', { doc: tr.docNo })} text={tc('confirm.releaseText', { doc: tr.docNo, amount: money(tr.total), bank: tr.bank?.name ?? '' })} confirmLabel={t('pp.release')} danger typeToConfirm={tr.docNo}
+        onCancel={() => setAsk(false)} onConfirm={async () => { setAsk(false); await run(() => settle.release(tr.id), t('pp.released')); }} />}
       {tr.can.file && <button type="button" className="btn" style={big} onClick={() => file(`/transfers/${tr.id}/file`, tr.fileName ?? `${tr.docNo}.csv`).catch(() => globalThis.alert?.(t('pp.fileFailed')))} data-testid={`pp-file-${tr.id}`}>{t('pp.bankFile')}</button>}
       {tr.can.cancel && <button type="button" className="btn" style={big} disabled={busy} onClick={() => { const r = globalThis.prompt?.(t('pp.whyCancel')); if (r && r.trim().length >= 5) run(() => settle.cancelTransfer(tr.id, { reason: r.trim() }), t('pp.cancelled')); }}>{t('pp.cancel')}</button>}
       <button type="button" className="btn" style={{ minHeight: 'var(--erp-target-min)' }} onClick={() => setOpen(!open)} aria-expanded={open} data-testid={`pp-open-${tr.id}`}>{open ? t('pp.hideLines') : t('pp.showLines')}</button>

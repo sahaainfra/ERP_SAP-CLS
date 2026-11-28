@@ -21,4 +21,9 @@ export default {
   'bulk.go': 'Do it for {n} row(s)',
   'bulk.none': 'None of them can be done',
   'bulk.cancel': 'Cancel',
+  // PACK-11: typed confirmation for postings that cannot be reversed (src/client/platform/feedback/Dialogs.jsx)
+  'confirm.typeLabel': 'This cannot be undone. Type {word} to confirm',
+  'confirm.typeWrong': 'Type {word} exactly to go on.',
+  'confirm.releaseTitle': 'Release {doc} to the bank?',
+  'confirm.releaseText': '{amount} goes to {bank} for payment. Once released, the transfer cannot be called back from here.',
 };

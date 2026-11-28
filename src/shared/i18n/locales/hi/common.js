@@ -43,4 +43,9 @@ export default {
   'bulk.go': '{n} पंक्ति(यों) के लिए करें',
   'bulk.none': 'इनमें से किसी पर नहीं किया जा सकता',
   'bulk.cancel': 'रद्द करें',
+  // PACK-11: typed confirmation for postings that cannot be reversed (src/client/platform/feedback/Dialogs.jsx)
+  'confirm.typeLabel': 'इसे वापस नहीं किया जा सकता। पुष्टि के लिए {word} टाइप करें',
+  'confirm.typeWrong': 'आगे बढ़ने के लिए ठीक {word} टाइप करें।',
+  'confirm.releaseTitle': '{doc} बैंक को जारी करें?',
+  'confirm.releaseText': '{amount} भुगतान के लिए {bank} को जाएगा। जारी होने के बाद ट्रांसफ़र यहाँ से वापस नहीं लिया जा सकता।',
 };

@@ -25,6 +25,11 @@ export default {
     'bulk.go': '{n} వరుస(ల)కు చేయండి',
     'bulk.none': 'వీటిలో ఏదీ చేయలేము',
     'bulk.cancel': 'రద్దు చేయండి',
+    // PACK-11: typed confirmation
+    'confirm.typeLabel': 'దీన్ని వెనక్కి తీసుకోలేము. నిర్ధారించడానికి {word} టైప్ చేయండి',
+    'confirm.typeWrong': 'కొనసాగడానికి సరిగ్గా {word} టైప్ చేయండి.',
+    'confirm.releaseTitle': '{doc} బ్యాంకుకు విడుదల చేయాలా?',
+    'confirm.releaseText': '{amount} చెల్లింపు కోసం {bank}కు వెళ్తుంది. విడుదలైన తర్వాత ఈ బదిలీని ఇక్కడ నుండి వెనక్కి తీసుకోలేము.',
   },
   shell: {
     'context.recent': 'ఇటీవలి', 'context.recentAria': 'ఇటీవలి పని సందర్భాలు',

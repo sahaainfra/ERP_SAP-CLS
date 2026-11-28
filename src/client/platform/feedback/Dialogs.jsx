@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/index.js';
+import { useT } from '../i18n/index.js';
 
 // Dialogs (part 03.04, FR-07, BR-02): the confirmation dialog, with a reason code and words where the action needs them, and the progress
 // dialog for work that takes a while. Both are native <dialog> elements (focus is held inside, Escape closes, the page behind is inert).
@@ -32,8 +33,13 @@ export function ReasonCodePicker({ forAction, code, text, onCode, onText, error,
  * ConfirmDialog: asks before an action that cannot be undone. `reasonFor` ('cancel' | 'reject' | 'return') adds the reason-code picker and
  * makes code and words required; `commentOptional` adds an optional comment. onConfirm({ reasonCode, reason }) returns a promise; a failure is
  * shown inside the dialog with its correlation ID and the dialog stays open.
+ * `typeToConfirm` (PACK-11, for postings that cannot be reversed: a salary transfer released to the bank, a payroll run posted to the books)
+ * names a word or document number the person must type before the button works.
  */
-export function ConfirmDialog({ open, title, text, confirmLabel = 'Confirm', danger = false, reasonFor = null, commentOptional = false, onConfirm, onCancel }) {
+export function ConfirmDialog({ open, title, text, confirmLabel = 'Confirm', danger = false, reasonFor = null, commentOptional = false, typeToConfirm = null, onConfirm, onCancel }) {
+  const tc = useT('common');
+  const [typed, setTyped] = useState('');
+  const typedOk = !typeToConfirm || typed.trim().toUpperCase() === String(typeToConfirm).trim().toUpperCase();
   const ref = useRef(null);
   const [code, setCode] = useState('');
   const [reason, setReason] = useState('');
@@ -43,7 +49,7 @@ export function ConfirmDialog({ open, title, text, confirmLabel = 'Confirm', dan
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) { setCode(''); setReason(''); setError(null); setBusy(false); d.showModal(); }
+    if (open && !d.open) { setCode(''); setReason(''); setTyped(''); setError(null); setBusy(false); d.showModal(); }
     if (!open && d.open) d.close();
   }, [open]);
   const submit = async (e) => {
@@ -51,6 +57,7 @@ export function ConfirmDialog({ open, title, text, confirmLabel = 'Confirm', dan
     const fields = {};
     if (reasonFor && !code) fields.reasonCode = 'Choose a reason.';
     if (reasonFor && reason.trim().length < 5) fields.reason = 'Explain in at least 5 characters.';
+    if (!typedOk) { setError({ fields: { typed: tc('confirm.typeWrong', { word: typeToConfirm }) } }); return; }
     if (Object.keys(fields).length) { setError({ fields, form: 'Please correct the fields below.' }); return; }
     setBusy(true);
     setError(null);
@@ -73,10 +80,17 @@ export function ConfirmDialog({ open, title, text, confirmLabel = 'Confirm', dan
         {!reasonFor && commentOptional && (
           <label className="field"><span>Comment (optional)</span><textarea rows="2" maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} /></label>
         )}
+        {typeToConfirm && (
+          <label className="field" data-testid="confirm-typed">
+            <span>{tc('confirm.typeLabel', { word: typeToConfirm })}</span>
+            <input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} aria-invalid={error?.fields?.typed ? true : undefined} aria-describedby={error?.fields?.typed ? `${titleId}-typed` : undefined} />
+            {error?.fields?.typed && <span className="field-error" id={`${titleId}-typed`} role="alert">{error.fields.typed}</span>}
+          </label>
+        )}
         {error?.form && <p className="field-error" role="alert" data-testid="confirm-error">{error.form}{error.correlationId && <> (Correlation ID: <code>{error.correlationId}</code>)</>}</p>}
         <div className="actions">
           <button type="button" className="btn" onClick={onCancel} disabled={busy}>Keep as it is</button>
-          <button type="submit" className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`} disabled={busy}>{busy ? 'Working...' : confirmLabel}</button>
+          <button type="submit" className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`} disabled={busy || !typedOk} aria-disabled={!typedOk || undefined}>{busy ? 'Working...' : confirmLabel}</button>
         </div>
       </form>
     </dialog>
