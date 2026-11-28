@@ -1072,3 +1072,9 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   `bill_mb_entries`, camera input, EXIF time and position kept). The offline copy of the form is kept in the browser's local storage on the
   device, and the server draft of PACK-09 is unchanged. It keeps no personal data beyond what the form holds, and is removed when the entry
   is saved. Everything is behind `ff.bill.pack18`.
+
+- **ADR-785 A baseline read from a schedule file is a reference, never an approved baseline (PACK-21).** MS Project XML carries baseline 0
+  per task. The export writes the project's current approved baseline there (`ff.plan.pack21`), and the reader keeps it with each activity
+  (`baselineStart`, `baselineFinish`). The import report says how many activities carry one (info `BASELINE_IN_FILE`). Applying a file
+  never creates or changes a `plan_baselines` row. A baseline is prepared by planning and approved by the project manager and the project
+  director (13.03 FR-02), and a file cannot stand in for that approval. P6 XML and XER carry no baseline here (D-876).
