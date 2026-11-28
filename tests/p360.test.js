@@ -135,3 +135,73 @@ test('D-432 a slot hidden and moved by an approved Control Center change; not be
   const platform = t.api.db.prepare('SELECT tab, slot, is_active FROM proj_360_widgets WHERE widget_code = ? AND company_id IS NULL').get(target.code);
   assert.deepEqual([platform.tab, platform.is_active], [cur.tab, 1]);
 });
+
+// PACK-16: no dead tiles. Every live Project 360 widget links to the filtered list behind it (the widget's own route, or each figure's or
+// row's), and the link is a page of the application (registered in the navigation registry) carrying the project; a slot whose module is
+// not live says which part supplies it (an empty state, not a tile without a target).
+test('PACK-16 every live Project 360 tile links to a filtered list of the project; no dead tiles', async () => {
+  const t = await setup();
+  for (const { key } of t.api.db.prepare('SELECT DISTINCT key FROM core_feature_flags WHERE company_id IS NULL').all()) t.api.db.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES (?, 1, 'p360 links', 0, 1)").run(key);
+  t.api.db.prepare('UPDATE core_feature_flags SET enabled = 1 WHERE company_id = 1').run();
+  const res = await t.call(as('DIR', 'p3dir1'), 'GET', `/project-360?projectId=${t.a}`);
+  assert.equal(res.status, 200, JSON.stringify(res.json).slice(0, 200));
+  const all = res.json.data.tabs.flatMap((tab) => tab.widgets.map((w) => ({ ...w, tab: tab.key })));
+  const live = all.filter((w) => w.status === 'LIVE');
+  const dead = live.filter((w) => !w.drill && !(w.figures ?? []).some((f) => f.drill) && !(w.rows ?? []).some((r) => r.drill));
+  const notLive = all.filter((w) => w.status === 'NOT_LIVE');
+  console.log(`PACK-16 p360: ${all.length} slots, ${live.length} live, ${notLive.length} not live, ${dead.length} live without a link: ${dead.map((w) => `${w.tab}/${w.code}`).join(', ')}`);
+  assert.ok(live.length > 0);
+  assert.deepEqual(dead.map((w) => `${w.tab}/${w.code}`), [], 'every live tile has a link');
+  for (const w of notLive) assert.match(w.emptyText ?? '', /part|not live/i, `${w.code} says which part supplies it`);
+  // each link carries the project, so the list behind it is filtered to it
+  const links = live.flatMap((w) => [w.drill, ...(w.figures ?? []).map((f) => f.drill), ...(w.rows ?? []).map((r) => r.drill)]).filter(Boolean);
+  const code = t.api.db.prepare('SELECT code FROM org_projects WHERE id = ?').get(t.a).code;
+  const unfiltered = [...new Set(links.filter((l) => !new RegExp(`(projectId|project)\\]?=(${t.a}|${code})\\b|/${t.a}\\b`).test(l) && !/[?&](id|recordId|record|snapshot)=\d+/.test(l)))];
+  console.log(`PACK-16 p360 links: ${links.length}; not filtered to the project: ${unfiltered.join(' ')}`);
+  // pages with no project filter of their own (dashboards, trackers, a form): D-865. Any other unfiltered link fails here.
+  const NO_PROJECT_FILTER = ['/bill/client-bill-new', '/inv/dashboard', '/inv/grns', '/inv/in-transit', '/proc/po-tracker', '/proc/spend-analysis', '/qa/concrete-acceptance', '/qa/ir-analysis', '/qa/snag-status'];
+  assert.deepEqual(unfiltered.map((l) => l.split('?')[0]).filter((p) => !NO_PROJECT_FILTER.includes(p)), [], 'every other link is filtered to the project or opens one record');
+});
+
+test('PACK-16 the portfolio filters by state (AP, Telangana), client, type and stage; the choices are those of the visible projects', async () => {
+  const t = await setup(); const db = t.api.db;
+  const dir = as('DIR', 'p3dir1');
+  // a row with every required column given (the first allowed value of a CHECK list, else a value of the column's type)
+  const fill = (table, vals) => {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all(); const sql = db.prepare('SELECT sql FROM sqlite_master WHERE name = ?').get(table).sql;
+    const first = (n) => { const m = new RegExp(`${n}[^,]*CHECK \\(${n} IN \\(([^)]*)\\)\\)`).exec(sql); return m ? m[1].split(',')[0].trim().replace(/^'|'$/g, '') : null; };
+    const use = cols.filter((c) => c.name in vals || (c.notnull && c.dflt_value == null && c.name !== 'id'));
+    return Number(db.prepare(`INSERT INTO ${table} (${use.map((c) => c.name).join(', ')}) VALUES (${use.map(() => '?').join(', ')})`)
+      .run(...use.map((c) => (c.name in vals ? vals[c.name] : first(c.name) ?? (/INT|REAL|NUM/i.test(c.type) ? 1 : `t-${c.name}`)))).lastInsertRowid);
+  };
+  const partner = (code, name) => fill('mdm_partners', { company_id: 1, code, legal_name: name, name_key: name.toLowerCase(), partner_status: 'ACTIVE' });
+  const nhai = partner('C-NHAI', 'National Highways Authority'); const tsr = partner('C-TSRDC', 'Telangana Roads Corporation');
+  const c = db.prepare("INSERT INTO org_projects (company_id, code, name, type) VALUES (1, ?, ?, ?)");
+  const pc = Number(c.run('P3C', 'Hyderabad metro depot', 'BUILDING').lastInsertRowid);
+  db.prepare("INSERT INTO proj_projects (company_id, project_id, lifecycle_state, pm_user, contract_value, start_date, scheduled_completion, created_by) VALUES (1, ?, 'SETUP', 'p3pm1', 1, '2026-01-01', '2027-01-01', 'test')").run(pc);
+  db.prepare('UPDATE proj_projects SET client_partner_id = ? WHERE project_id IN (?, ?)').run(nhai, t.a, t.b);
+  db.prepare('UPDATE proj_projects SET client_partner_id = ? WHERE project_id = ?').run(tsr, pc);
+  const branch = (code, name, st, project) => fill('org_branches', { company_id: 1, code, name, state_code: st, project_id: project });
+  branch('B-A-TS', 'A Telangana', '36', t.a); branch('B-A-AP', 'A Andhra', '37', t.a); branch('B-B-AP', 'B Andhra', '37', t.b);
+  fill('org_locations', { company_id: 1, code: 'L-C', name: 'C office', state_code: '36', project_id: pc });
+  const codes = async (qs) => { const r = await t.call(dir, 'GET', `/portfolio-overview${qs}`); assert.equal(r.status, 200, JSON.stringify(r.json).slice(0, 200)); return r.json.data.projects.map((p) => p.code).sort(); };
+  assert.deepEqual(await codes(''), ['P3A', 'P3B', 'P3C'], 'no filter: as before');
+  assert.deepEqual(await codes('?state=36'), ['P3A', 'P3C'], 'Telangana: a branch or a location in the state');
+  assert.deepEqual(await codes('?state=37'), ['P3A', 'P3B'], 'Andhra Pradesh: P3A works in both states');
+  assert.deepEqual(await codes(`?clientId=${tsr}`), ['P3C']);
+  assert.deepEqual(await codes('?type=ROAD'), ['P3A', 'P3B']);
+  assert.deepEqual(await codes('?stage=SETUP'), ['P3C']);
+  assert.deepEqual(await codes(`?state=37&clientId=${nhai}&stage=MOBILISATION`), ['P3B'], 'filters combine');
+  const all = (await t.call(dir, 'GET', '/portfolio-overview')).json.data;
+  assert.deepEqual(all.options.states.map((s) => [s.value, s.label]), [['37', 'Andhra Pradesh'], ['36', 'Telangana']]);
+  assert.deepEqual(all.options.clients.map((s) => s.label), ['National Highways Authority', 'Telangana Roads Corporation']);
+  assert.deepEqual(all.options.types.map((s) => s.value), ['BUILDING', 'ROAD']);
+  const a = all.projects.find((p) => p.code === 'P3A');
+  assert.deepEqual([a.states, a.client, a.type], [['36', '37'], 'National Highways Authority', 'ROAD']);
+  // validation, permission
+  for (const qs of ['?state=TS', '?clientId=x', '?stage=NOPE', '?extra=1']) assert.equal((await t.call(dir, 'GET', `/portfolio-overview${qs}`)).status, 400, qs);
+  assert.equal((await t.call(as('EMP', 'p3emp'), 'GET', '/portfolio-overview')).status, 403);
+  // another company's projects and options are never seen
+  const other = await t.call(as('DIR', 'p3dir1', '2'), 'GET', '/portfolio-overview?state=36');
+  assert.ok(other.status === 200 ? other.json.data.projects.length === 0 && other.json.data.options.states.length === 0 : [403, 404].includes(other.status));
+});
