@@ -90,3 +90,57 @@ test('AC-01 the payroll posted, paid by bank file and its payslips distributed; 
   await pay.page.getByTestId('ff-tab-payment').click(); await expect(pay.page.getByTestId('ff-pay')).toBeVisible(); if (phone) await noOverflow(pay.page);
   await pay.context.close();
 });
+
+// PACK-11 (ff.ui.pack11): releasing a salary transfer to the bank cannot be called back, so the accounts manager types its number first. The
+// dialog holds the keyboard (Escape gives focus back to the release button), the button stays off until the number is typed, and axe finds
+// nothing wrong in the open dialog. On the phone the dialog is a full-screen sheet.
+const AXE_SRC = (await import('node:fs')).readFileSync(new URL('../node_modules/axe-core/axe.min.js', import.meta.url), 'utf8');
+test('PACK-11 releasing a salary transfer asks for its number to be typed; Escape gives focus back; axe passes on the dialog', async ({ browser, request }, info) => {
+  test.setTimeout(300_000);
+  const phone = info.project.name === 'mobile'; const w = await world(request, phone ? 'PAYTM' : 'PAYTD'); const u = (r) => `${w.low}-${r.toLowerCase()}`;
+  const f = await request.patch('/api/v1/core/feature-flags/ff.ui.pack11', { headers: H('SYSADM', w.company, 'e2e-setup'), data: { scope: { level: 'company', companyId: w.company }, enabled: true, reason: 'e2e: PACK-11' } });
+  expect(f.status(), await f.text()).toBe(200);
+  const pay = await as(browser, info, { user: u('PAY'), roles: 'PAY', company: w.company });
+  await pay.page.goto(`/payroll/posting?run=${w.run}`); await expect(pay.page.getByTestId('pp-run')).toBeVisible();
+  await pay.page.getByTestId('pp-step-post').click(); const postBtn = pay.page.getByTestId('pp-post-btn'); if (await postBtn.isVisible().catch(() => false)) await postBtn.click();
+  await expect(pay.page.getByTestId('pp-balanced')).toHaveText('Yes');
+  await pay.page.getByTestId('pp-step-pay').click(); await pay.page.getByTestId('pp-prepare').click(); await expect(pay.page.getByText(/transfer is prepared/)).toBeVisible();
+  const acc = await as(browser, info, { user: u('ACCMGR'), roles: 'ACCMGR', company: w.company }); await acc.page.goto(`/payroll/posting?run=${w.run}`); await acc.page.getByTestId('pp-step-pay').click();
+  const card = acc.page.locator('[data-testid^="pp-transfer-"]').first(); const tid = (await card.getAttribute('data-testid')).split('-').pop();
+  const docNo = (await card.locator('strong').first().textContent()).trim();
+  const release = acc.page.getByTestId(`pp-release-${tid}`);
+
+  // open, then Escape: nothing released, focus back on the release button
+  await release.click();
+  const dialog = acc.page.getByTestId('confirm-dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText(`Release ${docNo} to the bank?`);
+  expect(await acc.page.evaluate(() => document.querySelector('[data-testid="confirm-dialog"]').contains(document.activeElement))).toBe(true);
+  for (let i = 0; i < 8; i += 1) {
+    await acc.page.keyboard.press('Tab'); // never on the page behind (the native modal dialog makes it inert; past the last control: the browser's toolbar)
+    expect(await acc.page.evaluate(() => { const d = document.querySelector('[data-testid="confirm-dialog"]'); const a = document.activeElement; return d.contains(a) || a === document.body; })).toBe(true);
+  }
+  if (phone) {
+    const box = await dialog.boundingBox(); const vp = acc.page.viewportSize();
+    expect(Math.round(box.width)).toBeGreaterThanOrEqual(vp.width - 1); expect(Math.round(box.height)).toBeGreaterThanOrEqual(vp.height - 1);
+  }
+  await acc.page.evaluate(AXE_SRC); // the page's CSP refuses an inline <script>
+  const ax = await acc.page.evaluate(() => window.axe.run(document.querySelector('[data-testid="confirm-dialog"]'), { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] }, resultTypes: ['violations'] }));
+  expect(ax.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+  await acc.page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(release).toBeFocused();
+  await expect(card).toHaveAttribute('data-status', 'DRAFT');
+
+  // the button works only with the number typed
+  await release.click();
+  const go = dialog.getByRole('button', { name: 'Release to the bank', exact: true });
+  await expect(go).toBeDisabled();
+  const typed = dialog.getByLabel(/Type .* to confirm/);
+  await typed.fill('WRONG-NUMBER'); await expect(go).toBeDisabled();
+  await typed.fill(docNo.toLowerCase()); await expect(go).toBeEnabled();
+  await go.click();
+  await expect(acc.page.getByText(/bank file is ready/)).toBeVisible();
+  await expect(card).toHaveAttribute('data-status', 'RELEASED');
+  await pay.context.close(); await acc.context.close();
+});
