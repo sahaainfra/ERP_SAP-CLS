@@ -58,4 +58,9 @@ export default {
   'chart.sum.table': 'यही आँकड़े नीचे की तालिका में हैं।',
   'chart.sum.switch': '"तालिका के रूप में दिखाएँ" यही आँकड़े तालिका में देता है।',
   'chart.table': '{title} तालिका के रूप में',
+  // PACK-13: the photo preview of the photo field (src/client/platform/forms/capture.jsx)
+  'photo.view': 'फ़ोटो देखें: {name}',
+  'photo.for': '{label} के लिए फ़ोटो',
+  'photo.altNamed': '{label} के लिए फ़ोटो: {name}',
+  'photo.close': 'बंद करें',
 };

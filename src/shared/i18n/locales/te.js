@@ -40,6 +40,11 @@ export default {
     'chart.sum.table': 'ఇవే అంకెలు క్రింది పట్టికలో ఉన్నాయి.',
     'chart.sum.switch': '"పట్టికగా చూపించు" ఇవే అంకెలను పట్టికగా ఇస్తుంది.',
     'chart.table': '{title} పట్టికగా',
+    // PACK-13: photo preview
+    'photo.view': 'ఫోటో చూడండి: {name}',
+    'photo.for': '{label} కోసం ఫోటో',
+    'photo.altNamed': '{label} కోసం ఫోటో: {name}',
+    'photo.close': 'మూసివేయండి',
   },
   shell: {
     'context.recent': 'ఇటీవలి', 'context.recentAria': 'ఇటీవలి పని సందర్భాలు',

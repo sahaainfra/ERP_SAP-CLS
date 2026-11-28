@@ -36,4 +36,9 @@ export default {
   'chart.sum.table': 'The same figures are in the table below.',
   'chart.sum.switch': '"Show as table" gives the same figures as a table.',
   'chart.table': '{title} as a table',
+  // PACK-13: the photo preview of the photo field (src/client/platform/forms/capture.jsx)
+  'photo.view': 'View photo: {name}',
+  'photo.for': 'Photo for {label}',
+  'photo.altNamed': 'Photo for {label}: {name}',
+  'photo.close': 'Close',
 };

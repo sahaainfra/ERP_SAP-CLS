@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FileUploader, AttachmentList } from '../../modules/core/components/Attachments.jsx';
 import Icon from '../design/Icon.jsx';
+import { useT } from '../i18n/index.js';
 import { FieldShell } from './fields.jsx';
 import { positionProblem, readPosition } from '../device/location.js';
 import LocationNotice from '../device/LocationNotice.jsx';
@@ -120,6 +121,7 @@ export function GpsField({ id, label, value, onChange, error, hint, required, di
 export function PhotoField({ id, label, value, onChange, error, hint, required, disabled, readOnly, entity, entityId }) {
   const input = useRef(null);
   const preview = useRef(null);
+  const tc = useT('common'); // PACK-13: the photo preview's text is in the catalogue (en, hi, te)
   const settings = useDeviceSettings();
   const low = useLowBandwidth();
   if (entity && entityId) {
@@ -144,15 +146,15 @@ export function PhotoField({ id, label, value, onChange, error, hint, required, 
   };
   const shown = value?.preview ? (
     <>
-      <button type="button" className="ff-photo-open" aria-haspopup="dialog" aria-label={`View photo: ${value.name}`} onClick={() => preview.current?.showModal()} disabled={disabled}>
-        <img className="ff-photo-img" src={value.preview} alt={`Photo for ${label}: ${value.name}`} />
+      <button type="button" className="ff-photo-open" aria-haspopup="dialog" aria-label={tc('photo.view', { name: value.name })} onClick={() => preview.current?.showModal()} disabled={disabled}>
+        <img className="ff-photo-img" src={value.preview} alt={tc('photo.altNamed', { label, name: value.name })} />
       </button>
-      <dialog className="dialog ff-photo-dialog" ref={preview} aria-label={`Photo for ${label}`}>
+      <dialog className="dialog ff-photo-dialog" ref={preview} aria-label={tc('photo.for', { label })}>
         <div className="ff-photo-heading">
           <strong>{value.name}</strong>
-          <button type="button" className="btn" onClick={() => preview.current?.close()}>Close</button>
+          <button type="button" className="btn" onClick={() => preview.current?.close()}>{tc('photo.close')}</button>
         </div>
-        <img src={value.preview} alt={`Photo for ${label}: ${value.name}`} />
+        <img src={value.preview} alt={tc('photo.altNamed', { label, name: value.name })} />
       </dialog>
     </>
   ) : '';
