@@ -5,6 +5,8 @@ import { toCsv } from '../../platform/security/csv.js';
 import { todayIST } from '../../../shared/dates.js';
 import { nowIso, rid } from '../proc/base.js';
 import { qaHelpers } from '../qa/common.js';
+import { isEnabled } from '../core/feature-flags/service.js';
+import { amountOf } from './clientbill.js';
 
 // Quantity reconciliation (part 22.02): the chain of quantities of every BOQ item and location: contract, revised (approved variations), executed (approved daily reports), measured (measurement book), certified, billed, paid, balance and the forecast at completion.
 // Every figure is read from the module that owns it (BR-01); the forecast is the only quantity typed here. Quantities are x1000.
@@ -65,6 +67,29 @@ export function createReconService({ db, base }) {
     }
     return out.sort((x, y) => x.code.localeCompare(y.code, undefined, { numeric: true }) || String(x.location ?? '').localeCompare(String(y.location ?? '')));
   }
+  /**
+   * PACK-18 (flag ff.bill.pack18): the money of the chain, tied to the client bills. The certified value is the certified quantity at the
+   * contract rate (amountOf, the rounding of the bill); the billed quantity and value are read from the items of the approved client bills,
+   * never recomputed; the tie compares the gross of those bills with the sum of their items. Variances: billed beyond certified, certified not
+   * yet billed, and the measurement book marked billed for a quantity other than the bills carry.
+   */
+  function moneyOf(companyId, pj, rs) {
+    const bills = db.prepare("SELECT id, doc_no, gross_paise FROM bill_client_bills WHERE company_id = ? AND org_project_id = ? AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY id").all(companyId, pj);
+    const lines = bills.length ? db.prepare(`SELECT bill_id, item_kind, item_code, this_qty_th, this_amount_paise FROM bill_client_bill_items WHERE company_id = ? AND deleted_at IS NULL AND bill_id IN (${bills.map(() => '?').join(', ')})`).all(companyId, ...bills.map((b) => b.id)) : [];
+    const byCode = new Map(); let milestones = 0;
+    for (const l of lines) { if (l.item_kind === 'MILESTONE') { milestones += l.this_amount_paise; continue; } const k = l.item_code.toLowerCase(); const a = byCode.get(k) ?? { qty: 0, amount: 0 }; a.qty += l.this_qty_th; a.amount += l.this_amount_paise; byCode.set(k, a); }
+    const rate = new Map([...itemsOf(companyId, pj).values()].map((it) => [it.code.toLowerCase(), it.rate ?? 0]));
+    const items = rs.map((r) => {
+      const k = r.code.toLowerCase(); const rt = rate.get(k) ?? 0; const certTh = Math.round((r.certified ?? 0) * 1000); const mbBilledTh = Math.round((r.billed ?? 0) * 1000); const b = byCode.get(k) ?? { qty: 0, amount: 0 };
+      const certifiedPaise = amountOf(certTh, rt); const variances = [];
+      if (b.qty > certTh) variances.push('BILLED_BEYOND_CERTIFIED'); if (certTh > b.qty) variances.push('CERTIFIED_NOT_BILLED'); if (mbBilledTh !== b.qty) variances.push('MB_BILL_MISMATCH');
+      return { code: r.code, rate: rt / 10000, certifiedQty: certTh / 1000, certifiedAmount: certifiedPaise / 100, billedQty: b.qty / 1000, billedAmount: b.amount / 100, mbBilledQty: mbBilledTh / 1000, unbilledAmount: (certifiedPaise - b.amount) / 100, variances };
+    });
+    const itemsPaise = [...byCode.values()].reduce((n, a) => n + a.amount, 0); const grossPaise = bills.reduce((n, b) => n + b.gross_paise, 0);
+    return { bills: bills.map((b) => ({ id: b.id, docNo: b.doc_no, gross: b.gross_paise / 100 })), items,
+      tie: { billsGross: grossPaise / 100, itemsAmount: itemsPaise / 100, milestones: milestones / 100, differencePaise: grossPaise - itemsPaise - milestones, ties: grossPaise === itemsPaise + milestones },
+      variances: items.filter((x) => x.variances.length).length };
+  }
   const totalsOf = (rs) => { const m = new Map(); for (const r of rs) { const t = m.get(r.uom ?? '') ?? { uom: r.uom ?? '', ...Object.fromEntries(CHAIN_COLS.map((c) => [c, 0])) }; m.set(r.uom ?? '', t); for (const c of CHAIN_COLS) if (c !== 'forecast') t[c] = Math.round((t[c] + (r[c] ?? 0)) * 1000) / 1000; } return [...m.values()]; };
   const recon = {
     /** For the QS dashboard (22.08): the chain of every BOQ item of a project with the rate, read from here and never re-computed elsewhere. */
@@ -85,7 +110,8 @@ export function createReconService({ db, base }) {
       gate(actor, 'bill.qty_recon.view', 'see the quantity reconciliation'); const pj = projectOk(actor, q.projectId, 'bill.qty_recon.view'); const by = q.by === 'location' ? 'location' : 'item'; let rs = rows(actor.companyId, pj.id, { by, locationId: q.locationId ?? null, code: q.code ?? null });
       if (q.level) rs = rs.filter((r) => r.level === q.level); if (q.deviatingOnly) rs = rs.filter((r) => r.deviationPct != null && Math.abs(r.deviationPct) > Number(param(actor.companyId, 'bill.deviation.threshold_pct') ?? 25));
       const lv = (l) => rs.filter((r) => r.level === l).length;
-      return { projectId: pj.id, project: pcode(pj.id), by, rows: rs, totals: totalsOf(rs), counts: { items: by === 'item' ? rs.length : new Set(rs.map((r) => r.code)).size, over: lv('OVER'), approaching: lv('APPROACHING'), forecastOver: lv('FORECAST_OVER') }, thresholdPct: Number(param(actor.companyId, 'bill.deviation.threshold_pct') ?? 25), alertPct: Number(param(actor.companyId, 'bill.qty.alert_pct') ?? 90), can: { forecast: base.may(actor, 'bill.qty_recon.forecast', pj.id), export: base.may(actor, 'bill.qty_recon.export', pj.id), prepare: base.may(actor, 'bill.deviation_statement.create', pj.id) } };
+      const money = by === 'item' && isEnabled(db, 'ff.bill.pack18', { companyId: actor.companyId }) ? moneyOf(actor.companyId, pj.id, rs) : undefined;
+      return { projectId: pj.id, project: pcode(pj.id), by, rows: rs, totals: totalsOf(rs), ...(money ? { money } : {}), counts: { items: by === 'item' ? rs.length : new Set(rs.map((r) => r.code)).size, over: lv('OVER'), approaching: lv('APPROACHING'), forecastOver: lv('FORECAST_OVER') }, thresholdPct: Number(param(actor.companyId, 'bill.deviation.threshold_pct') ?? 25), alertPct: Number(param(actor.companyId, 'bill.qty.alert_pct') ?? 90), can: { forecast: base.may(actor, 'bill.qty_recon.forecast', pj.id), export: base.may(actor, 'bill.qty_recon.export', pj.id), prepare: base.may(actor, 'bill.deviation_statement.create', pj.id) } };
     },
     /** The drill-down of one item to the records behind each figure. */
     detail(actor, q) {

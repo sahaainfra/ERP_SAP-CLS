@@ -3697,4 +3697,20 @@ export default {
     'p3.f.stage': 'దశ',
     'p3.f.any': 'ఏదైనా',
   },
+  // PACK-18: the money of the quantity reconciliation (other bill keys show the English text)
+  bill: {
+    "rc.money.title": "విలువ: ధృవీకరించినది మరియు బిల్ చేసినది",
+    "rc.money.intro": "ఒప్పంద రేటుపై ధృవీకరించిన పరిమాణం, ఆమోదించిన క్లయింట్ బిల్లులలో ఉన్నదానితో పోలిక. బిల్ చేసిన విలువ బిల్లుల నుండి తీసుకోబడుతుంది.",
+    "rc.money.rate": "రేటు",
+    "rc.money.certifiedAmt": "ధృవీకరించిన విలువ",
+    "rc.money.billedQty": "బిల్ చేసిన పరిమాణం",
+    "rc.money.billedAmt": "బిల్ చేసిన విలువ",
+    "rc.money.unbilled": "ధృవీకరించారు, బిల్ చేయలేదు",
+    "rc.money.variances": "తేడాలు",
+    "rc.money.tieOk": "{bills} ఆమోదించిన బిల్లుల మొత్తం {gross}: వాటి అంశాల మొత్తానికి సమానం.",
+    "rc.money.tieBad": "బిల్లుల మొత్తం {gross}, కానీ అంశాల మొత్తం {items}: తేడా {diff}.",
+    "rc.var.BILLED_BEYOND_CERTIFIED": "ధృవీకరించినదానికంటే ఎక్కువ బిల్",
+    "rc.var.CERTIFIED_NOT_BILLED": "ధృవీకరించారు, బిల్ చేయలేదు",
+    "rc.var.MB_BILL_MISMATCH": "కొలత పుస్తకం మరియు బిల్ వేరు",
+  },
 };

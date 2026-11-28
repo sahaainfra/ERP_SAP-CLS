@@ -805,4 +805,18 @@ export default {
   "ct.f.NO_CVR": "No approved CVR",
   "ct.f.HIGH_RISK": "High risk open",
   "dash.exceptions": "Exceptions",
+  // PACK-18: the money of the quantity reconciliation
+  "rc.money.title": "Value: certified and billed",
+  "rc.money.intro": "The certified quantity at the contract rate, against what the approved client bills carry. The billed value is read from the bills.",
+  "rc.money.rate": "Rate",
+  "rc.money.certifiedAmt": "Certified value",
+  "rc.money.billedQty": "Billed quantity",
+  "rc.money.billedAmt": "Billed value",
+  "rc.money.unbilled": "Certified, not billed",
+  "rc.money.variances": "Variances",
+  "rc.money.tieOk": "The {bills} approved bill(s) total {gross}: equal to the sum of their items.",
+  "rc.money.tieBad": "The bills total {gross} but their items total {items}: a difference of {diff}.",
+  "rc.var.BILLED_BEYOND_CERTIFIED": "Billed beyond certified",
+  "rc.var.CERTIFIED_NOT_BILLED": "Certified, not billed",
+  "rc.var.MB_BILL_MISMATCH": "Measurement book and bill differ",
 };

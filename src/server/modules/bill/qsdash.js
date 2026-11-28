@@ -63,7 +63,7 @@ export function createQsDashService({ db, base, recon }) {
       const kpi = (key, value, unit, status, note, drill) => ({ key, label: KPI[key], value: unit === 'Rs' ? rs(value) : value, unit, status, note, drill });
       const kpis = [
         kpi('workNotMeasured', v.workNotMeasured, 'Rs', toneOf(v.workNotMeasured), null, '/bill/qty-recon'), kpi('measuredNotCertified', v.measuredNotCertified, 'Rs', toneOf(v.measuredNotCertified), null, '/bill/mb-entries?filter[status]=APPROVED'),
-        kpi('certifiedNotBilled', v.certifiedNotBilled, 'Rs', toneOf(v.certifiedNotBilled), null, '/bill/client-bill-new'), kpi('billedNotCollected', v.billedNotCollected, 'Rs', toneOf(v.billedNotCollected), 'Receipts come from the receivables (23.05)', '/bill/client-bills?filter[status]=APPROVED'),
+        kpi('certifiedNotBilled', v.certifiedNotBilled, 'Rs', toneOf(v.certifiedNotBilled), null, '/bill/client-bill-new'), kpi('billedNotCollected', v.billedNotCollected, 'Rs', toneOf(v.billedNotCollected), 'Receipts come from the receivables', '/bill/client-bills?filter[status]=APPROVED'),
         kpi('variationPipeline', v.variationPipeline, 'Rs', toneOf(v.variationPipeline), `${sum((x) => x.variations.count)} in progress`, '/ctr/variations'), kpi('claimsPending', v.claimsPending, 'Rs', toneOf(v.claimsPending), `${sum((x) => x.claims.count)} pending`, '/ctr/claims'),
         kpi('overdueSubmission', v.overdueSubmission, '', toneOf(v.overdueSubmission, true), `Rs ${rs(sum((x) => x.overdue.value))}`, '/bill/client-bills?filter[clientState]=NOT_SENT'), kpi('unbilledWip', v.unbilledWip, 'Rs', toneOf(v.unbilledWip), 'Executed value less billed value', '/bill/qty-recon'),
       ];

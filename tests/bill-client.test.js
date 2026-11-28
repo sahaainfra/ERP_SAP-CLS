@@ -95,3 +95,30 @@ test('FR-02 the liquidated damages deducted are limited to those levied; a flag 
   assert.equal((await w.bc(U.qs, 'POST', '/client-bills/preview', bodyOf(w, { ldAmount: 9_000 }))).status, 400, 'more than levied'); const pv = (await w.bc(U.qs, 'POST', '/client-bills/preview', bodyOf(w, { ldAmount: 5_000, manual: [] }))).json.data; assert.equal(pv.deductions.find((d) => d.kind === 'LD').amount, 5_000);
   w.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.bill.p2203'").run(); assert.equal((await w.bc(U.qs, 'GET', '/client-bills')).status, 404); assert.equal((await w.bc(U.qs, 'GET', `/qty-recon?projectId=${w.A}`)).status, 200, 'the other flags are separate');
 });
+
+test('PACK-18 the reconciliation money ties to the approved client bills to the paisa; variances name what is certified and not billed', async () => {
+  const w = await world();
+  const odd = fill(w.d, 'proj_boq_lines', { company_id: 1, version_id: w.ver, line_kind: 'ITEM', item_code: '2.3', description: 'Shuttering with paise in the rate', uom: 'sqm', qty: 900_000, rate: 12_345_678, amount: 0 });
+  await w.cert(w.item, 20); await w.cert(w.item2, 5.5); await w.cert(odd, 3.333);
+  const rq = async () => (await w.bc(U.qs, 'GET', `/qty-recon?projectId=${w.A}`)).json.data;
+  assert.equal((await rq()).money, undefined, 'flag off: the report is as before');
+  w.d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.bill.pack18', 1, 'test', 0, 1)").run();
+  const before = (await rq()).money; assert.equal(before.bills.length, 0); assert.ok(before.tie.ties);
+  const v0 = before.items.find((x) => x.code === '2.3'); assert.deepEqual([v0.certifiedQty, v0.certifiedAmount, v0.billedAmount, v0.variances], [3.333, 4114.81, 0, ['CERTIFIED_NOT_BILLED']], '3.333 sqm x Rs 1,234.5678 = Rs 4,114.8145, rounded once to the paisa');
+  const c = await w.bc(U.qs, 'POST', '/client-bills', bodyOf(w)); assert.equal(c.status, 201, JSON.stringify(c.json)); const bill = await w.approve(c.json.data.id);
+  await w.cert(w.item, 1.111); // certified after the bill: not billed yet
+  const m = (await rq()).money; const g = bill.gross ?? bill.grossAmount;
+  const items = w.d.prepare('SELECT item_code, this_amount_paise FROM bill_client_bill_items WHERE bill_id = ?').all(bill.id); const sumItems = items.reduce((n, x) => n + x.this_amount_paise, 0);
+  assert.equal(m.bills.length, 1); assert.equal(Math.round(m.tie.billsGross * 100), w.d.prepare('SELECT gross_paise FROM bill_client_bills WHERE id = ?').get(bill.id).gross_paise); if (g != null) assert.equal(m.tie.billsGross, g);
+  assert.deepEqual([m.tie.differencePaise, m.tie.ties, Math.round(m.tie.itemsAmount * 100)], [0, true, sumItems], 'the gross of the bills is the sum of their items to the paisa');
+  for (const it of items) assert.equal(Math.round(m.items.find((x) => x.code === it.item_code).billedAmount * 100), it.this_amount_paise, `${it.item_code}: the billed value is read from the bill`);
+  const r21 = m.items.find((x) => x.code === '2.1'); assert.deepEqual([r21.certifiedQty, r21.billedQty, r21.mbBilledQty, r21.variances], [21.111, 20, 20, ['CERTIFIED_NOT_BILLED']]); assert.equal(Math.round(r21.unbilledAmount * 100), 1.111 * 6000 * 100);
+  const r23 = m.items.find((x) => x.code === '2.3'); assert.deepEqual([r23.billedAmount, r23.unbilledAmount, r23.variances], [4114.81, 0, []]);
+  assert.equal(m.variances, 1);
+  // a measurement marked billed without a bill item (tampered) is named
+  w.d.prepare("UPDATE bill_mb_entries SET bill_ref = 'HAND-1' WHERE bill_ref IS NULL AND boq_line_id = ?").run(w.item);
+  assert.ok((await rq()).money.items.find((x) => x.code === '2.1').variances.includes('MB_BILL_MISMATCH'));
+  // scope: another company's project is not found; a role without the right is refused
+  assert.equal((await w.bc({ ...U.qs, company: '2' }, 'GET', `/qty-recon?projectId=${w.A}`)).status, 404);
+  assert.equal((await w.bc(as('SK', 'sk9'), 'GET', `/qty-recon?projectId=${w.A}`)).status, 403, 'the store keeper has no right to the reconciliation');
+});

@@ -805,4 +805,18 @@ export default {
   "ct.f.NO_CVR": "कोई स्वीकृत सीवीआर नहीं",
   "ct.f.HIGH_RISK": "उच्च जोखिम खुला",
   "dash.exceptions": "अपवाद",
+  // PACK-18: the money of the quantity reconciliation
+  "rc.money.title": "मूल्य: प्रमाणित और बिल किया गया",
+  "rc.money.intro": "अनुबंध दर पर प्रमाणित मात्रा, स्वीकृत क्लाइंट बिलों में दर्ज राशि के सामने। बिल की गई राशि बिलों से ली जाती है।",
+  "rc.money.rate": "दर",
+  "rc.money.certifiedAmt": "प्रमाणित मूल्य",
+  "rc.money.billedQty": "बिल की गई मात्रा",
+  "rc.money.billedAmt": "बिल किया गया मूल्य",
+  "rc.money.unbilled": "प्रमाणित, बिल नहीं",
+  "rc.money.variances": "अंतर",
+  "rc.money.tieOk": "{bills} स्वीकृत बिल का योग {gross}: उनकी मदों के योग के बराबर।",
+  "rc.money.tieBad": "बिलों का योग {gross} है पर मदों का योग {items}: {diff} का अंतर।",
+  "rc.var.BILLED_BEYOND_CERTIFIED": "प्रमाणित से अधिक बिल",
+  "rc.var.CERTIFIED_NOT_BILLED": "प्रमाणित, बिल नहीं",
+  "rc.var.MB_BILL_MISMATCH": "माप पुस्तिका और बिल में अंतर",
 };

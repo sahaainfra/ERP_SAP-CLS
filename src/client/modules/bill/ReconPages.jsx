@@ -9,6 +9,7 @@ import { bill, fmtDate, qs } from './api.js';
 import { ErrorLine, big, useRunner } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import { formatINR } from '../../../shared/money.js';
 
 // Quantity reconciliation (part 22.02): the chain of quantities per item and location with the drill-down to the records behind each figure, the forecast (the only typed quantity), and the items approaching their limit.
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 });
@@ -58,8 +59,21 @@ export function QtyReconPage() {
             <tbody>{d.rows.map((r, i) => <tr key={i} data-testid="bill-recon-row" data-code={r.code} data-level={r.level ?? ''}><td><button type="button" className="btn" onClick={() => setCode(r.code)} data-testid="bill-recon-open">{r.code}</button></td><td>{r.description}</td><td>{r.uom}</td>{loc && <td>{r.location ?? t('rc.noLocation')}</td>}
               {COLS.filter((c) => !loc || ['executed', 'measured', 'certified', 'billed', 'paid'].includes(c)).map((c) => <td className="num" key={c} data-col={c}>{n(r[c])}</td>)}{!loc && <><td className="num">{r.deviationPct == null ? '—' : `${r.deviationPct > 0 ? '+' : ''}${r.deviationPct}%`}</td><td><LevelBadge level={r.level} /></td></>}</tr>)}</tbody>
             <tfoot>{d.totals.map((tt) => <tr key={tt.uom} data-testid="bill-recon-total"><th colSpan={loc ? 4 : 3}>{t('rc.total')} {tt.uom}</th>{COLS.filter((c) => !loc || ['executed', 'measured', 'certified', 'billed', 'paid'].includes(c)).map((c) => <th className="num" key={c}>{c === 'forecast' ? '' : n(tt[c])}</th>)}{!loc && <><th /><th /></>}</tr>)}</tfoot></table></div>)}
+        {d.money && !loc && <MoneyPanel m={d.money} />}
         {code && <Detail projectId={pid} code={code} can={d.can} onClose={() => setCode('')} />}</>)}
     </section>
+  );
+}
+
+/** PACK-18: the money of the chain, tied to the approved client bills (shown when the server sends it: flag ff.bill.pack18). */
+function MoneyPanel({ m }) {
+  const t = useT('bill'); const rs = (v) => formatINR(v);
+  return (
+    <div className="mdm-panel" data-testid="bill-recon-money"><h2>{t('rc.money.title')}</h2><p className="muted">{t('rc.money.intro')}</p>
+      <p role="status" className="mdm-banner" data-testid="bill-recon-tie" data-ties={m.tie.ties ? 'yes' : 'no'}>{m.tie.ties ? t('rc.money.tieOk', { bills: m.bills.length, gross: rs(m.tie.billsGross) }) : t('rc.money.tieBad', { gross: rs(m.tie.billsGross), items: rs(m.tie.itemsAmount + m.tie.milestones), diff: rs(m.tie.differencePaise / 100) })}</p>
+      <div className="table-scroll"><table className="data-table" data-testid="bill-recon-money-table"><caption className="sr-only">{t('rc.money.title')}</caption><thead><tr><th>{t('rc.item')}</th><th className="num">{t('rc.money.rate')}</th><th className="num">{t('rc.certified')}</th><th className="num">{t('rc.money.certifiedAmt')}</th><th className="num">{t('rc.money.billedQty')}</th><th className="num">{t('rc.money.billedAmt')}</th><th className="num">{t('rc.money.unbilled')}</th><th>{t('rc.money.variances')}</th></tr></thead>
+        <tbody>{m.items.map((x) => <tr key={x.code} data-testid="bill-recon-money-row" data-code={x.code}><td>{x.code}</td><td className="num">{rs(x.rate)}</td><td className="num">{n(x.certifiedQty)}</td><td className="num">{rs(x.certifiedAmount)}</td><td className="num">{n(x.billedQty)}</td><td className="num">{rs(x.billedAmount)}</td><td className="num">{rs(x.unbilledAmount)}</td><td>{x.variances.length ? x.variances.map((v) => <StatusBadge key={v} status={v === 'CERTIFIED_NOT_BILLED' ? 'IN_REVIEW' : 'REJECTED'} label={t(`rc.var.${v}`)} />) : '—'}</td></tr>)}</tbody></table></div>
+    </div>
   );
 }
 
