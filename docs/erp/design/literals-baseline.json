@@ -1,0 +1,506 @@
+{
+ "src/client/field-v3.css": {
+  "colours": 0,
+  "lengths": 11
+ },
+ "src/client/modules/bill/CertPages.jsx": {
+  "colours": 0,
+  "lengths": 4
+ },
+ "src/client/modules/bill/VinvPages.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/core/pages/OperationsHealthPage.jsx": {
+  "colours": 0,
+  "lengths": 4
+ },
+ "src/client/modules/ctr/OtherPages.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/ctr/SubcontractorPages.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/ctr/VariationPages.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/ctr/WorkOrderPages.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/est/TakeoffPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/est/parts.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/fin/ArPages.jsx": {
+  "colours": 0,
+  "lengths": 9
+ },
+ "src/client/modules/fin/AssetPages.jsx": {
+  "colours": 0,
+  "lengths": 20
+ },
+ "src/client/modules/fin/CashPages.jsx": {
+  "colours": 0,
+  "lengths": 17
+ },
+ "src/client/modules/fin/ClosePages.jsx": {
+  "colours": 0,
+  "lengths": 22
+ },
+ "src/client/modules/fin/ForecastPages.jsx": {
+  "colours": 0,
+  "lengths": 14
+ },
+ "src/client/modules/fin/GstPages.jsx": {
+  "colours": 0,
+  "lengths": 13
+ },
+ "src/client/modules/fin/GstReconPages.jsx": {
+  "colours": 0,
+  "lengths": 26
+ },
+ "src/client/modules/fin/InterCompanyPages.jsx": {
+  "colours": 0,
+  "lengths": 12
+ },
+ "src/client/modules/fin/PaymentPages.jsx": {
+  "colours": 0,
+  "lengths": 18
+ },
+ "src/client/modules/fin/PlPages.jsx": {
+  "colours": 0,
+  "lengths": 11
+ },
+ "src/client/modules/fin/ProjectAccountingPages.jsx": {
+  "colours": 0,
+  "lengths": 22
+ },
+ "src/client/modules/fin/TreasuryPages.jsx": {
+  "colours": 0,
+  "lengths": 15
+ },
+ "src/client/modules/fin/finparts.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/hse/CampPages.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/hse/DashboardPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/hse/EsgPages.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/hse/PermitMisc.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/hse/SecurityPages.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/iam/pages/UserPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/inv/AgeingPage.jsx": {
+  "colours": 0,
+  "lengths": 6
+ },
+ "src/client/modules/inv/AssetScanPage.jsx": {
+  "colours": 0,
+  "lengths": 14
+ },
+ "src/client/modules/inv/BlindCountPage.jsx": {
+  "colours": 0,
+  "lengths": 4
+ },
+ "src/client/modules/inv/CountPlansPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/inv/GateEntryPage.jsx": {
+  "colours": 0,
+  "lengths": 6
+ },
+ "src/client/modules/inv/GateExitPage.jsx": {
+  "colours": 0,
+  "lengths": 7
+ },
+ "src/client/modules/inv/GatePassPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/inv/GateRegisterPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/inv/GrnNewPage.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/inv/GrnsPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/inv/IssueNewPage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/inv/IssuesPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/inv/LabelsPage.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/inv/MaterialsDashboardPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/inv/ReorderParamsPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/inv/RtaHirePage.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/inv/RtaIssuePage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/inv/RtvsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/inv/SiteReturnsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/inv/SmallAssetsPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/inv/TransferNewPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/inv/TransferReceivePage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/inv/WastageTrendPage.jsx": {
+  "colours": 0,
+  "lengths": 7
+ },
+ "src/client/modules/pay/RunPages.jsx": {
+  "colours": 0,
+  "lengths": 10
+ },
+ "src/client/modules/pay/SettlePages.jsx": {
+  "colours": 0,
+  "lengths": 11
+ },
+ "src/client/modules/pay/SetupPages.jsx": {
+  "colours": 0,
+  "lengths": 15
+ },
+ "src/client/modules/pay/StatPages.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/pay/WagePages.jsx": {
+  "colours": 0,
+  "lengths": 22
+ },
+ "src/client/modules/plan/DelaysPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/plan/GanttPage.jsx": {
+  "colours": 0,
+  "lengths": 7
+ },
+ "src/client/modules/plan/HistogramPage.jsx": {
+  "colours": 0,
+  "lengths": 6
+ },
+ "src/client/modules/plan/LookaheadPage.jsx": {
+  "colours": 0,
+  "lengths": 16
+ },
+ "src/client/modules/plan/ProgrammePage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/plan/WeeklyPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/plant/EquipmentPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/plant/FleetTowerPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/plant/FuelDipPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/plant/FuelIssuePage.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/plant/GanttPage.jsx": {
+  "colours": 0,
+  "lengths": 18
+ },
+ "src/client/modules/plant/HireAgreementsPage.jsx": {
+  "colours": 0,
+  "lengths": 7
+ },
+ "src/client/modules/plant/HireBillPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/plant/JobCardsPage.jsx": {
+  "colours": 0,
+  "lengths": 7
+ },
+ "src/client/modules/plant/LogEntryPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/plant/LogVerificationPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/plant/PmSchedulePage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/plant/ResourcePlansPage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/portal/portal.css": {
+  "colours": 0,
+  "lengths": 6
+ },
+ "src/client/modules/proc/AnaParts.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/proc/ComparativeStatementsPage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/proc/ConsolidatePage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/proc/MrpProposalsPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/proc/PoNewPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proc/PrequalificationsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proc/PurchaseOrdersPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/proc/QuotationEntryPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proc/RateContractsPage.jsx": {
+  "colours": 0,
+  "lengths": 4
+ },
+ "src/client/modules/proc/RateIntelligencePage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proc/RfqNewPage.jsx": {
+  "colours": 0,
+  "lengths": 7
+ },
+ "src/client/modules/proc/RfqsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proc/ServiceEntriesPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proc/ShipmentsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proc/VendorPoPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/proc/VendorQuotePage.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/proc/VendorScorecardsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proj/BaselineComparePage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/proj/BoqReportsPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/proj/PortfolioPage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/proj/Project360Page.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/proj/ProjectMapPage.jsx": {
+  "colours": 0,
+  "lengths": 4
+ },
+ "src/client/modules/proj/RiskDashboardPage.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/proj/RiskPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proj/StripChartPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/proj/WizardPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/qa/ControlChartsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/qa/InspectionRequestsPage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/qa/ItpPage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/qa/SnagParts.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/qa/TemplatesPage.jsx": {
+  "colours": 0,
+  "lengths": 7
+ },
+ "src/client/modules/qa/TestCataloguePage.jsx": {
+  "colours": 0,
+  "lengths": 4
+ },
+ "src/client/modules/qa/TestRequestsPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/rmc/CostingPages.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/rmc/MixPages.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/rmc/ProductionPages.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/rmc/TicketPages.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/site/BoardPage.jsx": {
+  "colours": 0,
+  "lengths": 4
+ },
+ "src/client/modules/site/DailyPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/site/DprEntryPage.jsx": {
+  "colours": 0,
+  "lengths": 5
+ },
+ "src/client/modules/site/DprsPage.jsx": {
+  "colours": 0,
+  "lengths": 4
+ },
+ "src/client/modules/site/HindrancesPage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/site/InstructionIssuePage.jsx": {
+  "colours": 0,
+  "lengths": 3
+ },
+ "src/client/modules/site/InstructionsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/site/MobilePage.jsx": {
+  "colours": 0,
+  "lengths": 2
+ },
+ "src/client/modules/site/PeriodsPage.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/tst/GoLive.jsx": {
+  "colours": 0,
+  "lengths": 1
+ },
+ "src/client/modules/ui/StyleGuidePage.jsx": {
+  "colours": 0,
+  "lengths": 8
+ },
+ "src/client/styles.css": {
+  "colours": 0,
+  "lengths": 287
+ },
+ "src/client/ui-v3.css": {
+  "colours": 1,
+  "lengths": 136
+ }
+}

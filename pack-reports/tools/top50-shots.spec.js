@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { TEMPLATE_PERMISSIONS } from '../../src/server/platform/authz/templates.js';
 
-const OUT = 'pack-reports/screens';
+const OUT = process.env.SHOTS_OUT ?? 'pack-reports/screens';
 const routes = readFileSync('pack-reports/top50-worst-pages.csv', 'utf8').trim().split('\n').slice(1).map((l) => l.split(',')[1]);
 const ROLES = Object.keys(TEMPLATE_PERMISSIONS).filter((c) => !/^(X-.*|GUARD|EMP|SUBCO)$/.test(c)).join(',');
 const H = (company, user) => ({ 'x-erp-user': user, 'x-erp-roles': 'SYSADM', 'x-erp-company': String(company), 'content-type': 'application/json', 'idempotency-key': randomUUID() });
@@ -15,7 +15,7 @@ const H = (company, user) => ({ 'x-erp-user': user, 'x-erp-roles': 'SYSADM', 'x-
 test('PACK-02 top-50 screenshots at 360 and 1280 px', async ({ browser, request }, info) => {
   test.setTimeout(3_600_000);
   mkdirSync(OUT, { recursive: true });
-  const code = `SHOT${Date.now().toString(36).slice(-4).toUpperCase()}`;
+  const code = 'SHOTS'; // fixed, so two runs on fresh databases draw the same text (before/after comparisons)
   const created = await request.post('/api/v1/iam/org/companies', { headers: H(1, 'shots-setup'), data: { code, legalName: 'Screenshot Infra Pvt Ltd', shortName: code } });
   expect(created.status(), await created.text()).toBeLessThan(300);
   const company = (await created.json()).data.id;
@@ -30,7 +30,10 @@ test('PACK-02 top-50 screenshots at 360 and 1280 px', async ({ browser, request 
     const page = await context.newPage();
     for (const [i, route] of routes.entries()) {
       try {
-        await page.goto(route); await page.locator('main').waitFor({ timeout: 15_000 }); await page.waitForTimeout(800);
+        // settle: the data calls finished (no loading skeleton), and a page refused by the per-account rate limit is taken again
+        const settle = async () => { await page.locator('main').waitFor({ timeout: 15_000 }); await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {}); await page.waitForTimeout(500); };
+        await page.goto(route); await settle();
+        if (await page.getByText(/Too many requests/).count()) { await page.waitForTimeout(11_000); await page.goto(route); await settle(); }
         await page.screenshot({ path: `${OUT}/${String(i + 1).padStart(2, '0')}-${w}-${route.replace(/^\//, '').replace(/[/?=&]/g, '_')}.png`, fullPage: false });
       } catch (e) { info.annotations.push({ type: 'shot-failed', description: `${route} at ${w}: ${String(e.message).slice(0, 120)}` }); }
     }
