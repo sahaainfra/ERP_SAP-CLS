@@ -1027,3 +1027,12 @@ The owner left both decisions to the requirements of the ERP. The approval refer
   in HR (to find the same person twice): `aadhaar` is the full number in transit, `aadhaarMasked` is the last four only, and the server
   refuses a full number there. The browser also runs the Verhoeff check on a full number. The server does not yet (D-847). PAN is checked
   for shape only (five letters, four digits, a letter), not the holder-type letter, to stay as permissive as the checks it replaces.
+
+- **ADR-780 A bulk action shows who may act on each row first; plain tables get phone captions from their headers (PACK-10).** A List Report
+  bulk action may give `preview(ids)`, which asks the server (`POST /ui/sample-requests/bulk/preview` for the reference register) whether this
+  person may take the action on each selected row and why not, using the same per-record rules as the Object Page's buttons
+  (`allowedActionsOf`). The person sees "n of m can be done" and the refused rows with reasons, and the action runs on the allowed rows only.
+  The server still checks each row in the run, so the run's result stays the final word. Rows of another company or that the person cannot
+  see are reported as "does not exist", never named. For phone cards, one shell-level observer (`useTableCardLabels`, below 640 px only)
+  copies each column's header text into body cells that have no `data-label`, for every table on the page. This is cheaper and safer than
+  editing 346 page files, and it never overwrites a label a page set. Both are behind `ff.list.pack10`.
