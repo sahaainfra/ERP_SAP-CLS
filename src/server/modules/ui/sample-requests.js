@@ -246,6 +246,24 @@ export function createSampleRequestService({ db, drafts, approvals, objects }) {
       };
     },
 
+    /**
+     * What a bulk action would do (PACK-10), without doing it: for each selected request, whether this person may take the action on
+     * it and, if not, why (another person's draft, a request already submitted, one that is not visible). Uses the same per-record rules
+     * as the Object Page's buttons, so the preview and the run agree.
+     */
+    bulkPreview(actor, { action, ids }) {
+      assertPermissionAnywhere(actor, PERMISSION);
+      const rows = ids.map((id) => {
+        const r = header(id, cid(actor));
+        if (!r || !visible(actor, r)) return { id, label: `#${id}`, ok: false, message: 'That request does not exist.' };
+        const label = r.doc_no ?? `Draft #${r.id}`;
+        const a = allowedActionsOf(db, actor, r).find((x) => x.id === action);
+        if (!a) return { id, label, ok: false, message: `This request is ${String(r.status).toLowerCase()}; it cannot be ${action === 'submit' ? 'submitted' : 'cancelled'}.` };
+        return { id, label, ok: a.allowed, message: a.allowed ? null : a.reason };
+      });
+      return { action, rows, allowed: rows.filter((x) => x.ok).length, refused: rows.filter((x) => !x.ok).length };
+    },
+
     /** Bulk submit or cancel (FR-05): each request on its own, so one refusal does not stop the rest; the result names each one. */
     bulk(actor, { action, ids, reason, reasonCode }, correlationId) {
       assertPermissionAnywhere(actor, PERMISSION);

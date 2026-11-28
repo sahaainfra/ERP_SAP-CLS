@@ -56,6 +56,8 @@ export function formRoutes({ drafts, forms, requests }, { idempotent, idempotent
 const bulkBody = (b) => parse(z.object({ action: z.enum(['submit', 'cancel']), ids: z.array(z.number().int().positive()).min(1, 'Select at least one request').max(200), reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,30}$/).optional(), reason: z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500).optional() }).strict()
   .refine((v) => v.action !== 'cancel' || v.reason, { message: 'Give a reason of at least 5 characters', path: ['reason'] }), b);
 
+const bulkPreviewBody = (b) => parse(z.object({ action: z.enum(['submit', 'cancel']), ids: z.array(z.number().int().positive()).min(1, 'Select at least one request').max(200, 'An action takes at most 200 rows at a time') }).strict(), b);
+
 /** Send an export: the file itself (direct), or 202 with the queued job (large exports, FR-06). */
 const sendExport = (res, out) => {
   if (out.kind === 'job') return res.status(202).json({ data: out });
@@ -78,6 +80,8 @@ export function listRoutes({ views, exports, requests, describe }, { idempotentR
   r.get('/lists/:code/export', (req, res) => sendExport(res, exports.start(req.actor, String(req.params.code), req.query)));
   r.get('/sample-requests/export', (req, res) => sendExport(res, exports.start(req.actor, 'ui.sample_requests', req.query)));
   r.post('/sample-requests/bulk', idempotentRequired, (req, res) => res.json({ data: requests.bulk(req.actor, bulkBody(req.body), req.correlationId) }));
+  // PACK-10: who may do what to each selected row, before anything runs (read-only, so no idempotency key)
+  r.post('/sample-requests/bulk/preview', (req, res) => res.json({ data: requests.bulkPreview(req.actor, bulkPreviewBody(req.body)) }));
   return r;
 }
 

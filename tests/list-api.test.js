@@ -294,6 +294,62 @@ test('FR-05 bulk submit and cancel run each request on its own and report succes
   await api.close();
 });
 
+test('PACK-10 bulk preview: per row, whether this person may act and why not; the run then does exactly the allowed rows, each audited', async () => {
+  const api = await startApi();
+  seed(api, 6);
+  await api.call('PUT', '/api/v1/core/company-settings', { roles: 'SYSADM', user: 'sys1', headers: key('cs'), body: { legalName: 'Company 1 Pvt Ltd', reason: 'initial set-up' } });
+  await api.call('POST', '/api/v1/core/financial-years', { roles: 'SYSADM', user: 'sys1', headers: key('fy'), body: { startDate: '2026-04-01' } });
+  await api.call('POST', '/api/v1/core/number-series', { roles: 'SYSADM', user: 'sys1', headers: key('ns'), body: { docType: 'SAMPLE_MR', name: 'Sample material requests', prefix: 'MR', format: '{PREFIX}/{FY}/{SEQ:4}', resetRule: 'financial_year', reason: 'initial set-up' } });
+  const other = await api.call('POST', '/api/v1/iam/org/companies', { roles: 'SYSADM', user: 'sys1', headers: key('c2'), body: { code: 'BLK2', legalName: 'Other Infra Pvt Ltd', shortName: 'BLK2' } });
+  assert.equal(other.status, 201, JSON.stringify(other.json));
+  seed(api, 3, { company: other.json.data.id });
+  const foreign = api.db.prepare('SELECT id FROM ui_sample_requests WHERE company_id = ? ORDER BY id LIMIT 1').get(other.json.data.id).id;
+  const drafts = api.db.prepare("SELECT id FROM ui_sample_requests WHERE company_id = 1 AND status = 'DRAFT' ORDER BY id").all().map((r) => r.id);
+  const submitted = api.db.prepare("SELECT id FROM ui_sample_requests WHERE company_id = 1 AND status = 'SUBMITTED' ORDER BY id").all().map((r) => r.id);
+  assert.ok(drafts.length >= 2 && submitted.length >= 1);
+  api.db.prepare("UPDATE ui_sample_requests SET requested_by = 'pm1' WHERE company_id = 1").run();
+  api.db.prepare("UPDATE ui_sample_requests SET requested_by = 'pm2' WHERE id = ?").run(drafts[1]); // someone else's draft: a forbidden row
+  const ids = [drafts[0], drafts[1], submitted[0], foreign, 99999];
+  const auditBefore = api.db.prepare('SELECT COUNT(*) AS n FROM core_audit_log').get().n;
+
+  // success: one row per id, in order, with the reason for each refusal; nothing changes
+  const pv = await api.call('POST', `${U}/sample-requests/bulk/preview`, { ...pm, headers: json, body: { action: 'submit', ids } });
+  assert.equal(pv.status, 200, JSON.stringify(pv.json));
+  assert.deepEqual(pv.json.data.rows.map((r) => [r.id, r.ok]), [[drafts[0], true], [drafts[1], false], [submitted[0], false], [foreign, false], [99999, false]]);
+  assert.equal(pv.json.data.allowed, 1);
+  assert.equal(pv.json.data.refused, 4);
+  assert.match(pv.json.data.rows[1].message, /Only pm2, who raised this request/);
+  assert.match(pv.json.data.rows[2].message, /submitted; it cannot be submitted/);
+  assert.match(pv.json.data.rows[3].message, /does not exist/, "another company's request is not even named");
+  assert.equal(pv.json.data.rows[3].label, `#${foreign}`);
+  // read-only: asked twice, the same answer, no audit row, no status changed (so no idempotency key and no version are needed)
+  const again = await api.call('POST', `${U}/sample-requests/bulk/preview`, { ...pm, headers: json, body: { action: 'submit', ids } });
+  assert.deepEqual(again.json.data, pv.json.data);
+  assert.equal(api.db.prepare('SELECT COUNT(*) AS n FROM core_audit_log').get().n, auditBefore);
+  assert.equal(api.db.prepare('SELECT status FROM ui_sample_requests WHERE id = ?').get(drafts[0]).status, 'DRAFT');
+  // cancel: someone else's draft is refused, one's own submitted request may be cancelled
+  const pc = await api.call('POST', `${U}/sample-requests/bulk/preview`, { ...pm, headers: json, body: { action: 'cancel', ids: [drafts[1], submitted[0]] } });
+  assert.deepEqual(pc.json.data.rows.map((r) => r.ok), [false, true]);
+
+  // validation, permission
+  for (const body of [{ action: 'submit', ids: [] }, { action: 'approve', ids: [1] }, { action: 'submit', ids: Array.from({ length: 201 }, (_, i) => i + 1) }, { action: 'submit', ids: [1], extra: true }]) {
+    assert.equal((await api.call('POST', `${U}/sample-requests/bulk/preview`, { ...pm, headers: json, body })).status, 400, JSON.stringify(body).slice(0, 60));
+  }
+  assert.equal((await api.call('POST', `${U}/sample-requests/bulk/preview`, { roles: 'EMP', user: 'e1', headers: json, body: { action: 'submit', ids } })).status, 403);
+
+  // the run agrees with the preview: the allowed row is submitted, the refused ones are reported, and each submitted row is audited
+  const runKey = key('pv-run');
+  const run = await api.call('POST', `${U}/sample-requests/bulk`, { ...pm, headers: runKey, body: { action: 'submit', ids } });
+  assert.equal(run.status, 200, JSON.stringify(run.json));
+  assert.deepEqual(run.json.data.results.map((r) => [r.id, r.ok]), pv.json.data.rows.map((r) => [r.id, r.ok]));
+  assert.ok(api.db.prepare("SELECT COUNT(*) AS n FROM core_audit_log WHERE entity = 'ui_sample_requests' AND entity_id = ? AND action = 'submit'").get(String(drafts[0])).n >= 1);
+  assert.equal(api.db.prepare("SELECT COUNT(*) AS n FROM core_audit_log WHERE entity = 'ui_sample_requests' AND entity_id = ? AND action = 'submit'").get(String(drafts[1])).n, 0);
+  // replaying the run with the same key gives the same answer and does nothing twice
+  const replay = await api.call('POST', `${U}/sample-requests/bulk`, { ...pm, headers: runKey, body: { action: 'submit', ids } });
+  assert.deepEqual(replay.json.data, run.json.data);
+  await api.close();
+});
+
 test('the List Report additions are hidden while ff.ui.p0303 is OFF; the register itself still lists', async () => {
   const api = await startApi();
   seed(api, 3);
