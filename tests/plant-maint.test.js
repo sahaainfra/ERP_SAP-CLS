@@ -125,3 +125,25 @@ test('AC-03 AC-04 roles, scope, flag, cancel and amend; the sweep tells what is 
   const imp = await r.call(sup, 'POST', '/job-cards/import', { rows: [{ assetCode: 'EX-F', complaint: 'Imported complaint' }] }); assert.equal(imp.status, 201, JSON.stringify(imp.json)); assert.equal((await r.call(pmgr, 'POST', '/job-cards/import', { rows: [{ assetCode: 'EX-F', complaint: 'Not for the manager' }] })).status, 403);
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.plant.p1705'").run(); for (const pth of ['/job-cards', '/pm/due', '/maintenance/dashboard']) assert.equal((await r.call(pmgr, 'GET', pth)).status, 404, pth); assert.equal((await r.call(pmgr, 'GET', `/equipment/${m.id}/allocatable`)).json.data.allowed, true, 'with the part off nothing blocks');
 });
+
+test('PACK-25 a breakdown job card closed: the repair and the downtime (hours lost at the owning cost per hour) reach the project actual cost once; flag off, nothing', async () => {
+  const run = async (flagOn) => {
+    const r = await ready(); const d = r.d; const m = r.machine(flagOn ? 'EX-P1' : 'EX-P0');
+    const pid = d.prepare('SELECT org_project_id AS p FROM plt_equipment WHERE id = ?').get(m.id).p ?? d.prepare("SELECT id FROM org_projects WHERE company_id = 1 ORDER BY id LIMIT 1").get().id;
+    d.prepare("INSERT OR IGNORE INTO proj_projects (company_id, project_id, created_by) VALUES (1, ?, 'test')").run(pid);
+    d.prepare("INSERT INTO plt_cost_snapshots (company_id, equipment_id, period, owning_cost, operating_cost, hours, created_by) VALUES (1, ?, '2026-10', 3000000, 1000000, 200000, 'test')").run(m.id); // ₹ 30,000 owning over 200 h = ₹ 150 an hour
+    if (flagOn) d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.plant.pack25', 1, 'test', 0, 1)").run();
+    const bd = await r.call(sup, 'POST', '/breakdowns', { equipmentId: m.id, category: 'HYDRAULIC', description: 'Boom cylinder leaking oil' }); assert.equal(bd.status, 201, JSON.stringify(bd.json));
+    const c = await r.card(m, { complaint: 'Boom cylinder leaking', breakdownId: bd.json.data.id, vendorId: r.vendor, externalRef: 'SO/78', externalCost: 45000, diagnosis: 'Seals worn' });
+    assert.equal((await r.call(sup, 'POST', `/job-cards/${c.id}/submit`)).status, 202); assert.equal((await r.act(sup2, r.wf(c.id))).status, 200);
+    assert.equal((await r.call(sup, 'POST', `/job-cards/${c.id}/start`)).status, 200);
+    const done = await r.call(sup, 'POST', `/job-cards/${c.id}/complete`, { workDone: 'Cylinder resealed', labourHrs: 3, downtimeStart: `${plus(-1)}T09:00`, downtimeEnd: `${TODAY}T09:00` }); assert.equal(done.status, 200, JSON.stringify(done.json));
+    await r.drain(); await r.drain();
+    const rows = d.prepare("SELECT src_line_id AS line, amount FROM bud_actuals WHERE company_id = 1 AND src_type = 'plt_job_cards' AND src_id = ? ORDER BY src_line_id").all(String(c.id));
+    return { r, rows, pid, c };
+  };
+  const on = await run(true);
+  assert.deepEqual(on.rows.map((x) => [x.line, x.amount]), [['downtime', 360000], ['repair', 4575000]], 'downtime 24 h × ₹ 150 = ₹ 3,600; repair ₹ 45,000 external + 3 h at ₹ 250');
+  assert.equal(on.r.events('plant.cost.posted').length, 1); assert.equal(on.r.events('plant.cost.posted')[0].downtimeRate, 150);
+  const off = await run(false); assert.equal(off.rows.length, 0, 'flag off: the project cost does not change'); assert.equal(off.r.events('plant.cost.posted').length, 0);
+});

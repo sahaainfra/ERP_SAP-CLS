@@ -3,6 +3,7 @@ import { publishEvent } from '../../platform/events/index.js';
 import { toPdf } from '../../platform/export/index.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { toCsv } from '../../platform/security/csv.js';
 import { workflowOf } from '../../platform/workflow/index.js';
@@ -204,6 +205,14 @@ export function createMaintService({ db, base, flags, equipment, logsvc, inv }) 
         const cur = db.prepare('SELECT equip_state FROM plt_equipment WHERE id = ?').get(e.id).equip_state; if (cur === 'UNDER_MAINTENANCE') { eqs.setState(actor, e.id, { state: 'AVAILABLE', note: `Job card ${r.doc_no} closed` }, true); const al = allocFor(r.company_id, e.id, day); if (al && al.phase === 'ON_SITE') { try { eqs.setState(actor, e.id, { state: 'DEPLOYED', projectId: al.org_project_id, siteId: al.org_site_id, note: `Back at work after ${r.doc_no}` }, true); } catch { /* stays available: a certificate or a critical service needs attention */ } } }
         audit(actor, 'plt_job_cards', r.id, 'complete', r.company_id); const f = db.prepare('SELECT * FROM plt_job_cards WHERE id = ?').get(r.id);
         evt('plant.job.closed', actor, r.company_id, 'plt_job_cards', r.id, { jobCardId: r.id, docNo: r.doc_no, equipmentId: e.id, assetCode: e.asset_code, classItemId: e.class_item_id, jobType: r.job_type, projectId: r.org_project_id, siteId: r.org_site_id, breakdownId: r.breakdown_id, breakdownResolved: resolved, openedAt: r.opened_at, closedAt, downtimeStart: ds, downtimeEnd: de, downtimeHrs: d3(dt), labourHrs: d3(labour), labourCost: f.labour_cost / 100, sparesCost: f.spares_cost / 100, externalCost: f.external_cost / 100, totalCost: f.total_cost / 100, vendorId: r.vendor_id, warranty: Boolean(r.warranty), plans: done, meterAtService: meter == null ? null : d3(meter) }, r.org_project_id);
+        // PACK-25 (ff.plant.pack25): the cost of the job and of the downtime reach the project's actual cost (12.03) through plant.cost.posted:
+        // the repair (labour, spares, external) and, for a breakdown, the hours lost at the machine's owning cost per hour of its latest monthly snapshot (17.07)
+        if (r.org_project_id && isEnabled(db, 'ff.plant.pack25', { companyId: r.company_id })) {
+          const snap = db.prepare('SELECT owning_cost, hours FROM plt_cost_snapshots WHERE company_id = ? AND equipment_id = ? AND deleted_at IS NULL ORDER BY period DESC LIMIT 1').get(r.company_id, e.id);
+          const perHour = snap && snap.hours > 0 ? Math.round((snap.owning_cost * 1000) / snap.hours) : null; const downtimePaise = r.job_type === 'BREAKDOWN' && perHour != null && dt > 0 ? Math.round((perHour * dt) / 1000) : 0;
+          const lines = [...(f.total_cost > 0 ? [{ lineId: 'repair', resourceType: 'EQUIPMENT', amount: f.total_cost / 100, description: `Repair ${r.doc_no} of ${e.asset_code}` }] : []), ...(downtimePaise > 0 ? [{ lineId: 'downtime', resourceType: 'EQUIPMENT', qty: d3(dt), amount: downtimePaise / 100, description: `Downtime ${d3(dt)} h of ${e.asset_code} at ${perHour / 100} an hour (owning cost)` }] : [])];
+          if (lines.length) evt('plant.cost.posted', actor, r.company_id, 'plt_job_cards', r.id, { projectId: r.org_project_id, sourceType: 'plt_job_cards', sourceId: String(r.id), docRef: r.doc_no, date: day, lines, downtimeRate: perHour == null ? null : perHour / 100, downtimeHrs: d3(dt) });
+        }
         return jobs.get(actor, r.id); });
     },
     /** A warranty claim against the vendor or maker for the repair. */

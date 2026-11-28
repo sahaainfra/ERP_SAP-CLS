@@ -91,3 +91,13 @@ test('AC-03 AC-04 roles, scope, flag, return, cancel and import; an expiring agr
   assert.equal(plantOf(r.d).hiresvc.sweep(1).told, 1, 'ends in 7 days'); assert.equal((await r.call(pmgr, 'DELETE', `/hire-agreements/${a.id}`)).status, 409);
   r.d.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.plant.p1706'").run(); for (const pth of ['/hire-agreements', '/hire-bills', '/hire/comparison']) assert.equal((await r.call(pmgr, 'GET', pth)).status, 404, pth);
 });
+
+test('PACK-25 an internal hire charge reaches the project actual cost once (ff.plant.pack25); the hire-in bill goes to invoice matching instead', async () => {
+  const r = await ready(); const d = r.d; d.prepare("INSERT OR IGNORE INTO proj_projects (company_id, project_id, created_by) VALUES (1, ?, 'test')").run(r.A);
+  d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.plant.pack25', 1, 'test', 0, 1)").run();
+  const own2 = r.machine('EX-P25'); const ia = await r.approvedAgr(own2, { direction: 'INTERNAL', partnerId: null, projectId: r.A, rateBasis: 'DAY', rate: 10000, from: plus(-10) }); r.log(own2, plus(-3), { working_hrs: 10000 });
+  const ib = await r.certified(ia); assert.equal(ib.hireAmount, 1000000); await r.drain(); await r.drain();
+  const rows = d.prepare("SELECT src_line_id AS line, amount FROM bud_actuals WHERE company_id = 1 AND src_type = 'plt_hire_bills' AND src_id = ?").all(String(ib.id));
+  assert.deepEqual(rows.map((x) => [x.line, x.amount]), [['hire', 1_000_000]], 'one day at ₹ 10,000 on the project cost');
+  assert.equal(r.events('plant.cost.posted').length, 1);
+});

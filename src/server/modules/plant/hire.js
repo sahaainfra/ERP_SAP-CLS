@@ -3,6 +3,7 @@ import { publishEvent } from '../../platform/events/index.js';
 import { toPdf } from '../../platform/export/index.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
+import { isEnabled } from '../core/feature-flags/service.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { toCsv } from '../../platform/security/csv.js';
 import { workflowOf } from '../../platform/workflow/index.js';
@@ -168,6 +169,8 @@ export function createHireService({ db, base, flags, maint }) {
       if (outcome === 'APPROVED') { db.prepare("UPDATE plt_hire_bills SET status = 'APPROVED', approved_by = ?, approved_at = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, now, actor.user, now, r.id); audit(actor, 'plt_hire_bills', r.id, 'approve', r.company_id);
         const type = a.direction === 'IN' ? 'plant.hire.bill_certified' : a.direction === 'OUT' ? 'plant.hire.invoice_ready' : 'plant.hire.internal_charged';
         evt(type, actor, r.company_id, 'plt_hire_bills', r.id, { billId: r.id, docNo: r.doc_no, agreementId: a.id, agreementNo: a.doc_no, direction: a.direction, equipmentId: a.equipment_id, assetCode: e.asset_code, classItemId: e.class_item_id, partnerId: a.partner_id, projectId: a.org_project_id, siteId: a.org_site_id, periodFrom: r.period_from, periodTo: r.period_to, workingHrs: d3(r.working_hrs), billableHrs: d3(r.billable_hrs), hireAmount: r.hire_amount / 100, mobAmount: r.mob_amount / 100, fuelRecovery: r.fuel_recovery / 100, gstAmount: r.gst_amount / 100, amount: r.amount / 100, disputeHrs: d3(r.dispute_hrs) }, a.org_project_id);
+        // PACK-25 (ff.plant.pack25): an internal hire charge is the project's cost (12.03); a hire-in bill reaches it through invoice matching and the AP bill
+        if (a.direction === 'INTERNAL' && a.org_project_id && r.amount > 0 && isEnabled(db, 'ff.plant.pack25', { companyId: r.company_id })) evt('plant.cost.posted', actor, r.company_id, 'plt_hire_bills', r.id, { projectId: a.org_project_id, sourceType: 'plt_hire_bills', sourceId: String(r.id), docRef: r.doc_no, date: r.period_to, lines: [{ lineId: 'hire', resourceType: 'EQUIPMENT', qty: d3(r.billable_hrs), amount: r.amount / 100, description: `Internal hire ${r.doc_no} of ${e.asset_code}, ${r.period_from} to ${r.period_to}` }] }, a.org_project_id);
         notify(r.company_id, 'plant.hire.bill', [`user:${r.requested_by}`, 'role:ACCMGR'], r.doc_no, 'certified', `${r.doc_no} for ${e.asset_code} (${r.period_from} to ${r.period_to}) is certified.`, `/plant/hire-agreements?bill=${r.id}`, r.id, { projectId: a.org_project_id ?? undefined }); return; }
       const withdrawn = outcome === 'CANCELLED' && instance.status === 'WITHDRAWN'; const to = outcome === 'RETURNED' ? 'RETURNED' : outcome === 'REJECTED' ? 'REJECTED' : withdrawn ? 'DRAFT' : 'CANCELLED';
       db.prepare('UPDATE plt_hire_bills SET status = ?, workflow_instance_id = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(to, withdrawn ? null : r.workflow_instance_id, actor.user, now, r.id); audit(actor, 'plt_hire_bills', r.id, outcome.toLowerCase(), r.company_id, { reason: comment });
