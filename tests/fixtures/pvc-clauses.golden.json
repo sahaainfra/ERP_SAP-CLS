@@ -1,0 +1,43 @@
+{
+ "reviewedByQs": "PENDING",
+ "note": "Index values illustrative; amounts in paise",
+ "cases": {
+  "CPWD-10CC": {
+   "clause": "CPWD GCC clause 10CC style (component percentages of the value of work done)",
+   "eligiblePaise": 2192067890,
+   "lines": [
+    68898088,
+    58732621,
+    12066429
+   ],
+   "grossPaise": 139697138,
+   "amountPaise": 139697138
+  },
+  "MORTH-0.85": {
+   "clause": "MoRTH / NHAI item-rate style (0.85 x Pa per component)",
+   "eligiblePaise": 5123456789,
+   "lines": [
+    46284368,
+    -14745841,
+    39721182,
+    31481916,
+    12294124,
+    21878876,
+    92967122
+   ],
+   "grossPaise": 229881747,
+   "amountPaise": 229881747
+  },
+  "DEFLATION": {
+   "clause": "Either clause in a month when every index falls (recovery)",
+   "eligiblePaise": 975308643,
+   "lines": [
+    -5973928,
+    -890693,
+    -7954861
+   ],
+   "grossPaise": -14819482,
+   "amountPaise": -14819482
+  }
+ }
+}
