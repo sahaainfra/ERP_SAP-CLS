@@ -321,6 +321,22 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
   const ROW_H = 44;
   const v7 = useFlagOn('ff.ui.p16607'); // part 166.7: the title with the count, group-by, the filter sheet on a phone
   const [sheet, setSheet] = useState(false);
+  // PACK-11: the filter sheet is a modal on the phone: focus moves into it, Tab stays in it, Escape closes it, focus goes back to the button
+  const sheetRef = useRef(null); const sheetOpener = useRef(null); const sheetWasOpen = useRef(false);
+  useEffect(() => {
+    if (sheet) sheetRef.current?.querySelector('[data-testid="filter-sheet-close"]')?.focus();
+    else if (sheetWasOpen.current) sheetOpener.current?.focus();
+    sheetWasOpen.current = sheet;
+  }, [sheet]);
+  const onSheetKey = (e) => {
+    if (!sheet) return;
+    if (e.key === 'Escape') { e.stopPropagation(); setSheet(false); return; }
+    if (e.key !== 'Tab') return;
+    const all = [...sheetRef.current.querySelectorAll('button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.disabled && el.getClientRects().length > 0 && !el.closest('details:not([open]) > :not(summary)'));
+    if (!all.length) return;
+    const first = all[0]; const last = all[all.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
   const groupBy = v7 ? state?.groupBy ?? '' : '';
   const long = !narrow && rows.length > 60 && !groupBy;
   const win = long ? windowOf({ count: rows.length, rowHeight: ROW_H, viewport: 560, scrollTop }) : { start: 0, end: rows.length, before: 0, after: 0 };
@@ -392,13 +408,13 @@ export default function ListReport({ listCode, endpoint, exportEndpoint, title, 
             </select>
           </label>
         )}
-        {filtersOnSheet && <button type="button" className="btn" onClick={() => setSheet(true)} aria-haspopup="dialog" data-testid="filter-sheet-open"><Icon name="erp.action.filter" size={16} />Filters{filterCount ? ` (${filterCount})` : ''}</button>}
+        {filtersOnSheet && <button type="button" className="btn" ref={sheetOpener} onClick={() => setSheet(true)} aria-haspopup="dialog" data-testid="filter-sheet-open"><Icon name="erp.action.filter" size={16} />Filters{filterCount ? ` (${filterCount})` : ''}</button>}
         <span className="spacer" />
         {newAction && can(newAction.permission) && <button type="button" className="btn btn-primary" onClick={newAction.onClick}><Icon name="erp.action.create" size={16} />{newAction.label}</button>}
       </div>
       {ctxFilters.length > 0 && <p className="muted small" data-testid="list-context">Showing the working context only: {ctxFilters.map((c) => c.value).join(' / ')}. Choose All projects in the context at the top of the page to see everything.</p>}
       {filtersOnSheet && sheet && <div className="lr-sheet-backdrop" onClick={() => setSheet(false)} aria-hidden="true" />}
-      <div className={filtersOnSheet ? `lr-sheet${sheet ? ' is-open' : ''}` : 'lr-filters'} role={filtersOnSheet ? 'dialog' : undefined} aria-modal={filtersOnSheet && sheet ? 'true' : undefined} aria-label={filtersOnSheet ? `Filters of ${title}` : undefined} hidden={filtersOnSheet && !sheet} data-testid={filtersOnSheet ? 'filter-sheet' : undefined}>
+      <div className={filtersOnSheet ? `lr-sheet${sheet ? ' is-open' : ''}` : 'lr-filters'} role={filtersOnSheet ? 'dialog' : undefined} aria-modal={filtersOnSheet && sheet ? 'true' : undefined} aria-label={filtersOnSheet ? `Filters of ${title}` : undefined} hidden={filtersOnSheet && !sheet} data-testid={filtersOnSheet ? 'filter-sheet' : undefined} ref={sheetRef} onKeyDown={filtersOnSheet ? onSheetKey : undefined}>
       {filtersOnSheet && <div className="lr-sheet-head"><strong>Filters</strong><button type="button" className="btn btn-small" onClick={() => setSheet(false)} data-testid="filter-sheet-close">Done</button></div>}
       <div className="lr-quick" role="group" aria-label="Quick filters">
         {statusCol?.options?.map(([v, l]) => {
