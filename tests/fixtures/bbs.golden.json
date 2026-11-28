@@ -1,0 +1,190 @@
+{
+ "reviewedByQs": "PENDING",
+ "notes": [
+  "Unit weight is d x d / 162 rounded down to 3 places; it is within 0.25 % of the IS 1786 nominal mass (e.g. 20 mm 2.469 against 2.47, 25 mm 3.858 against 3.85).",
+  "Shape 51 (closed stirrup): 2(a+b) + 2 x 10d - 3 x 2d = 2(a+b) + 14d; practice that also deducts the two 135° hook bends (2 x 3d) gives 2(a+b) + 8d (D-872).",
+  "Laps are not part of any shape (D-873)."
+ ],
+ "lines": [
+  {
+   "barMark": "S00",
+   "shapeCode": "00",
+   "dia": 12,
+   "nos": 100,
+   "cutLength": "6.000",
+   "totalLength": "600.000",
+   "unitWeight": "0.888",
+   "weightKg": "532.800"
+  },
+  {
+   "barMark": "S11",
+   "shapeCode": "11",
+   "dia": 16,
+   "nos": 40,
+   "cutLength": "3.468",
+   "totalLength": "138.720",
+   "unitWeight": "1.580",
+   "weightKg": "219.178"
+  },
+  {
+   "barMark": "S21",
+   "shapeCode": "21",
+   "dia": 20,
+   "nos": 30,
+   "cutLength": "3.520",
+   "totalLength": "105.600",
+   "unitWeight": "2.469",
+   "weightKg": "260.726"
+  },
+  {
+   "barMark": "S33",
+   "shapeCode": "33",
+   "dia": 10,
+   "nos": 24,
+   "cutLength": "3.380",
+   "totalLength": "81.120",
+   "unitWeight": "0.617",
+   "weightKg": "50.051"
+  },
+  {
+   "barMark": "S41",
+   "shapeCode": "41",
+   "dia": 25,
+   "nos": 16,
+   "cutLength": "3.607",
+   "totalLength": "57.712",
+   "unitWeight": "3.858",
+   "weightKg": "222.653"
+  },
+  {
+   "barMark": "S51",
+   "shapeCode": "51",
+   "dia": 8,
+   "nos": 30,
+   "cutLength": "1.612",
+   "totalLength": "48.360",
+   "unitWeight": "0.395",
+   "weightKg": "19.102"
+  },
+  {
+   "barMark": "S99",
+   "shapeCode": "99",
+   "dia": 12,
+   "nos": 12,
+   "cutLength": "3.200",
+   "totalLength": "38.400",
+   "unitWeight": "0.888",
+   "weightKg": "34.099"
+  },
+  {
+   "barMark": "W6",
+   "shapeCode": "00",
+   "dia": 6,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "0.222",
+   "weightKg": "2.664"
+  },
+  {
+   "barMark": "W8",
+   "shapeCode": "00",
+   "dia": 8,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "0.395",
+   "weightKg": "4.740"
+  },
+  {
+   "barMark": "W10",
+   "shapeCode": "00",
+   "dia": 10,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "0.617",
+   "weightKg": "7.404"
+  },
+  {
+   "barMark": "W12",
+   "shapeCode": "00",
+   "dia": 12,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "0.888",
+   "weightKg": "10.656"
+  },
+  {
+   "barMark": "W16",
+   "shapeCode": "00",
+   "dia": 16,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "1.580",
+   "weightKg": "18.960"
+  },
+  {
+   "barMark": "W20",
+   "shapeCode": "00",
+   "dia": 20,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "2.469",
+   "weightKg": "29.628"
+  },
+  {
+   "barMark": "W25",
+   "shapeCode": "00",
+   "dia": 25,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "3.858",
+   "weightKg": "46.296"
+  },
+  {
+   "barMark": "W28",
+   "shapeCode": "00",
+   "dia": 28,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "4.839",
+   "weightKg": "58.068"
+  },
+  {
+   "barMark": "W32",
+   "shapeCode": "00",
+   "dia": 32,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "6.320",
+   "weightKg": "75.840"
+  },
+  {
+   "barMark": "W36",
+   "shapeCode": "00",
+   "dia": 36,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "8.000",
+   "weightKg": "96.000"
+  },
+  {
+   "barMark": "W40",
+   "shapeCode": "00",
+   "dia": 40,
+   "nos": 1,
+   "cutLength": "12.000",
+   "totalLength": "12.000",
+   "unitWeight": "9.876",
+   "weightKg": "118.512"
+  }
+ ]
+}
