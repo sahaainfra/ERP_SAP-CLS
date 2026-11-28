@@ -1,0 +1,172 @@
+{
+ "snapshot": {
+  "config": {
+   "scopeRef": null,
+   "scopeType": "DEFAULT",
+   "version": 0
+  },
+  "cutoff": "06:00",
+  "cutoffAt": "<timestamp>",
+  "dataDate": "D-1",
+  "exceptions": [
+   {
+    "kind": "LOST_TIME_INCIDENT",
+    "route": "/hse/incidents?id=1",
+    "severity": "CRITICAL",
+    "text": "Lost-time injury INC-MR at MR-B."
+   },
+   {
+    "kind": "DPR_MISSING",
+    "route": "/site/dpr-compliance?siteId=2&date=D-1",
+    "severity": "WARNING",
+    "text": "No DPR for D-1 from MR-B-S1 MR-B-S1 site (MR-B)."
+   },
+   {
+    "kind": "COLLECTION_DUE",
+    "route": "/finance/receivables?id=1",
+    "severity": "INFO",
+    "text": "Collection due today: ₹2,00,000.00 from Metro Rail Corp (AR-MR1)."
+   }
+  ],
+  "recipient": "mr-dir1",
+  "reportDate": "D",
+  "sections": {
+   "approvals": {
+    "overdue": 0,
+    "pending": 0,
+    "route": "/approvals",
+    "rows": []
+   },
+   "attendance": {
+    "absent": 1,
+    "date": "D-1",
+    "manHours": 8,
+    "missingPunch": 0,
+    "present": 1,
+    "route": "/att/register?date=D-1",
+    "rows": [
+     {
+      "absent": 0,
+      "manHours": 8,
+      "marked": 1,
+      "minutes": null,
+      "missing": 0,
+      "present": 1,
+      "project": "MR-A"
+     },
+     {
+      "absent": 1,
+      "manHours": 0,
+      "marked": 1,
+      "minutes": null,
+      "missing": 0,
+      "present": 0,
+      "project": "MR-B"
+     }
+    ]
+   },
+   "incidents": {
+    "count": 1,
+    "lostTime": 1,
+    "route": "/hse/incidents",
+    "rows": [
+     {
+      "classification": "LTI",
+      "docNo": "<docNo>",
+      "id": "<id>",
+      "occurredAt": "<timestamp>",
+      "project": "MR-B",
+      "route": "/hse/incidents?id=1",
+      "severity": "HIGH",
+      "type": "INJURY"
+     }
+    ]
+   },
+   "payables": {
+    "dueToday": 0,
+    "msmeDue": 0,
+    "outstanding": 0,
+    "overdue": 0,
+    "route": "/finance/payables"
+   },
+   "progress": {
+    "approved": 0,
+    "date": "D-1",
+    "missing": [
+     {
+      "project": "MR-B",
+      "route": "/site/dpr-compliance?siteId=2&date=D-1",
+      "site": "MR-B-S1 MR-B-S1 site",
+      "siteId": "<siteId>"
+     }
+    ],
+    "route": "/site/dpr-compliance?date=D-1",
+    "rows": [
+     {
+      "project": "MR-A",
+      "route": "/site/dprs?id=1",
+      "site": "MR-A-S1 MR-A-S1 site",
+      "status": "SUBMITTED"
+     }
+    ],
+    "sites": 2,
+    "submitted": 1
+   },
+   "receivables": {
+    "dueRows": [
+     {
+      "amount": 200000,
+      "client": "Metro Rail Corp",
+      "docNo": "<docNo>",
+      "route": "/finance/receivables?id=1"
+     }
+    ],
+    "dueToday": 200000,
+    "outstanding": 200000,
+    "overdue": 0,
+    "route": "/finance/receivables?tab=ageing"
+   },
+   "risks": {
+    "critical": 0,
+    "high": 0,
+    "route": "/proj/risks",
+    "rows": []
+   },
+   "tasks": {
+    "critical": 0,
+    "overdue": 0,
+    "route": "/tasks",
+    "rows": []
+   },
+   "tower": {
+    "alerts": [],
+    "criticalAlerts": 0,
+    "distribution": {
+     "AMBER": 0,
+     "GREEN": 0,
+     "NONE": 2,
+     "RED": 0
+    },
+    "openAlerts": 0,
+    "red": [],
+    "route": "/bi/control-tower",
+    "tiles": []
+   }
+  },
+  "summary": {
+   "kind": "RULE_BASED",
+   "lines": [
+    "No project is red overall; 0 executive alert(s) open.",
+    "DPRs for D-1: 1 of 2 site(s) reported; 1 missing.",
+    "Attendance on D-1: 1 present, 1 absent, 8 man-hours.",
+    "Receivables ₹2,00,000.00, of which ₹0.00 overdue; ₹2,00,000.00 due today.",
+    "Payables ₹0.00, ₹0.00 due today.",
+    "0 approval(s) wait for you, 0 overdue.",
+    "0 urgent or due task(s), 0 overdue.",
+    "0 critical and 0 high risk(s) open.",
+    "1 incident(s) on D-1, 1 lost-time."
+   ]
+  },
+  "version": 1
+ }
+}

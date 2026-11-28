@@ -241,3 +241,38 @@ test('27.05 volume: 100,000 archived reports keep the archive and the record wit
   const plan = db.prepare("EXPLAIN QUERY PLAN SELECT * FROM mr_reports WHERE company_id = 1 AND recipient_user = 'mr-dir1' AND deleted_at IS NULL ORDER BY report_date DESC LIMIT 25").all().map((x) => x.detail).join(' | ');
   assert.match(plan, /USING INDEX (ix_mr_reports_recipient|sqlite_autoindex_mr_reports_2)/);
 });
+
+// PACK-15: the morning report's golden output. The director's report for the fixture's date, normalised so that it does not change with the
+// day the test runs (dates become offsets from the report date "D", ids, timestamps, numbers and hashes become placeholders), is compared
+// with tests/fixtures/morning-report.golden.json. A change of a section, a figure, an exception or the summary fails here; to accept a
+// deliberate change run with GOLDEN_CAPTURE=1 and say why in the commit. The report's text on screen is in the `mr` catalogue: the test also
+// requires every English key to have its Hindi and Telugu text.
+test('PACK-15 the morning report matches its golden output; its screen text exists in Hindi and Telugu', async () => {
+  const { readFileSync, writeFileSync, existsSync } = await import('node:fs');
+  const t = await setup();
+  const { db } = t;
+  db.prepare("INSERT INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.bi.p2705', 1, 'Morning report fixture', 0, 1)").run();
+  const res = await t.get(dir, `/morning-reports/current?date=${t.reportDate}`);
+  assert.equal(res.status, 200, JSON.stringify(res.json));
+  const base = Date.parse(`${t.reportDate}T00:00:00Z`);
+  const rel = (d) => { const n = Math.round((Date.parse(`${d}T00:00:00Z`) - base) / 86_400_000); return n === 0 ? 'D' : `D${n > 0 ? '+' : ''}${n}`; };
+  const norm = (v, k = '') => {
+    if (Array.isArray(v)) return v.map((x) => norm(x, k));
+    if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map((key) => [key, norm(v[key], key)]));
+    if (/(^id$|Id$|^hash$|Hash$|^reportNo$|^docNo$|^requestNo$|^alertNo$)/.test(k)) return v == null ? v : `<${k}>`;
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v)) return '<timestamp>';
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return rel(v);
+    if (typeof v === 'string') return v.replace(/\b\d{4}-\d{2}-\d{2}\b/g, (d) => rel(d)).replace(/\b[A-Z]{2,5}\/\d{4}-\d{2}\/\d+\b/g, '<docNo>');
+    return v;
+  };
+  const actual = `${JSON.stringify(norm({ snapshot: res.json.data.snapshot }), null, 1)}\n`;
+  const file = new URL('./fixtures/morning-report.golden.json', import.meta.url);
+  if (process.env.GOLDEN_CAPTURE === '1' || !existsSync(file)) writeFileSync(file, actual);
+  assert.equal(actual, readFileSync(file, 'utf8'), 'the morning report changed: compare with tests/fixtures/morning-report.golden.json');
+  // the screen's text in every language
+  const en = (await import('../src/shared/i18n/locales/en/mr.js')).default;
+  const hi = (await import('../src/shared/i18n/locales/hi/mr.js')).default;
+  const te = (await import('../src/shared/i18n/locales/te.js')).default.mr;
+  for (const k of Object.keys(en)) { assert.ok(hi[k], `hi mr.${k}`); assert.ok(te?.[k], `te mr.${k}`); }
+  await t.api.close();
+});
