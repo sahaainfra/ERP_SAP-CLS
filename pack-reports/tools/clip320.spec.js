@@ -4,6 +4,7 @@
 // Telugu clipping), and every control whose text does not fit: a button, link, input, select, chip, label, table cell or heading whose
 // content is wider or taller than its box while its overflow is hidden or clipped, or ends in an ellipsis. Results:
 // pack-reports/clip320.json; screenshots of pages with clipping in pack-reports/clip320/ (ignored by git).
+/* global document, getComputedStyle */ // measure() runs in the page
 import { test, expect } from '@playwright/test';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
@@ -16,8 +17,8 @@ const ROLES = Object.keys(TEMPLATE_PERMISSIONS).filter((c) => !/^(X-.*|GUARD|EMP
 const H = (company, user) => ({ 'x-erp-user': user, 'x-erp-roles': 'SYSADM', 'x-erp-company': String(company), 'content-type': 'application/json', 'idempotency-key': randomUUID() });
 
 const measure = (lang) => {
-  const script = lang === 'te' ? /[ఀ-౿]/g : /[ऀ-ॿ]/g;
-  const letters = /[A-Za-zऀ-ॿఀ-౿]/g;
+  const script = lang === 'te' ? /\p{Script=Telugu}/gu : /\p{Script=Devanagari}/gu;
+  const letters = /[A-Za-z\p{Script=Devanagari}\p{Script=Telugu}]/gu;
   const main = document.querySelector('main') ?? document.body;
   const text = main.innerText ?? '';
   const total = (text.match(letters) ?? []).length; const inScript = (text.match(script) ?? []).length;
