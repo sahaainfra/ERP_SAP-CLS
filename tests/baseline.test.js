@@ -205,3 +205,45 @@ test('FR-03 the handover meeting: attendees, questions, actions as tasks; FR-05 
   t.api.db.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.proj.p1002'").run(); assert.equal((await t.call(est1, 'GET', '/baseline-packs')).status, 404, 'flag off'); assert.equal((await t.call(pcm, 'GET', '/projects')).status, 200, 'the project master is unaffected');
   t.api.db.prepare("UPDATE core_feature_flags SET enabled = 1 WHERE key = 'ff.proj.p1002'").run();
 });
+
+// PACK-17: the commercial thread through the API, end to end from the award: the awarded tender becomes a project (10.02, BOQ and rates
+// copied), its baseline pack is signed off (estimation, the commercial manager, the project director), and the client contract is made from
+// that baseline (21.01): the letter of acceptance, the awarded value and the client reach the contract without being typed again. (The
+// tender's way to the award, through the API, is `tests/award.test.js` FR-04..FR-07, which ends with the tender AWARDED and
+// tdr.tender.awarded published; here the award and the approved estimate are the fixture's.)
+test('PACK-17 thread: awarded tender → project → signed-off baseline → client contract, the award reaching the contract unchanged', async () => {
+  const t = await setup(); const { tid } = t.awarded();
+  const award = t.api.db.prepare('SELECT loa_no, loa_date, awarded_value_minor FROM tdr_awards WHERE tender_id = ?').get(tid);
+  // 1. project from the award
+  const made = await t.call(pcm, 'POST', '/projects/from-award', t.body(tid));
+  assert.equal(made.status, 201, JSON.stringify(made.json).slice(0, 300));
+  const projectId = made.json.data.projectId ?? made.json.data.project?.id;
+  assert.ok(projectId, JSON.stringify(made.json.data).slice(0, 200));
+  assert.equal(t.api.db.prepare('SELECT tender_id FROM proj_projects WHERE project_id = ?').get(projectId).tender_id, tid, 'the project knows its tender');
+  // 2. the baseline signed off
+  const packId = made.json.data.pack.id;
+  const sub = await t.call(pcm, 'POST', `/baseline-packs/${packId}/submit`, {}); assert.equal(sub.status, 202, JSON.stringify(sub.json).slice(0, 300));
+  const inst = sub.json.data.workflowInstanceId; await t.act(est1, inst); await t.act(com1, inst); await t.act(pd1, inst);
+  assert.equal((await t.call(pd1, 'GET', `/baseline-packs/${packId}`)).json.data.status, 'APPROVED');
+  // 3. the contract proposed from the baseline, then made
+  const K = '/api/v1/ctr';
+  const pre = await t.api.call('GET', `${K}/contracts/prefill?projectId=${projectId}`, { ...com1, headers: key() });
+  assert.equal(pre.status, 200, JSON.stringify(pre.json).slice(0, 300));
+  const p = pre.json.data.proposal;
+  assert.equal(pre.json.data.baseline?.id, packId, 'proposed from the signed-off pack');
+  assert.equal(p.loaNo, award.loa_no, 'the letter of acceptance of the award');
+  const body = { projectId, title: p.title, contractNo: p.contractNo ?? 'PWD/NH48/P3', contractType: p.contractType ?? 'ITEM_RATE', original: p.original, clientPartnerId: p.clientPartnerId, loaNo: p.loaNo, loaDate: p.loaDate,
+    agreementNo: 'AGR/NH48/P3', agreementDate: '2026-11-20', startDate: p.startDate ?? '2026-12-01', completionDate: p.completionDate ?? '2028-11-30', dlpMonths: p.dlpMonths ?? 24,
+    paymentTerms: { billFrequency: 'MONTHLY', certificationDays: 14, paymentDays: 28 }, retentionPct: 5, retentionCapPct: 5,
+    advanceTerms: { mobilisationPct: 10, machineryPct: 0, interestPct: 0, recoveryStartPct: 10, recoveryEndPct: 80, note: '' }, pvcApplicable: true, pvcRef: 'Clause 13.8',
+    ldRatePct: 0.05, ldBasis: 'PER_DAY', ldCapPct: 10, disputeResolution: 'Conciliation, then arbitration', security: { performancePct: 5, validityMonths: 48, form: 'Bank guarantee' }, insurance: [], importClauses: true };
+  const c = await t.api.call('POST', `${K}/contracts`, { ...com1, headers: key(), body });
+  assert.equal(c.status, 201, JSON.stringify(c.json).slice(0, 400));
+  const k = c.json.data;
+  assert.equal(k.loaNo ?? k.terms?.loaNo, award.loa_no);
+  assert.equal(String(k.original ?? k.value?.original), String(p.original));
+  assert.equal(Math.round(Number(p.original) * 100), award.awarded_value_minor, 'the awarded value, to the paisa');
+  assert.equal(t.api.db.prepare('SELECT org_project_id, baseline_pack_id FROM ctr_contracts WHERE id = ?').get(k.id).baseline_pack_id, packId, 'the contract keeps its baseline');
+  // and a second client contract for the same project is refused (it is changed by amendment)
+  assert.equal((await t.api.call('POST', `${K}/contracts`, { ...com1, headers: key(), body: { ...body, contractNo: 'DUP-1' } })).status, 409);
+});
