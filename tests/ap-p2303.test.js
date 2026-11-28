@@ -116,3 +116,28 @@ test('FR-05 BR-02 holds keep a bill out of payment; FR-03 a debit note approved,
   assert.equal((await w.call(U.se, 'GET', '/bills')).status, 403); assert.equal((await w.call(U.aud, 'GET', '/bills')).status, 200);
   assert.equal((await w.call(U.aud, 'GET', '/gl/integrity')).json.data.ok, true);
 });
+
+test('PACK-24 the MSME overdue report on seeded data: 15 days without an agreement, the agreed days at most 45, medium and other vendors left out, part payments counted, paid bills gone', async () => {
+  const w = await world(); const d = w.d;
+  const v = { microNone: w.partner('Micro no agreement', { msme: 'MICRO' }), small30: w.partner('Small thirty days', { msme: 'SMALL' }), small60: w.partner('Small sixty days', { msme: 'SMALL' }), medium: w.partner('Medium firm', { msme: 'MEDIUM' }), other: w.partner('Large firm') , microPaid: w.partner('Micro paid', { msme: 'MICRO' }) };
+  const bill = async (vendor, date, taxable, due) => { const i = w.inv(vendor, date, taxable, 'SERVICE', due); await w.drain(); return w.billOf('VENDOR_INVOICE', i); };
+  // no agreement: the invoice gives no due date (the application assumes 30 days for its own ageing): 1 June + 15 = 16 June
+  publishEvent(d, { type: 'ap.invoice.matched', entity: 'bill_vendor_invoices', entityId: 9901, actorId: 'test', companyId: 1, data: { invoiceId: 9901, invoiceNo: 'INV-NA', invoiceDate: '2026-06-01', fy: '2026-27', kind: 'SERVICE', projectId: w.A, vendorId: v.microNone, vendorGstin: '36AABCD1234E1Z2', taxable: 10000, tax: 1800, total: 11800 } }); await w.drain();
+  const b1 = w.billOf('VENDOR_INVOICE', 9901); assert.equal(b1.due_date, '2026-07-01', 'the ageing still assumes 30 days');
+  const b2 = await bill(v.small30, '2026-06-10', 20000, '2026-07-10'); // agreed 30 days: 10 July
+  const b3 = await bill(v.small60, '2026-06-05', 30000, '2026-08-04'); // agreed 60 days: capped at 45 = 20 July
+  const b4 = await bill(v.medium, '2026-06-01', 40000, null); const b5 = await bill(v.other, '2026-06-01', 50000, null);
+  const b6 = await bill(v.microPaid, '2026-06-01', 5000, null);
+  assert.deepEqual([b1.msme_due_date, b2.msme_due_date, b3.msme_due_date], ['2026-06-16', '2026-07-10', '2026-07-20']);
+  assert.deepEqual([b4.msme, b5.msme], [0, 0], 'a medium enterprise and a large firm are outside Section 43B(h)');
+  // part of b2 is paid; b6 is paid in full
+  d.prepare('UPDATE ap_bills SET paid_paise = ? WHERE id = ?').run(Math.round(b2.net_payable_paise / 2), b2.id); d.prepare('UPDATE ap_bills SET paid_paise = net_payable_paise WHERE id = ?').run(b6.id);
+  const rep = (await w.call(U.acc, 'GET', '/payables/msme?asOf=2026-07-15')).json.data;
+  const at = (b) => rep.rows.find((x) => x.id === b.id);
+  assert.deepEqual(rep.rows.map((x) => x.id).sort(), [b1.id, b2.id, b3.id].sort(), 'only the open bills of micro and small vendors');
+  assert.deepEqual([at(b1).state, at(b1).daysLeft], ['OVERDUE', -29]); assert.deepEqual([at(b2).state, at(b2).daysLeft], ['OVERDUE', -5]); assert.equal(at(b3).daysLeft, 5); assert.notEqual(at(b3).state, 'OVERDUE');
+  const due = (b) => (b.net_payable_paise - b.adjusted_paise - (b.id === b2.id ? Math.round(b2.net_payable_paise / 2) : 0)) / 100;
+  assert.equal(at(b2).outstanding, due(b2), 'what is left after the part payment');
+  assert.equal(rep.overdue, Math.round((due(b1) + due(b2)) * 100) / 100, 'the overdue total is the two overdue bills to the paisa');
+  const csv = await w.api.raw('GET', '/api/v1/fin/payables/msme/export?asOf=2026-07-15', U.acc); assert.equal(csv.status, 200); assert.equal(csv.buffer.toString('utf8').trim().split('\n').length >= 4, true, 'the export has the three bills');
+});

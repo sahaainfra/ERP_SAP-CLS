@@ -261,3 +261,21 @@ test('the register (List Report) with the PAN hidden outside finance, Partner 36
   // another company sees nothing
   assert.equal((await t.api.call('GET', `${M}/partners/${p.id}`, as('PROCMGR', 'p9', '2'))).status, 404);
 });
+
+test('PACK-24 verification hooks: with a GSTIN provider registered (and the flag) a GSTIN the network does not know or names differently is refused, a verified one is stored as verified by the API; no provider, no call', async () => {
+  const { partnerVerifiers } = await import('../src/server/modules/mdm/partners.js');
+  const t = await setup(); const d = t.api.db; const calls = [];
+  partnerVerifiers.register('GSTIN', ({ gstin: g }) => { calls.push(g); return g.startsWith('27AABCV') ? { status: 'NOT_FOUND' } : { status: 'VERIFIED', source: 'TEST' }; });
+  try {
+    const flagOff = await t.call(proc, 'POST', '/partners', vendor({ legalName: 'Hook Off Pvt Ltd', pan: 'AABCV1234C', gstins: [{ stateCode: 'MH', gstin: gstin('AABCV1234C') }], cin: null, bank: null, contacts: [{ name: 'Hook 1', mobile: '9876500001' }] }));
+    assert.equal(calls.length, 0, 'flag off: the provider is not asked'); assert.notEqual(flagOff.status, 500);
+    d.prepare("INSERT OR IGNORE INTO core_feature_flags (key, company_id, description, default_enabled, enabled) VALUES ('ff.mdm.pack24', 1, 'test', 0, 1)").run();
+    const refused = await t.call(proc, 'POST', '/partners', vendor({ legalName: 'Hook Unknown Pvt Ltd', pan: 'AABCV5678C', gstins: [{ stateCode: 'MH', gstin: gstin('AABCV5678C') }], cin: null, bank: null, contacts: [{ name: 'Hook 2', mobile: '9876500002' }] }));
+    assert.equal(refused.status, 400, JSON.stringify(refused.json)); assert.match(JSON.stringify(refused.json.error.details), /does not know this GSTIN/);
+    const ok = await t.call(proc, 'POST', '/partners', vendor({ legalName: 'Hook Known Pvt Ltd', pan: 'AABCK1234C', gstins: [{ stateCode: 'MH', gstin: gstin('AABCK1234C') }], cin: null, bank: null, contacts: [{ name: 'Hook 3', mobile: '9876500003' }] }));
+    assert.equal(ok.status, 201, JSON.stringify(ok.json)); assert.equal(d.prepare('SELECT verify_source FROM mdm_partner_gstins WHERE partner_id = ?').get(ok.json.data.id).verify_source, 'API');
+    assert.ok(calls.length >= 2, 'the provider is asked with the flag on');
+  } finally { partnerVerifiers.remove('GSTIN'); }
+  const none = await t.call(proc, 'POST', '/partners', vendor({ legalName: 'Hook None Pvt Ltd', pan: 'AABCN1234C', gstins: [{ stateCode: 'MH', gstin: gstin('AABCN1234C') }], cin: null, bank: null, contacts: [{ name: 'Hook 4', mobile: '9876500004' }] })); assert.equal(none.status, 201, JSON.stringify(none.json));
+  assert.equal(d.prepare('SELECT verify_source FROM mdm_partner_gstins WHERE partner_id = ?').get(none.json.data.id).verify_source, 'FORMAT', 'no provider: the format check only, and nothing leaves the application');
+});

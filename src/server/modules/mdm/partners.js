@@ -17,6 +17,15 @@ import { evidenceProviders, workflowOf, workflowTypes } from '../../platform/wor
 import { fromUnits, toUnits } from '../../../shared/money.js';
 import { todayIST } from '../../../shared/dates.js';
 import { commonOf } from './common.js';
+import { isEnabled } from '../core/feature-flags/service.js';
+
+/**
+ * PACK-24: verification hooks for the statutory identity of a partner. A provider is registered by an integration (a GSTN or PAN
+ * verification service under a contract the company signs); none is registered here, so nothing leaves the application.
+ *   partnerVerifiers.register('GSTIN', ({ companyId, gstin }) => ({ status: 'VERIFIED' | 'MISMATCH' | 'NOT_FOUND', legalName, source }))
+ */
+const verifierMap = new Map();
+export const partnerVerifiers = { register(kind, fn) { verifierMap.set(kind, fn); }, get: (kind) => verifierMap.get(kind) ?? null, remove(kind) { verifierMap.delete(kind); } };
 
 // The business partner master (part 06.04): one record per vendor, subcontractor, labour contractor, service provider, client, consultant or transporter (a partner may hold several roles), with its statutory
 // identity (PAN, GSTIN per state, MSME, CIN), addresses, contacts, bank accounts, compliance documents with expiry and TDS settings. A registration is saved as a Prospect and sent for approval: the steward
@@ -136,6 +145,12 @@ export function createPartnerService({ db, vaultKey }) {
     if (!b.roles.length) problems.push({ field: 'roles', message: 'Give the partner at least one role' });
     checkIdentity(b, problems);
     const gst = (b.gstins ?? []).map((g, i) => ({ ...g, stateCode: checkGstin(g, b.pan, problems, i) ?? g.stateCode }));
+    // PACK-24 (ff.mdm.pack24): the verification hooks, where a provider is registered (the shape, the check character and the PAN inside are checked above)
+    if (isEnabled(db, 'ff.mdm.pack24', { companyId: actor.companyId })) {
+      gst.forEach((g, i) => { const v = String(g.gstin ?? '').toUpperCase();
+        const fn = partnerVerifiers.get('GSTIN'); if (fn && !problems.some((x) => x.field === `gstins.${i}.gstin`)) { const r = fn({ companyId: actor.companyId, gstin: v }); g.verified = r?.status === 'VERIFIED' ? (r.source ?? 'API') : null; if (r?.status === 'MISMATCH' || r?.status === 'NOT_FOUND') problems.push({ field: `gstins.${i}.gstin`, message: r.status === 'NOT_FOUND' ? 'The GST network does not know this GSTIN' : `The GST network gives another name for this GSTIN${r.legalName ? ` (${r.legalName})` : ''}` }); } });
+      const pf = partnerVerifiers.get('PAN'); if (pf && b.pan) { const r = pf({ companyId: actor.companyId, pan: b.pan, name: b.legalName }); if (r?.status === 'MISMATCH' || r?.status === 'NOT_FOUND') problems.push({ field: 'pan', message: r.status === 'NOT_FOUND' ? 'The income-tax records do not know this PAN' : 'The name on this PAN is different' }); }
+    }
     const seenStates = new Set(); for (const g of gst) { if (seenStates.has(g.stateCode)) problems.push({ field: 'gstins', message: `Two GSTINs for ${g.stateCode}: one registration per state` }); seenStates.add(g.stateCode); }
     for (const [i, a] of (b.addresses ?? []).entries()) { if (!stateRow(a.stateCode)) problems.push({ field: `addresses.${i}.stateCode`, message: `${a.stateCode} is not a state` }); if (a.pin && !FORMATS.PIN.test(a.pin)) problems.push({ field: `addresses.${i}.pin`, message: 'A PIN code has six digits' }); }
     if (!(b.addresses ?? []).some((a) => a.addressType === 'REGISTERED')) problems.push({ field: 'addresses', message: 'Give the registered address' });
@@ -165,7 +180,7 @@ export function createPartnerService({ db, vaultKey }) {
   function writeChildren(actor, pid, b, prep) {
     for (const t of ['mdm_partner_roles', 'mdm_partner_gstins', 'mdm_partner_addresses', 'mdm_partner_contacts', 'mdm_partner_tds']) db.prepare(`UPDATE ${t} SET deleted_at = ?, deleted_by = ?, is_active = 0 WHERE partner_id = ? AND deleted_at IS NULL`).run(nowIso(), actor.user, pid);
     for (const r of b.roles) db.prepare("INSERT INTO mdm_partner_roles (company_id, partner_id, partner_role, categories_json, regions_json, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, 'mdm_partner')").run(actor.companyId, pid, r, JSON.stringify(b.categories ?? []), JSON.stringify(b.regions ?? []), actor.user);
-    for (const g of prep.gst) db.prepare("INSERT INTO mdm_partner_gstins (company_id, partner_id, state_code, gstin, verify_source, verified_at, verified_by, created_by, source_type) VALUES (?, ?, ?, ?, 'FORMAT', ?, 'system', ?, 'mdm_partner')").run(actor.companyId, pid, g.stateCode, g.gstin, nowIso(), actor.user);
+    for (const g of prep.gst) db.prepare("INSERT INTO mdm_partner_gstins (company_id, partner_id, state_code, gstin, verify_source, verified_at, verified_by, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, 'system', ?, 'mdm_partner')").run(actor.companyId, pid, g.stateCode, g.gstin, g.verified ? 'API' : 'FORMAT', nowIso(), actor.user);
     for (const a of b.addresses) db.prepare("INSERT INTO mdm_partner_addresses (company_id, partner_id, address_type, address, city, state_code, pin, is_default, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'mdm_partner')").run(actor.companyId, pid, a.addressType, a.address, a.city ?? null, stateRow(a.stateCode).code, a.pin ?? null, a.isDefault || a.addressType === 'REGISTERED' ? 1 : 0, actor.user);
     b.contacts.forEach((c, i) => db.prepare("INSERT INTO mdm_partner_contacts (company_id, partner_id, name, designation, email, mobile, is_primary, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'mdm_partner')").run(actor.companyId, pid, c.name, c.designation ?? null, c.email ?? null, c.mobile ?? null, c.isPrimary || (i === 0 && !b.contacts.some((x) => x.isPrimary)) ? 1 : 0, actor.user));
     for (const t of b.tds ?? []) db.prepare("INSERT INTO mdm_partner_tds (company_id, partner_id, section, ldc_no, ldc_rate, ldc_limit, valid_from, valid_until, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'mdm_partner')").run(actor.companyId, pid, t.section, t.ldcNo ?? null, t.ldcRate != null ? toUnits(t.ldcRate, 'percent') : null, t.ldcLimit != null ? toUnits(t.ldcLimit, 'money') : null, t.validFrom ?? null, t.validUntil ?? null, actor.user);
