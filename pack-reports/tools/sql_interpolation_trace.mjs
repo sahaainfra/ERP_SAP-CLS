@@ -91,7 +91,7 @@ function verdict(expr, src, offset, depth = 0) {
   if (/^[A-Za-z_$][\w$]*$/.test(e) && depth < 2) {
     const def = definitionOf(src, e, offset);
     if (def) {
-      if (new RegExp(`^${STR}`).test(def) || /^\[\s*'/.test(def) || /^Object\.freeze\(\s*[\['{]/.test(def)) return ['CONSTANT', `const ${e} = ${def.slice(0, 80)}`];
+      if (new RegExp(`^${STR}`).test(def) || /^\[\s*'/.test(def) || /^Object\.freeze\(\s*[[{']/.test(def)) return ['CONSTANT', `const ${e} = ${def.slice(0, 80)}`];
       const [v, why] = verdict(def, src, offset, depth + 1);
       if (v !== 'REVIEW') return [v, `${e} = ${def.slice(0, 80)}${why ? ` (${why})` : ''}`];
       return ['REVIEW', `${e} = ${def.slice(0, 120)}`];
