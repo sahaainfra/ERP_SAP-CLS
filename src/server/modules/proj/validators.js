@@ -171,4 +171,8 @@ export const parseProgress = (b) => parse(z.object({ projectId: id, locationId: 
 
 // ---- Part 10.08: Project 360 ----
 export const parseP360 = (q) => parse(z.object({ projectId: id, period: z.string().regex(/^\d{4}-\d{2}$/, 'Use a month such as 2026-11').optional(), format: z.string().optional() }).strict(), q ?? {});
-export const parsePortfolio = (q) => parse(z.object({ q: z.string().trim().max(80).optional(), health: z.enum(['RED', 'AMBER', 'GREEN', 'NONE']).optional() }).strict(), q ?? {});
+// PACK-16: the portfolio also filters by the GST state of the project's registrations (36 Telangana, 37 Andhra Pradesh, …), the client, the
+// project type and the life-cycle stage
+export const parsePortfolio = (q) => parse(z.object({ q: z.string().trim().max(80).optional(), health: z.enum(['RED', 'AMBER', 'GREEN', 'NONE']).optional(),
+  state: z.string().regex(/^\d{2}$/, 'Use the 2-digit GST state code').optional(), clientId: z.coerce.number().int().positive().optional(),
+  type: z.string().trim().min(1).max(40).optional(), stage: z.enum(Object.keys(STATES)).optional() }).strict(), q ?? {});

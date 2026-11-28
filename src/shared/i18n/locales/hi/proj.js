@@ -1059,4 +1059,10 @@ export default {
   "p3.tab.resources": "संसाधन",
   "p3.tab.time": "समय",
   "p3.title": "प्रोजेक्ट 360",
+  // PACK-16: the portfolio filters
+  'p3.f.state': 'राज्य',
+  'p3.f.clientId': 'क्लाइंट',
+  'p3.f.type': 'प्रकार',
+  'p3.f.stage': 'चरण',
+  'p3.f.any': 'कोई भी',
 };

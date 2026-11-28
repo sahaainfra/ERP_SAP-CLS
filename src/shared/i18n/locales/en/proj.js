@@ -1059,4 +1059,10 @@ export default {
   'p3.tab.resources': "Resources",
   'p3.tab.time': "Time",
   'p3.title': "Project 360",
+  // PACK-16: the portfolio filters
+  'p3.f.state': 'State',
+  'p3.f.clientId': 'Client',
+  'p3.f.type': 'Type',
+  'p3.f.stage': 'Stage',
+  'p3.f.any': 'Any',
 };

@@ -3689,4 +3689,12 @@ export default {
     "cl.st.WITHDRAWN": "ఉపసంహరించబడింది",
     "cl.st.PROPOSED": "ప్రతిపాదించబడింది",
   },
+  // PACK-16: the portfolio filters (the rest of this area is shown in English until Part 59)
+  proj: {
+    'p3.f.state': 'రాష్ట్రం',
+    'p3.f.clientId': 'క్లయింట్',
+    'p3.f.type': 'రకం',
+    'p3.f.stage': 'దశ',
+    'p3.f.any': 'ఏదైనా',
+  },
 };
